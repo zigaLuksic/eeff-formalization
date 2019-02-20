@@ -7,6 +7,15 @@
 *.cmx
 *.cmxs
 *.cmxa
+*.synctex.gz
+*.log
+*.fls
+*.fdb_latexmk
+*.blg
+*.bbl
+*.aux
+
+.vscode/
 
 # ocamlbuild working directory
 _build/
