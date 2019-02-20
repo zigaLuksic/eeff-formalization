@@ -36,12 +36,17 @@
   \Large{\textsc{\textbf{(How to steal your neighbours sandwich without being noticed)}}}
 \end{center}
 
-Kot so to opazili že mnogi~\cite{DBLP:conf/icfp/KammarLO13,DBLP:journals/entcs/Pretnar15,DBLP:journals/pacmpl/Ahman18} v splošnem nimam pojma kaj počnem.
-
-
 \section*{Pregled znanstvenega področja in dosedanjih raziskav}
 
-Uporaba algebrajskih učinkov in prestreznikov je del področja teorije tipov, čigar vpliv na razvoj programskih jezikov hitro narašča. Raziskave področja so se začele predvsem zaradi iskanje matematičnega pomena za računske učinke \cite{DBLP:conf/fossacs/PlotkinP01, DBLP:journals/acs/PlotkinP03}, kasneje pa se je izkazalo, da so algebrajski učinki uporabni tudi kot del samih programskih jezikov \cite{DBLP:journals/corr/PlotkinP13}. Algebrajski učinki nam omogočajo preprosto in generično razširitev funkcijskih programskih jezikov z računskimi učinki. Z uporabo naprednejšega sistema tipov \cite{DBLP:conf/esop/SalehKPS18} zagotavljajo varnost kljub prisotnosti računskih učinkov. Prav tako se lepo sklopijo z obstoječo denotacijsko semantiko funkcijskih programskih jezikov, kar nam ponuja vpogled v matematični pomen programov. 
+Uporaba algebrajskih učinkov in prestreznikov je del področja teorije tipov, čigar vpliv na razvoj programskih jezikov hitro narašča. Algebrajski učinki nam omogočajo preprosto in generično razširitev funkcijskih programskih jezikov z računskimi učinki, kot na primer izpis rezultatov v datoteko ali spreminjanje podatkovne baze. Eden od pristopov k temu problemi je uporaba tako imenovanih monad, vendar moramo pri tem pristopu primerno prilagoditi celotno kodo programa. Uporaba algebrajskih učinkov nam omogoča, da namesto tega računske učinke obravnavamo zgolj v zunanjem sloju kode, s tako imenovanimi algebrajskimi prestrezniki.
+
+Raziskave področja so se začele zgolj z uvedbo algebrajskih učinkov~\cite{DBLP:conf/fossacs/PlotkinP01, DBLP:journals/acs/PlotkinP03}, temu pa je kasneje sledil razvoj algebrajskih prestreznikov~\cite{DBLP:conf/esop/PlotkinP09}, ki posplošijo princip delovanja prestreznikov napak z možnostjo nadaljevanja izvajanja. Izkaže se, da lahko z algebrajskimi prestrezniki modeliramo večino želenih računskih učinkov, prav tako pa je ekvivalenten monadičnemu pristopu. 
+
+Uporaba algebrajskih učinkov prav tako omogoča sledenje računskim učinkom skozi sistem tipov. Pri tem želimo ohraniti lastnosti kot so polimorfizmi in varnost tipov. Razvoj sistema tipov z učinki je šel v smeri t.i.\ 'row-types'~\cite{DBLP:conf/icfp/HillerstromL16} in pa 'subtyping'~\cite{DBLP:conf/esop/SalehKPS18}. 
+
+Ključnega pomena za razumevanje in dokazovanje v programskih jezikih so pristopi, kjer programom podamo primeren matematičen pomen. Funkcijski programski jeziki uporabljajo strukturno denotacijsko semantiko, ki sloni na uporabi teorije domen in teorije kategorij.
+
+tako se lepo sklopijo z obstoječo denotacijsko semantiko funkcijskih programskih jezikov~\cite{DBLP:journals/corr/BauerP13}, kar nam ponuja vpogled v matematični pomen programov. 
 
 \section*{Opis raziskovalne vsebine}
 
@@ -49,7 +54,7 @@ Razvoj zanesljivih in ekspresivnih sistemov tipov skrbi tako za varnost programo
 
 \section*{Raziskovalna vprašanja}
 
-Kaj vse lahko natlačiva v Eff preden postane neokusno? Raziščimo s pristopom surove sile.
+Želim pokazati, da implementacija enačb v programski jezik z algebrajskimi učinki ohrani vsaj del strukture teorije učinkov. Nadalje želim raziskati lastnosti, katerim mora zadoščati programski jezik, da v pripadajoči denotacijski semantiki ohranimo čim več koristnih lastnosti teorije. Poleg razvoja matematičnega ogrodja za teorijo učinkov in konstrukcije primernih logik za dokazovanje, nameravam sistem tudi uporabiti na primernih problemih, kot recimo analiza statističnih modelov.
 
 \section*{Pričakovani rezultati in prispevek k znanosti}
 
