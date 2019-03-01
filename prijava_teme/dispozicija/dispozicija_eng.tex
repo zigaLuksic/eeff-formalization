@@ -20,7 +20,7 @@
 \renewcommand{\and}{\\}
 \newcommand{\todo}[1]{{\color{red}{#1}}}
 
-\title{Dispozicija doktorske disertacije}
+\title{Doctoral dissertation proposal}
 \author{Žiga Lukšič \and Mentor: doc.\ dr.\ Matija Pretnar}
 \date{}
 
@@ -36,11 +36,17 @@
   \Large{\textsc{\textbf{\todo{??? but in english}}}}
 \end{center}
 
-\section*{Pregled področja in dosedanjih raziskav}
+\section*{Overview of current research on the topic}
 
-Uporaba matematično dobro osnovanih konceptov v programskih jezikih se je v praksi izkazala za koristno, na kar kaže vse pogostejša raba idej iz funkcijskih programskih jezikov. Če ima naš jezik močne matematične temelje, lahko programe predstavimo z matematičnimi objekti, kar nam nudi močna orodja za analizo in formalno dokazovanje pravilnosti programov. Mnogo programov potrebuje nekakšen vnos in nam vrne izračun, torej je naravno, da jih predstavljamo s funkcijami. Vendar preproste funkcije ne vplivajo na svoje okolje, zaradi česar so računski učinki, kot na primer izpisovanje besedila na zaslonu, odčitavanje podatkov iz senzorjev ali komunikacija z oddaljenim strežnikom, velik izziv za matematično formulacijo.
+The use of math based concepts in programming language design has ??? as shown by increasing integration of functional programming ideas in mainstream languages. A language with strong mathematical foundations allows us to present programs as mathematical objects, allowing for strong tools and procedures in formal reasoning of program correctness. As many programs accept input and return the computed value it is natural to interpret them as functions. Yet simple functions do not change their environment, so it is difficult to model computational effects such as printing text, reading data from sensors, or communication with a distant server.
+
+
 
 Računske učinke lahko v programski jezik dodajamo kot posebne konstrukte, vendar moramo temu primerno za vsak dodani učinek prilagoditi pomen naših programov in pristope k formalnemu dokazovanju. Ker s tem omejimo uporabnike jezika na zgolj že vgrajene učinke, bi želeli dodati vse pogosto rabljene učinke, s čimer pa postajajo temelji našega jezika kompleksnejši. Zato želimo k problemu računskih učinkov pristopiti z rešitvami, ki omogočajo strukturirano dodajanje učinkov brez prilagajanja programskega jezika.
+
+% ==============================================================================
+% ==============================================================================
+% ==============================================================================
 
 Ena od takšnih rešitev temelji na t.i.\ \emph{monadah}~\cite{DBLP:journals/iandc/Moggi91}. Monadični pristop k učinkom deluje, kot dokazujejo programski jeziki kot je Haskell, vendar uporaba različnih učinkov zahteva veriženje monad kar pri veliki količini učinkov zmanj\-šuje preglednost kode.
 
@@ -52,11 +58,11 @@ Kljub omejevanju možnih prestreznikov, so enačbe pomemben del teorije računsk
 
 Pri uvedi algebrajskih prestreznikov so sistem tipov nadgradili z informacijami o učinkih~\cite{DBLP:conf/esop/PlotkinP09}. To je obsegalo tako informacije o tem, kateri učinki se lahko sprožijo v programu, kot tudi katere učinke prestreznik prestreže. Razvoj sistema tipov in učinkov se je nadaljeval v dveh smereh: t.i.\ `row-types'~\cite{DBLP:conf/icfp/HillerstromL16} in `subtyping'~\cite{DBLP:conf/esop/SalehKPS18}. Prav tako se je pričelo tudi dodajanja enačb v sisteme tipov~\cite{DBLP:journals/pacmpl/Ahman18} vendar zahteva uporabo zahtevnejših odvisnih tipov. Zato želimo enačbe dodati v tipe na preprostejši način, ki zahteva manjšo prilagoditev jezika in je bolj v skladu z izvornim pristopom~\cite{DBLP:conf/esop/PlotkinP09}. Tako kot se uveljavlja uporaba učinkov z lokalno signaturo, lahko tudi enačbe dodajamo lokalno, s čimer pridobimo lokalne teorije učinkov. V izvornemu pristopu je teorija učinkov globalna~\cite{DBLP:conf/esop/PlotkinP09}, torej morajo teoriji zadoščati vsi prestrezniki. Ker pa mnogi uporabni prestrezniki ne spoštujejo teorij, jih lahko pri uporabi lokalnih teorij kljub temu uporabljamo v delih programov, kjer ne zahtevamo enačb.
 
-\section*{Opis raziskovalne vsebine}
+\section*{Design of research}
 
 Kljub temu, da se je teorija algebrajskih učinkov uveljavila v sferi funkcijskega programiranja, ostaja področje eksplicitnih enačb med učinki še precej neraziskano področje. Kljub začetkom dela z odvisnimi tipi~\cite{DBLP:journals/pacmpl/Ahman18} ostaja še mnogo neraziskanih pristopov, ki nam nudijo preprostejši sistem tipov. S tem pridobimo preglednejšo operacijsko in denotacijsko semantiko, zaradi česar so takšni sistemi primernejši za implementacijo in splošnejšo uporabo. Kljub manj obsežnim spremembam tipi vsebujejo enačbe, ki govorijo o programih, ti pa se spet zanašajo na tipe, torej je pomembno, da poskrbimo za neciklične definicije. Poudarek mojega pristopa bo predvsem na preprostem sistemu formalnega dokazovanja pri uporabi algebrajskih učinkov, kjer bo ključnega pomena dokazovanje pravilnosti brez prisotnosti konkretnih prestreznikov, saj lahko zgolj v tem primeru zagotovimo modularnost. S tem se odprejo aplikativna področja kot je na primer statistično programiranje, kjer je uporaba učinkov naravna, hkrati pa je nujno zagotoviti določene lastnosti kode. Prav tako olajšamo dokazovanje v prisotnosti abstrakcije, saj lahko lastnosti programov, katerih koda je nedostopna, izrazimo z enačbami.
 
-\section*{Raziskovalna vprašanja}
+\section*{Research questions}
 
 \begin{itemize}
   \item Kako prilagodimo tipe, da vključujejo lokalne teorije, brez cikličnih definicij?
@@ -68,12 +74,11 @@ Kljub temu, da se je teorija algebrajskih učinkov uveljavila v sferi funkcijske
 \end{itemize}
 
 
-\section*{Pričakovani rezultati in prispevek k znanosti}
+\section*{Expected results and original contribution to science}
 
 Z vrnitvijo enačb  bo teorija algebrajskih učinkov ponovno takšna, kot je bila izvorno zamišljena. Hkrati bo teorija nadgrajena z uporabo lokalnih teorij, s čimer odstranimo omejitve pri pisanju prestreznikov. Izboljšanje možnosti dokazovanja bodo tako omogočile prodor algebrajskih učinkov v širše sfere uporabe in odstranile mističnost algebrajskih prestreznikov. Domnevam, da bo na voljo mnogo različnih logik, s katerimi bo možno izraziti tako trenutni sistem prestreznikov, kjer enačbe ne igrajo vloge, kot tudi sisteme kjer enačbe uporabnikom pomagajo. Ker se je pri uvedbi prestreznikov~\cite{DBLP:conf/esop/PlotkinP09} izkazalo, da je problem ali prestreznik spoštuje teorijo neodločljiv, pričakujem za ekspresivne logike podoben rezultat.
 
 
-\renewcommand\refname{Literatura}
 \bibliographystyle{abbrv}
 \bibliography{bibliography}
 
