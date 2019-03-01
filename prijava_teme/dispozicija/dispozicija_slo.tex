@@ -54,7 +54,11 @@ Pri uvedi algebrajskih prestreznikov so sistem tipov nadgradili z informacijami 
 
 \section*{Opis raziskovalne vsebine}
 
-Kljub temu, da se je teorija algebrajskih učinkov uveljavila v sferi funkcijskega programiranja, ostaja področje eksplicitnih enačb med učinki še precej neraziskano področje. Kljub začetkom dela z odvisnimi tipi~\cite{DBLP:journals/pacmpl/Ahman18} ostaja še mnogo neraziskanih pristopov, ki nam nudijo preprostejši sistem tipov. S tem pridobimo preglednejšo operacijsko in denotacijsko semantiko, zaradi česar so takšni sistemi primernejši za implementacijo in splošnejšo uporabo. Kljub manj obsežnim spremembam tipi vsebujejo enačbe, ki govorijo o programih, ti pa se spet zanašajo na tipe, torej je pomembno, da poskrbimo za neciklične definicije. Poudarek mojega pristopa bo predvsem na preprostem sistemu formalnega dokazovanja pri uporabi algebrajskih učinkov, kjer bo ključnega pomena dokazovanje pravilnosti brez prisotnosti konkretnih prestreznikov, saj lahko zgolj v tem primeru zagotovimo modularnost. S tem se odprejo aplikativna področja kot je na primer statistično programiranje, kjer je uporaba učinkov naravna, hkrati pa je nujno zagotoviti določene lastnosti kode. Prav tako olajšamo dokazovanje v prisotnosti abstrakcije, saj lahko lastnosti programov, katerih koda je nedostopna, izrazimo z enačbami.
+Kljub temu, da se je teorija algebrajskih učinkov uveljavila v sferi funkcijskega programiranja, ostaja področje eksplicitnih enačb med učinki še precej neraziskano področje. Kljub začetkom dela z odvisnimi tipi~\cite{DBLP:journals/pacmpl/Ahman18} je še mnogo neraziskanih pristopov, ki nam nudijo preprostejši sistem tipov. S tem pridobimo preglednejšo operacijsko in denotacijsko semantiko, zaradi česar so takšni sistemi primernejši za implementacijo in splošnejšo uporabo. Kljub manj obsežnim spremembam tipi vsebujejo enačbe, ki govorijo o programih, ti pa se spet zanašajo na tipe, torej je pomembno, da poskrbimo za neciklične definicije. 
+
+Da sistem tipov zagotovi, da prestrezniki spoštujejo teorijo učinkov, ga opremimo z logiko, v kateri lahko takšne lastnosti izrazimo in dokažemo. Želimo izbiro med uporabo različnih logik, s čimer omogočimo zamenjavo na močnejšo logiko, ko to potrebujemo.
+
+Poudarek pristopa bo na vzpostavitvi sistema formalnega dokazovanja pri uporabi teorij učinkov, kjer bo ključnega pomena dokazovanje pravilnosti brez prisotnosti konkretnih prestreznikov, saj lahko zgolj v tem primeru zagotovimo modularnost. S tem se odprejo aplikativna področja kot je na primer statistično programiranje, kjer je uporaba učinkov naravna, hkrati pa je nujno zagotoviti določene lastnosti kode. Prav tako olajšamo dokazovanje v prisotnosti abstrakcije, saj lahko lastnosti programov, katerih koda je nedostopna, izrazimo z enačbami.
 
 \section*{Raziskovalna vprašanja}
 
@@ -62,15 +66,15 @@ Kljub temu, da se je teorija algebrajskih učinkov uveljavila v sferi funkcijske
   \item Kako prilagodimo tipe, da vključujejo lokalne teorije, brez cikličnih definicij?
   \item Koliko različnih logik imamo na izbiro in kako izbrati primerno?
   \item Kako izbira logike vpliva na jezik in denotacijsko semantiko jezika?
-  \item Je problem, ali prestreznik spoštuje teorijo, odločljiv? Ali lahko v primeru neodločljivosti problem delno rešimo z orodji kot je quickcheck~\cite{DBLP:conf/icfp/ClaessenH00}?
+  \item Je problem, ali prestreznik spoštuje teorijo, odločljiv? Ali lahko v primeru neodločljivosti razvijemo orodje kot npr. quickcheck~\cite{DBLP:conf/icfp/ClaessenH00}, ki omogoča delno zaznavanje napak?
   \item Kako prilagoditi lastnosti kot so varnost, zdravost, zadostnost in kontekstno ekvivalenco v prisotnosti enačb?
-  \item V katerih aplikativnih primerih nam uporaba enačb pomaga? Ali lahko s pomočjo modularnih dokazov izboljšamo pristope na področjih kot je statistično programiranje?
+  \item V katerih aplikativnih primerih nam uporaba enačb pomaga? Ali lahko s pomočjo naprednejšega sistema dokazovanja pravilnosti izboljšamo pristope na področjih kot je statistično programiranje?
 \end{itemize}
 
 
 \section*{Pričakovani rezultati in prispevek k znanosti}
 
-Z vrnitvijo enačb  bo teorija algebrajskih učinkov ponovno takšna, kot je bila izvorno zamišljena. Hkrati bo teorija nadgrajena z uporabo lokalnih teorij, s čimer odstranimo omejitve pri pisanju prestreznikov. Izboljšanje možnosti dokazovanja bodo tako omogočile prodor algebrajskih učinkov v širše sfere uporabe in odstranile mističnost algebrajskih prestreznikov. Domnevam, da bo na voljo mnogo različnih logik, s katerimi bo možno izraziti tako trenutni sistem prestreznikov, kjer enačbe ne igrajo vloge, kot tudi sisteme kjer enačbe uporabnikom pomagajo. Ker se je pri uvedbi prestreznikov~\cite{DBLP:conf/esop/PlotkinP09} izkazalo, da je problem ali prestreznik spoštuje teorijo neodločljiv, pričakujem za ekspresivne logike podoben rezultat.
+Z vrnitvijo enačb  bo teorija algebrajskih učinkov ponovno takšna, kot je bila izvorno zamišljena. Hkrati bo teorija nadgrajena z uporabo lokalnih teorij, s čimer odstranimo omejitve pri pisanju prestreznikov. Izboljšanje možnosti dokazovanja bodo tako omogočile prodor algebrajskih učinkov v širše sfere uporabe in odstranile mističnost algebrajskih prestreznikov. Domnevam, da bo na voljo mnogo različnih logik, s katerimi bo možno izraziti tako trenutni sistem prestreznikov, kjer enačbe ne igrajo vloge, kot tudi sisteme kjer enačbe uporabnikom pomagajo. Ker se je pri uvedbi prestreznikov~\cite{DBLP:conf/esop/PlotkinP09} izkazalo, da je problem ali prestreznik spoštuje teorijo neodločljiv, pričakujem za ekspresivne logike podoben rezultat. Avtomatizirana orodja, ki generirajo teste v dani teoriji, na katerih preizkusijo prestreznike, lahko pomagajo pri zaznavi napak v kodi prestreznikov še preden se lotimo dokazovanja pravilnosti, s čimer zmanjšamo breme dokazovanja uporabnikov.
 
 
 \renewcommand\refname{Literatura}

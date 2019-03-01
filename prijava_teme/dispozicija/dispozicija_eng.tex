@@ -52,30 +52,34 @@ Equations remain a vital part of effect theories even though they impose restric
 
 When developing the theory of algebraic effects and handlers they have upgraded the type system with additional information about effects~\cite{DBLP:conf/esop/PlotkinP09}. The type system keeps track of which operations might be called and also which operation calls are handled away by handlers. Further development proceeded in two directions: row-types~\cite{DBLP:conf/icfp/HillerstromL16} and subtyping~\cite{DBLP:conf/esop/SalehKPS18}. There have also been attempts at including equations in the type system with the use of dependant types~\cite{DBLP:journals/pacmpl/Ahman18}, but requires a more complex type system. The goal is to reintroduce equations back into languages with algebraic effects in a way that is as simple as possible and also true to the original ideas~\cite{DBLP:phd/ethos/Pretnar10}. In the same way that effect systems slowly move to local effect signatures it is possible to also switch to local effect theories. While effect theories used to be global~\cite{DBLP:conf/esop/PlotkinP09}, forcing all handlers to respect the global theory, switching to local theories allows us to rely on effect theories in some parts of the program while we use handlers that do not respect the theory in other parts where equations are not required.
 
-% ==============================================================================
-% ==============================================================================
-% ==============================================================================
 
 \section*{Design of research}
 
-Kljub temu, da se je teorija algebrajskih učinkov uveljavila v sferi funkcijskega programiranja, ostaja področje eksplicitnih enačb med učinki še precej neraziskano področje. Kljub začetkom dela z odvisnimi tipi~\cite{DBLP:journals/pacmpl/Ahman18} ostaja še mnogo neraziskanih pristopov, ki nam nudijo preprostejši sistem tipov. S tem pridobimo preglednejšo operacijsko in denotacijsko semantiko, zaradi česar so takšni sistemi primernejši za implementacijo in splošnejšo uporabo. Kljub manj obsežnim spremembam tipi vsebujejo enačbe, ki govorijo o programih, ti pa se spet zanašajo na tipe, torej je pomembno, da poskrbimo za neciklične definicije. Poudarek mojega pristopa bo predvsem na preprostem sistemu formalnega dokazovanja pri uporabi algebrajskih učinkov, kjer bo ključnega pomena dokazovanje pravilnosti brez prisotnosti konkretnih prestreznikov, saj lahko zgolj v tem primeru zagotovimo modularnost. S tem se odprejo aplikativna področja kot je na primer statistično programiranje, kjer je uporaba učinkov naravna, hkrati pa je nujno zagotoviti določene lastnosti kode. Prav tako olajšamo dokazovanje v prisotnosti abstrakcije, saj lahko lastnosti programov, katerih koda je nedostopna, izrazimo z enačbami.
+Despite algebraic effects gaining popularity in mainstream functional programming, the field of explicit equations between effects remains largely unresearched. While there is promising work with dependant types~\cite{DBLP:journals/pacmpl/Ahman18} there are many other approaches that result in simpler type systems. This requires less changes to operational and denotational semantics making such approaches more favourable for implementation and general use. While changes to the type system are kept to a minimum, types now include equations, which describe programs, which yet again depend on types. The system must be defined with great care to ensure that we avoid any and all circular definitions. 
+
+In order for the type system to ensure that handlers respect the desired effect theory we require a logic where such properties can be expressed and proven. If possible, the use of different logics should be used, allowing us to switch to a more expressive logic when needed. 
+
+My research will focus on establishing a more powerful reasoning system, aided by local effect theories in their original form, to allow for proofs that do not require concrete handlers. This way we obtain true modularity even in reasoning. This opens up possibilities in fields such as statistical programing where using effects is a natural approach but many properties of code need to be ensured. We further ease reasoning in presence of code abstraction because many crucial properties of abstracted code can be expressed with equations without revealing the implementation.
+
 
 \section*{Research questions}
 
 \begin{itemize}
-  \item Kako prilagodimo tipe, da vključujejo lokalne teorije, brez cikličnih definicij?
-  \item Koliko različnih logik imamo na izbiro in kako izbrati primerno?
-  \item Kako izbira logike vpliva na jezik in denotacijsko semantiko jezika?
-  \item Je problem, ali prestreznik spoštuje teorijo, odločljiv? Ali lahko v primeru neodločljivosti problem delno rešimo z orodji kot je quickcheck~\cite{DBLP:conf/icfp/ClaessenH00}?
-  \item Kako prilagoditi lastnosti kot so varnost, zdravost, zadostnost in kontekstno ekvivalenco v prisotnosti enačb?
-  \item V katerih aplikativnih primerih nam uporaba enačb pomaga? Ali lahko s pomočjo modularnih dokazov izboljšamo pristope na področjih kot je statistično programiranje?
+  \item How to extend the type system to include local theories while paying attention to not introduce cyclic definitions?
+  \item How many logics can we use in our type system and how to choose a suitable logic?
+  \item How does the choice of logic impact our language and its denotational semantics?
+  \item Is the problem of handlers respecting effect theories decidable? If undecidable, how do we design procedures similar to quickcheck~\cite{DBLP:conf/icfp/ClaessenH00} to at aid us with catching errors?
+  \item How do we adapt properties such as safety, soundness, adequacy, and contextual equivalence in presence of equations?
+  \item In which applicative cases are we aided by the use of equations?  Can we improve approaches to fields such as statistical programing by using improved reasoning.
 \end{itemize}
+
 
 
 \section*{Expected results and original contribution to science}
 
-Z vrnitvijo enačb  bo teorija algebrajskih učinkov ponovno takšna, kot je bila izvorno zamišljena. Hkrati bo teorija nadgrajena z uporabo lokalnih teorij, s čimer odstranimo omejitve pri pisanju prestreznikov. Izboljšanje možnosti dokazovanja bodo tako omogočile prodor algebrajskih učinkov v širše sfere uporabe in odstranile mističnost algebrajskih prestreznikov. Domnevam, da bo na voljo mnogo različnih logik, s katerimi bo možno izraziti tako trenutni sistem prestreznikov, kjer enačbe ne igrajo vloge, kot tudi sisteme kjer enačbe uporabnikom pomagajo. Ker se je pri uvedbi prestreznikov~\cite{DBLP:conf/esop/PlotkinP09} izkazalo, da je problem ali prestreznik spoštuje teorijo neodločljiv, pričakujem za ekspresivne logike podoben rezultat.
+By reintroducing equations we return to the original concept of algebraic effects. We further improve it by introducing local theories, which help alleviate restrictions on handler definitions. Improved reasoning capabilities will allow algebraic effects to anchor in mainstream languages and will remove a layer of mysticism surrounding handlers.
 
+I suspect that there will be many options in the choice of logic, ranging from logics that express the current system without equations to far more powerful logics that greatly benefit users. When introducing algebraic handlers~\cite{DBLP:conf/esop/PlotkinP09} they have shown that determining whether a handler respects an effect theory is undecidable and it is most likely that it is the case with many expressive logics. However, procedures that automatically generate tests in an effect theory and test handlers can be used to detect errors in handler code before attempting formal proofs, reducing the burden of additional work.
 
 \bibliographystyle{abbrv}
 \bibliography{bibliography}
