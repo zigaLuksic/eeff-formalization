@@ -1,0 +1,57 @@
+%chktex-file 46
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{newtxmath}
+\usepackage{ifthen}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\pagenumbering{gobble}
+
+%----------------------------------
+\usepackage[ddmmyyyy]{datetime}
+
+\renewcommand{\dateseparator}{. }
+%----------------------------------
+\usepackage{biblatex}
+
+\addbibresource{matija_bibliography.bib}
+%----------------------------------
+
+\newcommand{\todo}[1]{{\color{red}{#1}}}
+
+
+%===============================================================================
+\begin{document}
+
+\subsection*{Soglasje mentorja}
+
+Podpisani mentor kandidata Žige Lukšiča soglašam s predlagano temo doktorske disertacije ``\todo{???}'' (\todo{??? but in english}).
+\\
+\\
+Seznam izbranih referenc s področja teme doktorske disertacije:
+
+\todo{
+\begin{itemize}
+\item \fullcite{DBLP:phd/ethos/Pretnar10}
+\item \fullcite{DBLP:journals/corr/PlotkinP13}
+\item \fullcite{DBLP:journals/corr/BauerP13}
+\item \fullcite{DBLP:journals/jfp/KammarP17}
+\item \fullcite{DBLP:conf/esop/SalehKPS18}
+\end{itemize}
+}
+
+\vspace{10mm}
+
+\noindent Moja SICRIS šifra raziskovalca je 32320.
+
+\vspace{15mm}
+
+\noindent Ljubljana, \today \hfill doc.\ dr.\ Matija Pretnar
+
+\end{document}

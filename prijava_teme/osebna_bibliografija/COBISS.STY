@@ -1,0 +1,202 @@
+%
+% COBISS.sty  
+%
+% verzija 0.1: 06-Nov-96
+% verzija 0.2: 18-May-98 dodani ukazi \onesidefoot, \onesidesty, \chonesidesty
+%
+% IZUM, Gordana Budimir
+%
+
+\makeatletter
+
+% ukazi za footer: pagemarkl = levo, pagemarkr = desno
+\def\pagetagl{}
+\def\pagemarkl#1{\def\pagetagl{#1}}
+\def\pagetagr{}
+\def\pagemarkr#1{\def\pagetagr{#1}}
+
+\def\partmark{}
+\def\tagmarkl{}
+\def\tagmarkr{}
+\def\mainmark{}
+
+\newdimen\textwidthHdFt \textwidthHdFt=16.1cm
+
+% footer 
+\def\myfoot{\def\@oddfoot{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+            \hbox{\vbox{\kern6pt
+                        \hbox to \textwidthHdFt{\hrulefill}\kern-18pt
+                        \hbox to \textwidthHdFt{\rm\hspace{.01cm}{\small
+                          \pagetagl}\hfil\pagetagr\bf\hspace{0.2cm}
+			    \thepage\hspace{.01cm}\rm}}} }}
+
+            \def\@evenfoot{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+ 	    \ifnum\c@page=0\setcounter{page}{1}\@oddfoot
+            \else
+            \hbox{\vbox{\kern6pt
+                        \hbox to \textwidthHdFt{\hrulefill}\kern-18pt
+                        \hbox to \textwidthHdFt{\rm\bf\hspace{.01cm}\thepage
+                        \hspace{0.4cm}\rm\small\pagetagr
+			    \hfil\pagetagl\hspace{.01cm}}}}
+	    \fi }} }
+
+% onesidefoot
+\def\onesidefoot{\def\@oddfoot{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+            \hbox{\vbox{\kern6pt
+                        \hbox to \textwidthHdFt{\hrulefill}\kern-18pt
+                        \hbox to \textwidthHdFt{\rm\hspace{.01cm}{\small
+                          \pagetagl}\hfil\pagetagr\bf\hspace{0.2cm}
+			    \thepage\hspace{.01cm}\rm}}} }}
+
+\def\@evenfoot{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+            \hbox{\vbox{\kern6pt
+                        \hbox to \textwidthHdFt{\hrulefill}\kern-18pt
+                        \hbox to \textwidthHdFt{\rm\hspace{.01cm}{\small
+                          \pagetagl}\hfil\pagetagr\bf\hspace{0.2cm}
+			    \thepage\hspace{.01cm}\rm}}} }}}
+
+% header in footer za izpisi bibliografij
+\def\ps@headings{\let\@mkboth\markboth
+\myfoot 
+\def\@evenhead{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\bf\small\tagmarkl}\hfill
+                   {\bf\small\mainmark}\hfill\llap{\bf\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }
+\def\@oddhead {{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\bf\small\tagmarkl}\hfill
+                   {\bf\small\mainmark}\hfill\llap{\bf\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }}
+
+
+% header in footer za naslovno stran
+\def\ps@titlesty{\let\@mkboth\markboth
+\def\@oddfoot{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+            \hbox{\vbox{\kern6pt
+                        \hbox to \textwidthHdFt{\rm\hspace{.01cm}{\small
+                          \pagetagl}\hfil\pagetagr\hspace{.01cm}\rm}}} }}
+
+\def\@evenfoot{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+ 	    \ifnum\c@page=0\setcounter{page}{1}\@oddfoot
+            \else
+            \hbox{\vbox{\kern6pt
+                        \hbox to \textwidthHdFt{\rm\hspace{.01cm}
+                        \small\pagetagl\hfil\pagetagr\hspace{.01cm}}}}
+	    \fi }}
+\def\@evenhead{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}}}\hfil} }
+\def\@oddhead {{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}}}\hfil} }}
+
+% header in footer za poglavja
+\def\ps@chaptersty{\let\@mkboth\markboth
+\myfoot 
+\def\@evenhead{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }
+\def\@oddhead {{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }}
+
+% header in footer za ONESIDE
+\def\ps@onesidesty{\let\@mkboth\markboth
+\onesidefoot 
+\def\@evenhead{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }
+\def\@oddhead {{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }}
+
+% header in footer za ONESIDE poglavja
+\def\ps@chonesidesty{\let\@mkboth\markboth
+\onesidefoot 
+\def\@evenhead{{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }
+\def\@oddhead {{\tolerance 10000 \hfuzz 10pt \vfuzz 10pt
+    \hbox{\vbox{\hbox to \textwidthHdFt{\rlap{\rm\small\tagmarkl}\hfill
+                   {\small\mainmark}\hfill\llap{\rm\small\tagmarkr}}\kern4pt%
+                \hbox to \textwidthHdFt{\hrulefill}}}\hfil} }}
+
+\def\ps@plain{\let\@mkboth\@gobbletwo
+     \def\@oddhead{}\myfoot\def\@evenhead{}}
+
+\def\cleardoublepage{\clearpage\thispagestyle{empty}\if@twoside 
+    \ifodd\c@page\else\hbox{}\newpage\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+
+
+\@addtoreset{page}{chapter}
+
+% ukazi za header: maintag = sredina, subtagl = levo, subtagr = desno
+\def\tag#1{\def\partmark{#1}\setcounter{page}{1}}
+\def\maintag#1{\def\mainmark{#1}}
+\def\subtagl#1{\def\tagmarkl{#1}}
+\def\subtagr#1{\def\tagmarkr{#1}}
+
+% oblika strani
+\pagestyle{headings}
+\columnsep 30pt
+\parindent=0pt
+\parskip=0pt
+\hoffset=0mm
+\voffset=0mm
+
+\evensidemargin=-8mm
+\topmargin=0mm
+\textwidth=161mm
+\textheight=220mm
+\headheight=5mm
+\headsep=10mm
+
+%definicije diakriti~nih znakov
+\def\d.{d\llap{\raise0.75ex\hbox{-}}}
+\def\D.{\rlap{\raise0.5ex\hbox{-}}D}
+\def\a.{\hbox{a\kern-.38em\lower.3em\hbox{{\tiny ``}}}}
+\def\A.{\hbox{A\kern-.5em\lower.4em\hbox{{\tiny ``}}}}
+\def\s.{\hbox{s\kern-.32em\lower.15em\hbox{{\tiny ,}}}}
+\def\S.{\hbox{S\kern-.38em\lower.18em\hbox{{\tiny ,}}}}
+\def\t.{\hbox{t\kern-.28em\lower.15em\hbox{{\tiny ,}}}}
+\def\T.{\hbox{T\kern-.45em\lower.15em\hbox{{\tiny ,}}}}
+\def\E.{\hbox{E\kern-.4em\lower.35em\hbox{{\tiny ``}}}}
+\def\e.{\hbox{e\kern-.3em\lower.35em\hbox{{\tiny ``}}}}
+
+
+% definicija ukaza nest
+\def\nest{\list{}{\leftmargin 4ex\listparindent -2ex\itemindent -2ex
+ \listparindent\itemindent\topsep 0pt\itemsep 0pt
+ \rightmargin\leftmargin\parsep 0pt}\item[]}
+\let\endnest=\endlist
+
+% definicije za BibTeX
+\def\bibtag{}
+\def\bibmark#1{\def\bibtag{#1}}
+\def\thebibliography#1{\chapter*{\bibtag\@mkboth
+ {\uppercase{\bibtag}}{\uppercase{\bibtag}}}\list
+ {[\arabic{enumi}]}{\settowidth\labelwidth{[#1]}\leftmargin\labelwidth
+ \advance\leftmargin\labelsep
+ \usecounter{enumi}}
+ \def\newblock{\hskip .11em plus .33em minus .07em}
+ \sloppy\clubpenalty4000\widowpenalty4000
+ \sfcode`\.=1000\relax}
+\let\endthebibliography=\endlist
+
+% Blackboard math symbols
+
+\newcommand{\NN}{\mathbb N}
+\newcommand{\ZZ}{\mathbb Z}
+\newcommand{\QQ}{\mathbb Q}
+\newcommand{\RR}{\mathbb R}
+\newcommand{\CC}{\mathbb C}
+\newcommand{\Cc}{\mathbb C}
+ 
+
+\makeatother
+
+
