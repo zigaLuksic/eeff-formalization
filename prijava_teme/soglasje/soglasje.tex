@@ -14,13 +14,9 @@
 \pagenumbering{gobble}
 
 %----------------------------------
-\usepackage[ddmmyyyy]{datetime}
+\usepackage{bibentry}
 
-\renewcommand{\dateseparator}{. }
-%----------------------------------
-\usepackage{biblatex}
 
-\addbibresource{matija_bibliography.bib}
 %----------------------------------
 
 \newcommand{\todo}[1]{{\color{red}{#1}}}
@@ -28,23 +24,25 @@
 
 %===============================================================================
 \begin{document}
+% \usepackage[slovene]{babel}
 
 \subsection*{Soglasje mentorja}
 
-Podpisani mentor kandidata Žige Lukšiča soglašam s predlagano temo doktorske disertacije ``\todo{???}'' (\todo{??? but in english}).
+Podpisani mentor kandidata Žige Lukšiča soglašam s predlagano temo doktorske disertacije ``Uporaba teorij algebrajskih učinkov'' (Applications of algebraic effect theories).
 \\
 \\
 Seznam izbranih referenc s področja teme doktorske disertacije:
 
-\todo{
-\begin{itemize}
-\item \fullcite{DBLP:phd/ethos/Pretnar10}
-\item \fullcite{DBLP:journals/corr/PlotkinP13}
-\item \fullcite{DBLP:journals/corr/BauerP13}
-\item \fullcite{DBLP:journals/jfp/KammarP17}
-\item \fullcite{DBLP:conf/esop/SalehKPS18}
-\end{itemize}
-}
+\vspace{-10mm}
+
+\bibentry{DBLP:journals/corr/PlotkinP13}
+\bibentry{DBLP:journals/corr/BauerP13}
+\bibentry{DBLP:journals/jlp/BauerP15}
+\bibentry{DBLP:journals/pacmpl/0002KLP17}
+\bibentry{DBLP:journals/jfp/KammarP17}
+\renewcommand\refname{}
+\bibliographystyle{fmf-sl}
+\bibliography{matija_bibliography}
 
 \vspace{10mm}
 
@@ -52,6 +50,8 @@ Seznam izbranih referenc s področja teme doktorske disertacije:
 
 \vspace{15mm}
 
-\noindent Ljubljana, \today \hfill doc.\ dr.\ Matija Pretnar
+\noindent Ljubljana, 15. marec 2019 \hfill doc.\ dr.\ Matija Pretnar
+
+
 
 \end{document}
