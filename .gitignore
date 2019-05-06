@@ -16,6 +16,10 @@
 *.aux
 *.run.xml
 *.bcf
+*.nav
+*.out
+*.snm
+*.toc
 
 .vscode/
 
