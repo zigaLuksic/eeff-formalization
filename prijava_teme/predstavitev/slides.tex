@@ -40,36 +40,97 @@
 		f_2 =& \;\fun{x}{2*x}
 	\end{align*}
 
-	We know mathematical properties of operations $+$ and $*$ so we can argue that the functions are equal.
+	We know mathematical properties of operations $+$ and $*$ so we can argue that the functions are equal \textcolor{gray}{(whatever that means)}.
 	
 	\vspace{5mm}
 
-	Harder with effectful operations, such as $get$, which reads a value from memory.
+	Harder with effectful operations, such as $print$.
 
 	\begin{align*}
-		g_1 =& \;\fun{\unit}{\apply{get}{\unit} + \apply{get}{\unit}}\\
-		g_2 =& \;\fun{\unit}{2*\apply{get}{\unit}}
+		print\_twice =& \;\fun{s}{\apply{print}{s};\,\apply{print}{s}}\\
+		print\_double =& \;\fun{s}{\apply{print}{s \, \concat s}}
 	\end{align*}
+
+	%($c_1;\,c_2$ \textcolor{gray}{is syntactic sugar for} $\dobind{\_}{c_1}{c_2}$)
+
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{``Implementing print''}
+	
+	We give meaning to operations with handlers. An example:
+
+	\begin{align*}
+		&\mathit{collect\_prints} \; = \; \keyhandler \; \{ \\
+		&\tab | \; \operation[print]{s}{k} \mapsto \\
+		&\tab \tab \tab \betterdobind{(v, s')}{\apply{k}{\unit}}(v, s\,\concat s')\\
+		&\tab | \; \return{x} \mapsto (x, "") \\
+		&\}
+	\end{align*}
+
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+
+	What happens when we combine them?
+	\pause
+
+	\[ \withhandle{\mathit{collect\_prints}}{(\apply{print\_twice}{"test"})} \]
+	\pause
+
+	When the first $print$ occurs, our handler `intercepts' the operation call
+
+	\[ \operation[print]{"test"}{\unit.\apply{print}{"test"}} \]
+	\pause
+
+	It `activates' the $print$ branch of the handler and it first wraps the continuation
+
+	\[
+		k = \fun{\unit}{\withhandle{\mathit{collect\_prints}}{(\apply{print}{"test"})}}
+	\]
+
+	\pause
+
+	and proceeds with the evaluation
+	\begin{align*}
+		&\betterdobind{(v, s')}{\apply{k}{\unit}}\\
+		&(v, "test"\concat s')
+	\end{align*} 
 
 
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-	\frametitle{Reasoning about programming}
-	
-	When working with algebraic effects we can use the equations that hold between operations.
+	When using the handler $\mathit{collect\_prints}$ the functions $print\_twice$ and $print\_double$ are indeed equal.
 
 	\vspace{5mm}
 
-	\[\dobind{\_}{\apply{get}{\unit}}{\apply{get}{\unit}} \rel \apply{get}{\unit}\]
+	This does not hold for arbitrary $print$ handlers.
 
-	We can prescribe a global effect theory with the above equation.
+	\pause
+	\vspace{5mm}
+
+	\textbf{We want reasoning tools that can separate handlers from the rest of our code!}
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+	The theory of algebraic effects consists of operations and \textbf{equations} between them.
 
 	\vspace{5mm}
 
-	But this hinders the use of handlers 
+	We can use equations such as
 
+	\[
+		\apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2}
+	\]
 
+	as reasoning tools.
+
+	\vspace{5mm}
+
+	\pause
+
+	Can we achieve that without restricting ourselves to a global effect theory?
 
 \end{frame}
 %-------------------------------------------------------------------------------
@@ -77,10 +138,7 @@
 %-------------------------------------------------------------------------------
 \begin{frame}
 	\frametitle{Idea}
-	Make equations great again!
-	\vspace{5mm}
-
-	Reintroduce equations into algebraic effects and handlers by including them in types.
+	Include the desired equations in types.
 
   \[
     \ctyC = \tyA \bang \sig \new{\witheq \eqE}
@@ -93,7 +151,7 @@
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-  \frametitle{Term Syntax (nothing new)}
+  \frametitle{Term Syntax}
   
 \[
 	\begin{array}{rrll}
@@ -119,7 +177,7 @@
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-  \frametitle{Type Syntax (mostly old stuff)}
+  \frametitle{Type Syntax}
   \[
 	\begin{array}{rrll}
 		\text{(value) type}~\tyA, \tyB
@@ -140,7 +198,7 @@
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-  \frametitle{Type Syntax (new stuff)}
+  \frametitle{Type Syntax (additions)}
   \[
 	\begin{array}{rrll}
 		\text{value context}~\ctx
@@ -164,113 +222,20 @@
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-	\frametitle{Example}
-	We have written a program using nondeterministic choice
-	\(\mathit{choose} \oftype \unit \to \booltype	\). We obtain a binary non-deterministic choice from the abbreviation:
-	\[
-		c_1 \oplus c_2
-		\defeq
-		\operation[\mathit{choose}]{\unit}{y. \ifclause{y}{c_1}{c_2}}
+  \frametitle{Full equation}
+	\[\tenv = \tenvlong
+			{(x \oftype \texttt{string}, y \oftype \texttt{string})}
+    	{(z \oftype \unittype \to \anytype)}
 	\]
 	
-	We didn't pay any attention to the order of arguments of $\oplus$ so we wish
-	to make sure that the arguments commute when evaluated
-
 	\[
-		\teqjudgement
-			{\textcolor{gray}{\tenvlong{\nil}{z1, z2}}}
-			{z_1 \oplus z_2 \rel z_2 \oplus z_1} \hspace{5mm}(\textsc{comm})
-	\]
-
-	and so we give our program the type $\mathit{nondetProg} \oftype \ctype{\inttype}{\set{\mathit{choose}}}{(\textsc{comm})}$
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	Now we want to play with our program, but don't want to write all the handlers ourselves!!!
-	\vspace{5mm}
-
-	So we find a library for working with \(\mathit{yield} \oftype \inttype \to \unittype	\) and in it a handler 
-	\[
-		\mathit{sumYielded} \oftype \ctype{\unittype}{\set{\mathit{yield}}}{\textsc{(order)}} \hto \ctype{\inttype}{\nil}{\nil}
-	\]
-	 which does not care about the order of yielded values, as expressed by
-	\[
-		\mathit{yield}(x; \_.\mathit{yield}(y; \_.z)) \rel \mathit{yield}(y; \_.\mathit{yield}(x; \_.z)) \hspace{5mm}(\textsc{order})
-	\]
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	To go from $\mathit{choose}$ to $\mathit{yield}$ we write a handler that yields all possible outcomes of our program
-	\begin{align*}
-		&\mathit{yieldAll} \; = \; \keyhandler \; \{ \\
-		&\tab | \; \operation[\mathit{choose}]{\unit}{k} \mapsto \apply{k}{\true}; \apply{k}{\false} \\
-		&\tab | \; \return{x} \mapsto \operation[\mathit{yield}]{x}{\_. \return{\unit}} \\
-		&\}
-	\end{align*}
-
-	It clearly has the type $\ctype{\inttype}{\set{\mathit{choose}}}{\nil} \hto \ctype{\unittype}{\set{\mathit{yield}}}{\nil}$, but due to the type of our program, any handler used on $\mathit{nondetProg}$ needs to respect $(\textsc{comm})$.
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Typing rules}
-
-	\[
-		\inferrule*[]
-		{ \judgement{\ctx}{v}{\ctyC \hto \ctyD}\\
-			\judgement{\ctx}{c}{\ctyC}
-		}
-		{ \judgement{\ctx}{\withhandle{v}{c}}{\ctyD}
-		}	
-	\]
-
-	When handling computations, the equations in the types must match as well.
-	\vspace{5mm}
-
-	Most typing rules are largely unchanged. The only interesting rule is for typing handlers.
-
-	\[
-	\inferrule*[]
-	{
-		\judgement{\ctx, x \oftype \tyA}{c_r}{\ctyD}
-		\\
-		\new{\respects{\hcases}{\eqE}{\sig}{\ctyD}}
-		\\
-	}
-	{\judgement{\ctx}
-		{\handler{\hcases}}
-		{\ctype{\tyA}{\sig}{\eqE} \hto \ctyD}
-	}
-	\]
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	The typing part of \new{$\respects{\hcases}{\eqE}{\sig}{\ctyD}$} is as expected
-
-	\[
-			\inferrule*[]{	}
-			{\judgement{\ctx}
-				{\emptyhcases}
-				{\nil \casesto {\ctyD}}
-			}
-	\]
-
-	\[
-			\inferrule*[]
-			{\judgement{\ctx}
-				{\hcases}
-				{\sig \casesto {\ctyD}}\\
-				\judgement{\ctx, x \oftype \tyA_{\op}, \contin \oftype \tyB_{\op} \to \ctyD}
-				{c_{\op}}
-				{\ctyD}\\
-				\op \not \in \sig
-			}
-			{\judgement{\ctx}
-				{\hcases \union \set{\operation{x}{\contin} \mapsto c_{\op}}}
-				{(\sig \union \set{\op \oftype \tyA_{\op} \to \tyB_{\op}}) \casesto {\ctyD}}
-			}
-	\]
-
-	but to get the \new{\emph{respects}} part we need to use a logic...
+    \teqjudgement{\tenv}
+      {
+      \mathit{print}(x; \_.\mathit{print}(y; \_.\apply{z}{\unit}))
+      \rel
+      \mathit{print}(x \concat y; \_.\apply{z}{\unit})
+      }
+  \]
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
@@ -287,135 +252,6 @@
 	\]
 
 	and corresponds to the conventional approach where we ignore equations.
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	Another option is to use \textcolor{gray}{(along with rules for reflexivity, symmetry, transitivity, substitution, congruences for each
-	construct, and $\beta\eta$-equivalences)}
-	\[
-		% Respect
-		\inferrule*[]
-		{ 
-			\textcolor{gray}{\respects{\hcases}{\eqE}{\sig}{\ctyD}} \\
-			\ljudgement{\ctx, (x_i \oftype \tyA_i)_i, (f_j \oftype \tyB_j \to \ctyD)_j}{}
-			{\thandle{T_1}{f_j \subsfor z_j}_j 
-			\lequal_{\ctyD} 
-			\thandle{T_2}{f_j \subsfor z_j}_j}
-		}
-		{ \respects{\hcases}{\;\eqE \union \left \{
-			\teqjudgement{\tenvlong
-				{(x_i \oftype \tyA_i)_i}
-				{(z_j \oftype \tyB_j \to \anytype)_j}}
-			{\tmplT_1 \rel \tmplT_2}
-			\right \} \;}{\sig}{\ctyD}
-		}
-	\]
-	\[
-		\inferrule*[]
-		{ \welltyped{\hcases}{\sig \casesto \ctyD} }
-		{ \respects{\hcases}{\nil}{\sig}{\ctyD} }
-	\]
-	where for $h = \set{\operation{x}{k} \mapsto c_{\op}}_{\op}$ we define:
-	\begin{align*}
-		%
-		\thandle{z_i(v)}{f_j \subsfor z_j}_j &= \apply{f_i}{v} \\
-		%
-		\thandle{(\ifclause{v}{\tmplT_1}{\tmplT_2})}{f_j \subsfor z_j}_j &= 
-		\ifclause{v}
-		{\thandle{\tmplT_1}{f_j \subsfor z_j}_j}
-		{\thandle{\tmplT_2}{f_j \subsfor z_j}_j}\\
-		%
-		\thandle{\operation{v}{y.\tmplT}}{f_j \subsfor z_j}_j &=
-		\subs{c_{\op}}{v \subsfor x, (\fun{y}{\thandle{\tmplT}{f_j \subsfor z_j}_j}) \subsfor k}
-	\end{align*}
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	We also construct a rule with which to use the equations of the current theory
-	\[
-		\inferrule*[]
-		{ \left(\teqjudgement{\tenvlong
-				{(x_i \oftype \tyA_i)_i}
-				{(z_j \oftype \tyB_j \to \anytype)_j}
-			}{\tmplT_1 \rel \tmplT_2}
-		  \right) \in \eqE
-		  \\
-		  \welltyped{v_i}{\tyA_i}
-		  \\
-		  \welltyped{f_j}{\tyB_j \to \ctypebasic}
-		}
-		{ \eqjudg
-			{\subs{(\subs{T_1}{f_j \subsfor z_j}_j)}{v_i \subsfor x_i}_i}
-			{\subs{(\subs{T_2}{f_j \subsfor z_j}_j)}{v_i \subsfor x_i}_i}
-			{\ctypebasic}
-		}
-	\]
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	We can further extend our logic with induction \textcolor{gray}{(and quantifiers and hypotheses)}
-
-	\[
-		\inferrule*[]
-		{
-		\ljudgement{\ctx}{\hypo}{c \oftype \ctypebasic}
-		\\
-		\ljudgement{\ctx, x \oftype \tyA}{\hypo}{\varphi(\return x)}
-		\\
-		\Big[\ljudgement{\ctx, x \oftype \tyA_\op, k \oftype \tyB_\op \to \ctypebasic}
-			{\hypo, \big(\fall{y \oftype \tyB_\op} \varphi(\apply{k}{y})\big)}{\varphi(\operation{x}{y.\apply{k}{y}})}\Big]
-		_{\op : \tyA_\op \to \tyB_\op \in \sig}
-		}
-		{ \ljudgement{\ctx}{\hypo}{\fall{c \oftype \ctypebasic} \varphi(c)}
-		}
-	\]
-	\vspace{5mm}
-
-	Sadly, proving (in such a logic) that the handler respects $\eqE$ has to be done by hand (currently).
-
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Typing \textit{yieldAll}}
-	Suppose we use the suggested logic with induction.
-	\vspace{5mm}
-
-	It is not possible to give the handler $\mathit{yieldAll}$ the type
-	\[
-		\ctype{\inttype}{\set{\mathit{choose}}}{(\textsc{comm})} \hto \ctype{\unittype}{\set{\mathit{yield}}}{\nil}
-	\]
-	because the order of arguments for $\oplus$ influences the order of yielded values.
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Typing \textit{yieldAll}}
-
-	But luckily $\mathit{sumYielded}$ works with the theory $(\textsc{order})$ and it is possible \textcolor{gray}{(in the logic with induction)} to give $\mathit{yieldAll}$ the type 
-	\[
-		\ctype{\inttype}{\set{\mathit{choose}}}{(\textsc{comm})} \hto \ctype{\unittype}{\set{\mathit{yield}}}{(\textsc{order})}
-	\]
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Combining the parts}
-	We can now safely compose
-	\begin{align*}
-		& \mathit{nondetProg} \oftype \ctype{\inttype}{\set{\mathit{choose}}}{(\textsc{comm})} \\ \\
-		& \mathit{yieldAll} \oftype \ctype{\inttype}{\set{\mathit{choose}}}{(\textsc{comm})} \hto \ctype{\unittype}{\set{\mathit{yield}}}{(\textsc{order})} \\ \\
-		& \mathit{sumYielded} \oftype \ctype{\unittype}{\set{\mathit{yield}}}{(\textsc{order})} \hto \ctype{\inttype}{\nil}{\nil}
-	\end{align*}
-
-	We typed $\mathit{yieldAll}$ without needing the code of either $\mathit{nondetProg}$ or $\mathit{sumYielded}$ so everything is entirely modular.
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Benefits}
-	\begin{itemize}
-		\item Equations are back!
-		\item Reasoning becomes more modular.
-		\item Libraries can provide tools for reasoning via equations.
-		\item Theories are now local, which removes the drawbacks of global theories.
-	\end{itemize}
 \end{frame}
 %===============================================================================
 \end{document}
