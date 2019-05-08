@@ -2,7 +2,7 @@
 
 \documentclass[usenames,dvipsnames]{beamer}
 \usetheme{boadilla}
-\usecolortheme{lily}
+\usecolortheme{spruce}
 \setbeamertemplate{navigation symbols}{}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
@@ -19,7 +19,7 @@
 \usepackage{caption}
 \usepackage{tcolorbox}
 \definecolor{shadecolor}{rgb}{0.95,0.95,0.95}
-\definecolor{newstuff}{rgb}{0.20,0.85,0.40}
+\definecolor{newstuff}{rgb}{0.20,0.50,0.75}
 \include{macros}
 
 \title[Applications of algebraic effect theories]{\LARGE Applications of algebraic effect theories}
@@ -239,19 +239,99 @@
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-	\frametitle{We can use different kinds of logics}
-	We can use any logic that implements some kind of \new{respects} relation \textcolor{gray}{(though there are requirements for denotational semantics to make sense)}.
-	\vspace{5mm}
+	\frametitle{Assigning types}
 	
-	The simplest logic we can use is the free logic, in which
+	Assume a slightly richer language (with strings and pairs).
 
+	\vspace{5mm}
+
+	Without equations, $\mathit{collect\_prints}$ would have the type
 	\[
-	\inferrule*[]
-	{ \welltyped{\hcases}{\sig \casesto \ctyD} }
-	{ \respects{\hcases}{\nil}{\sig}{\ctyD} }
+		{\tyA}\bang{\set{print}} \hto {(\tyA * string)}\bang{\nil}
 	\]
 
-	and corresponds to the conventional approach where we ignore equations.
+	\pause
+
+	But before we wanted to use the theory
+	\begin{equation*}
+		E_{no\_sep} = \left( \apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2} \right)
+	\end{equation*}
+
+	so we could instead use the type
+	\[
+		\ctype{\tyA}{\set{print}}{E_{no\_sep}} \hto \ctype{(\tyA * string)}{\nil}{\nil}
+	\]
+
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{Another example}
+	\begin{align*}
+		&\mathit{use\_newline} \; = \; \keyhandler \; \{ \\
+		&\tab | \; \operation[print]{s}{k} \mapsto \apply{print}{s};\,\apply{print}{"\backslash n"};\, \apply{k}{\unit}\\
+		&\tab | \; \return{x} \mapsto x \\
+		&\}
+	\end{align*}
+
+	\begin{align*}
+		E_{no\_sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, s_2}\\
+		E_{sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, "\backslash n" \concat \, s_2}	
+	\end{align*}
+
+	\[
+		\mathit{use\_newline} \oftype \ctype{\tyA}{\set{print}}{E_{sep}} \hto \ctype{(\tyA)}{\set{print}}{E_{no\_sep}}
+	\]
+
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{How to type handlers?}
+	All typing rules remain largely the same as when not using equations.
+
+	\vspace{5mm}
+
+	The only important change is
+	\[
+		\inferrule*[]
+		{
+			\judgement{\ctx, x \oftype \tyA}{c_r}{\ctyD}
+			\\
+			\new{\respects{\hcases}{\eqE}{\sig}{\ctyD}}
+			\\
+		}
+		{\judgement{\ctx}
+			{\handler{\hcases}}
+			{\ctype{\tyA}{\sig}{\eqE} \hto \ctyD}
+		}
+	\]
+
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{How to type handlers?}
+	
+	We must check $\new{\respects{\hcases}{\eqE}{\sig}{\ctyD}}$ in a logic, but we have a choice which logic to use.
+
+	\vspace{5mm}
+
+	The general idea is checking that our handler maps equivalent computations to equivalent computations.
+
+	\vspace{5mm}
+
+	The choice of logic also bears impact on the denotational semantics of our language.
+
+\end{frame}
+%-------------------------------------------------------------------------------
+\begin{frame}
+	\frametitle{Future work}
+	
+	\begin{itemize}
+		\item Implement the new type system.
+		\item Consider options for easier checks of the \new{respects} relation.
+		\item How to define subtyping?
+		\item How to use such systems for formalisation (probabilistic programming)?
+	\end{itemize}
+
 \end{frame}
 %===============================================================================
 \end{document}
