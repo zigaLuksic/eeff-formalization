@@ -121,7 +121,7 @@
 	We can use equations such as
 
 	\[
-		\apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2}
+		\eqE_{no\_sep} = \apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2}
 	\]
 
 	as reasoning tools.
@@ -145,7 +145,7 @@
   Operations of type $\ctyC$ either return a value of type $\tyA$ or call an operation from $\sig$ \new{in the effect theory $\eqE$}.
   \vspace{5mm}
 
-  Equations in $\eqE$ tell us what computations we deem equal, e.g.\ $print\_double$ and $print\_twice$ are equal when using the effect theory with the equation $\apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2}$ but not in a theory with no equations.
+  Equations in $\eqE$ tell us what computations we deem equal, e.g.\ $print\_double$ and $print\_twice$ are equal at $\mathtt{string} \to \ctype{\unittype}{\set{print}}{\set{\eqE_{no\_sep}}}$ but not at $\mathtt{string} \to \ctype{\unittype}{\set{print}}{\nil}$
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
@@ -153,19 +153,19 @@
 
 	Without equations, $\mathit{collect\_prints}$ would have the type
 	\[
-		{\tyA}\bang{\set{print}} \hto {(\tyA * string)}\bang{\nil}
+		{\tyA}\bang{\set{print}} \hto {(\tyA * \mathtt{string})}\bang{\nil}
 	\]
 
 	\pause
 
 	But before we wanted to use the theory
 	\begin{equation*}
-		E_{no\_sep} = \left( \apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2} \right)
+		\eqE_{no\_sep} = \apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2}
 	\end{equation*}
 
 	so we could instead use the type
 	\[
-		\ctype{\tyA}{\set{print}}{E_{no\_sep}} \hto \ctype{(\tyA * string)}{\nil}{\nil}
+		\ctype{\tyA}{\set{print}}{\set{\eqE_{no\_sep}}} \hto \ctype{(\tyA * \mathtt{string})}{\nil}{\nil}
 	\]
 
 \end{frame}
@@ -180,12 +180,12 @@
 	\end{align*}
 
 	\begin{align*}
-		E_{no\_sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, s_2}\\
-		E_{sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, "\!\backslash n" \concat \, s_2}	
+		\eqE_{no\_sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, s_2}\\
+		\eqE_{sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, "\!\backslash n" \concat \, s_2}	
 	\end{align*}
 
 	\[
-		\mathit{use\_newline} \oftype \ctype{\tyA}{\set{print}}{E_{sep}} \hto \ctype{(\tyA)}{\set{print}}{E_{no\_sep}}
+		\mathit{use\_newline} \oftype \ctype{\tyA}{\set{print}}{\set{\eqE_{sep}}} \hto \ctype{\tyA}{\set{print}}{\set{\eqE_{no\_sep}}}
 	\]
 
 \end{frame}
