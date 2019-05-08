@@ -40,11 +40,11 @@
 		f_2 =& \;\fun{x}{2*x}
 	\end{align*}
 
-	We know mathematical properties of operations $+$ and $*$ so we can argue that the functions are equal \textcolor{gray}{(whatever that means)}.
+	We know mathematical properties of operations $+$ and $*$ so we can argue that the programs are equal \textcolor{gray}{(whatever that means)}.
 	
 	\vspace{5mm}
 
-	Harder with effectful operations, such as $print$.
+	This becomes harder with effectful operations, such as $print$.
 
 	\begin{align*}
 		print\_twice =& \;\fun{s}{\apply{print}{s};\,\apply{print}{s}}\\
@@ -75,18 +75,18 @@
 	What happens when we combine them?
 	\pause
 
-	\[ \withhandle{\mathit{collect\_prints}}{(\apply{print\_twice}{"test"})} \]
+	\[ \withhandle{\mathit{collect\_prints}}{(\apply{print\_twice}{"\!test"})} \]
 	\pause
 
 	When the first $print$ occurs, our handler `intercepts' the operation call
 
-	\[ \operation[print]{"test"}{\unit.\apply{print}{"test"}} \]
+	\[ \operation[print]{"\!test"}{\unit.\apply{print}{"\!test"}} \]
 	\pause
 
 	It `activates' the $print$ branch of the handler and it first wraps the continuation
 
 	\[
-		k = \fun{\unit}{\withhandle{\mathit{collect\_prints}}{(\apply{print}{"test"})}}
+		k = \fun{\unit}{\withhandle{\mathit{collect\_prints}}{(\apply{print}{"\!test"})}}
 	\]
 
 	\pause
@@ -94,7 +94,7 @@
 	and proceeds with the evaluation
 	\begin{align*}
 		&\betterdobind{(v, s')}{\apply{k}{\unit}}\\
-		&(v, "test"\concat s')
+		&(v, "\!test"\concat s')
 	\end{align*} 
 
 
@@ -134,8 +134,6 @@
 
 \end{frame}
 %-------------------------------------------------------------------------------
-%0000000000000000000000000000000000000000000000000000000000000000000000000000000
-%-------------------------------------------------------------------------------
 \begin{frame}
 	\frametitle{Idea}
 	Include the desired equations in types.
@@ -147,103 +145,11 @@
   Operations of type $\ctyC$ either return a value of type $\tyA$ or call an operation from $\sig$ \new{in the effect theory $\eqE$}.
   \vspace{5mm}
 
-  Equations in $\eqE$ tell us what computations we deem equal.
+  Equations in $\eqE$ tell us what computations we deem equal, e.g.\ $print\_double$ and $print\_twice$ are equal when using the effect theory with the equation $\apply{print}{s_1};\, \apply{print}{s_2} \rel \apply{print}{s_1  \concat \, s_2}$ but not in a theory with no equations.
 \end{frame}
 %-------------------------------------------------------------------------------
 \begin{frame}
-  \frametitle{Term Syntax}
-  
-\[
-	\begin{array}{rrll}
-		\text{values}~v
-		 & ::=   & x                                                                              & \text{variable}          \\
-		 & \vsep & \unit                                                                          & \text{unit constant}     \\
-		 & \vsep & \true \vsep \false                                                             & \text{boolean constants} \\
-		 & \vsep & \fun{x}{c}                                                                     & \text{function}          \\
-		 & \vsep & \handler{\hcases}                                                              & \text{handler}           \\
-		 \\
-		 \text{computations}~c
-		 & ::=   & \ifclause{v}{c_1}{c_2}                                                         & \text{conditional}       \\
-		 & \vsep & \apply{v_1}{v_2}                                                               & \text{application}       \\
-		 & \vsep & \return{v}                                                                     & \text{returned value}    \\
-		 & \vsep & \operation{v}{y.c}                                                             & \text{operation call}    \\
-		 & \vsep & \dobind{x}{c_1}{c_2}                                                           & \text{sequencing}        \\
-		 & \vsep & \withhandle{v}{c}                                                              & \text{handling}					\\
-		 \\
-		 \text{operation clauses}~\hcases
-		  & ::=   & \emptyhcases \vsep \hcases \union \set{\operation{x}{\contin} \mapsto c_{\op}}                            \\
-		\end{array}
-		\]
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-  \frametitle{Type Syntax}
-  \[
-	\begin{array}{rrll}
-		\text{(value) type}~\tyA, \tyB
-		 & ::=   & \unittype          & \text{unit type}\\
-		 & \vsep & \booltype          & \text{boolean type}\\
-		 & \vsep & \tyA \to \ctyC     & \text{function type}\\
-		 & \vsep & \ctyC \hto \ctyD   & \text{handler type}\\
-		\\
-		\text{computation type}~\ctyC, \ctyD
-		 & ::=   & \ctype{\tyA}{\sig}{\new{\eqE}}\\
-		\\
-		\text{signature}~\sig
-		 & ::=   & \nil \vsep \sig \union \set{{\op \oftype \tyA \to \tyB}}\\
-	\end{array}
-\]
-
-
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-  \frametitle{Type Syntax (additions)}
-  \[
-	\begin{array}{rrll}
-		\text{value context}~\ctx
-		 & ::=   & \varepsilon \vsep \ctx, x \oftype \tyA \\
-		\\
-		\new{ \text{template context}}~\tvars
-		 & ::=   & \varepsilon \vsep \tvars, z \oftype \tyA \to \anytype \\
-    \\
-		\new{\text{template}}~\tmplT
-		 & ::=   & \apply{z}{v} \\
-		 & \vsep & \ifclause{v}{\tmplT_1}{\tmplT_2} \\
-		 & \vsep & \operation{v}{y.\tmplT} \\
-		\\
-		\new{\text{(effect) theory}}~\eqE
-		 & ::=   & \nil \vsep \eqE \union
-		\set{\teqjudgement{\tenv}{\tmplT_1 \rel \tmplT_2}}\\
-	\end{array}
-  \]
-  
-  The \emph{any type} \new{$\anytype$} used in template types can be instantiated to any computation type so that we can reuse templates.
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-  \frametitle{Full equation}
-	\[\tenv = \tenvlong
-			{(x \oftype \texttt{string}, y \oftype \texttt{string})}
-    	{(z \oftype \unittype \to \anytype)}
-	\]
-	
-	\[
-    \teqjudgement{\tenv}
-      {
-      \mathit{print}(x; \_.\mathit{print}(y; \_.\apply{z}{\unit}))
-      \rel
-      \mathit{print}(x \concat y; \_.\apply{z}{\unit})
-      }
-  \]
-\end{frame}
-%-------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Assigning types}
-	
-	Assume a slightly richer language (with strings and pairs).
-
-	\vspace{5mm}
+	\frametitle{Assigning types to example handler}
 
 	Without equations, $\mathit{collect\_prints}$ would have the type
 	\[
@@ -268,14 +174,14 @@
 	\frametitle{Another example}
 	\begin{align*}
 		&\mathit{use\_newline} \; = \; \keyhandler \; \{ \\
-		&\tab | \; \operation[print]{s}{k} \mapsto \apply{print}{s};\,\apply{print}{"\backslash n"};\, \apply{k}{\unit}\\
+		&\tab | \; \operation[print]{s}{k} \mapsto \apply{print}{s};\,\apply{print}{"\!\backslash n"};\, \apply{k}{\unit}\\
 		&\tab | \; \return{x} \mapsto x \\
 		&\}
 	\end{align*}
 
 	\begin{align*}
 		E_{no\_sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, s_2}\\
-		E_{sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, "\backslash n" \concat \, s_2}	
+		E_{sep} &= \apply{print}{s_1};\,\apply{print}{s_2} \rel \apply{print}{s_1 \concat\, "\!\backslash n" \concat \, s_2}	
 	\end{align*}
 
 	\[
@@ -310,7 +216,7 @@
 \begin{frame}
 	\frametitle{How to type handlers?}
 	
-	We must check $\new{\respects{\hcases}{\eqE}{\sig}{\ctyD}}$ in a logic, but we have a choice which logic to use.
+	For $\new{\respects{\hcases}{\eqE}{\sig}{\ctyD}}$ we first check that the types match. We then check correctness in a logic, but we have a choice which logic to use.
 
 	\vspace{5mm}
 
@@ -326,10 +232,10 @@
 	\frametitle{Future work}
 	
 	\begin{itemize}
-		\item Implement the new type system.
+		\item Implement the proposed equation system in Eff.
 		\item Consider options for easier checks of the \new{respects} relation.
 		\item How to define subtyping?
-		\item How to use such systems for formalisation (probabilistic programming)?
+		\item Concrete applications (probabilistic programming).
 	\end{itemize}
 
 \end{frame}
