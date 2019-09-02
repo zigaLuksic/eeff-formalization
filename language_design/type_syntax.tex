@@ -1,0 +1,42 @@
+% !TeX root = ../main.tex
+% chktex-file 1
+% chktex-file 46
+
+%=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+\[
+	\begin{array}{rrll}
+		\text{(value) type}~\tyA, \tyB
+		 & ::=   & \unittype          				& \text{unit type}\\
+		 & \vsep & \inttype         					& \text{int type}\\
+		 & \vsep & \floattype         				& \text{float type}\\
+		 & \vsep & \stringtype         				& \text{string type}\\
+		 & \vsep & \emptytype         				& \text{empty type}\\
+		 & \vsep & \sumtype{\tyA}{\tyB}   		& \text{sum type}\\
+		 & \vsep & \producttype{\tyA}{\tyB}   & \text{product type}\\
+		 & \vsep & \tyA \to \ctyC     				& \text{function type}\\
+		 & \vsep & \ctyC \hto \ctyD   				& \text{handler type}\\
+		\\
+		\text{computation type}~\ctyC, \ctyD
+		 & ::=   & \ctype{\tyA}{\sig}{\eqE}\\
+		\\
+		\text{signature}~\sig
+		 & ::=   & \nil \vsep \sig \union \set{{\op \oftype \tyA \to \tyB}}\\
+		\\
+		\text{value context}~\ctx
+		 & ::=   & \varepsilon \vsep \ctx, x \oftype \tyA \\
+		\\
+		\text{template context}~\tvars
+		 & ::=   & \varepsilon \vsep \tvars, z \oftype \tyA \to \anytype \\
+		\\
+		\text{template}~\tmplT
+		 & ::=   & \apply{z}{v} & \text{applied template variable} \\
+		 & \vsep & \match{v} \inleft{x} \mapsto T_1 \vsep \inright{x} \mapsto T_2  & \text{sum template} \\
+		 & \vsep & \match{v} \pair{x}{y} \mapsto T & \text{product template} \\
+		 & \vsep & \letbind{x}{v} T & \text{value bind template} \\
+		 & \vsep & \operation{v}{y.\tmplT} & \text{operation call template} \\
+		\\
+		\text{(effect) theory}~\eqE
+		 & ::=   & \nil \vsep \eqE \union
+		\set{\teqjudgement{\tenv}{\tmplT_1 \rel \tmplT_2}}\\
+	\end{array}
+\]

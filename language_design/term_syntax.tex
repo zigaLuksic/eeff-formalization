@@ -1,0 +1,32 @@
+% !TeX root = ./main.tex
+% chktex-file 1
+% chktex-file 46
+
+\[
+	\begin{array}{rrll}
+		\text{values}~v
+		 & ::=   & x                      & \text{variable}          \\
+		 & \vsep & \unit									& \text{unit}							 \\
+		 & \vsep & n											& \text{integer}					 \\
+		 & \vsep & f											& \text{float}						 \\
+		 & \vsep & s											& \text{string}						 \\
+		 & \vsep & \inleft{v}~\vsep~\inright{v} & \text{sum constructors} \\
+		 & \vsep & \pair{v_1}{v_2}				&	\text{pair}						 	 \\
+		 & \vsep & \fun{x}{c}             & \text{function}          \\
+		 & \vsep & \handler{\hcases}      & \text{handler}           \\
+		 \\
+		 \text{computations}~c
+		 & ::=   & \return{v}             & \text{returned value}    \\
+		 & \vsep & \apply{v_1}{v_2}       & \text{application}       \\
+		 & \vsep & \match{v} \inleft{x} \mapsto c_1 \vsep \inright{x} \mapsto c_2 & \text{sum match} \\
+		 & \vsep & \match{v} \pair{x}{y} \mapsto c & \text{product match} \\
+		 & \vsep & \operation{v}{y.c}     & \text{operation call}    \\
+		 %& \vsep & \letbind{x}{v} {c}		& \text{value binding} \\
+		 & \vsep & \letrec{f}{x}{c_1} {c_2}		& \text{recursive function definition} \\
+		 & \vsep & \dobind{x}{c_1}{c_2}   & \text{sequencing}        \\
+		 & \vsep & \withhandle{v}{c}      & \text{handling}					 \\
+		 \\
+		 \text{operation clauses}~\hcases
+		  & ::=   & \emptyhcases \vsep \hcases \union \set{\operation{x}{k} \mapsto c_{\op}}                            \\
+		\end{array}
+		\]

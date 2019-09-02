@@ -1,0 +1,45 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{newtxmath}
+\usepackage{ifthen}
+\usepackage{xcolor}
+\usepackage{tikz-cd}
+\usepackage{float}
+\usepackage{framed}
+\usepackage{caption}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\floatstyle{plain}
+\restylefloat{figure}
+\definecolor{shadecolor}{rgb}{0.95,0.95,0.95}
+\input{macros}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}[definition]{Example}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{corollary}[definition]{Corollary}
+
+
+%===============================================================================
+\begin{document}
+
+\begin{figure}[]
+  \centering
+  \input{term_syntax.tex}
+  \caption{\EEFF Term Syntax}
+\end{figure}
+
+\begin{figure}[]
+  \centering
+  \input{type_syntax.tex}
+  \caption{\EEFF Type Syntax}
+\end{figure}
+
+\end{document}
