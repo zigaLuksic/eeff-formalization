@@ -32,6 +32,38 @@ with handler_cases : Type u
 def term := val ⊕ comp
 def full_def := (psum val (psum comp handler_cases))
 
+mutual def vdepth, cdepth, hdepth
+with vdepth : val → ℕ
+| (val.var x) := 1
+| (val.unit) := 1
+| (val.int n) := 1
+| (val.inl vl) := 1 + (vdepth vl) 
+| (val.inr vr) := 1 + (vdepth vr)
+| (val.pair v1 v2) := 1 + max (vdepth v1) (vdepth v2)
+| (val.lambda x c) := 1 + (cdepth c)
+| (val.handler h) := 1 + (hdepth h)
+with cdepth : comp → ℕ
+| (comp.return v_ret) := 1 + (vdepth v_ret) 
+| (comp.prod_match v_pair (x, y) c) := 
+    1 + max (vdepth v_pair) (cdepth c)
+| (comp.sum_match v_sum (x, c_l) (y, c_r)) :=
+    1 + max (vdepth v_sum) (max (cdepth c_l) (cdepth c_r))
+| (comp.application v_fun v_arg) :=
+    1 + max (vdepth v_fun) (vdepth v_arg)
+| (comp.operation op_id v_arg (k, c_cont)) :=
+    1 +  max (vdepth v_arg) (cdepth c_cont)
+| (comp.letrec f x c1 c2) :=
+    1 + max (cdepth c1) (cdepth c2)
+| (comp.dobind (x, c1) c2) := 
+    1 + max (cdepth c1) (cdepth c2)
+| (comp.handle v c) := 1 + max (vdepth h) (cdepth c)
+with hdepth : handler_cases → ℕ
+| (handler_cases.return_case x c_ret) :=
+    1 +  cdepth c_ret
+| (handler_cases.operation_case op x k c_op hcases) := 
+    1 + max (cdepth c_op) (hdepth hcases)
+
+
 -- this aint capture avoiding yet!
 section
 variable (id : var_id)
