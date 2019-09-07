@@ -7,6 +7,7 @@
 \newcommand{\todo}[2][]{\textcolor{red}{\textsc{#1} #2}}
 % \newcommand{\todo}[2][]{}
 \newcommand{\code}[1]{\mathtt{#1}}
+
 \definecolor{superlightgray}{gray}{0.80}
 \newcommand{\highlight}[1]{\setlength{\fboxsep}{2pt}\colorbox{superlightgray}{\ensuremath{#1}}}
 \newenvironment{ruledfigure}[1][!hbtp]{%
@@ -41,7 +42,6 @@
 \newcommand{\eqE}{\mathcal{E}}
 
 % Meta-variables (Values & Computations)
-\newcommand{\hcases}{\mathit{h}}
 
 \newcommand{\logic}{\ensuremath{\mathcal{L}}}
 \newcommand{\fulllogic}{\ensuremath{\mathcal{L}_\text{full}}}
@@ -106,8 +106,10 @@
 \newcommand{\emptyhcases}{\nil}
 \newcommand{\handler}[2][\return x \mapsto c_r]{\keyhandler \;({#1}; {#2})}
 % Substitution
-\newcommand{\subs}[2]{{#1}[{#2}]}
-\newcommand{\subsfor}{/}
+\newcommand{\subs}[1]{[#1]}
+\newcommand{\subswith}{\mapsto}
+% \newcommand{\subs}[2]{{#1}[{#2}]}
+% \newcommand{\subsfor}{/}
 
 %=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 % Equation and template construction
@@ -117,17 +119,15 @@
 \newcommand{\tenvlong}[2]{{#1};{#2}}
 \newcommand{\tenv}{\tenvlong{\ctx}{\tvars}}
 \newcommand{\thandle}[3][h]{{#2^#1} [{#3}]}
-%\newcommand{\tsemhandle}[2][H]{\llparenthesis #2 \rrparenthesis^{#1}}
-%\newcommand{\tjsemhandle}[4][H]{\llparenthesis \wftemplate[#3]{#4}{\sig} \rrparenthesis^{#1}}
 \newcommand{\respects}[5][\ctx]{#1 \vdash #2 \oftype #4 \casesto #5 \;\mathsf{respects}\; #3}
 % Types
 \newcommand{\typevar}{\tau}
-\newcommand{\bang}{!}
+\newcommand{\witheff}{!}
 \newcommand{\witheq}{/}
 \newcommand{\ctype}[3]{
 	\ifthenelse{\equal{#3}{}}
-	{#1\bang#2}
-	{#1\bang#2\witheq#3}}
+	{#1\witheff#2}
+	{#1\witheff#2\witheq#3}}
 \newcommand{\ctypebasic}{\ctype{\tyA}{\sig}{\eqE}}
 \newcommand{\set}[1]{\{{#1}\}}
 \newcommand{\booltype}{\mathtt{bool}}
@@ -164,8 +164,7 @@
 % Operational semantics
 \newcommand{\eval}{\Downarrow}
 \newcommand{\nil}{\emptyset}
-\newcommand{\smallstep}[2]{{#1} \leadsto {#2}}
-
+\newcommand{\smallstep}{\,\leadsto\,}
 %=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 % Logics
 \newcommand{\lequal}{\equiv}

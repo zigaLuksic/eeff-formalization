@@ -11,21 +11,21 @@
 		 & \vsep & \inleft{v}~\vsep~\inright{v} & \text{sum constructors}  \\
 		 & \vsep & \pair{v_1}{v_2}							&	\text{pair}						 	 \\
 		 & \vsep & \fun{x}{c}             			& \text{function}          \\
-		 & \vsep & \handler{\hcases}      			& \text{handler}           \\
+		 & \vsep & \handler{h}      						& \text{handler}           \\
 		 \\
 		 \text{computations}~c
 		 & ::=   & \return{v}             		& \text{returned value}    		\\
-		 & \vsep & \apply{v_1}{v_2}       		& \text{application}       		\\
+		 & \vsep & \match{v} \pair{x}{y} \mapsto c 	 & \text{product match} \\
 		 & \vsep & \match{v} \inleft{x} \mapsto c_1 
-		 							\vsep \inright{x} \mapsto c_2 & \text{sum match} 			\\
-		 & \vsep & \match{v} \pair{x}{y} \mapsto c 	& \text{product match} 	\\
+		 	 				 \vsep     \inright{x} \mapsto c_2 & \text{sum match} 		\\
+		 & \vsep & \apply{v_1}{v_2}       		& \text{application}       		\\
 		 & \vsep & \operation{v}{y.c}     		& \text{operation call}    		\\
 		 & \vsep & \letrec{f}{x}{c_1} {c_2}		& \text{recursive function} 	\\
 		 & \vsep & \dobind{x}{c_1}{c_2}   		& \text{sequencing}        		\\
 		 & \vsep & \withhandle{v}{c}      		& \text{handling}					 		\\
 		 \\
-		 \text{operation clauses}~\hcases
+		 \text{operation clauses}~h
 			& ::=   & \emptyhcases 
-			\vsep 		\hcases \union \set{\operation{x}{k} \mapsto c_{\op}} 	\\
+			\vsep 		h \union \set{\operation{x}{k} \mapsto c_{\op}} 	\\
 		\end{array}
 		\]
