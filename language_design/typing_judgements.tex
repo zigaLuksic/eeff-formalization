@@ -1,0 +1,135 @@
+% !TeX root = ./main.tex
+% chktex-file 1
+% chktex-file 46
+
+
+\begin{mathpar}
+	% Mode Switch
+	\inferrule*[]
+	{ \typecheck{v}{\tyA} }
+	{ \typesynthesis{(v \oftype \tyA)}{\tyA} }
+
+	\inferrule*[]
+	{ \typesynthesis{v}{\tyA'} \\ \tyA = \tyA'}
+	{ \typecheck{v}{\tyA} }
+
+	% Term Variable
+	\inferrule*[]
+	{ (x \oftype \tyA) \in \ctx }
+	{ \typesynthesis{x}{\tyA} }
+
+	% Constant
+	\inferrule*[]{ }
+	{ \typesynthesis{\unit}{\unittype} }
+
+	% Integer
+	\inferrule*[]{ }
+	{ \typesynthesis{n}{\inttype} }
+
+	% Sums
+	\inferrule*[]
+	{ \typecheck{v}{\tyA} }
+	{ \typecheck{\inleft{} v}{\sumtype{\tyA}{\tyB}} }
+
+	\inferrule*[]
+	{ \typecheck{v}{\tyB} }
+	{ \typecheck{\inright v}{\sumtype{\tyA}{\tyB}} }
+
+	% Pairs
+	\inferrule*[]
+	{ \typecheck{v_1}{\tyA} \\ \typecheck{v_2}{\tyB} }
+	{ \typecheck{\pair{v_1}{v_2}}{\producttype{\tyA}{\tyB}} }
+
+	\inferrule*[]
+	{ \typesynthesis{v_1}{\tyA} \\ \typesynthesis{v_2}{\tyB} }
+	{ \typesynthesis{\pair{v_1}{v_2}}{\producttype{\tyA}{\tyB}} }
+
+	% Function
+	\inferrule*[]
+	{ \typecheck[\ctx, x \oftype \tyA]{c}{\ctyC} }
+	{ \typecheck{\fun{x}{c}}{\tyA \to \ctyC} }
+
+	% Handler
+	\inferrule*[]
+	{	\typecheck[\ctx, x \oftype \tyA]{c_r}{\ctyD} \\
+		\respects{h}{\eqE}{\sig}{\ctyD} }
+	{\typecheck
+		{\handler{h}}
+		{\ctype{\tyA}{\sig}{\eqE} \hto \ctyD}
+	}
+
+	% Respects
+
+	\inferrule*[]{ }
+	{\typecheck{\emptyhcases}{\nil \casesto {\ctyD}} }
+
+	\inferrule*[]
+	{\typecheck
+		{h}
+		{\sig \casesto {\ctyD}}\\
+		\typecheck[\ctx, x \oftype \tyA_{\op}, k \oftype \tyB_{\op} \to \ctyD]
+		{c_{\op}}
+		{\ctyD}\\
+		\op \not \in \sig
+	}
+	{\typecheck
+		{h \union \set{\operation{x}{k} \mapsto c_{\op}}}
+		{(\sig \union \set{\op \oftype \tyA_{\op} \to \tyB_{\op}}) \casesto {\ctyD}}
+	}
+\end{mathpar}
+
+%=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+\begin{mathpar}
+	% Mode Switch
+	\inferrule*[]
+	{ \typecheck{c}{\ctyC'}}
+	{ \typesynthesis{(c \oftype \ctyC')}{\ctyC} }
+
+	\inferrule*[]
+	{ \typesynthesis{c}{\ctyC'} \\ \ctyC = \ctyC'}
+	{ \typecheck{c}{\ctyC} }
+
+	% Match statements
+	\inferrule*[]
+	{ \typesynthesis{v}{\sumtype{\tyA}{\tyB}} \\
+		\typecheck[\ctx, x \oftype \tyA]{c_1}{\ctyC} \\
+		\typecheck[\ctx, x \oftype \tyB]{c_2}{\ctyC} }
+	{ \typecheck{\match{v} \sumcases{x}{c_1}{x}{c_2} }{\ctyC} }
+
+	\inferrule*[]
+	{ \typesynthesis{v}{\producttype{\tyA}{\tyB}} \\
+		\typesynthesis[\ctx, x \oftype \tyA, y \oftype \tyB]{c}{\ctyC} }
+	{ \typesynthesis{\match{v} \prodcases{x}{y}{c} }{\ctyC} }
+
+	% Function application
+	\inferrule*[]
+	{ \typesynthesis{v_1}{\tyA \to \ctyC} \\
+		\typecheck{v_2}{\tyA}	}
+	{ \typesynthesis{\apply{v_1}{v_2}}{\ctyC} }
+
+	% Return
+	\inferrule*[]
+	{ \typesynthesis{v}{\tyA} }
+	{ \typesynthesis{\return{v}}{\ctype{\tyA}{\nil}{\nil}} }
+
+	% Operation
+	\inferrule*[]
+	{ (\op \oftype \tyA_{\op} \to \tyB_{\op}) \in \sig \\
+		\typecheck{v}{\tyA_{\op}} \\
+		\typecheck[\ctx, y \oftype \tyB_{\op}]{c}{\ctype{\tyA}{\sig}{\eqE}} }
+	{ \typecheck{\operation{v}{y.c}}{\ctype{\tyA}{\sig}{\eqE}} }
+
+	% Do-bind
+	\inferrule*[]
+	{ \typesynthesis{c_1}{\ctype{\tyA}{\sig}{\eqE}} \\
+		\typecheck[\ctx, x \oftype \tyA]{c_2}{\ctype{\tyB}{\sig}{\eqE}} }
+	{ \typecheck{\dobind{x}{c_1}{c_2}}{\ctype{\tyB}{\sig}{\eqE}} }
+
+	% Handling
+	\inferrule*[]
+	{ \typesynthesis{v}{\ctyC \hto \ctyD} \\
+		\typecheck{c}{\ctyC} }
+	{ \typecheck{\withhandle{v}{c}}{\ctyD} }
+
+\end{mathpar}

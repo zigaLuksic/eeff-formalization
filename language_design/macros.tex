@@ -92,6 +92,8 @@
 \newcommand{\dobind}[2]{\keydo~{#1} \leftarrow{#2}~\keyin~}
 % Match and if
 \newcommand{\match}[1]{\keymatch~{#1}~\keywith~}
+\newcommand{\prodcases}[3]{\pair{#1}{#2} \mapsto #3}
+\newcommand{\sumcases}[4]{\inleft{#1} \mapsto #2 \vsep \inright{#3} \mapsto #4}
 \newcommand{\ifclause}[3]{\keyif~{#1}~\keythen~{#2}~\keyelse~{#3}}
 % Operation
 \newcommand{\operation}[3][\op]{
@@ -147,6 +149,8 @@
 \newcommand{\hto}{\Rightarrow}
 
 % Type-checking
+\newcommand{\oftype}{\!:\!}
+
 \newcommand{\wfctx}[1]{\vdash #1 \oftype \mathsf{ctx}}
 \newcommand{\wftctx}[1]{\vdash #1 \oftype \mathsf{tctx}}
 \newcommand{\wfvtype}[1]{\vdash #1 \oftype \mathsf{vtype}}
@@ -155,8 +159,10 @@
 \newcommand{\wftemplate}[3][\tenv]{#1 \vdash #2 \oftype #3}
 \newcommand{\wfequations}[2]{\vdash #1 \oftype #2}
 \newcommand{\welltyped}[3][\ctx]{#1 \vdash #2 \oftype #3}
-\newcommand{\oftype}{\!:\!}
+
 \newcommand{\judgement}[3]{{#1} \vdash {#2} \oftype {#3}}
+\newcommand{\typesynthesis}[3][\ctx]{{#1} \vdash {#2} \Mapsto {#3}}
+\newcommand{\typecheck}[3][\ctx]{{#1} \vdash {#2} \Mapsfrom {#3}}
 
 % Subtyping
 \newcommand{\subtypeof}{\leq}
