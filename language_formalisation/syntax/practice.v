@@ -1,1547 +1,1447 @@
-Require Export Arith String List Omega.
-Export ListNotations.
-Global Generalizable All Variables.
-
+(* # Preface *)
 (*
-# Contents
+In order to open this lecture in Coq(ide)/Proofgeneral, you need to compile the
+Coq file `lecture1.v` into an _object file_ `lecture.vo` first. The `.vo` file
+contains a lambda term that represents the definitions and proofs in the `.v`
+file, in which all uses of tactics have been compiled away.
 
-- Inductive data types
-- Proofs and tactics
-- Data types in canonical representation
+Compiling a Coq file can be done in two ways:
+
+- Open your terminal, and run `coqc lecture1.v`.
+- Open the file `lecture1.v` in Coqide or Proofgeneral, and press in the menu
+"Compile", press "Compile buffer".
+*)
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Require Export lecture1.
+Open Scope string_scope.
+
+(* # Contents *)
+(*
+The topics of this lecture are:
+
+- Using inductive types to represent syntax of program languages.
+- Using inductive relations to represent big and small step operational semantics.
+- The use of tactics to automate proofs.
 
 # Tactics
 
-Below you can find an overview of the basic tactics of Coq. Most of these
-tactics will be discussed in the lecture, but not all. You should carefully read
-them and try to use them in the exercises.
+In this lecture, we will learn how to use the following tactics:
 
-## Tactics for basic logic
+- `inv` : the tactic `inv H` performs inversion on a hypothesis of an indexed
+  inductive type. It can be thought of as the dual of applying a constructor.
+- `subst` : the tactic `subst x`, where `x` is a variable, checks whether there
+  is a hypothesis `H : x = y` or `H : y = x`, and then substitutes all
+  occurrences of `x` in the goal and the all other hypotheses by `y`. After
+  that, it removes `H`. 
+- `change` : the tactic `change x into y` substitutes all occurrences of `x`
+  into `y` provided `x` and `y` are equal by computation (also called
+  _definitionally equal_).
+- `apply .. in ..` : this is variant of the `apply` tactic that can be used in
+  hypotheses.
 
-- `assumption` : the assumption rule of logic, it finishes goals if the goal
-   appears among the hypotheses.
+     H1 : R a0 .. an,
+     H2 : forall x1 .. xn, P x1 .. xn -> R x1 .. xn
+     |- Q
+    ------------------------------------------------- 'apply H2 in H1`
+     H1 : P a0 .. an,
+     H2 : forall x1 .. xn, P x1 .. xn -> R x1 .. xn
+     |- Q
 
-   ------------ `assumption`
-    H : P |- P
-
-- `intros x` : performs implication or forall introduction.
-
-    H : P |- Q
-   ------------ `intros H`
-    |- P -> Q
-
-    x : A |- Q x
-   ----------------------  `intros x`
-    |- forall x : A, Q x
-
-  Note that intros can be chained, e.g. one can write `intros x y H1 H2`.
-
-- `revert` : performs implication or forall elimination (in a way that is in
-  opposite direction of `intros`).
-
-     |- P -> Q
-    ------------ `revert H`
-     H : P |- Q
-
-     |- forall x : A, P x
-    ---------------------- `revert x` (if `x` does not appear in any hypothesis)
-     x : A |- P x
-
-  This tactic is most commonly used to _generalize the induction hypothesis_,
-  i.e. before an induction proof to make sure that the induction hypothesis is
-  suitably generalized.
-
-  Note that reverts can be chained, e.g. one can write `revert x y H1`.
-
-- `apply` : performs implication or forall elimination.
-
-     |- Pi a1 .. an          |- Pm a1 .. an
-    ---------------------------------------------------------------------------- 'apply H`
-     H : forall x1 .. xn, (P1 x1 .. xn) -> ... -> (Pm x1 .. xn) -> (Q x1 .. xn)
-     |- Q a0 .. an
-
-- `assert` : performs implication elimination.
-
-     |- P    H : P |- Q
-    --------------------  `assert P as H`
-           |- Q
-
-- `specialize` : performs forall elimination.
-
-     H : P a |- Q
-    ------------------------ `specialize (H a)`
-     H : forall x, P x |- Q
-
-  Note that specialize can be chained, e.g. one can write `specialize H a b`
-
-- `split` : performs conjunction introduction.
-
-     |- P1     |- P2
-    ----------------- `split`
-       |- P1 /\ P2
-
-- `left` : performs (left-) disjunction introduction.
-
-     |- P1
-    ------------- `left`
-     |- P1 \/ P2
-
-- `right` : performs (right-) disjunction introduction.
-
-     |- P2
-    ------------- `right`
-     |- P1 \/ P2
-
-- `destruct` performs elimination of inductive types, in particular, it can
-  be used for conjunction and disjunction elimination as follows:
-
-  For conjunction elimination:
-
-     H : P1, H2 : P2 |- Q
-    ---------------------- `destruct H as [H1 H2]`
-     H : P1 /\ P2 |- Q
-
-  For disjunction elimination:
-
-     H : P1 |- Q    H : P2 |- Q
-    ---------------------------- `destruct H as [H1|H2]`
-     H : P1 \/ P2 |- Q
-
-## Computation
-
-- `simpl` : simplifies the goal by computation. For example, given a goal that
-  contains `S x + y` it will turn it into the same goal but with all occurrences
-  of `S x + y` replaces by `S (x + y)`.
-
-  Alternatively, an hypothesis `H` can be simplified by computation by writing
-  `simpl in H`.
-
-- `unfold` : unfold a definition into its body. For example, when having
-
-    Definition foo := bar.
-
-  Then `unfold foo` will replace all occurrences of `foo` in the goal by `bar.
-  As for `simpl`, one can perform the tactic to a hypothesis `H` by writing
-  `unfold foo in H`.
-
-## Equality
-
-- `reflexivity` : proves goals of the shape `x = x`
-
-    ------- reflexivity
-     x = x
-
-- `discriminate` : discharges goals with an hypothesis of the shape
-
-    --------------------------
-     H : c1 ... = c2 ... |- Q
-
-  Where `c1` and `c2` are different constructors (e.g. `true` and `false, or
-  `O` and `S`).
-
-- `injection` : performs injectivity of constructors.
-
-   Given the following goal, where `c` is a constructor of an inductive data
-   type (for example, `S` or `cons`):
-
-      H1 : x0 = y0, .., Hn : xn = yn |- Q
-     ------------------------------------- `injection H as H1 .. Hn`
-      H : c x0 .. xn = c y0 .. yn |- Q
-
-- `rewrite` substitutes all occurrences of an equality.
-
-     H : x = y |- Q y
-    ------------------ `rewrite H`
-     H : x = y |- P x
-
-     H : x = y |- Q x
-    ------------------ `rewrite <-H`
-     H : x = y |- P y
-
-  The rewrite tactic can also be used in hypotheses, e.g. `rewrite H1 in H2`.
-
-- `f_equal` : proves an equality by proving that all arguments of a function
-   are equal.
-
-     |- x0 = y0   ...   |- xn = yn
-    ------------------------------- `f_equal`
-     |- f x0 .. xn = f y0 ... yn
-
-## Inductive data types
-
-- `destruct` : performs a case analysis. For example, given a natural number
-  `n`, one can write `destruct n as [|n']`, which will generate two goals, one
-  for the case `n = O` and one for the case `n = S n'`.
-
-- `induction` : performs induction. For example, given a natural number
-  `n`, one can write `induction n as [|n' IH]`, which will generate two goals,
-  the base case, and the inductive case, in which the induction hypothesis is
-  called `IH`.
+- `eapply` : this tactic behaves like `apply`, but it may leave existential
+  variables (evar) for universally quantified premises that cannot be inferred. 
+- `eassumption` : this tactic behaves like `assumption`, but can be used when
+  the goal contains an evar.
+- `eauto` : a brute-force depth first search mechanism.
 *)
-
-(* # Introduction *)
-(*
-The underlying theory of Coq is based on the Calculus of Inductive Constructions
-(CIC). CIC is a language that can be used as:
-
-- A typed functional programming language
-- A language to represent mathematical statements
-- A language to represent proofs
-
-As we will see during the summer school, by the Curry Howard Correspondence, all
-of the above concepts are in fact unified, because CIC is a
-
-  higher-order dependently typed programming language
-
-In this lecture, we will not go much into the details of the Curry Howard
-Correspondence, but focus more on a practical use of  Coq to formalize
-programming language semantics.
-*)
-
-(* # Inductive types *)
-(*
-An important aspect of Coq is to keep the underlying theory, the CIC, small.
-This is achieved is not building in the standard data types that we see in
-ordinary programming languages, but instead define these data types in terms of
-unified constructs. Specifically, in Coq, these data types (and many more) can
-be defined by means of inductive types. In the first part of this lecture, I
-will give an introduction to inductive types, ans show how these can be used for
-programming and proving.
-
-Mote, all of the inductive types that we will define are also in the Coq
-standard library. In order to not confuse the standard library results with our
-own definitions, we put our own definitions in a module. That way, after we
-close the module, we can use the results from the Coq standard library for
-subsequent lectures.
-*)
-Module lecture.
-
-(* ## Booleans *)
-(*
-Let us start with one of the simplest data types, the Booleans. In Coq, these
-can de defined through the following definition:
-*)
-
-Inductive bool : Type :=
-  | true : bool
-  | false : bool.
 
 (*
-The lines above introduces a new type called `bool` with _constructors_ `false`
-and `true`. Similar to functional programming languages like OCaml and Haskell,
-we can now define operations by pattern matching.
+Technical node: the standard `inversion` tactic of Coq is not so good as it
+leaves a lot of garbage. Inspired by CompCert, we define a smarter version,
+which directly substitutes all equalities that have been generated, and clears
+the original hypothesis. Source: http://compcert.inria.fr/doc/html/Coqlib.html.
+*)
+Ltac inv H := inversion H; clear H; subst.
+
+(* # A language for extended arithmetic expressions *)
+(*
+We will start by formalizing the semantics of a very simple language: arithmetic
+expressions extended with conditionals and let expressions. In the second part
+of this lecture, we will extend this language with additional features, namely
+while loops and mutable state.
+
+The syntax of our arithmetic expression language is as follows:
+
+Values:        v ::= b | n
+Operators:    op ::= + | - | <= | < | ==
+Expressions:   e ::= x | v | let x := e1 in e2 | e1 `op` e2 | if e1 then e2 else e3
+
+Here, `b` ranges over Booleans, `n` over natural numbers, and `x` over
+variables, which are bound by the let construct.
+
+As we have seen before, we make use of Coq's module system to put this language
+definition in its own namespace. That way, we do not get conflicting names when
+we define our extended language.
+*)
+Module stateless_language.
+(* ## Syntax *)
+(*
+As is usual in Coq, or any common functional programming language, we represent
+the syntax by a series of inductive data types. 
+*)
+Inductive val : Type :=
+  | VBool : bool -> val
+  | VNat : nat -> val.
+
+Inductive bin_op : Type :=
+  | PlusOp | MinusOp | LeOp | LtOp | EqOp.
+
+Inductive expr : Type :=
+  | EVar : string -> expr
+  | EVal : val -> expr
+  | ELet : string -> expr -> expr -> expr
+  | EOp : bin_op -> expr -> expr -> expr
+  | EIf : expr -> expr -> expr -> expr.
+
+(*
+We use strings to represent variables, and do that for two reasons: it keeps
+the syntax conceptually simple and allows us to write down concrete terms
+with a higher level of convenience. String in Coq have type `string` and the
+usual syntax "this is a string" can be used to write strings.
+
+(We could use Coq's expressive notation machinery to define a parser and pretty
+printer for our language, so that we could use notations that are very close to
+those we use informally. In this lecture, we will not do that, instead we will
+be very explicit about the ASTs that we use).
 *)
 
-Definition andb (b1 b2 : bool) : bool :=
-  match b1 with
-  | true => b2
-  | false => false
+(*
+Now let us take a look at some examples.
+*)
+(* `10 + 20 == 30` *)
+Definition example1 : expr :=
+  EOp EqOp
+    (EOp PlusOp (EVal (VNat 10)) (EVal (VNat 20)))
+    (EVal (VNat 30)).
+
+(* `let x := 10 + 20 in let y := 5 <= x in y` *) 
+Definition example2 : expr :=
+  ELet "x" (EOp PlusOp (EVal (VNat 10)) (EVal (VNat 20)))
+    (ELet "y" (EOp LeOp (EVal (VNat 5)) (EVar "x"))
+    (EVar "y")).
+
+(* ### Exercise *)
+(*
+Turn the following expressions into corresponding `expr`s in Coq.
+*)
+(* `let x := false in x` *)
+Definition example3 : expr := EVar "exercise".
+
+(* `let x := (let y := 1 + 1 in y) in x + x` *)
+Definition example4 : expr := EVar "exercise".
+
+(* `if 10 <= 12 then 1 else 2` *)
+Definition example5 : expr := EVar "exercise".
+
+(* ## Semantics of operators *)
+(* We start by defining the semantics of binary operations. We do this by
+defining a function:
+
+  eval_bin_op : bin_op -> val -> val -> option val
+
+We have seen the `option` already in the previous lecture, but we will take a
+look at it again:
+
+  Inductive option (A : Type) : Type :=
+    | None
+    | Some : A -> option A
+
+In the semantics of binary operators, we use `None` to handle errors, and `Some`
+to handle actual results. Errors occur when operators are applied to the wrong
+kind of arguments, for example, when the operator `<=` (LeOp) is applied to
+Boolean arguments.
+*)
+Definition eval_bin_op (op : bin_op) (v1 v2 : val) : option val :=
+  match op, v1, v2 with
+  | PlusOp, VNat n1, VNat n2 => Some (VNat (n1 + n2))
+  | MinusOp, VNat n1, VNat n2 => Some (VNat (n1 - n2))
+  | LeOp, VNat n1, VNat n2 => Some (VBool (Nat.leb n1 n2))
+  | LtOp, VNat n1, VNat n2 => Some (VBool (Nat.ltb n1 n2))
+  | EqOp, VNat n1, VNat n2 => Some (VBool (Nat.eqb n1 n2))
+  | EqOp, VBool n1, VBool n2 => Some (VBool (Bool.eqb n1 n2))
+  | _, _, _ => None
   end.
 
-Definition orb (b1 b2 : bool) : bool :=
-  match b1 with
-  | true => true
-  | false => b2
+(* ### Exercise *)
+(*
+You could avoid the partiality in `eval_bin_op` by representing values in a
+dependently typed way, i.e. as values indexed by types. You can do this as an
+exercise in Agda or Coq. In this lecture, we will not pursue this approach,
+because Coq's facilities for programming with dependent types are not as good as
+Agda's (Coq's focus is mostly on proving, whereas Agda's focus is more on
+programming).
+*)
+
+(* ## Substitution *)
+(*
+The next function that we define is substitution, which we will use to define
+the semantics of let expressions. Substitution `subst x w e` replaces variables
+`x` by value `w` in the expression `e`. We define is by structural recursion
+over the expression `e`.
+*)
+Fixpoint subst (x : string) (w : val) (e : expr) : expr :=
+  match e with
+  | EVal v => EVal v
+  | EVar y => if string_dec x y then EVal w else EVar y
+  | ELet y e1 e2 =>
+     if string_dec x y
+     then ELet y (subst x w e1) e2
+     else ELet y (subst x w e1) (subst x w e2)
+  | EOp op e1 e2 => EOp op (subst x w e1) (subst x w e2)
+  | EIf e1 e2 e3 => EIf (subst x w e1) (subst x w e2) (subst x w e3)
   end.
-
 (*
-What makes Coq different from ordinary functional programming languages is that
-we can now prove properties about these operations. For example:
-*)
-Lemma andb_true_l : forall b : bool, andb true b = b.
-Proof.
-  intros b. (* introduce the forall quantifier, and name the variable b *)
-  simpl. (* simplify the goal *)
-  reflexivity. (* both side of the equation are equal *)
-Qed.
-
-(*
-Of course, the above property was rather boring, it followed immediately by
-definition of the function `andb`. Proofs like above, are often called _proof by
-computation_. Let us now consider something slightly more interesting, where we
-will see a new proof technique: proof by _case distinction_.
+Convince yourself that this definition is indeed structurally recursive.
 *)
 
-Lemma andb_true_r : forall b : bool, andb b true = b.
-Proof.
-  intros b.
-  simpl. (* This does not simplify anything, the reason for it is that `andb` is
-  defined by pattern matching on the first argument. *)
-
-  (* We are now going to use a new proof technique: _proof by case distinction_.
-  In this case, since `b` is of type `bool` we know that it is either `true` or
-  `false`. In Coq we can make such a case distinction using the `destruct`
-  tactic. *)
-  destruct b.
-  (* After this, we get two goals: for `true` and for `false. We can use the
-  bullets `-`, `+` and `*` to structure the subproofs for these cases. *)
-  - (* case `b = true` *)
-    simpl.
-    reflexivity.
-  - (* case `b = false` *)
-    simpl.
-    reflexivity.
-Qed.
-
 (*
-Now let us the combination of both proof techniques to prove another result.
-*)
-Lemma andb_comm : forall b1 b2 : bool, andb b1 b2 = andb b2 b1.
-Proof.
-  intros b1 b2.
-  induction b1.
-  - (* true *)
-    simpl.
-    induction b2.
-    + (* true true *)
-      simpl. reflexivity.
-    + (* true false *)
-      simpl. reflexivity.
-  - (* false *)
-    simpl.
-    induction b2.
-    simpl.
-    reflexivity.
-    simpl.
-    simpl.
-Qed.
+Technical note: Note that the definition of substitution becomes significantly
+more complicated when we consider the case where the term that is being
+substituted (here `w`) may contain free variables. In that case, one has to deal
+with _variable capture_. Consider the following example in lambda calculus:
 
-(*
-As we see, the above proof is pretty lengthy and contains a lot of repetition.
-We will now carry out the proof in a shorter and more concise manner.
+  (λ x y, x y) y → (λ y, x y)[x:=y]
 
-First observe that our proofs is composed of a sequence of _tactics_ (like
-`intros`, `simpl`, `destruct` and `reflexivity`), each of those separated by a
-period.  The period executes the tactic, and produces a number of subgoals (or
-zero, for example when using `reflexivity`, which are then shown to the user.
+By substituting naively, the RHS will become `λ y, y y`, which is wrong.
+Instead, one should first-alpha rename, so that substitution results in
+`λ z, y z`.
 
-Apart from periods, tactics in Coq can also be sequenced using the semicolon
-operator:
-
-  tac1; tac2.
-
-The semantics of this kind of sequencing is a bit different than that of
-`tac1. tac2.`: it will apply `tac2` to all subgoals generated by `tac1`, and
-does not explicitly show goals for the intermediate results. Let us see this
-kind of sequencing in action:
+Since we only substitute values (which are closed by definition, as they cannot
+contain variables), we do not have to deal with this problem, but it will
+evidently occur when dealing with richer languages. To that end, one may use
+a different representation of binders, such as De Bruijn indexes.
 *)
 
-Lemma andb_comm_short_proof : forall b1 b2 : bool, andb b1 b2 = andb b2 b1.
-Proof.
-  intros b1 b2.
-  destruct b1; destruct b2; simpl; reflexivity.
-Qed.
-
-Lemma andb_assoc : forall b1 b2 b3 : bool,
-  andb b1 (andb b2 b3) = andb (andb b1 b2) b3.
-Proof.
-  intros b1 b2 b3.
-  destruct b1; simpl; reflexivity.
-(* Question: why do we not need to perform a case analysis on `b2` or `b3`? *)
-Qed.
-
-(* # Exercise *)
 (*
-Prove the following lemmas, first try to prove them using the period as
-sequencing operator, and then try to optimize the proof to use the semicolon.
+The next step is to define the semantics of expressions. We could try to do
+this in a similar way as we have defined the semantics of operators, namely,
+by defining a function:
+
+  eval : expr -> option val
+
+Unfortunately, this does not quite work. The definition below is rejected by
+Coq because it is not structurally recursive.
 *)
-Lemma andb_false_l : forall b : bool, andb false b = false.
+Fail Fixpoint eval (e : expr) : option val :=
+  match e with
+  | EVar x => None
+  | EVal v => Some v
+  | ELet y e1 e2 =>
+     match eval e1 with
+     | Some v => eval (subst y v e2)
+     | None => None
+     end
+  | EOp op e1 e2 =>
+     match eval e1 with
+     | Some v1 =>
+       match eval e2 with
+       | Some v2 => eval_bin_op op v1 v2
+       | None => None
+       end
+     | None => None
+     end
+   | EIf e1 e2 e3 =>
+      match eval e1 with
+      | Some (VBool true) => eval e2
+      | Some (VBool false) => eval e3
+      | _ => None
+      end
+   end.
+(*
+The problem here is that `subst y v e2` is not smaller than `e2`, so Coq
+rejects this definition.
+
+We could circumvent this problem by defining the evaluation function using a
+map that associates variables to values (a _stack_), and look up values in the
+stack when evaluating variables. This is a fun suggestion for a *homework
+exercise* (including proving a correspondence with the big- and small-step
+semantics below), but we will not pursue that direction in this lecture. The
+reason for that is that we will consider while loops in the next part, and then
+evaluation will inevitably not be total.
+*)
+
+(* ## Big-step semantics *)
+(*
+In the lecture, we will explore two different, but commonly used ways of
+defining a semantics:
+
+- Big-step style, by a relation
+
+    big_step : expr -> val -> Prop
+
+  That relates expressions and their values.
+
+- Small-step style, by a relation
+
+    step : expr -> expr -> Prop
+
+  That performs one step of execution, of which we then take the reflexive/
+  transitive closure.
+
+We will formalize both using inductive relations. Let us start with the big-step
+style.
+*)
+Inductive big_step : expr -> val -> Prop :=
+  | Val_big_step v : big_step (EVal v) v
+  | Let_big_step y e1 e2 v1 v2 :
+     big_step e1 v1 ->
+     big_step (subst y v1 e2) v2 ->
+     big_step (ELet y e1 e2) v2
+  | If_big_step_true e1 e2 e3 v :
+     big_step e1 (VBool true) ->
+     big_step e2 v ->
+     big_step (EIf e1 e2 e3) v
+  | If_big_step_false e1 e2 e3 v :
+     big_step e1 (VBool false) ->
+     big_step e3 v ->
+     big_step (EIf e1 e2 e3) v
+  | Op_big_step e1 e2 op v1 v2 v :
+     big_step e1 v1 ->
+     big_step e2 v2 ->
+     eval_bin_op op v1 v2 = Some v ->
+     big_step (EOp op e1 e2) v.
+
+(*
+In the definition of an inductive relation, like the big-step semantics above,
+one should really think the constructors as _inference rules_:
+
+  --------------------- `Val_big_step`
+   big_step (EVal v) v
+
+
+   big_step e1 v1     big_step (subst y v1 e2) v2
+  ------------------------------------------------ `Let_big_step`
+              big_step (ELet y e1 e2) v2
+
+
+   big_step e1 (VBool true)       big_step e2 v
+  ---------------------------------------------- `If_big_step_true`
+           big_step (EIf e1 e2 e3) v
+
+
+   big_step e1 (VBool false)      big_step e3 v
+  ---------------------------------------------- `If_big_step_true`
+           big_step (EIf e1 e2 e3) v
+
+
+   big_step e1 v1    big_step e2 v2    eval_bin_op op v1 v2 = Some v
+  ------------------------------------------------------------------- `Op_big_step`
+                      big_step (EOp op e1 e2) v
+
+*)
+
+(*
+Now let us take a look at the example programs we have seen before to see how we
+can use the inference rules to prove that said programs have a certain value. 
+*)
+Lemma big_step_example1 : big_step example1 (VBool true).
 Proof.
-  intro b; simpl; reflexivity.
+  unfold example1. (* expose the definition of `example1` *)
+  (* At the top-level we have an `EOp`, so the only choice is to use the
+  constructor `Op_big_step`, which corresponds to the inference rule for binary
+  operators:
+
+    Op_big_step e1 e2 op v1 v2 v :
+      big_step e1 v1 ->
+      big_step e2 v2 ->
+      eval_bin_op op v1 v2 = Some v ->
+      big_step (EOp op e1 e2) v.
+
+  As we have seen in the previous lecture, we could use the tactic `apply` to
+  reduce proving our current goal to proving the premises of the above rule.
+  Let us try that:
+  *)
+  Fail apply Op_big_step.
+  (*
+  Unfortunately, this does not quite work, Coq complains that it cannot guess
+  the values `v1` and `v2` (i.e. the resulting values of the sub-expressions).
+  To remedy that problem, we could explicitly specify these values, by using
+  the `with` keyword of the `apply` tactic:
+
+    apply Op_big_step with (v1:=VNat 30) (v2:=VNat 30).
+
+  You should try to carry out the proof this way, but as you will see, it
+  quickly becomes tedious. Instead, we will look at another tactic: `eapply`.
+  *)
+  eapply Op_big_step.
+  (*
+  After executing this tactic, we get goals:
+
+  1. `big_step (EOp PlusOp (EVal (VNat 10)) (EVal (VNat 20))) ?v1`
+  2. `big_step (EVal (VNat 30)) ?v2`
+  3. `eval_bin_op EqOp ?v1 ?v2 = Some (VBool true)`
+
+  What we see here is something new, _existential variables_ (or _evars_ for
+  short) `?v1` and `?v2`. Evars represent holes, that have to be instantiated at
+  a later point while carrying out the proof.
+  *)
+  - (* We use `eapply` again for the nested binary operator. *)
+    eapply Op_big_step.
+    (* After this, we get evars `?v10` and `?v20` for the values of the
+    sub-expressions `EVal (VNat 10)` and `EVal (VNat 20)` *)
+    + eapply Val_big_step. (* By using `Val_big_step, we instantiate `?v10`. *)
+    + eapply Val_big_step. (* By using `Val_big_step, we instantiate `?v20`. *)
+    + (* The goal here is `eval_bin_op PlusOp (VNat 10) (VNat 20) = Some ?v1`.
+      Since `eval_bin_op is a function, we can perform proof by computation,
+      which will evaluate the LHS to `Some (VNat 30)`. *)
+      simpl.
+      (* The goal now becomes `Some (VNat 30) = Some ?v1`. By using the tactic
+      `reflexivity`, `?v1` will be instantiated with `VNat 30`. *)
+      reflexivity.
+  - eapply Val_big_step.
+  - simpl. reflexivity.
 Qed.
 
-Lemma andb_false_r : forall b : bool, andb b false = false.
-Proof. 
-  intro b; induction b; simpl; reflexivity.
+Lemma big_step_example2 : big_step example2 (VBool true).
+Proof.
+  unfold example2.
+  eapply Let_big_step.
+  - eapply Op_big_step.
+    + apply Val_big_step.
+    + apply Val_big_step.
+    + simpl. reflexivity.
+  - (* In our goal we have:
+
+      subst "x" (VNat 30)
+        (ELet "y" (EOp LeOp (EVal (VNat 5)) (EVar "x")) (EVar "y"))
+
+    Yet again, since `subst` is a function, we can proceed by proof by
+    computation. *)
+    simpl.
+    eapply Let_big_step.
+    + eapply Op_big_step.
+      * apply Val_big_step.
+      * apply Val_big_step.
+      * simpl. reflexivity.
+    + simpl. apply Val_big_step.
 Qed.
 
-Lemma andb_diag : forall b, andb b b = b.
-Proof. 
-  intro b.
-  induction b; simpl; reflexivity.
-Qed.
-
-Lemma orb_true_l : forall b : bool, orb true b = true.
+(* ### Exercise *)
+(*
+Prove the following lemmas.
+*)
+Lemma big_step_example3 : big_step example3 (VBool false).
 Proof. Admitted.
 
-Lemma orb_true_r : forall b : bool, orb b true = true.
+Lemma big_step_example4 : big_step example4 (VNat 4).
 Proof. Admitted.
 
-Lemma orb_false_l : forall b : bool, orb false b = b.
+Lemma big_step_example5 : big_step example5 (VNat 1).
 Proof. Admitted.
 
-Lemma orb_false_r : forall b : bool, orb b false = b.
-Proof. Admitted.
-
-Lemma orb_diag : forall b, orb b b = b.
-Proof. Admitted.
-
-Lemma orb_comm : forall b1 b2 : bool, orb b1 b2 = orb b2 b1.
-Proof. Admitted.
-
-Lemma orb_assoc : forall b1 b2 b3 : bool,
-  orb b1 (orb b2 b3) = orb (orb b1 b2) b3.
-Proof.
-  intros b1 b2 b3.
-  induction b1; simpl; reflexivity.
-Qed.
-
-Lemma orb_andb_distr : forall b1 b2 b3,
-  andb b1 (orb b2 b3) = orb (andb b1 b2) (andb b1 b3).
-Proof.
-  intros b1 b2 b3.
-  induction b1; simpl; reflexivity.
-Qed.
+(* ## Automating proofs using `eauto` *)
 (*
-So far we have seen two proof techniques: proof by computation (using the
-`simpl` tactic) and proof by case distinction (using the `destruct` tactic).
-We will now see a new technique: _proof by contradiction_. Before doing that,
-let us take  a look at the way logical negation is defined in Coq:
+As we have seen above, carrying out these proofs are very tedious. In most cases
+(apart from cases for the if construct), there is just one rule that we can
+apply. We will now look into automating this.
 
-  ~P := P -> False
-
-So, as we see here, in order to prove `~P`, we have to prove that under the
-assumption of `P` we can prove `False`, i.e. under the assumption of `P`, we
-can prove _anything_.
+In order to automate these proofs, we will use the `eauto` tactic, which
+performs a "brute force" first, by trying to `eapply` individual lemmas from a
+database of lemmas. It does do this in a depth first fashion, i.e. it will
+backtrack whenever multiple lemmas could be `eapply`ed (for example, in the case
+of the conditional expression if).
 *)
-
-Lemma true_neq_false : true <> false.
-Proof.
-  unfold not. (* unfold the definition of negation, which is called `not`, using
-  the `unfold` tactic. *)
-
-  intros H. (* introduce the assumption `H : true = false`. *)
-
-  (* But what to do next? So far we have only proved equalities, but now we have
-  a contradicting equality as an assumption. The reason that this assumption is
-  contradictory is that both sides of the equality involve different
-  constructors. If we end up in such a situation, we can use the `discriminate`
-  tactic to prove anything (include `False`). *)
-  discriminate.
-Qed.
-
-Lemma andb_true_inv : forall b1 b2,
-  andb b1 b2 = true -> b1 = true /\ b2 = true.
-Proof.
-  intros b1 b2 H.
-  (* Since `andb` is defined by pattern matching on the first argument, we
-  perform a case analysis on `b1`. *)
-  destruct b1.
-  - (* case `b1 = true` *)
-    simpl in H. (* The `simpl` tactic can also be used to simplify hypotheses.
-    We use it to turn `H : andb true b2 = true` into `H : b2 = true`. *)
-    split. (* conjunctions can be introduced using the `split` tactic *)
-    + reflexivity.
-    + assumption. (* This goal precisely matches a hypothesis, so we can use the
-      `assumption` tactic. *)
-  - (* case `b1 = false` *)
-    (* Like in the first case, we proceed by simplifying `H`. *)
-    simpl in H.
-    (* This yields `false = true`, which is contradictory. We can now thus use
-    the `discriminate` tactic to discharge the goal. *)
-    discriminate.
-Qed.
+Create HintDb exec.
+(*
+The command `Create HintDb` creates a _database_ of lemmas named `exec` that can
+be used by `eauto`. As we can see, this database is initially empty.
+*)
+Print HintDb exec.
 
 (*
-Let us take a look at another example, for which we will define the XOR
-operation on Booleans, which is true iff exactly one of the arguments is true.
+In order to make this hint database useful, we add all constructors of the
+inductive relation `big_step` (i.e. all the inference rules of the big-step
+semantics) to the database.
 *)
-Definition xorb (b1 b2 : bool) :  bool :=
-  match b1, b2 with
-  | true, false => true
-  | false, true => true
-  | _, _ => false
-  end.
+Hint Constructors big_step : exec.
+(*
+Now we can see that the hint database is populated.
+*)
+Print HintDb exec.
 
-Lemma xorb_inj_l : forall b1 b2 b3 : bool,
-  xorb b1 b2 = xorb b1 b3 -> b2 = b3.
+(*
+Let us see it in practice.
+*)
+Lemma big_step_example :
+  big_step (EIf (EVal (VBool true)) (EVal (VNat 10)) (EVal (VNat 11))) (VNat 10).
 Proof.
-  intros b1 b2 b3 H.
-  (* Since xor is defined by pattern matching on both arguments, we proceed
-  by making a case distinction on all Boolean variables. *)
-  destruct b1, b2, b3; simpl in H.
-  (* This gives `2^3 = 8`, but as we can see, these can be classified into
-  two kinds:
-  - Trivial goals: `true = true` and `false = false`.
-  - Contradictory goals, where we have either the hypothesis `false = true` or
-    `true = false`.
-  Of course, we could prove each of these goals individually, but that gets
-  pretty boring. So, instead we will make use of of another tactic combinator:
+  eauto with exec. (* We can now invoke `eauto` with the hint database. *)
 
-    tac1 || tac2
+Restart.
+  (* This solved the goal, but we it gives us no clue what just happened. To
+  see what is going on, we can use the `debug` keyword. *)
+  debug eauto with exec.
 
-  This operator will try to run the tactic `tac1` and in case it fails, it will
-  run `tac2` instead.
+  (*
+  1 depth=5 
+  1.1 depth=4 simple apply If_big_step_false
+  1.2 depth=4 simple apply If_big_step_true
+  1.2.1 depth=4 simple apply Val_big_step
+  1.2.1.1 depth=4 simple apply Val_big_step
   *)
 
-Restart. (* Let us start over *)
-
-  intros b1 b2 b3 H.
-  destruct b1, b2, b3; simpl in H; discriminate || reflexivity.
+  (* Note that `eauto` is in fact making use of backtracking, it first tries
+  `If_big_step_false`, and notices that it fails, and in turn uses, after
+  backtracking uses `If_big_step_true`. *)
 Qed.
-
-(* ### Exercises *)
-(* Prove the following lemmas. Note that one can "cheat" by finishing proofs
-with the `Admitted` command. We do this for exercises, and the idea is that
-you finish the proofs. *)
-Lemma xorb_diag_is_true : forall b : bool, xorb b b = b -> b = false.
-Proof. 
-  intros b H.
-  induction b; reflexivity || discriminate.
-Qed.
-
-
-Lemma orb_false_inv : forall b1 b2 : bool,
-  orb b1 b2 = false -> b1 = false /\ b2 = false.
-Proof. 
-  intros b1 b2 H.
-  destruct b1, b2; simpl in H; discriminate || (split; assumption).
-Qed.
-
-Lemma xorb_comm : forall b1 b2, xorb b1 b2 = xorb b2 b1.
-Proof.
-  intros b1 b2.
-  destruct b1, b2; simpl; reflexivity.
-Qed.
-
-Lemma xorb_assoc : forall b1 b2 b3 : bool,
-  xorb b1 (xorb b2 b3) = xorb (xorb b1 b2) b3.
-Proof.
-  intros b1 b2 b3.
-  destruct b1, b2, b3; simpl; reflexivity.
-  
-Qed.
-
-Lemma xorb_true_inv : forall b1 b2 : bool,
-  xorb b1 b2 = true -> b1 <> b2.
-Proof.
-  intros b1 b2 h.
-  destruct b1, b2; simpl in h.
-  - discriminate.
-  - unfold not. intro paradox. discriminate.
-  - unfold not. intro paradox. discriminate.
-  - discriminate.
-  Qed.
-  
-Lemma xorb_false_inv : forall b1 b2 : bool,
-  xorb b1 b2 = false -> b1 = b2.
-Proof. 
-  intros b1 b2 h.
-  destruct b1, b2; simpl in h; discriminate || reflexivity. 
-Qed.
-(* ## Natural numbers *)
-Module nat_defs.
-(*
-Another very commonly used data type is the natural numbers 0, 1, 2, 3, ... Ome
-can define the natural numbers `nat` in Coq as the Peano numerals:
-*) 
-Inductive nat : Type :=
-  | O : nat
-  | S : nat -> nat.
 
 (*
-The type `nat` has two constructors, `O`, which represents the natural number
-`0`, and the constructor `S n`, which represents the natural number `n + 1`.
-Using this data type, we can construct any natural number, for example:
+As we have seen in our manual proofs (e.g. `big_step_example2`), we were not
+just using `eapply`, but we also had to:
 
-  1 = S O
-  2 = S (S O)
-  3 = S (S (S O))
-  4 = S (S (S (S O)))
+- Prove goals of the shape `eval_bin_op op v1 v1 = Some ?v` by computation
+- Simplify substitutions by proof by computations.
 
-And so on. What is different from the type `bool` of Booleans, that we have just
-seen, is that the `nat` is _recursive_: the constructor `S` has an argument of
-type `nat`.
-
-An important feature of recursive inductive types in Coq is that we can define
-functions by structural recursion, for example:
+Using the `Hint Extern` command, we can instruct `eauto` to run tactics when
+the goal matches a certain shape. The number `10` indices the level of
+precedence the hint, where a lower number means that the hint is applied
+earlier.
 *)
+Hint Extern 10 (eval_bin_op _ _ _ = Some _) => simpl; reflexivity : exec.
+Hint Extern 10 (big_step (subst _ _ _) _) => progress simpl : exec.
+Print HintDb exec.
 
-Fixpoint plus (n1 n2 : nat) : nat :=
-  match n1 with
-  | O => n2
-  | S n1' => S (plus n1' n2)
-  end.
-
-(*
-The above function implements addition of Peano natural numbers, simply by
-merging together the `S` constructors.
-
-It is important to note that the function is structurally recursive on the
-argument `n1`, i.e. the size of the argument `n1` reduces in each recursive
-call. For reasons of soundness of the logic, all functions in Coq should be
-total. Since it is undecidable to check whether a function is total, Coq imposes
-this restriction by requiring each recursive function to be structurally
-recursive. The following definitions are thus not allowed:
-*)
-
-Fail Fixpoint foo (n : nat) := S (foo n).
-Fail Fixpoint bar (n : nat) := S (bar (S n)).
-
-(*
-Both of these attempts result in the error:
-
-  Recursive call to foo has principal argument equal to "n" instead of
-  a sub-term of "n".
-
-Indeed, this function would not terminate, try to simplify `foo 0`, for example.
-
-In similar style as we have defined addition, we can define multiplication. Note
-that this function is structurally recursive in its first argument, and thus Coq
-allows it. *)
-Fixpoint mult (n1 n2 : nat) : nat :=
-  match n1 with
-  | O => O
-  | S n1' => plus n2 (mult n1' n2)
-  end.
-End nat_defs.
-
-(*
-Now that we have defined some operations on natural numbers, let us try to see
-whether we can prove some properties about them.
-
-Note that since we closed the module `nat_defs` above, its content is hidden,
-which allows us to use the natural numbers from Coq's instead. For these we have
-the usual notations, like `0`, `1`, `2`, and so on for the literals, and `+`
-and `*` for the addition and multiplication. 
-*)
-
-Lemma plus_0_l : forall n : nat, 0 + n = n.
+Lemma big_step_example1_automated : big_step example1 (VBool true).
 Proof.
-  intros n.
+  unfold example1.
+  debug eauto with exec.
+  (*
+  1 depth=5 
+  1.1 depth=4 simple eapply Op_big_step
+  1.1.1 depth=3 simple eapply Op_big_step
+  1.1.1.1 depth=3 simple apply Val_big_step
+  1.1.1.1.1 depth=3 simple apply Val_big_step
+  1.1.1.1.1.1 depth=3 (*external*) (simpl; reflexivity)
+  1.1.1.1.1.1.1 depth=3 simple apply Val_big_step
+  1.1.1.1.1.1.1.1 depth=3 simple apply @eq_refl
+  *)
+Qed.
+
+Lemma big_step_example2_automated : big_step example2 (VBool true).
+Proof.
+  unfold example2.
+  (* Let us first do this example in a couple of steps, by doing top-level
+  steps by hand. *)
+  eapply Let_big_step.
+  { debug eauto with exec.
+    (*
+    1 depth=5 
+    1.1 depth=4 simple eapply Op_big_step
+    1.1.1 depth=4 simple apply Val_big_step
+    1.1.1.1 depth=4 simple apply Val_big_step
+    1.1.1.1.1 depth=4 (*external*) (simpl; reflexivity)
+    *) }
   simpl.
-  reflexivity.
+  eapply Let_big_step.
+  { eauto with exec. }
+  eauto with exec.
+Restart.
+  (* Now we do it all in one go. *)
+  unfold example2.
+  debug eauto with exec. (* This did not do anything. The problem is that we
+  reached the maximal search depth, which is 5 by default.
+
+  1 depth=5 
+  1.1 depth=4 simple eapply Let_big_step
+  1.1.1 depth=3 simple eapply Op_big_step
+  1.1.1.1 depth=3 simple apply Val_big_step
+  1.1.1.1.1 depth=3 simple apply Val_big_step
+  1.1.1.1.1.1 depth=3 (*external*) (simpl; reflexivity)
+  1.1.1.1.1.1.1 depth=2 (*external*) (progress simpl)
+  1.1.1.1.1.1.1.1 depth=1 simple eapply Let_big_step
+  1.1.1.1.1.1.1.1.1 depth=0 simple eapply Op_big_step
+  *)
+  debug eauto 10 with exec.
+  (*
+  1 depth=10 
+  1.1 depth=9 simple eapply Let_big_step
+  1.1.1 depth=8 simple eapply Op_big_step
+  1.1.1.1 depth=8 simple apply Val_big_step
+  1.1.1.1.1 depth=8 simple apply Val_big_step
+  1.1.1.1.1.1 depth=8 (*external*) (simpl; reflexivity)
+  1.1.1.1.1.1.1 depth=7 (*external*) (progress simpl)
+  1.1.1.1.1.1.1.1 depth=6 simple eapply Let_big_step
+  1.1.1.1.1.1.1.1.1 depth=5 simple eapply Op_big_step
+  1.1.1.1.1.1.1.1.1.1 depth=5 simple apply Val_big_step
+  1.1.1.1.1.1.1.1.1.1.1 depth=5 simple apply Val_big_step
+  1.1.1.1.1.1.1.1.1.1.1.1 depth=5 (*external*) (simpl; reflexivity)
+  1.1.1.1.1.1.1.1.1.1.1.1.1 depth=4 (*external*) (progress simpl)
+  1.1.1.1.1.1.1.1.1.1.1.1.1.1 depth=4 simple apply Val_big_step
+  *)
 Qed.
 
+Lemma big_step_example3_automated : big_step example3 (VBool false).
+Proof. Admitted.
+
+Lemma big_step_example4_automated : big_step example4 (VNat 4).
+Proof. Admitted.
+
+Lemma big_step_example5_automated : big_step example5 (VNat 1).
+Proof. Admitted.
+
+(* ## Determinism of the big-step semantics *)
 (*
-This proof was simple: since `plus` is defined by recursion on the first
-argument, we can just prove the lemma by computation. Now let us try the version
-with 0 for the second argument.
+The idea of the big-step semantics `big_step e v` is that it associates to
+expressions their value. We will now establish that this value is in fact
+unique, i.e. that the big-step semantics is _deterministic_.
 *)
-
-Lemma plus_0_r : forall n : nat, n + 0 = n.
+Lemma big_step_deterministic e v1 v2 :
+  big_step e v1 ->
+  big_step e v2 ->
+  v1 = v2.
 Proof.
-  intros n.
-  simpl. (* Does not do anything, there is no constructor in match position *)
-  
-  (* We could try to proceed by case distinction on n, which is done using
-  the destruct tactic. The syntax `as [|n']` is used to name the argument of
-  the constructor `S`. *)
-  destruct n as [|n'].
-  - simpl. reflexivity. (* So good so far. *)
-  - simpl. (* Now we end up with `S (n' + 0) = S n'`, which did not make the
-    situation much better. We quite clearly need something more here... *)
+  intros Hstep1.
+  revert v2. (* We have to generalize the induction hypothesis, because `v2`
+  will differ each time we need the induction hypothesis. *)
 
-Restart.
-  intros n.
+  (* Since we have defined the big-step semantics using an inductive type, we
+  can perform induction over the derivation. We can do this using the
+  `induction` tactic. Before doing this, it is worth taking a look at the
+  induction scheme for `big_step` *)
+  Check big_step_ind.
+  (* Formatted in a nicer way:
 
-  (* Perform proof by induction. *)
-  induction n as [|n' IH].
-  - simpl. reflexivity.
-  - simpl.
-    rewrite IH. (* replaces the LHS of `IH : n' + 0 = n` with the RHS. *)
+    (forall v, P (EVal v) v) ->
 
-    (* Now we have the same goal as before, but with the additional hypothesis
+    (forall y e1 e2 v1 v2,
+       big_step e1 v1 ->
+       P e1 v1 ->
+       big_step (subst y v1 e2) v2 ->
+       P (subst y v1 e2) v2 ->
+       P (ELet y e1 e2) v2) ->
 
-      IH : n' + 0 = n'
+    (forall e1 e2 e3 v,
+       big_step e1 (VBool true) ->
+       P e1 (VBool true) ->
+       big_step e2 v ->
+       P e2 v ->
+       P (EIf e1 e2 e3) v)
 
-    That is to say, we now that the property holds for the smaller natural
-    number `n'`. Thus gives us enough information to finish the proof. *)
+    (forall e1 e2 e3 v,
+       big_step e1 (VBool false) ->
+       P e1 (VBool false) ->
+       big_step e3 v ->
+       P e3 v ->
+       P (EIf e1 e2 e3) v)
+
+    (forall e1 e2 op v1 v2 v,
+       big_step e1 v1 ->
+       P e1 v1 ->
+       big_step e2 v2 ->
+       P e2 v2 ->
+       eval_bin_op op v1 v2 = Some v ->
+       P (EOp op e1 e2) v)
+   ----------------------------------------------------    
+    forall e v, big_step e v -> P e v
+  *)
+  induction Hstep1.
+  - (* Case for values *)
+    intros v' Hstep2.
+    (* Now we need a new tactic. Let us take a look at the hypotheses:
+
+       Hstep2 : big_step (EVal v) v'
+
+    By looking at the constructors of `big_step`, we know that the only way
+    how we can prove `big_step (EVal v) v'` is by means of the constructor
+    `Val_big_step`, which means that `v'` should be `v`. We use the `inv` tactic
+    to obtain that information.
+
+    (Note the close correspondence between dependent pattern matching in
+    Agda (for example, on `Vec (S n)` where we know it is in fact a cons) and
+    inversion in Coq. *)
+    inv Hstep2.
     reflexivity.
+  - (* Case for let *)
+    intros v' Hstep2. inv Hstep2.
+    assert (v1 = v0).
+    { apply IHHstep1_1. assumption. }
+    subst v0.
+    apply IHHstep1_2. assumption.
+  - (* case for if-true *)
+    intros v' Hstep2. inv Hstep2.
+    + apply IHHstep1_2. assumption.
+    + assert (VBool true = VBool false).
+      { apply IHHstep1_1. assumption. }
+      discriminate.
+  - (* case for if-false *)
+    intros v' Hstep2. inv Hstep2.
+    + assert (VBool false = VBool true).
+      { apply IHHstep1_1. assumption. }
+      discriminate.
+    + apply IHHstep1_2. assumption.
+  - (* case for op *)
+    intros v' Hstep2. inv Hstep2.
+    assert (v1 = v0).
+    { apply IHHstep1_1. assumption. }
+    subst v0.
+    assert (v2 = v3).
+    { apply IHHstep1_2. assumption. }
+    subst v3.
+    rewrite H in H6. injection H6 as H6. assumption.
 Qed.
 
-(*
-In summary, in the above we have seen two new techniques:
+(* ### Exercise (for experts) *)
+(* Try to use Coq's tactic language to automate the above proof. *)
 
-- _Proof by induction_ : using the tactic `induction n as [|n IH]` we can
-  perform induction on a natural number `n`. It will produce two subgoals, one
-  for the base case, and one for the inductive case. The induction hypothesis
-  will be called `IH`.
-- _Proof by rewriting_ : using the tactic `rewrite H` we can substitute an
-  equality `H : x = y` into the goal. 
+(* ## Small-step semantics *)
+(*
+We will now give a small-step semantics for our little language.
+
+First first define a head reduction relation:
+*)
+Inductive head_step : expr -> expr -> Prop :=
+  | Let_headstep y e2 v1 :
+     head_step (ELet y (EVal v1) e2) (subst y v1 e2)
+  | If_headstep_true e2 e3 :
+     head_step (EIf (EVal (VBool true)) e2 e3) e2
+  | If_headstep_false e2 e3 :
+     head_step (EIf (EVal (VBool false)) e2 e3) e3
+  | Op_headstep op v1 v2 v :
+     eval_bin_op op v1 v2 = Some v ->
+     head_step (EOp op (EVal v1) (EVal v2)) (EVal v).
+
+(*
+The next step is to lift head reduction to whole terms, by allowing redexes
+to be reduced at any evaluation position, instead of just at the head position.
+We define this lifting by means of _evaluation contexts_:
+
+  E := □ | let x := E in e2 | E `op` e2 | e1 `op` E | if E then e2 else e3
+
+Evaluation contexts should be seen as expressions a hole `□`. By means of the
+function `fill : ctx -> expr -> expr`, which fills an expression in the hole
+of an evaluation context, we can now lift head reduction to whole expressions:
+
+         head_step e1 e2
+  ------------------------------
+   step (fill E e1) (fill E e2) 
+
+Note that holes only appear at a call-by-value evaluation positions, an in
+particular this means that we do not have the following evaluation contexts:
+
+  let x := e1 in E
+  if e1 then E else e2
+  if e1 then e2 else e3
+
+After all, in `let x := e1 in e2`, the expression `e1` should be evaluated
+entirely before `e2`, and in `if e1 then e2 else e3`, the expression `e1` should
+be evaluated entirely before evaluating either `e2` or `e3`.
+
+In Coq, we formalize evaluation contexts in two stages. First we define
+_evaluation context items_:
+
+  E := let x := □ in e2 | □ `op` e2 | e1 `op` □ | if □ then e2 else e3
+
+And then define evaluation contexts as lists of evaluation contexts.
+*)
+Inductive ctx_item :=
+  | LetCtx : string -> expr -> ctx_item
+  | OpCtxL : bin_op -> expr -> ctx_item
+  | OpCtxR : bin_op -> val -> ctx_item
+  | IfCtx : expr -> expr -> ctx_item.
+
+Notation ctx := (list ctx_item).
+
+(*
+We first define a function for putting an expression in the hole of an
+evaluation context item, and then lift said function to evaluation contexts.
+*)
+Definition fill_item (E : ctx_item) (e : expr) : expr :=
+  match E with
+  | LetCtx s e2 => ELet s e e2
+  | OpCtxL op e2 => EOp op e e2
+  | OpCtxR op v1 => EOp op (EVal v1) e
+  | IfCtx e2 e3 => EIf e e2 e3
+  end.
+
+Fixpoint fill (E : ctx) (e : expr) : expr :=
+  match E with
+  | nil => e
+  | E1 :: E2 => fill_item E1 (fill E2 e)
+  end.
+
+Inductive step : expr -> expr -> Prop :=
+  | do_step E e1 e2 :
+     head_step e1 e2 ->
+     step (fill E e1) (fill E e2).
+
+(*
+Finally, we define the transitive/reflexive closure of the reduction relation.
+ *)
+Inductive steps : expr -> expr -> Prop :=
+  | steps_refl e :
+     steps e e
+  | steps_step e1 e2 e3 :
+     step e1 e2 ->
+     steps e2 e3 ->
+     steps e1 e3.
+
+(* ## Correspondence between big-step and small-step semantics *)
+(*
+Now that we have defined two different styles of semantics for our little
+language, we are going to show that these are the same. Formally speaking,
+this means we will show:
+
+  steps e (EVal v) <-> big_step e v
+
+This will be expressed by the lemmas:
+
+1. steps_val_big_step : forall e v,
+     steps e (EVal v) -> big_step e v
+
+2. big_step_steps_val : forall e v,
+     big_step e v -> steps e (EVal v)
 *)
 
-Lemma plus_S_r : forall n1 n2, n1 + S n2 = S (n1 + n2).
+(* ### Direction 1 *)
+(*
+We will prove our final result:
+
+  steps e (EVal v) -> big_step e v
+
+in several steps.
+
+a. head_step_big_step :
+     head_step e1 e2 -> big_step e2 v -> big_step e1 v
+b. step_big_step :
+     step e1 e2 -> big_step e2 v -> big_step e1 v
+c. steps_big_step :
+     steps e1 e2 -> big_step e2 v -> big_step e1 v
+d. steps_val_big_step :
+     steps e (EVal v) -> big_step e v.
+
+So, in words, we first show that the big-step semantics is preserved by head
+reduction, then by whole program reduction, and finally by multiple steps
+of program reduction. In the progress of proving that (b) follows from (a), we
+have to establish various properties about the way evaluation contexts interact
+with the big-step semantics.
+*)
+Lemma head_step_big_step e1 e2 v :
+  head_step e1 e2 ->
+  big_step e2 v ->
+  big_step e1 v.
 Proof.
-  intros n1 n2.
-  induction n1 as [|n1 IH].
-  - simpl. reflexivity.
-  - simpl. rewrite IH. reflexivity.
-
-Restart.
-
-(*
-Instead of `rewrite`, we will now demonstrate another tactic: `f_equal`, which
-makes use of the fact that `p = q` implies `S p = S q`.
-*)
-
-  intros n1 n2.
-  induction n1 as [|n1 IH].
-  - simpl. reflexivity.
-  - simpl.
-    f_equal.
+  intros Hhead Hbig.
+  destruct Hhead. (* head reduction is not a recursive inductive datatype, so
+  we perform case-analysis on the derivation *)
+  - (* case let *)
+    eapply Let_big_step. eapply Val_big_step. assumption.
+  - (* case if-true *)
+    eapply If_big_step_true. eapply Val_big_step. assumption.
+  - (* case if-false *)
+    eapply If_big_step_false. eapply Val_big_step. assumption.
+  - (* case op *)
+    inv Hbig.
+    eapply Op_big_step.
+    eapply Val_big_step.
+    eapply Val_big_step.
     assumption.
 Qed.
 
 (*
-Think carefully on which argument we should do induction.
+As we have just seen, the above proof contains a lot of repetition. Each case
+basically follows the same pattern:
+
+1. Perform inversion on hypotheses `big_step (EVal v1) v2` to obtain that `v1`
+   and `v2` are in fact the same.
+2. Apply the rules of the big-step semantics.
+
+We have already seen how to automate step (1), namely using the eauto tactic.
+For step (2), we  write a custom tactic `inv_big_step_vals` that repeatedly
+checks whether there is a hypothesis `big_step (EVal v1) v2`, and if so,
+performs inversion on it. 
 *)
-Lemma plus_assoc : forall n1 n2 n3 : nat,
-  n1 + (n2 + n3) = (n1 + n2) + n3.
-Proof.
-  intros n1 n2 n3.
-  induction n1 as [|n1 IH].
-  - simpl. reflexivity.
-  - simpl. f_equal. assumption.
-Qed.
-
-(*
-In the below, we will see that we can reuse lemmas that we have proved before.
-This is important, as otherwise proofs become quickly unmanageable.
-*)
-Lemma plus_comm : forall n1 n2 : nat, n1 + n2 = n2 + n1.
-Proof.
-  intros n1 n2.
-  induction n1 as [|n1 IH].
-  - simpl.
-    rewrite plus_0_r. (* The goal `n2 = n2 + 0` is an instance of the lemma
-    `plus_0_r` that we proved before. We can use the `rewrite` tactic not just
-    with hypotheses, but also with lemmas. *)
-    reflexivity.
-  - simpl.
-    rewrite plus_S_r. (* In this case, we make use of the lemma `plus_S_r` that
-    we just proved. *)
-    rewrite IH. reflexivity.
-Qed.
-
-(*
-Now that we have seen some proofs by induction, the `induction` tactic may seem
-like a good opportunity to prove any lemma. However, that is not always a good
-idea. As the lemma that we consider next will show, reuse of lemmas, instead of
-blindly performing induction, is very important. The lemma below can be proven
-simply by making use of the properties we have proven so far: associativity and
-commutativity of addition.
-*) 
-Lemma plus_rearrange : forall n m p q : nat,
-  (n + m) + p + q = (m + n) + (p + q).
-Proof.
-  intros n m p q.
-  (* The situation here becomes a bit tricky: if we would just write
-  `rewrite plus_comm` it will trigger the rewrite at some arbitrary position in
-  the goal. More precisely, since `plus_comm` is university quantified:
-
-    plus_comm : forall n1 n2 : nat, n1 + n2 = n2 + n1
-
-  It fits any occurrence of plus in the goal. To work around that, we first
-  specialize the lemma, and then rewrite. This is done by partially applying the
-  lemma, as shown below. *)
-  rewrite (plus_comm n).
-
-  (* For associativity we have the same problem, so we perform the same trick. *)
-  rewrite (plus_assoc (m + n)).
-
-  reflexivity.
-Qed.
-
-(*
-To convince yourself, you could give it a try to prove the lemma above by
-induction, and you will see that it gets very difficult.
-*)
-
-(*
-In order to practice some more with proof by induction, we will now define the
-function `beq_nat : nat -> nat -> bool` that computes whether two natural
-numbers are equal.
-
-Note that this function is very different from the equality `=`, which is a
-statement in logic/mathematics, and not a computable function. (The type of
-`n1 = n2` is `Prop`, Coq's type of propositions, whereas the type of
-`beq_nat n1 n2` is `bool`. We will prove:
-
-  n1 = n2 <-> beq_nat n1 n2 = true
-*)
-Fixpoint beq_nat (n1 n2 : nat) : bool :=
-  match n1, n2 with
-  | O, O => true
-  | S n1', S n2' => beq_nat n1' n2'
-  | _, _ => false
+Tactic Notation "inv_big_step_vals" :=
+  repeat
+  match goal with
+  | H : big_step (EVal _) _ |- _ => inv H
   end.
 
 (*
-For proving the left to right direction, we first introduce a helper lemma.
+To keep things understandable, we create hint databases that contain just the
+constructors of `big_step` and `head_step` respectively.
 *)
-Lemma beq_nat_refl : forall n : nat, beq_nat n n = true.
+Create HintDb big_step.
+Hint Constructors big_step : big_step.
+Create HintDb head_step.
+Hint Constructors head_step : head_step.
+
+Lemma head_step_big_step_automated e1 e2 v :
+  head_step e1 e2 ->
+  big_step e2 v ->
+  big_step e1 v.
 Proof.
-  intros n.
-  induction n as [|n IH].
-  - simpl. reflexivity.
-  - simpl. assumption.
+  intros Hhead Hbig.
+  destruct Hhead; inv_big_step_vals; eauto with big_step.
 Qed.
 
-Lemma eq_beq_nat : forall n1 n2, n1 = n2 -> beq_nat n1 n2 = true.
-Proof.
-  intros n1 n2 H.
-  rewrite H.
-  rewrite beq_nat_refl.
-  reflexivity.
-Qed.
-
+(* #### Exercise *)
 (*
-The right to left direction will be a but more involved, as we will see.
+Prove the lemmas below. If you feel confident, try to make use of the tactics
+for automation we have seen so far. Before starting to write any Coq, carefully
+think how you would do the proof on paper! You have to use a variety of proof
+techniques:
+
+- Induction on evaluation contexts (i.e. lists of evaluation context items).
+- Case analysis on evaluation context items.
+- Inversion on the big-step semantics.
+
+Also, make sure to reuse the lemmas that you have already proven. 
 *)
-Lemma beq_nat_eq : forall n1 n2, beq_nat n1 n2 = true -> n1 = n2.
+Lemma big_step_fill_item E e v v' :
+  big_step e v' ->
+  big_step (fill_item E (EVal v')) v ->
+  big_step (fill_item E e) v.
+Proof. Admitted.
+
+Lemma big_step_fill_item_inv E e v :
+  big_step (fill_item E e) v ->
+  exists v', big_step e v' /\ big_step (fill_item E (EVal v')) v.
+Proof. Admitted.
+
+Lemma big_step_fill E e v v' :
+  big_step e v' ->
+  big_step (fill E (EVal v')) v ->
+  big_step (fill E e) v.
 Proof.
-  intros n1 n2 H.
-  induction n1 as [|n1 IH].
-  - simpl in H. destruct n2 as [|n2].
-    + reflexivity.
-    + discriminate.
-  - simpl in H. destruct n2 as [|n2].
-    + discriminate.
-    + (* Now we have to prove `S n1 = S n2`, but our induction hypothesis
-
-        IH : beq_nat n1 (S n2) = true -> n1 = S n2
-
-      Does not really help; it is too weak. If we look at the definition of
-      `beq_nat` we see that `n2` also decreases in each recursive call. In our
-      proof, we however fixed `n2` before doing the induction, and to that end,
-      the induction hypothesis is too specific.  *)
-
-Restart.
-
-  intros n1 n2 H.
-  revert n2 H. (* We fix this problem by generalizing over `n2` and `H` before
-  performing the induction. As we will see, that will give a stronger induction
-  hypothesis that applies to any `n2`. Generalization is done using Coq's
-  `revert` tactic. *)
-  induction n1 as [|n1 IH].
-  - intros n2 H.
-    simpl in H. destruct n2 as [|n2].
-    + reflexivity.
-    + discriminate.
-  - intros n2 H.
-    simpl in H. destruct n2 as [|n2].
-    + discriminate.
-    + (* Now we see that the induction hypothesis is:
-
-         IH : forall n2 : nat, beq_nat n1 n2 = true -> n1 = n2
-
-      This suffices to prove the goal. *)
-      f_equal. apply IH. assumption.
+  (* This proof is given to give you inspiration for the other proofs. *)
+  revert v.
+  induction E as [|E E' IH]; intros v Hbig1 Hbig2; simpl in *.
+  { inv_big_step_vals. assumption. }
+  apply big_step_fill_item_inv in Hbig2. destruct Hbig2 as (v''&?&?).
+  eapply big_step_fill_item.
+  + apply IH. eassumption. eassumption.
+  + eassumption.
 Qed.
 
+Lemma big_step_fill_inv E e v :
+  big_step (fill E e) v ->
+  exists v', big_step e v' /\ big_step (fill E (EVal v')) v.
+Proof. Admitted.
+
+Lemma step_big_step e1 e2 v :
+  step e1 e2 ->
+  big_step e2 v ->
+  big_step e1 v.
+Proof. Admitted.
+
+Lemma steps_big_step e1 e2 v :
+  steps e1 e2 ->
+  big_step e2 v ->
+  big_step e1 v.
+Proof. Admitted.
+
+Lemma steps_val_big_step e v :
+  steps e (EVal v) ->
+  big_step e v.
+Proof. Admitted.
+
+(* ### Direction 2 *)
 (*
-The technique of generalizing the goal before performing induction is called
-_generalizing the induction hypothesis_. It is often needed.
+We will prove our final result:
 
-In the following lemma, we demonstrate Coq's `injection` tactic, which
-simplifies a hypothesis using injectivity of constructors. *)
-Lemma plus_inj_l : forall n1 n2 n3 : nat,
-  n1 + n2 = n1 + n3 -> n2 = n3.
+  big_step e v -> steps e (EVal v)
+
+As for the previous direction, there are a bunch of helper lemmas that will
+help you prove the final result. *)
+Lemma steps_trans e1 e2 e3 :
+  steps e1 e2 ->
+  steps e2 e3 ->
+  steps e1 e3.
+Proof. Admitted.
+
+Lemma head_step_step e1 e2 :
+  head_step e1 e2 ->
+  step e1 e2.
 Proof.
-  intros n1 n2 n3 H. induction n1 as [|n1 IH].
-  - simpl in H.
-    assumption.
-  - simpl in H.
-    apply IH.
-    injection H as H. (* The `injection` tactic applies the fact that
-    constructors of inductive data types are injective. For the case of natural
-    numbers that means:
+  intros.
+  (* Here we cannot just apply the constructor `do_step`. To do that, the goal
+  should be of the shape:
 
-      S p = S q -> p = q
+    step (fill E e1) (fill E e2)
 
-    *)
-    assumption.
+  However, we now that `fill [] e` computes to `e` by the definition of `fill`.
+  We use the `change` tactic to replace a term by another term that is equal up
+  to computation (definitionally equal). *)
+  change e1 with (fill [] e1).
+  change e2 with (fill [] e2).
+  (* Now the goal is of the right shape. *)
+  apply do_step.
+  assumption.
 Qed.
 
-(* ### Exercise (easy to moderate) *)
+Lemma step_fill_item E e1 e2 :
+  step e1 e2 ->
+  step (fill_item E e1) (fill_item E e2).
+Proof.
+  (* Hint: here you need to perform case analysis on `step e1 e2`, and then use
+  the `change` tactic again to turn the goal into the right shape to use the
+  constructor `do_step`. *) 
+Admitted.
+
+Lemma steps_fill_item E e1 e2 :
+  steps e1 e2 ->
+  steps (fill_item E e1) (fill_item E e2).
+Proof.
+Admitted.
+
+Lemma big_step_steps_val e v :
+  big_step e v ->
+  steps e (EVal v).
+Proof.
+  intros Hbig. induction Hbig.
+  - apply steps_refl.
+  - (* Below, I show how to handle one case. You should finish the remaining
+    cases. *)
+    change (ELet y e1 e2) with (fill_item (LetCtx y e2) e1).
+    eapply steps_trans.
+    + apply steps_fill_item. eassumption.
+    + simpl. eapply steps_step.
+      * eapply head_step_step. eauto with head_step.
+      * eassumption.
+  -
+Admitted.
+End stateless_language.
+
+(* # A stateful mini ML-like language *)
 (*
-Prove the lemmas below.  For each of the lemmas carefully take into account:
-- Can you derive it from results you have proven already?
-- If not, do you have to perform induction? If so, on which variable?
-- Do you need to generalize the induction hypothesis?
-*)
-Lemma mult_0_l : forall n,
-  0 * n = 0.
-Proof.
-  intros n.
-  simpl.
-  reflexivity.
-Qed.
+We will now extend our arithmetic expression language with while loops and
+mutable state, which brings it close to an ML-like language without functions.
+The syntax of our mini-ML like language is:
 
-Lemma mult_0_r : forall n,
-  n * 0 = 0.
-Proof.
+Values:        v ::= b | n | ()
+Operators:    op ::= + | - | <= | < | ==
+Expressions:   e ::= x
+                   | v
+                   | let x := e1 in e2
+                   | e1 ; e2
+                   | e1 `op` e2
+                   | if e1 then e2 else e3
+                   | while e1 { e2 }
+                   | alloc e
+                   | free e
+                   | !e
+                   | e1 := e2
 
-  intros n.
-  induction n as [|n ih].
-  - simpl. reflexivity.
-  - simpl. assumption.
-Qed.
+As we see, there are some new constructs:
 
-Lemma plus_swap : forall n1 n2 n3 : nat,
-  n1 + (n2 + n3) = n2 + (n1 + n3).
-Proof. 
-  intros n1 n2 n3.
-  induction n1 as [|n1 ih].
-  - simpl. reflexivity.
-  - simpl. rewrite ih. rewrite plus_S_r. reflexivity.
-Qed.
+- Sequencing of expressions (e1 ; e2)
+- While loops (while e1 { e2 }).
+- Allocation of a new reference (`alloc e`, which yields a new location in
+  memory whose is value is given by the expression `e`).
+- Deallocation of a reference (`free e`, which deallocates a location in memory
+  that is given by the expression `e`).
+- Loading from memory (`! e`, which loads a value from the location given by the
+  expression `e`).
+- Storing in memory (`e1 := e2`, which stores the value given by `e2` at the
+  location given by `e1`).
 
-Lemma mult_S_r : forall n1 n2 : nat,
-  n1 * S n2 = n1 + n1 * n2.
-Proof.
-  intros n1 n2.
-  induction n1 as [|n1 ih].
-  - simpl. reflexivity.
-  - simpl. rewrite ih. rewrite plus_swap. reflexivity.
-Qed.
+Note that since all our expressions need to have a return value, we have added
+the unit value `()` to deal with expressions that we just execute for their
+side-effects.
 
-Lemma mult_comm : forall n1 n2 : nat,
-  n1 * n2 = n2 * n1.
-Proof. 
-  intros n1 n2.
-  induction n1 as [|n1 ih].
-  - simpl. induction n2 as [|n2 ih'].
-    + simpl. reflexivity.
-    + simpl. assumption.
-  - simpl. rewrite ih. rewrite mult_S_r.
-
-
-Lemma plus_mult_distr_l : forall n1 n2 n3 : nat,
-  (n1 + n2) * n3 = n1 * n3 + n2 * n3.
-Proof.
-  intros n1 n2 n3.
-  induction n1 as [|n1 ih].
-  - simpl. reflexivity.
-  - simpl. rewrite ih. rewrite plus_assoc. reflexivity.
-Qed.
-
-Lemma mult_assoc : forall n1 n2 n3 : nat,
-  n1 * (n2 * n3) = (n1 * n2) * n3.
-Proof.
-  intros n1 n2 n3.
-  induction n1 as [|n1 ih].
-  - simpl. reflexivity.
-  - simpl. rewrite ih. rewrite plus_mult_distr_l. reflexivity.
-
-Lemma double_inj : forall n m,
-  n + n = m + m ->
-  n = m.
-Proof.
-  intros n.
-  induction n as [|n ih].
-  - intros m h.
-    induction m as [|m ih'].
-    + reflexivity.
-    + simpl in h. discriminate.
-  - intros m h.
-    induction m as [|m].
-    + simpl in h. discriminate.
-    + simpl in h. injection h as h.
-      rewrite plus_S_r in h. rewrite plus_S_r in h.
-      injection h as h. specialize (ih m). apply ih in h.
-      f_equal. assumption.
-
-
+Extend our arithmetic expression language with mutable state is relatively
+straightforward: we need a type `mem` to represent memories, and then we keep
+track of in the big- and small-step operational semantics. The types of these
+semantics then become:
   
+  big_step : expr -> val -> Prop
+  step : expr -> mem -> expr -> mem -> Prop
 
+And of course, we have to add corresponding reduction rules for each new
+construct.
 
+In order to represent memories, we will use our type of finite maps that we
+have developed in the previous lecture. Using that type, we can represent
+memories as:
 
-Lemma plus_inj_r : forall n1 n2 n3 : nat,
-  n1 + n3 = n2 + n3 -> n1 = n2.
-Proof. 
-  intros n1 n2 n3 h.
-  induction n3 as [|n3 ih].
-  + rewrite plus_0_r in h.
-    rewrite plus_0_r in h.
-    assumption.
-  + rewrite plus_S_r in h.
-    rewrite plus_S_r in h.
-    injection h as h.
-    apply ih in h.
-    assumption.
+  mem := map val
 
-(* ### Exercise (easy) *)
-(*
-Recall the mathematical definition of the factorial function:
+In order to give the semantics of the memory operations (alloc, free, load,
+store) we can simply use the operations on finite maps that we already
+defined (`minsert`, `mdelete`, `mlookup`, and `minsert`, respectively). There is
+just one additional operation that we need, when allocating a new reference, we
+need to use a location that is not already in use. So, before formalizing our
+ML-like language, we will first define the operation:
 
-    factorial(0) = 1
-    factorial(n) = n * factorial(n - 1)     (if n > 0)
+  mfresh : map A -> nat
 
-Translate this into a corresponding function in Coq.
+that yields an unused index in the map.
 *)
 
-Fixpoint factorial (n : nat) : nat :=
-  match n with
-  | 0 => 1
-  | S n' => n * factorial n' 
-  end.
+(* ## Picking fresh locations in a map *)
 (*
-Fixpoint factorial (n : nat) : nat :=
-  ...
+As usual, we first define the operation on raw maps, and then lift it to maps
+(raw maps bundled with a proof of well-formedness). 
 *)
+Definition mfresh_raw {A} (m : map_raw A) : nat := length m.
 
-(* ### Exercise (moderate) *)
-(*
-A small island in the middle of the Pacific Ocean has coins of just two values:
-
-- 3 cents
-- 5 cents
-
-It is claimed that using any amount of 8 cents or more can be composed of a
-combination of these 3 cent and 5 cent coins. Prove this. 
-
-Hint: in this proof you may use the `omega` tactic, which solves goals involving
-propositional logic, the operations `=` and `+`, and multiplication by constant
-natural numbers.
-*)
-
-Lemma coin_problem : forall x, exists y z, x + 8 = 3 * y + 5 * z.
-Proof.
-  intro x.
-  induction x as [|x ih].
-  + exists 1. exists 1. simpl. reflexivity.
-  + Admitted.
-End lecture.
-
-(* # Advanced data structures *)
-(* ## Finite maps *)
-(*
-In the last part of this course we will look into a way of representing finite
-maps (aka finite partial functions) from natural numbers to elements of some
-type `A`. This means that we want to define a type `map A` and the following
-operations:
-
-  mlookup : map A -> nat -> option A
-  mempty : map A
-  msingleton : nat -> A -> map A
-  minsert : nat -> A -> map A -> map A
-  mdelete : nat -> map A -> map A
-
-These operations should enjoy their expected properties, for example:
-
-  mlookup (minsert i y m) i = Some y
-  i <> j -> mlookup (minsert i y m) j = mlookup m j
-
-The naive way of encoding finite maps is by means of association lists, i.e. as
-lists of key value lists. In Coq that would be:
-*)
-
-Definition assoc_list (A : Type) : Type := list (prod nat A).
-
-Print prod.
-(*
-Inductive prod (A B : Type) : Type :=
-  | pair : A -> B -> A * B
-*)
-
-Print list.
-(*
-Inductive list (A : Type) : Type :=
-  | nil : list A
-  | cons : A -> list A -> list A
-*)
-
-(*
-However, this encoding is not ideal, and suffers from some problems. First of
-all, the same finite maps can be represented by different association lists.
-For example, the map `0 |-> a, 3 |-> b` can be represented by the following
-association lists:
-
-  [(0,a); (3,b)]
-  [(3,b); (0,a)]
-
-This situation is not desired, since it means that the following property does
-_not_ hold:
-
-  m1 = m2 <-> forall i, mlookup m1 i = mlookup m2 i
-
-To see that it does not hold, take
-
-  m1 = [(0,a); (3,b)]
-  m2 = [(3,b); (0,a)]
-
-Now it is clear to see that the property does not hold.
-
-Similarly, another issue of the representation through association lists is that
-the same key could appear multiple times in the same association list, e.g.:
-
-  [(0,a); (0,b)]
-
-When implementing `mlookup` we have to make an arbitrary choice with key/value
-pair to pick. Also, other operations get a bit tricky on how to consider
-duplicate key pairs.
-
-So, a natural question comes up:
-
-  Can we represent finite maps in a different way so that these problems
-  fo not occur?
-
-As we will see, the answer is "yes". To get there, let's first take a look at
-another attempt:
-*)
-
-Definition map_raw (A : Type) := list (option A).
-
-Print option.
-(*
-Inductive option (A : Type) : Type :=
-  | Some : A -> option A
-  | None : option A
-*)
-
-(*
-The idea of this representation is that at each index `i` of the list we have
-`Some a` iff `i |-> a` is in the map, and use `None`s for unused positions. For
-example, we represent the map `0 |-> a, 3 |-> b` as 
-
-  [Some a; None; None; Some b]
-
-With the above representation of finite maps in hand, we can now define the
-lookup function as:
-*)
-
-Fixpoint mlookup_raw {A} (m : map_raw A) (i : nat) : option A :=
-  match m with
-  | nil => None
-  | x :: m =>
-     match i with
-     | 0 => x
-     | S i => mlookup_raw m i
-     end
-  end.
-
-(*
-This new representation solves the problem of duplicate keys value pairs, simply
-because at each position in the list, there can be at most one value. However,
-this representation still suffers from the problem that there are duplicate
-representations of the same map. For example, the map in the previous example
-could also be represented by:
-
-  [Some a; None; None; Some b; None]
-  [Some a; None; None; Some b; None; None]
-
-So, in order to have the property
-
-  m1 = m2 <-> forall i, mlookup m1 i = mlookup m2 i
-
-We have to make sure that there is no sequence of `None`s at the end of the
-list. We will do this by considering the "subtype of `raw_map`s that do not have
-a sequence of `None`s at the end". But how to represent subtypes in Coq? As
-we will see below, we do this as follows:
-
-1. Define a predicate that carved out the _well-formed_ `raw_map`s, i.e. those
-   that do not have a sequence of `None`s at the end.
-2. Construct the subtype of _well-formed` `raw_map`s.
-
-Before going into details about the second point, we will first define the
-well-formedness predicate. For reasons that will become apparent later, we do
-this by defining a Boolean function `map_wf`:
-*)
-
-Definition is_Some {A} (x : option A) : bool :=
-  match x with
-  | Some _ => true
-  | None => false
-  end.
-
-Fixpoint map_wf {A} (may_be_nil : bool) (m : map_raw A) : bool :=
-  match m with
-  | [] => may_be_nil
-  | x :: m => map_wf (is_Some x) m
-  end.
-
-(*
-We use the parameter `may_be_nil` to keep track of whether the previous element
-was a `Some`. Only if that is the case, the list may be `nil`.
-
-Now, to define our actual `map` type, we want to consider the elements of type
-`map_raw` that are well-formed. We achieve this by defining a dependently typed
-record that consists of:
-
-- The raw map `m : map_raw`
-- A proof that the raw map `m` is well-formed.
-
-The second becomes part is a bit more subtle. We have defined the well-formedness
-predicate as a Boolean function, whereas proofs in Coq as of type `Prop`. To
-make things work, we thus need to turn the Boolean into a `Prop`. We do this by
-defining a function `is_True : bool -> Prop`:
-*)
-
-Coercion is_True (b : bool) : Prop :=
-  if b then True else False.
-
-(*
-The keyword `Coercion` is used to instruct Coq to automatically insert the
-function whenever it sees a `bool` but needs a `Prop`. We can now for example
-write things like:
-*)
-
-Check (true : Prop).
-Check (true /\ 0 = 0).
-
-(*
-When we instruct Coq to display coercions (by setting `Set Printing Coercions`),
-we see that the above terms actually expand to:
-
-  is_True true : Prop
-  is_True true /\ 0 = 0
-
-With the coercion `is_True` in hand, we can now define the dependently typed
-record as follows:
-*)
-
-Record map (A : Type) := make_map {
-  map_car : map_raw A;
-  map_prf : map_wf true map_car
-}.
-
-(*
-Now let is take a look at the record `map` that we have just defined. As part of
-this, we get a constructor:
-
-  make_map : forall (A : Type) (m : map_raw A), map_wf true m -> map A
-
-And two projections to get out the raw map and the proof, respectively:
-
-  map_car : forall (A : Type), map A -> map_raw A
-  map_prf : forall (A : Type) (m : map A), map_wf true (map_car A m)
-
-The following commands make sure that the type argument `A` becomes implicit,
-so that we do not have to write it explicitly all the time.
-*)
-Arguments make_map {_} _ _.
-Arguments map_car {_} _.
-Arguments map_prf {_} _.
-
-(*
-With the projection `map_car` in hands, it is straightforward to lift the
-function `mlookup_raw` to the record `map` of raw maps together with a proof of
-well-formedness: we just project out the raw map:
-*)
-Definition mlookup {A} (m : map A) (i : nat) : option A :=
-  mlookup_raw (map_car m) i.
-
-(*
-Now that we have the type of maps defined, and the basic operation for looking
-up elements in place, we will start by proving the desired property:
-
-  (forall i, mlookup m1 i = mlookup m2 i) -> m1 = m2
-
-We will do this in two stages:
-
-1. Lemma `map_raw_eq`: Prove that for any `m1 m2 : raw_map A` we have
-
-     map_wf b m1 ->
-     map_wf b m2 ->
-     (forall i, mlookup_raw m1 i = mlookup_raw m2 i) ->
-     m1 = m2
-
-2. Lemma `map_eq`: Show that the desired property follows from (1).
-*)
-
-(*
-Stage 1: We prove the property by induction on one of the raw maps, followed by
-a case distinction on the other. We can pick either `m1` or `m2` for the
-induction, because the choice does not really matter by symmetry, after all.
-
-For the base cases, we will first prove the helper lemma `map_wf_nil` as below.
-This lemma states that whenever we have a well-formed raw map, and looking up
-always yields `None`, then the raw map should be nil. This property is proven
-by induction.
-*)
-Lemma map_wf_nil {A} (b : bool) (m : map_raw A) :
-  map_wf b m ->
-  (forall i, mlookup_raw m i = None) ->
-  m = [].
-Proof.
-  revert b. induction m as [|x m2 IH]; intros b Hwf Hlookup; simpl in *.
-  - reflexivity.
-  - assert (m2 = []).
-    { apply (IH (is_Some x)). apply Hwf. intros i. apply (Hlookup (S i)). }
-    subst m2.
-    assert (x = None).
-    { apply (Hlookup 0). }
-    subst x.
-    simpl in *.
-    destruct Hwf.
-Qed.
-
-(*
-We can now prove the actual property for raw maps. Remember to use the above
-helper lemma in the base cases.
-*)
-Lemma map_raw_eq {A} (b : bool) (m1 m2 : map_raw A) :
-  map_wf b m1 ->
-  map_wf b m2 ->
-  (forall i, mlookup_raw m1 i = mlookup_raw m2 i) -> m1 = m2.
-Proof.
-  revert b m2.
-  induction m1 as [|x m1 IH]; intros b m2 Hm1 Hm2 Hlookup.
-  - symmetry. apply (map_wf_nil b).
-    + apply Hm2.
-    + simpl in *. intros i. symmetry. apply Hlookup.
-  - destruct m2 as [|y m2].
-    + apply (map_wf_nil b). assumption. assumption.
-    + assert (x = y).
-      { apply (Hlookup 0). }
-      subst. simpl in *. f_equal.
-      apply (IH (is_Some y)). assumption. assumption.
-      intros i. apply (Hlookup (S i)).
-Qed.
-
-(*
-Stage 2: We will prove the property for maps, that is:
-
-  (forall i, mlookup m1 i = mlookup m2 i) -> m1 = m2
-
-Unfortunately, even while having the helping lemma `map_raw_eq` that we just
-proved at hand, this direction still does not follow immediately. The problem
-is that maps are essentially tuples
-
-  m : raw_map A
-  H : is_True (map_car true m)
-
-Now if we want to establish that two maps `(m1,H1)` and `(m2,H2)` are equal, we
-do not just have to show that the underlying raw maps `m1` and `m2` are equal
-(which we obtain from `map_raw_eq`), but we also have to show that the proofs
-`H1` and `H2` are equal. So, concretely, after using the equality that `m1` and
-`m2` are equal, we have to show that given:
-
-  m1 : map_raw A
-  H1 : is_True (map_car true m1)
-  H2 : is_True (map_car true m1)
-
-We have to show `H1 = H2`. Intuitively, this may sound obvious, but it is not.
-As you will see in the Homotopy Type Theory lectures, the property below, which
-is typically refered to as _proof irrelevance_ does in general not hold:
-
-  forall (P : Prop) (H1 H2 : P), H1 = H2
-
-Fortunately, in our case we are lucky, we are not considering an arbitrary
-proposition `P`, but something of the shape `is_True b`. Due to that, we can
-actually prove this property by making a case analysis on `b`:
-*)
-Lemma is_True_proof_irrel (b : bool) (H1 H2 : is_True b) :
-  H1 = H2.
-Proof.
-  destruct b; simpl in *.
-  - (* Now we `H1, H2 : True`. By a simple case analysis, we can show that
-    each proof of `True` is equal to `I`, the constructor of `True`. By
-    Curry-Howard, think of `True` as the unit type, and indeed, the only
-    constructor of the unit type is `tt`. *)
-    destruct H1. destruct H2. reflexivity.
-  - (* Now we have `H1, H2 : False`. This is a contradiction. *)
-    destruct H1.
-Qed.
-
-(*
-The desired property, but written as a bi-implication so that we also have the
-opposite direction. Note that the opposite direction of is trivial: we rewrite
-the equality and use reflexivity.
-*)
-Lemma map_eq {A} (m1 m2 : map A) :
-  m1 = m2 <-> forall i, mlookup m1 i = mlookup m2 i.
-Proof.
-  split.
-  - intros ->. reflexivity.
-  - unfold mlookup. intros Hlookup.
-    destruct m1 as [m1 H1], m2 as [m2 H2]; simpl in *.
-    assert (m1 = m2).
-    { apply (map_raw_eq true). apply H1. apply H2. apply Hlookup. }
-    subst m2.
-    f_equal. apply is_True_proof_irrel.
-Qed.
-
-(*
-So, the take home message is that when we want to represent subtypes and have
-sensible results for equality we should:
-
-1. Define a Boolean-valued predicate that expresses well-formedness.
-2. Define a dependently typed record that includes a proof of well-formedness.
-
-The use of a Boolean-valued well-formedness predicate is crucial: it ensures that
-any any two proofs of the well-formedness property are equal, as we have proven
-in the lemma `is_True_proof_irrel`. *)
-
-(*
-## Operations on maps
-
-We will now proceed to define all of the map operations, namely:
-
-  mempty : map A
-  msingleton : nat -> A -> map A
-  minsert : nat -> A -> map A -> map A
-  mdelete : nat -> map A -> map A
-
-The definitions of all of these operations proceeds in the following way:
-
-1. Define the operation on raw maps.
-2. Prove that the operation on raw maps preserves well-formedness.
-3. Lift the operation from raw maps to maps.
-4. Prove the desired properties involving `mlookup_raw` on raw maps.
-5. Lift those properties to a version involving `mlookup`.
-*)
-
-(* ## The empty map *)
-
-Definition mempty_raw {A} : map_raw A := nil.
-
-Lemma mempty_raw_wf {A} : map_wf true (@mempty_raw A).
-Proof. simpl. constructor. Qed.
-
-Definition mempty {A} : map A := make_map mempty_raw mempty_raw_wf.
-
-Lemma mempty_raw_lookup {A} (i : nat) : mlookup_raw (@mempty_raw A) i = None.
-Proof. simpl. reflexivity. Qed.
-
-Lemma mempty_lookup {A} (i : nat) : mlookup (@mempty A) i = None.
-Proof. unfold mlookup, mempty, map_car. apply mempty_raw_lookup. Qed.
-
-(* ## The singleton operation *)
-
-Fixpoint msingleton_raw {A} (i : nat) (y : A) : map_raw A :=
-  match i with
-  | 0 => [Some y]
-  | S i => None :: msingleton_raw i y
-  end.
+Definition mfresh {A} (m : map A) : nat := mfresh_raw (map_car m).
 
 (* ### Exercise *)
 (*
-Prove the properties of `msingleton` below.
+Prove the following lemmas.
 *)
-Lemma msingleton_raw_wf {A} (b : bool) (i : nat) (y : A) :
-  map_wf b (msingleton_raw i y).
+Definition mfresh_lookup_raw {A} (m : map_raw A) :
+  mlookup_raw m (mfresh_raw m) = None.
 Proof. Admitted.
 
-Definition msingleton {A} (i : nat) (x : A) : map A :=
-  make_map (msingleton_raw i x) (msingleton_raw_wf true i x).
-
-Lemma msingleton_raw_lookup {A} (i : nat) (y : A) :
-  mlookup_raw (msingleton_raw i y) i = Some y.
+Definition mfresh_lookup {A} (m : map A) : mlookup m (mfresh m) = None.
 Proof. Admitted.
 
-Lemma msingleton_raw_lookup_ne {A} (i j : nat) (y : A) :
-  i <> j -> mlookup_raw (msingleton_raw i y) j = None.
-Proof. Admitted.
+Module Export stateful_language.
+(* ## Syntax *)
+(*
+We extend the syntax of our arithmetic language by adding constructors for the
+new constructs.
+*)
+Inductive val : Type :=
+  | VUnit : val (* new *)
+  | VBool : bool -> val
+  | VNat : nat -> val
+  | VLoc : nat -> val (* new *).
 
-Lemma msingleton_lookup {A} (i : nat) (y : A) :
-  mlookup (msingleton i y) i = Some y.
-Proof. Admitted.
+Inductive bin_op : Type :=
+  | PlusOp | MinusOp | LeOp | LtOp | EqOp.
 
-Lemma msingleton_lookup_ne {A} (i j : nat) (y : A) :
-  i <> j -> mlookup (msingleton i y) j = None.
-Proof. Admitted.
+Inductive expr : Type :=
+  | EVar : string -> expr
+  | EVal : val -> expr
+  | ELet : string -> expr -> expr -> expr
+  | ESeq : expr -> expr -> expr (* new *)
+  | EOp : bin_op -> expr -> expr -> expr
+  | EIf : expr -> expr -> expr -> expr
+  | EWhile : expr -> expr -> expr (* new *)
+  | EAlloc : expr -> expr (* new *)
+  | EFree : expr -> expr (* new *)
+  | ELoad : expr -> expr (* new *)
+  | EStore : expr -> expr -> expr (* new *).
 
-(* ## The insert operation *)
+(*
+Let us take a look at an example:
 
-Fixpoint minsert_raw {A} (i : nat) (y : A) (m : map_raw A) {struct m} : map_raw A :=
-  match m with
-  | [] => msingleton_raw i y
-  | x :: m =>
-    match i with
-    | 0 => Some y :: m
-    | S i => x :: minsert_raw i y m
-    end
+  div n1 n2 :=
+    let x := alloc n1 in
+    let y := alloc 0 in
+    while (n1 <= x) {
+      x := !x - n2;
+      y := !y + 1
+    };
+    !y
+*)
+Definition div (n1 n2 : nat) : expr :=
+  ELet "x" (EAlloc (EVal (VNat n1)))
+    (ELet "y" (EAlloc (EVal (VNat 0)))
+      (ESeq
+        (EWhile (EOp LeOp (EVal (VNat n2)) (ELoad (EVar "x")))
+          (ESeq
+            (EStore (EVar "x") (EOp MinusOp (ELoad (EVar "x")) ((EVal (VNat n2)))))
+            (EStore (EVar "y") (EOp PlusOp (ELoad (EVar "y")) ((EVal (VNat 1)))))
+          )
+        )
+        (ELoad (EVar "y")))).
+
+(* ## Semantics of operators *)
+Definition eval_bin_op (op : bin_op) (v1 v2 : val) : option val :=
+  match op, v1, v2 with
+  | PlusOp, VNat n1, VNat n2 => Some (VNat (n1 + n2))
+  | MinusOp, VNat n1, VNat n2 => Some (VNat (n1 - n2))
+  | LeOp, VNat n1, VNat n2 => Some (VBool (Nat.leb n1 n2))
+  | LtOp, VNat n1, VNat n2 => Some (VBool (Nat.ltb n1 n2))
+  | EqOp, VNat n1, VNat n2 => Some (VBool (Nat.eqb n1 n2))
+  | EqOp, VBool n1, VBool n2 => Some (VBool (Bool.eqb n1 n2))
+  | EqOp, VUnit, VUnit => Some (VBool true) (* new *)
+  | EqOp, VLoc l1, VLoc l2 => Some (VBool (Nat.eqb l1 l2)) (* new *) 
+  | _, _, _ => None
   end.
+
+(* ## Substitution *)
+Fixpoint subst (x : string) (w : val) (e : expr) : expr :=
+  match e with
+  | EVal v => EVal v
+  | EVar y => if string_dec x y then EVal w else EVar y
+  | ELet y e1 e2 =>
+     if string_dec x y
+     then ELet y (subst x w e1) e2
+     else ELet y (subst x w e1) (subst x w e2)
+  | ESeq e1 e2 => ESeq (subst x w e1) (subst x w e2)
+  | EOp op e1 e2 => EOp op (subst x w e1) (subst x w e2)
+  | EIf e1 e2 e3 => EIf (subst x w e1) (subst x w e2) (subst x w e3)
+  | EWhile e1 e2 => EWhile (subst x w e1) (subst x w e2)
+  | EAlloc e => EAlloc (subst x w e)
+  | EFree e => EFree (subst x w e)
+  | ELoad e => ELoad (subst x w e)
+  | EStore e1 e2 => EStore (subst x w e1) (subst x w e2)
+  end.
+
+(* ## Big-step semantics *)
+Notation mem := (map val).
+
+Inductive big_step : expr -> mem -> val -> mem -> Prop :=
+  | Val_big_step m v : big_step (EVal v) m v m
+  | Let_big_step m1 m2 m3 y e1 e2 v1 v2 :
+     big_step e1 m1 v1 m2 ->
+     big_step (subst y v1 e2) m2 v2 m3 ->
+     big_step (ELet y e1 e2) m1 v2 m3
+  | Seq_big_step m1 m2 m3 e1 e2 v1 v2 :
+     big_step e1 m1 v1 m2 ->
+     big_step e2 m2 v2 m3 ->
+     big_step (ESeq e1 e2) m1 v2 m3
+  | If_big_step_true m1 m2 m3 e1 e2 e3 v :
+     big_step e1 m1 (VBool true) m2 ->
+     big_step e2 m2 v m3 ->
+     big_step (EIf e1 e2 e3) m1 v m3
+  | If_big_step_false m1 m2 m3 e1 e2 e3 v :
+     big_step e1 m1 (VBool false) m2 ->
+     big_step e3 m2 v m3 ->
+     big_step (EIf e1 e2 e3) m1 v m3
+  | While_big_step_true m1 m2 m3 m4 e1 e2 v1 v2 :
+     big_step e1 m1 (VBool true) m2 ->
+     big_step e2 m2 v1 m3 ->
+     big_step (EWhile e1 e2) m3 v2 m4 ->
+     big_step (EWhile e1 e2) m1 v2 m4
+  | While_big_step_false m1 m2 e1 e2 :
+     big_step e1 m1 (VBool false) m2 ->
+     big_step (EWhile e1 e2) m1 VUnit m2
+  | Op_big_step m1 m2 m3 e1 e2 op v1 v2 v :
+     big_step e1 m1 v1 m2 ->
+     big_step e2 m2 v2 m3 ->
+     eval_bin_op op v1 v2 = Some v ->
+     big_step (EOp op e1 e2) m1 v m3
+  | Alloc_big_step m1 m2 e v :
+     big_step e m1 v m2 ->
+     big_step (EAlloc e) m1 (VLoc (mfresh m2)) (minsert (mfresh m2) v m2)
+  | Free_big_step m1 m2 e l :
+     big_step e m1 (VLoc l) m2 ->
+     mlookup m2 l <> None -> (* make sure that we only deallocate locations that exist *)
+     big_step (EFree e) m1 VUnit (mdelete l m2)
+  | Load_big_step m1 m2 e l v :
+     big_step e m1 (VLoc l) m2 ->
+     mlookup m2 l = Some v ->
+     big_step (ELoad e) m1 v m2
+  | Store_big_step m1 m2 m3 e1 e2 l v :
+     big_step e1 m1 (VLoc l) m2 ->
+     big_step e2 m2 v m3 ->
+     mlookup m3 l <> None -> (* make sure that we only assign to locations that exist *)
+     big_step (EStore e1 e2) m1 VUnit (minsert l v m3).
+
+(* ### Example *)
+(*
+We add some additional hints to the hint database to deal with memories.
+*)
+Create HintDb exec.
+Hint Constructors big_step : exec.
+Hint Extern 10 (eval_bin_op _ _ _ = Some _) => simpl; reflexivity : exec.
+Hint Extern 10 (big_step (subst _ _ _) _ _ _) => progress simpl : exec.
+Hint Extern 10 (mlookup _ _ = Some _) => reflexivity : exec.
+Hint Extern 10 (mlookup _ _ <> None) => discriminate : exec.
+
+Lemma big_step_div_15_5 : exists m,
+  big_step (div 15 5) mempty (VNat 3) m.
+Proof.
+  eexists. unfold div.
+  debug eauto 100 with exec.
+Qed.
+
+Lemma big_step_div_21_5 : exists m,
+  big_step (div 21 5) mempty (VNat 4) m.
+Proof.
+  eexists. unfold div.
+  debug eauto 100 with exec.
+Qed.
+
+Lemma big_step_div_14_3 : exists m,
+  big_step (div 14 3) mempty (VNat 4) m.
+Proof.
+  eexists. unfold div.
+  debug eauto 100 with exec.
+Qed.
 
 (* ### Exercise *)
 (*
-Prove the properties of `minsert` below.
+Prove the following lemma.
 *)
-Lemma minsert_raw_wf {A} (b : bool) (i : nat) (y : A) (m : map_raw A) :
-  map_wf b m -> map_wf b (minsert_raw i y m).
+Lemma big_step_deterministic e1 m1 e2 m2 e2' m2' :
+  big_step e1 m1 e2 m2 ->
+  big_step e1 m1 e2' m2' ->
+  e2 = e2' /\ m2 = m2'.
 Proof. Admitted.
 
-Definition minsert {A} (i : nat) (x : A) (m : map A) : map A :=
-  match m with
-  | make_map m Hm => make_map (minsert_raw i x m) (minsert_raw_wf true i x m Hm)
+(* ## Small-step semantics *)
+Inductive head_step : expr -> mem -> expr -> mem -> Prop :=
+  | Let_headstep m y e2 v1 :
+     head_step (ELet y (EVal v1) e2) m (subst y v1 e2) m
+  | Seq_headstep m e2 v1 :
+     head_step (ESeq (EVal v1) e2) m e2 m
+  | If_headstep_true m e2 e3 :
+     head_step (EIf (EVal (VBool true)) e2 e3) m e2 m
+  | If_headstep_false m e2 e3 :
+     head_step (EIf (EVal (VBool false)) e2 e3) m e3 m
+  | While_headstep m e1 e2 :
+     head_step (EWhile e1 e2) m (EIf e1 (ESeq e2 (EWhile e1 e2)) (EVal VUnit)) m
+  | Op_headstep m op v1 v2 v :
+     eval_bin_op op v1 v2 = Some v ->
+     head_step (EOp op (EVal v1) (EVal v2)) m (EVal v) m
+  | Alloc_headstep m v :
+     head_step (EAlloc (EVal v)) m (EVal (VLoc (mfresh m))) (minsert (mfresh m) v m)
+  | Free_headstep m l :
+     mlookup m l <> None ->
+     head_step (EFree (EVal (VLoc l))) m (EVal VUnit) (mdelete l m)
+  | Load_headstep m l v :
+     mlookup m l = Some v ->
+     head_step (ELoad (EVal (VLoc l))) m (EVal v) m
+  | Store_headstep m l v :
+     mlookup m l <> None ->
+     head_step (EStore (EVal (VLoc l)) (EVal v)) m (EVal VUnit) (minsert l v m).
+
+Inductive ctx_item : Type :=
+  | LetCtx : string -> expr -> ctx_item
+  | SeqCtx : expr -> ctx_item
+  | OpCtxL : bin_op -> expr -> ctx_item
+  | OpCtxR : bin_op -> val -> ctx_item
+  | IfCtx : expr -> expr -> ctx_item
+  | AllocCtx : ctx_item
+  | FreeCtx : ctx_item
+  | LoadCtx : ctx_item
+  | StoreCtxL : expr -> ctx_item
+  | StoreCtxR : val -> ctx_item.
+
+Notation ctx := (list ctx_item).
+
+Definition fill_item (E : ctx_item) (e : expr) : expr :=
+  match E with
+  | LetCtx s e2 => ELet s e e2
+  | SeqCtx e2 => ESeq e e2
+  | OpCtxL op e2 => EOp op e e2
+  | OpCtxR op v1 => EOp op (EVal v1) e
+  | IfCtx e2 e3 => EIf e e2 e3
+  | AllocCtx => EAlloc e
+  | FreeCtx => EFree e
+  | LoadCtx => ELoad e
+  | StoreCtxL e2 => EStore e e2
+  | StoreCtxR v1 => EStore (EVal v1) e
   end.
 
-Lemma minsert_raw_lookup {A} (i : nat) (y : A) (m : map_raw A) :
-  mlookup_raw (minsert_raw i y m) i = Some y.
-Proof. Admitted.
-
-Lemma minsert_raw_lookup_ne {A} (i j : nat) (y : A) (m : map_raw A) :
-  i <> j ->
-  mlookup_raw (minsert_raw i y m) j = mlookup_raw m j.
-Proof. Admitted.
-
-Lemma minsert_lookup {A} (i : nat) (y : A) (m : map A) :
-  mlookup (minsert i y m) i = Some y.
-Proof. Admitted.
-
-Lemma minsert_lookup_ne {A} (i j : nat) (y : A) (m : map A) :
-  i <> j ->
-  mlookup (minsert i y m) j = mlookup m j.
-Proof. Admitted.
-
-(* ## The delete operation *)
-Fixpoint mcons {A} (x : option A) (m : map_raw A) : map_raw A :=
-  match x with
-  | None =>
-     match m with
-     | [] => []
-     | _ => None :: m
-     end
-  | _ => x :: m
+Fixpoint fill (E : ctx) (e : expr) : expr :=
+  match E with
+  | nil => e
+  | E1 :: E2 => fill_item E1 (fill E2 e)
   end.
 
-Fixpoint mdelete_raw {A} (i : nat) (m : map_raw A) {struct m} : map_raw A :=
-  match m with
-  | [] => []
-  | x :: m =>
-    match i with
-    | 0 => mcons None m
-    | S i => mcons x (mdelete_raw i m)
-    end
+Inductive step : expr -> mem -> expr -> mem -> Prop :=
+  | do_step E m1 m2 e1 e2 :
+     head_step e1 m1 e2 m2 ->
+     step (fill E e1) m1 (fill E e2) m2.
+
+Inductive steps : expr -> mem -> expr -> mem -> Prop :=
+  | steps_refl m e :
+     steps e m e m
+  | steps_step m1 m2 m3 e1 e2 e3 :
+     step e1 m1 e2 m2 ->
+     steps e2 m2 e3 m3 ->
+     steps e1 m1 e3 m3.
+
+(* ## Correspondence between big-step and small-step semantics *)
+
+Tactic Notation "inv_big_step_vals" :=
+  repeat
+  match goal with
+  | H : big_step (EVal _) _ _ _ |- _ => inv H
   end.
 
-Lemma mcons_lookup_0 {A} (x : option A) (m : map_raw A) :
-  mlookup_raw (mcons x m) 0 = x.
-Proof. destruct x, m; reflexivity. Qed.
-
-Lemma mcons_lookup_S {A} (x : option A) (m : map_raw A) (i : nat) :
-  mlookup_raw (mcons x m) (S i) = mlookup_raw m i.
-Proof. destruct x, m; reflexivity. Qed.
-
-Arguments mcons : simpl never.
-(* The `Arguments`command with the `simpl never` flag makes sure that `simpl`
-does not unfold `mcons`. This will make some proofs easier, as we rather rewrite
-using the lemmas `mcons_lookup_0` and `mcons_lookup_S` to avoid matches to
-appear in the goal. *)
-
-Lemma mcons_wf {A} (b : bool) (x : option A) (m : map_raw A) :
-  map_wf b m -> map_wf b (mcons x m).
-Proof. destruct m, x; simpl; auto. Qed.
+Create HintDb big_step.
+Hint Constructors big_step : big_step.
+Create HintDb head_step.
+Hint Constructors head_step : head_step.
 
 (* ### Exercise *)
 (*
-Prove the properties of `mdelete` below.
+Prove the following lemmas. If you have automated your proofs for the arithmetic
+language, it should be relatively easy to adapt your proofs.
 *)
-Lemma mdelete_raw_wf {A} (b : bool) (i : nat) (m : map_raw A) :
-  map_wf b m -> map_wf true (mdelete_raw i m).
+Lemma head_step_big_step m1 m2 m3 e1 e2 v :
+  head_step e1 m1 e2 m2 ->
+  big_step e2 m2 v m3 ->
+  big_step e1 m1 v m3.
 Proof. Admitted.
 
-Definition mdelete {A} (i : nat) (m : map A) : map A :=
-  match m with
-  | make_map m Hm => make_map (mdelete_raw i m) (mdelete_raw_wf true i m Hm)
-  end.
-
-Lemma mdelete_raw_lookup {A} (i : nat) (m : map_raw A) :
-  mlookup_raw (mdelete_raw i m) i = None.
+Lemma big_step_fill_item m1 m2 m3 E e v v' :
+  big_step e m1 v' m2 ->
+  big_step (fill_item E (EVal v')) m2 v m3 ->
+  big_step (fill_item E e) m1 v m3.
 Proof. Admitted.
 
-Lemma mdelete_raw_lookup_ne {A} (i j : nat) (m : map_raw A) :
-  i <> j ->
-  mlookup_raw (mdelete_raw i m) j = mlookup_raw m j.
+Lemma big_step_fill_item_inv m1 m3 E e v :
+  big_step (fill_item E e) m1 v m3 ->
+  exists v' m2, big_step e m1 v' m2 /\ big_step (fill_item E (EVal v')) m2 v m3.
 Proof. Admitted.
 
-Lemma mdelete_lookup {A} (i : nat) (m : map A) :
-  mlookup (mdelete i m) i = None.
+Lemma big_step_fill m1 m2 m3 E e v v' :
+  big_step e m1 v' m2 ->
+  big_step (fill E (EVal v')) m2 v m3 ->
+  big_step (fill E e) m1 v m3.
 Proof. Admitted.
 
-Lemma mdelete_lookup_ne {A} (i j : nat) (m : map A) :
-  i <> j ->
-  mlookup (mdelete i m) j = mlookup m j.
+Lemma big_step_fill_inv m1 m3 E e v :
+  big_step (fill E e) m1 v m3 ->
+  exists v' m2, big_step e m1 v' m2 /\ big_step (fill E (EVal v')) m2 v m3.
 Proof. Admitted.
+
+Lemma step_big_step m1 m2 m3 e1 e2 v :
+  step e1 m1 e2 m2 ->
+  big_step e2 m2 v m3 ->
+  big_step e1 m1 v m3.
+Proof. Admitted.
+
+Lemma steps_big_step m1 m2 m3 e1 e2 v :
+  steps e1 m1 e2 m2 ->
+  big_step e2 m2 v m3 ->
+  big_step e1 m1 v m3.
+Proof. Admitted.
+
+Lemma steps_val_big_step m1 m2 e v :
+  steps e m1 (EVal v) m2 ->
+  big_step e m1 v m2.
+Proof. Admitted.
+
+Lemma steps_trans m1 m2 m3 e1 e2 e3 :
+  steps e1 m1 e2 m2 ->
+  steps e2 m2 e3 m3 ->
+  steps e1 m1 e3 m3.
+Proof. Admitted.
+
+Lemma head_step_step m1 m2 e1 e2 :
+  head_step e1 m1 e2 m2 ->
+  step e1 m1 e2 m2.
+Proof. Admitted.
+
+Lemma step_fill_item m1 m2 E e1 e2 :
+  step e1 m1 e2 m2 ->
+  step (fill_item E e1) m1 (fill_item E e2) m2.
+Proof. Admitted.
+
+Lemma steps_fill_item m1 m2 E e1 e2 :
+  steps e1 m1 e2 m2 ->
+  steps (fill_item E e1) m1 (fill_item E e2) m2.
+Proof. Admitted.
+
+Lemma big_step_steps_val m1 m2 e v :
+  big_step e m1 v m2 ->
+  steps e m1 (EVal v) m2.
+Proof. Admitted.
+End stateful_language.
+
+(*
+We want to use the ML-like language in the next lecture. By exporting, we
+make the definitions in the module `stateful_language` available at the
+top-level namespace.
+*)
+Export stateful_language.
