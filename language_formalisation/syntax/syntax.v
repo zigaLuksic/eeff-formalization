@@ -1,4 +1,4 @@
-Require Import Bool ZArith Int String.
+Require Export Bool ZArith Int String.
 
 Definition var_id := string.
 Definition op_id := string.
@@ -92,8 +92,8 @@ Fixpoint vsubst (σ : var_id * val) (v : val) :=
   | Var id => if id == s_id then s_v else v
   | Unit => v
   | Int n => v
-  | Inl v' => vsubst σ v'
-  | Inr v' => vsubst σ v'
+  | Inl v' => Inl (vsubst σ v')
+  | Inr v' => Inr (vsubst σ v')
   | Pair v1 v2 => Pair (vsubst σ v1) (vsubst σ v2)
   | Fun id c => if id == s_id then v else Fun id (csubst σ c) 
   | Handler ret_id c h => 
