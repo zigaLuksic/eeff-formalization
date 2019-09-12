@@ -12,14 +12,14 @@
 		c\subs{x \subswith v_1, y \subswith v_2} } 
 	
 	\inferrule*[]	{	}
-	{ \match{\inleft{v}} \inleft{x} \mapsto c_1 \vsep \inright{x} \mapsto c_2
+	{ \match{\inleft{v}} \sumcases{x}{c_l}{x}{c_r} 
 			\smallstep
-		c_1\subs{x \subswith v} }
+		c_l\subs{x \subswith v} }
 
 	\inferrule*[]	{	}
-	{ \match{\inright{v}} \inleft{x} \mapsto c_1 \vsep \inright{x} \mapsto c_2
+	{ \match{\inright{v}} \sumcases{x}{c_l}{x}{c_r}
 			\smallstep
-		c_2\subs{x \subswith v} }
+		c_r\subs{x \subswith v} }
 	
 	% FUNCTION
 	\inferrule*[]	{	}

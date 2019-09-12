@@ -29,3 +29,19 @@ with eqs : Type :=
 | EqsNil : eqs
 | EqsCons : ctx -> tmpl_ctx -> tmpl -> tmpl -> eqs
 .
+
+Fixpoint get_vtype (ctx : ctx) (id : var_id) : option vtype :=
+  match ctx with
+  | CtxNil => None
+  | CtxCons id' tyA ctx' =>
+      if eq_id id id' then Some tyA
+      else get_vtype ctx' id
+  end.
+
+Fixpoint get_op_type (sig : sig) (id : op_id) : option (vtype * vtype) :=
+  match sig with
+  | SigNil => None
+  | SigCons id' tyA tyB sig' =>
+      if eq_id id id' then Some (tyA, tyB)
+      else get_op_type sig' id
+  end.
