@@ -1,5 +1,5 @@
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Require Import term_syntax type_syntax.
+Require Import syntax.
 
 Inductive vtysynth : ctx -> val -> vtype -> Type :=
 | SynthUnit ctx : vtysynth ctx Unit TyUnit 
@@ -11,6 +11,9 @@ Inductive vtysynth : ctx -> val -> vtype -> Type :=
     vtysynth ctx v1 tyA ->
     vtysynth ctx v2 tyB ->
     vtysynth ctx (Pair v1 v2) (TyProd tyA tyB)
+| SynthVAnnot ctx v tyA :
+    vtycheck ctx v tyA ->
+    vtysynth ctx (VAnnot v tyA) tyA
 with ctysynth : ctx -> comp -> ctype -> Type :=
 | SynthRet ctx v tyA : ctysynth ctx (Ret v) (CTy tyA SigNil EqsNil)
 | SynthPMatch ctx v tyA tyB x y c ctyC :
@@ -25,6 +28,9 @@ with ctysynth : ctx -> comp -> ctype -> Type :=
     vtysynth ctx v (TyHandler ctyC ctyD) ->
     ctycheck ctx c ctyC ->
     ctysynth ctx (Handle v c) ctyC
+| SynthCAnnot ctx c ctyC :
+    ctycheck ctx c ctyC ->
+    ctysynth ctx (CAnnot c ctyC) ctyC
 (* with htysynth : ctx -> hcases -> sig -> ctype -> Type := *)
 with vtycheck : ctx -> val -> vtype -> Type :=
 | CheckVBySynth ctx v tyA tyA' :
