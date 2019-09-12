@@ -1,4 +1,4 @@
-Require Import Bool List ZArith Int String.
+Require Import Bool ZArith Int String.
 
 Definition var_id := string.
 Definition op_id := string.
@@ -16,15 +16,15 @@ Inductive val : Type :=
 | Handler : var_id -> comp -> hcases -> val
 with comp : Type :=
 | Ret : val -> comp
-| PairMatch : val -> var_id * var_id -> comp -> comp
-| SumMatch : val -> var_id -> comp -> var_id -> comp -> comp
+| PMatch : val -> var_id * var_id -> comp -> comp
+| SMatch : val -> var_id -> comp -> var_id -> comp -> comp
 | App : val -> val -> comp
 | Op : op_id -> val -> var_id -> comp -> comp
 | LetRec : var_id -> var_id -> comp -> comp -> comp
 | DoBind : var_id -> comp -> comp -> comp
 | Handle : val -> comp -> comp
 with hcases : Type :=
-| Empty : hcases
+| NoCases : hcases
 | OpCases : hcases -> op_id -> var_id -> var_id -> comp -> hcases.
 
 (* NOT CAPTURE AVOIDING!!! *)
@@ -48,14 +48,14 @@ with csubst (sub : var_id * val) (c : comp) :=
   let (s_id, s_v) := sub in
   match c with
   | Ret v => Ret (vsubst sub v)
-  | PairMatch v (id1, id2) c' => 
+  | PMatch v (id1, id2) c' => 
       if eq_id id1 s_id then c
       else if eq_id id2 s_id then c
-      else PairMatch (vsubst sub v) (id1, id2) (csubst sub c')
-  | SumMatch v idl cl idr cr =>
+      else PMatch (vsubst sub v) (id1, id2) (csubst sub c')
+  | SMatch v idl cl idr cr =>
       let cl' := if eq_id idl s_id then cl else csubst sub cl in
       let cr' := if eq_id idr s_id then cr else csubst sub cr in
-      SumMatch (vsubst sub v) idl cl' idr cr'
+      SMatch (vsubst sub v) idl cl' idr cr'
   | App vf vx => App (vsubst sub vf) (vsubst sub vx)
   | Op op_id v_arg id k =>
       let k' := if eq_id id s_id then k else csubst sub k in
@@ -73,11 +73,21 @@ with hsubst (sub : var_id * val) (h : hcases) :=
   (* c [id |-> sv] *)
   let (s_id, s_v) := sub in
   match h with
-  | Empty => h
+  | NoCases => h
   | OpCases h' op_id x_id k_id c_op =>
       let c_op' := 
         if eq_id x_id s_id then c_op
         else if eq_id k_id s_id then c_op
       else csubst sub c_op in
       OpCases (hsubst sub h') op_id x_id k_id c_op'
+  end.
+
+
+Fixpoint find_op_case (h : hcases) (op_id : op_id) 
+  : option (var_id * var_id * comp) :=
+  match h with
+  | NoCases => None
+  | OpCases h_others op_id' x_op k_op c_op =>
+      if eq_id op_id op_id' then Some (x_op, k_op, c_op)
+      else find_op_case h_others op_id
   end.
