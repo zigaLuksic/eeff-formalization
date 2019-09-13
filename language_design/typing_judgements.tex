@@ -83,11 +83,11 @@
 \begin{mathpar}
 	% Mode Switch
 	\inferrule*[]
-	{ \typecheck{c}{\ctyC'}}
-	{ \typesynth{(c \oftype \ctyC')}{\ctyC} }
+	{ \typecheck{c}{\ctyC}}
+	{ \typesynth{(c \oftype \ctyC)}{\ctyC} }
 
 	\inferrule*[]
-	{ \typesynth{c}{\ctyC'} \\ \ctyC = \ctyC'}
+	{ \typesynth{c}{\ctyC'} \\ \ctyC = \ctyC' \\ \text{\todo{effect subtyping?}} }
 	{ \typecheck{c}{\ctyC} }
 
 	% Match statements
@@ -123,7 +123,8 @@
 	% Do-bind
 	\inferrule*[]
 	{ \typesynth{c_1}{\ctype{\tyA}{\sig}{\eqE}} \\
-		\typecheck[\ctx, x \oftype \tyA]{c_2}{\ctype{\tyB}{\sig}{\eqE}} }
+		\typecheck[\ctx, x \oftype \tyA]{c_2}{\ctype{\tyB}{\sig}{\eqE}} \\
+		\text{\todo{effect subtyping?}} }
 	{ \typecheck{\dobind{x}{c_1}{c_2}}{\ctype{\tyB}{\sig}{\eqE}} }
 
 	% Handling
