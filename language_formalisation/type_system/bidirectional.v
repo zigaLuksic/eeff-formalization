@@ -33,10 +33,7 @@ with csynth : ctx -> comp -> ctype -> Type :=
     csynth Γ (CAnnot c ctyC) ctyC
 (* with hsynth : ctx -> hcases -> sig -> ctype -> Type := *)
 with vcheck : ctx -> val -> vtype -> Type :=
-| CheckVBySynth Γ v α α' :
-    vsynth Γ v α' ->
-    α = α' ->
-    vcheck Γ v α
+| CheckVBySynth Γ v α α' : vsynth Γ v α' -> α = α' -> vcheck Γ v α
 | CheckInl Γ v α β :
     vcheck Γ v α ->
     vcheck Γ (Inl v) (TyΣ α β)
@@ -47,37 +44,32 @@ with vcheck : ctx -> val -> vtype -> Type :=
     vcheck Γ v1 α ->
     vcheck Γ v2 β ->
     vcheck Γ (Pair v1 v2) (TyΠ α β)
-| CheckFun Γ x c α tyC :
-    ccheck (CtxU x α Γ) c tyC ->
-    vcheck Γ (Fun x c) (TyFun α tyC)
-| CheckHandler Γ x c_ret h α sig eqs ctyD :
-    ccheck (CtxU x α Γ) c_ret ctyD ->
-    hcheck Γ h sig ctyD ->
-    vcheck Γ (Handler x c_ret h) (TyHandler (CTy α sig eqs) ctyD)
+| CheckFun Γ x c α C :
+    ccheck (CtxU x α Γ) c C ->
+    vcheck Γ (Fun x c) (TyFun α C)
+| CheckHandler Γ x c_ret h α sig eqs D :
+    ccheck (CtxU x α Γ) c_ret D ->
+    hcheck Γ h sig D ->
+    vcheck Γ (Handler x c_ret h) (TyHandler (CTy α sig eqs) D)
 with ccheck : ctx -> comp -> ctype -> Type :=
-| CheckCBySynth Γ c ctyC ctyC' :
-    csynth Γ c ctyC' ->
-    ctyC = ctyC' ->
-    ccheck Γ c ctyC
-| CheckSMatch Γ v α β xl cl xr cr ctyC :
+| CheckCBySynth Γ c C C' : csynth Γ c C' -> C = C' -> ccheck Γ c C
+| CheckSMatch Γ v α β xl cl xr cr C :
     vsynth Γ v (TyΣ α β) ->
-    ccheck (CtxU xl α Γ) cl ctyC ->
-    ccheck (CtxU xr β Γ) cr ctyC ->
-    ccheck Γ (ΣMatch v xl cl xr cr) ctyC
+    ccheck (CtxU xl α Γ) cl C ->
+    ccheck (CtxU xr β Γ) cr C ->
+    ccheck Γ (ΣMatch v xl cl xr cr) C
 | CheckOp Γ op_id v y c α_op β_op α sig eqs :
     get_op_type sig op_id = Some (α_op, β_op) ->
     vcheck Γ v α_op ->
     ccheck (CtxU y β_op Γ) c (CTy α sig eqs) ->
     ccheck Γ (Op op_id v y c) (CTy α sig eqs)
 with hcheck : ctx -> hcases -> sig -> ctype -> Type :=
-| CheckCasesØ Γ ctyD : hcheck Γ CasesØ SigØ ctyD
-| CheckCasesU Γ h op_id x k c_op α_op β_op sig ctyD :
+| CheckCasesØ Γ D : hcheck Γ CasesØ SigØ D
+| CheckCasesU Γ h op_id x k c_op α_op β_op sig D :
     find_op_case h op_id = None ->
-    hcheck Γ h sig ctyD ->
-    ccheck
-      (CtxU x α_op (CtxU k (TyFun β_op ctyD) Γ))
-      c_op ctyD ->
+    hcheck Γ h sig D ->
+    ccheck (CtxU x α_op (CtxU k (TyFun β_op D) Γ)) c_op D ->
     hcheck 
       Γ (CasesU h op_id x k c_op)
-      (SigU op_id α_op β_op sig) ctyD
+      (SigU op_id α_op β_op sig) D
 .
