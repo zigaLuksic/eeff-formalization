@@ -1,5 +1,5 @@
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Require Import syntax.
+Require Export syntax.
 
 Inductive small_step : comp -> comp -> Type :=
 | Step_pmatch v1 v2 x y c: 
