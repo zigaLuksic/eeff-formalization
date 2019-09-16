@@ -15,7 +15,9 @@ Inductive vsynth : ctx -> val -> vtype -> Type :=
     vcheck Γ v α ->
     vsynth Γ (VAnnot v α) α
 with csynth : ctx -> comp -> ctype -> Type :=
-| SynthRet Γ v α : csynth Γ (Ret v) (CTy α SigØ EqsØ)
+| SynthRet Γ v α : 
+    vsynth Γ v α ->
+    csynth Γ (Ret v) (CTy α SigØ EqsØ)
 | SynthΠMatch Γ v α β x y c ctyC :
     vsynth Γ v (TyΠ α β) ->
     csynth (CtxU (CtxU Γ α) β) c ctyC ->

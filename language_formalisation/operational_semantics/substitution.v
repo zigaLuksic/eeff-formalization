@@ -8,6 +8,10 @@ Definition id_up (id : var_id) (cut : nat) :=
   let (id_name, id_n) := id in
   if Nat.leb cut id_n then (id_name, id_n + 1) else id.
 
+Definition id_down (id : var_id) (cut : nat) :=
+  let (id_name, id_n) := id in
+  if Nat.leb cut id_n then (id_name, id_n - 1) else id.
+
 Definition fits_sub (id : var_id) (db_i : nat) :=
   let (id_name, id_n) := id in Nat.eqb id_n db_i.
 
@@ -56,6 +60,45 @@ Fixpoint sub_shift (sub : nat * val) (d : nat) :=
   | 0 => sub
   | S d' => sub_shift (db_i+1, v_shift v_s 0) (d')
   end.
+
+Fixpoint v_negshift (v : val) (cut : nat) :=
+match v with
+| Var id => Var (id_down id cut)
+| Unit => Unit
+| Int n => Int n
+| Inl v' => Inl (v_negshift v' cut)
+| Inr v' => Inr (v_negshift v' cut)
+| Pair v1 v2 => Pair (v_negshift v1 cut) (v_negshift v2 cut)
+| Fun x c => Fun x (c_negshift c (cut+1))
+| Handler x c_ret h =>
+    Handler x (c_negshift c_ret (cut+1)) (h_shift h cut)
+| VAnnot v' α => VAnnot (v_negshift v' cut) α
+end
+with c_negshift (c : comp) (cut : nat) :=
+match c with
+| Ret v => Ret (v_negshift v cut)
+| ΠMatch v (x, y) c =>
+    ΠMatch (v_negshift v cut) (x, y) (c_negshift c (cut+2))
+| ΣMatch v xl cl xr cr =>
+    ΣMatch (v_negshift v cut)
+      xl (c_negshift cl (cut+1))
+      xr (c_negshift cr (cut+1))
+| App v1 v2 => App (v_negshift v1 cut) (v_negshift v2 cut)
+| Op op v_arg y c =>
+    Op op (v_negshift v_arg cut) y (c_negshift c (cut+1))
+| LetRec f x f_ty c1 c2 =>
+    LetRec f x f_ty (c_negshift c1 (cut+2)) (c_negshift c2 (cut+1))
+| DoBind x c1 c2 =>
+    DoBind x (c_negshift c1 cut) (c_negshift c2 (cut+1))
+| Handle v c' => Handle (v_negshift v cut) (c_negshift c' cut)
+| CAnnot c' C => CAnnot (c_negshift c' cut) C
+end
+with h_negshift (h : hcases) (cut : nat) :=
+match h with
+| CasesØ => CasesØ
+| CasesU h op x k c => 
+    CasesU (h_negshift h cut) op x k (c_negshift c (cut+2))
+end.
 
 Fixpoint v_sub (v : val) (sub : nat * val) :=
 let (db_i, v_s) := sub in
@@ -108,5 +151,11 @@ end
 
 End Sub.
 
-Definition csub (c:comp) (v:val) :=
-  Sub.c_sub c (0, v).
+Definition vsub_out (v:val) (v_s:val) :=
+  Sub.v_negshift (Sub.v_sub v (0, v_s)) 0.
+
+Definition csub_out (c:comp) (v_s:val) :=
+  Sub.c_negshift (Sub.c_sub c (0, v_s)) 0.
+
+Definition hsub_out (h:hcases) (v_s:val) :=
+  Sub.h_negshift (Sub.h_sub h (0, v_s)) 0.
