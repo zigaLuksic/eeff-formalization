@@ -1,6 +1,7 @@
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Require Export syntax.
+Require Export syntax Arith.
+Require Import Le Compare_dec.
 
 Module Sub.
 
@@ -71,7 +72,7 @@ match v with
 | Pair v1 v2 => Pair (v_negshift v1 cut) (v_negshift v2 cut)
 | Fun x c => Fun x (c_negshift c (cut+1))
 | Handler x c_ret h =>
-    Handler x (c_negshift c_ret (cut+1)) (h_shift h cut)
+    Handler x (c_negshift c_ret (cut+1)) (h_negshift h cut)
 | VAnnot v' α => VAnnot (v_negshift v' cut) α
 end
 with c_negshift (c : comp) (cut : nat) :=
@@ -151,11 +152,64 @@ end
 
 End Sub.
 
+
+Lemma stupid_auxiliary_lemma (n:nat):
+  n + 1 - 1 = n.
+Proof.
+induction n. auto.
+simpl.
+assert (forall n, n + 1 = S n).
+- intro. induction n0. auto. simpl. rewrite IHn0. auto.
+- rewrite (H n). auto.
+Qed.
+
+Lemma vshifts_cancel (n:nat) (v:val) :
+  Sub.v_negshift (Sub.v_shift v n) n = v
+with cshifts_cancel (n:nat) (c:comp) :
+  Sub.c_negshift (Sub.c_shift c n) n = c
+with hshifts_cancel (n:nat) (h:hcases) :
+  Sub.h_negshift (Sub.h_shift h n) n = h.
+Proof.
+{
+induction v; simpl.
++ (* The only relevant case. *)
+  destruct v as (name, db_i). simpl.
+  f_equal. f_equal.
+  remember (n <=? db_i) as cmp.
+  induction cmp.
+  - simpl. assert (n <= db_i + 1).
+    -- apply eq_sym in Heqcmp.
+       apply (leb_complete _ _) in Heqcmp.
+       assert (forall n, n + 1 = S n).
+       intro. induction n0. auto. simpl. rewrite IHn0. auto.
+       rewrite (H db_i).
+       apply (le_n_S _ _) in Heqcmp. apply (le_Sn_le _ _) in Heqcmp.
+       assumption.
+    -- apply (leb_correct _ _) in H. rewrite H. simpl.
+       rewrite (stupid_auxiliary_lemma db_i). reflexivity.
+  - simpl. rewrite <-Heqcmp. reflexivity.
++ f_equal. reflexivity.
++ f_equal. 
++ f_equal. assumption.
++ f_equal. assumption.
++ f_equal. assumption. assumption.
++ f_equal. rewrite (cshifts_cancel (n+1) c). reflexivity.
++ f_equal.
+  - rewrite (cshifts_cancel (n+1) c). reflexivity.
+  - rewrite (hshifts_cancel n h). reflexivity.
++ f_equal. rewrite (vshifts_cancel n v). reflexivity.
+
+}
+{
+
+}
+Qed.
+
 Definition vsub_out (v:val) (v_s:val) :=
-  Sub.v_negshift (Sub.v_sub v (0, v_s)) 0.
+  Sub.v_negshift (Sub.v_sub v (0, (Sub.v_shift v_s 0))) 0.
 
 Definition csub_out (c:comp) (v_s:val) :=
-  Sub.c_negshift (Sub.c_sub c (0, v_s)) 0.
+  Sub.c_negshift (Sub.c_sub c (0, (Sub.v_shift v_s 0))) 0.
 
 Definition hsub_out (h:hcases) (v_s:val) :=
-  Sub.h_negshift (Sub.h_sub h (0, v_s)) 0.
+  Sub.h_negshift (Sub.h_sub h (0, (Sub.v_shift v_s 0))) 0.

@@ -25,7 +25,14 @@ with hsub_lemma
   vcheck Γ v_s α ->
   hcheck Γ (hsub_out h v_s) Σ D.
 Proof.
-
+{
+intros orig ty_v_s.
+induction v.
+- inv orig. inv H. unfold vsub_out. simpl.
+  destruct v as (name, db_i). simpl.
+  induction db_i; simpl.
+  + simpl in H2.
+}
 
 Qed.
 
