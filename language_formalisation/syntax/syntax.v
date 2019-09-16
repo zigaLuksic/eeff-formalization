@@ -12,7 +12,6 @@ Definition int := Z.t.
 (* Syntax Definitions *)
 Inductive val : Type :=
 | Var : var_id -> val
-| BoundVar : nat -> val
 | Unit : val
 | Int : Z.t -> val
 | Inl : val -> val
@@ -76,11 +75,11 @@ with eqs : Type :=
 Definition id_eq (id1 : var_id) (id2 : var_id) : bool :=
   let (id_name1, id_n1) := id1 in
   let (id_name2, id_n2) := id2 in
-  if string_dec id_name1 id_name2 then Nat.eqb id_n1 id_n2 else false.
+  Nat.eqb id_n1 id_n2.
 
 Definition id_match_ctx (id : var_id) (x : var_name) : bool:=
   let (id_name, id_n) := id in
-  if string_dec id_name x then Nat.eqb id_n 0 else false.
+  Nat.eqb id_n 0.
 
 Definition id_n_reduce (id : var_id) : var_id :=
   let (id_name, id_n) := id in (id_name, id_n - 1).  
