@@ -36,8 +36,8 @@ match c with
 | App v1 v2 => App (v_shift v1 cut) (v_shift v2 cut)
 | Op op v_arg y c =>
     Op op (v_shift v_arg cut) y (c_shift c (cut+1))
-| LetRec f x c1 c2 =>
-    LetRec f x (c_shift c1 (cut+2)) (c_shift c2 (cut+1))
+| LetRec f x f_ty c1 c2 =>
+    LetRec f x f_ty (c_shift c1 (cut+2)) (c_shift c2 (cut+1))
 | DoBind x c1 c2 =>
     DoBind x (c_shift c1 cut) (c_shift c2 (cut+1))
 | Handle v c' => Handle (v_shift v cut) (c_shift c' cut)
@@ -86,8 +86,8 @@ match c with
 | App v1 v2 => App (v_sub v1 sub) (v_sub v2 sub)
 | Op op v_arg y c =>
     Op op (v_sub v_arg sub) y (c_sub c (sub_shift sub 1))
-| LetRec f x c1 c2 =>
-    LetRec f x
+| LetRec f x f_ty c1 c2 =>
+    LetRec f x f_ty
       (c_sub c1 (sub_shift sub 2))
       (c_sub c2 (sub_shift sub 1))
 | DoBind x c1 c2 =>
@@ -108,3 +108,5 @@ end
 
 End Sub.
 
+Definition csub (c:comp) (v:val) :=
+  Sub.c_sub c (0, v).

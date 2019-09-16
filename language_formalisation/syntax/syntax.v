@@ -23,11 +23,11 @@ Inductive val : Type :=
 
 with comp : Type :=
 | Ret : val -> comp
-| ΠMatch : val -> var_name * var_name -> comp -> comp
+| ΠMatch : val -> var_name * var_name -> comp -> comp (* x~1 y~0 *)
 | ΣMatch : val -> var_name -> comp -> var_name -> comp -> comp
 | App : val -> val -> comp
-| Op : op_id -> val -> var_name -> comp -> comp
-| LetRec : var_name -> var_name -> comp -> comp -> comp
+| Op : op_id -> val -> var_name -> comp -> comp (* x~1 k~0 *)
+| LetRec : var_name -> var_name -> vtype -> comp -> comp -> comp (* f~0 x~1 *)
 | DoBind : var_name -> comp -> comp -> comp
 | Handle : val -> comp -> comp
 | CAnnot : comp -> ctype -> comp
@@ -54,11 +54,11 @@ with sig : Type :=
 
 with ctx : Type :=
 | CtxØ : ctx
-| CtxU : ctx -> var_name -> vtype -> ctx
+| CtxU : ctx -> vtype -> ctx
 
 with tmpl_ctx : Type :=
 | TctxØ : tmpl_ctx
-| TctxU : tmpl_ctx -> var_name -> vtype -> tmpl_ctx
+| TctxU : tmpl_ctx -> vtype -> tmpl_ctx
 
 with tmpl : Type :=
 | TApp : var_name -> val -> tmpl
@@ -77,7 +77,7 @@ Definition id_eq (id1 : var_id) (id2 : var_id) : bool :=
   let (id_name2, id_n2) := id2 in
   Nat.eqb id_n1 id_n2.
 
-Definition id_match_ctx (id : var_id) (x : var_name) : bool:=
+Definition id_match_ctx (id : var_id) : bool:=
   let (id_name, id_n) := id in
   Nat.eqb id_n 0.
 
@@ -90,8 +90,8 @@ Notation "x == y" := (string_dec x y) (at level 75, no associativity).
 Fixpoint get_vtype (Γ : ctx) (id : var_id) : option vtype :=
   match Γ with
   | CtxØ => None
-  | CtxU Γ' x α =>
-      if id_match_ctx id x then Some α
+  | CtxU Γ' α =>
+      if id_match_ctx id then Some α
       else get_vtype Γ' (id_n_reduce id)
   end.
 

@@ -16,9 +16,9 @@ Inductive vsynth : ctx -> val -> vtype -> Type :=
     vsynth Γ (VAnnot v α) α
 with csynth : ctx -> comp -> ctype -> Type :=
 | SynthRet Γ v α : csynth Γ (Ret v) (CTy α SigØ EqsØ)
-| SynthPMatch Γ v α β x y c ctyC :
+| SynthΠMatch Γ v α β x y c ctyC :
     vsynth Γ v (TyΠ α β) ->
-    csynth (CtxU (CtxU Γ β) α) c ctyC ->
+    csynth (CtxU (CtxU Γ α) β) c ctyC ->
     csynth Γ (ΠMatch v (x, y) c) ctyC
 | SynthApp Γ v1 v2 α ctyC :
     vsynth Γ v1 (TyFun α ctyC) ->
@@ -31,19 +31,19 @@ with csynth : ctx -> comp -> ctype -> Type :=
 | SynthCAnnot Γ c ctyC :
     ccheck Γ c ctyC ->
     csynth Γ (CAnnot c ctyC) ctyC
+| SynthLetRec Γ f x A C c1 c2 D:
+    ccheck (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
+    csynth (CtxU Γ (TyFun A C)) c2 D ->
+    csynth Γ (LetRec f x (TyFun A C) c1 c2) D
 (* with hsynth : ctx -> hcases -> sig -> ctype -> Type := *)
 with vcheck : ctx -> val -> vtype -> Type :=
-| CheckVBySynth Γ v α α' : vsynth Γ v α' -> α = α' -> vcheck Γ v α
+| CheckVBySynth Γ v α : vsynth Γ v α -> vcheck Γ v α
 | CheckInl Γ v α β :
     vcheck Γ v α ->
     vcheck Γ (Inl v) (TyΣ α β)
 | CheckInr Γ v α β :
     vcheck Γ v β ->
     vcheck Γ (Inr v) (TyΣ α β)
-| CheckPair Γ v1 v2 α β :
-    vcheck Γ v1 α ->
-    vcheck Γ v2 β ->
-    vcheck Γ (Pair v1 v2) (TyΠ α β)
 | CheckFun Γ x c α C :
     ccheck (CtxU Γ α) c C ->
     vcheck Γ (Fun x c) (TyFun α C)

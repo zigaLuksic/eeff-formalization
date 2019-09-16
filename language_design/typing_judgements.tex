@@ -40,9 +40,9 @@
 	{ \typecheck{v_1}{\tyA} \\ \typecheck{v_2}{\tyB} }
 	{ \typecheck{\pair{v_1}{v_2}}{\producttype{\tyA}{\tyB}} }
 
-	\inferrule*[]
-	{ \typesynth{v_1}{\tyA} \\ \typesynth{v_2}{\tyB} }
-	{ \typesynth{\pair{v_1}{v_2}}{\producttype{\tyA}{\tyB}} }
+	% \inferrule*[]
+	% { \typesynth{v_1}{\tyA} \\ \typesynth{v_2}{\tyB} }
+	% { \typesynth{\pair{v_1}{v_2}}{\producttype{\tyA}{\tyB}} }
 
 	% Function
 	\inferrule*[]
@@ -107,6 +107,13 @@
 	{ \typesynth{v_1}{\tyA \to \ctyC} \\
 		\typecheck{v_2}{\tyA}	}
 	{ \typesynth{\apply{v_1}{v_2}}{\ctyC} }
+
+	% Recursive function definition
+	% can also be checked
+	\inferrule*[]
+	{ \typecheck[\ctx, f \oftype \tyA \to \ctyC, x \oftype \tyA]{c_1}{\ctyC} \\
+	\typesynth[\ctx, f \oftype \tyA \to \ctyC]{c_2}{\ctyD}	}
+	{ \typesynth{\letrec{f}{x}{\tyA \to \ctyC}{c_1} c_2}{\ctyD} }
 
 	% Return
 	\inferrule*[]

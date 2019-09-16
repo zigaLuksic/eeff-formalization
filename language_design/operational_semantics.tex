@@ -25,6 +25,13 @@
 	\inferrule*[]	{	}
 	{ \apply{(\fun{x}{c})}{v} \smallstep c\subs{x \subswith v} }
 	
+	% REC FUNCTION
+	\inferrule*[]	{	}
+	{ \letrec{f}{x}{\tyA \to \ctyC}{c_1} c_2 
+			\smallstep
+		c_2\subs{f \subswith
+			(\fun{x}{\letrec{f}{x}{\tyA \to \ctyC}{c_1} c_1}) } }
+	
 	
 	% DO BIND
 	\inferrule*[]
