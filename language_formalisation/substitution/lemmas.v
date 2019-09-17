@@ -18,18 +18,28 @@ assert (forall n, n + 1 = S n).
 - rewrite (H n). auto.
 Qed.
 
-Lemma n_minus_m_le_n (n:nat) (m:nat):
-  n - m <= n.
+Lemma n_le_n_plus_m (n:nat) (m:nat):
+  n <= n + m.
 Proof.
 revert m. induction n; intro m.
-- simpl. apply le_refl.
-- induction m.
-  + simpl. apply le_refl.
-  + simpl. specialize (IHn m).
-    assert (n <= S n).
-    * assert (S n <= S n) by apply le_refl.
-      apply le_Sn_le in H. assumption.
-    * apply (le_trans _ _ _ IHn H). 
+- simpl. apply le_0_n.
+- simpl. apply le_n_S. specialize (IHn m). assumption.
+Qed.
+
+Lemma safe_minus a b c:
+  c <= b -> a + b - c = a + (b - c).
+Proof.
+revert a b.
+induction c; intros a b c_le_b.
++ assert (forall n, n - 0 = n).
+  { intro n. induction n; simpl; reflexivity. }
+  specialize (H b) as Hb.
+  specialize (H (a + b)) as Hab.
+  rewrite Hb. rewrite Hab. reflexivity.
++ induction b.
+  - assert (~ S c <= 0) by apply (le_Sn_0 _ ). destruct H. assumption.
+  - simpl. assert (forall n m, n + S m = S (n + m)) by auto.
+    specialize (H a b). rewrite H. simpl. apply IHc. apply le_S_n. assumption.
 Qed.
 
 (* Main lemmas *)
@@ -140,28 +150,24 @@ revert cut. induction h; intros cut; simpl.
 Qed.
 
 
-
-
-
-
 Lemma vshifts_cancel (n:nat) (m:nat) (cut:nat) (v:val) :
   (m <= n) ->
   Sub.v_negshift (Sub.v_shift v n cut) m cut = (Sub.v_shift v (n - m) cut)
 
 with cshifts_cancel (n:nat) (m:nat) (cut:nat) (c:comp) :
   (m <= n) ->
-  Sub.c_negshift (Sub.c_shift c n cut) n cut = (Sub.c_shift c (n - m) cut)
+  Sub.c_negshift (Sub.c_shift c n cut) m cut = (Sub.c_shift c (n - m) cut)
 
 with hshifts_cancel (n:nat) (m:nat) (cut:nat) (h:hcases) :
   (m <= n) ->  
-  Sub.h_negshift (Sub.h_shift h n cut) n cut = (Sub.h_shift h (n - m) cut).
+  Sub.h_negshift (Sub.h_shift h n cut) m cut = (Sub.h_shift h (n - m) cut).
 Proof.
 {
 clear vshifts_cancel.  
-revert n m cut.
-induction v; intros n m cut m_leq_n; simpl.
-+ (* The only relevant case. *)
-  f_equal. 
+revert cut.
+induction v; intros cut m_le_n; simpl.
+{ (* The only relevant case. *)
+  f_equal.
   destruct v as (name, db_i). simpl.
   remember (cut <=? db_i) as cmp.
   induction cmp.
@@ -175,69 +181,47 @@ induction v; intros n m cut m_leq_n; simpl.
        assumption.
     -- apply eq_sym in Heqcmp.
        apply (leb_complete _ _) in Heqcmp.
-       assert (n - m <= db_i).
-       { assert (n-m <= n) by apply (n_minus_m_le_n _ _).
-         apply (le_trans _ _ _ H0 Heqcmp). }
+       assert (cut <= db_i + n).
+       { assert (db_i <= db_i + n) by apply (n_le_n_plus_m _ _).
+         apply (le_trans _ _ _ Heqcmp H0). }
        apply (leb_correct _ _) in H0. rewrite H0. simpl.
-       rewrite n_plus_minus.
-       assert (m <= db_i + 1) by apply (le_trans _ _ _ m_leq_n H).
-       apply (leb_correct _ _) in H1. rewrite H1. simpl.
-    
-    rewrite H. simpl.
-       rewrite (n_plus_minus db_i). reflexivity.
-  - simpl. rewrite <-Heqcmp. reflexivity.
-+ f_equal. reflexivity.
-+ f_equal. 
-+ f_equal. specialize (IHv n). assumption.
-+ f_equal. specialize (IHv n). assumption.
-+ f_equal. specialize (IHv1 n). assumption.
-  specialize (IHv2 n). assumption.
-+ f_equal. rewrite (cshifts_cancel (n+1) c). reflexivity.
-+ f_equal.
-Lemma n_minus_m_le_n (n:nat) (m:nat):
-  n - m <= n.
-Proof.
-
-
-(* Main lemmas *)
-  - rewrite (cshifts_cancel (n+1) c). reflexivity.
-  - rewrite (hshifts_cancel n h). reflexivity.
-+ f_equal. specialize (IHv n). assumption.
+       rewrite safe_minus. reflexivity. assumption.
+  - simpl. rewrite <-Heqcmp. reflexivity. }
+all : f_equal; try reflexivity;
+try specialize (IHv cut m_le_n); try assumption.
++ specialize (IHv1 cut m_le_n). assumption.
++ specialize (IHv2 cut m_le_n). assumption.
++ rewrite (cshifts_cancel n m (cut+1) c m_le_n). reflexivity.
++ rewrite (cshifts_cancel n m (cut+1) c m_le_n). reflexivity.
++ rewrite (hshifts_cancel n m cut h m_le_n). reflexivity.
 }
 {
 clear cshifts_cancel.
-revert n.
-induction c; intro n.
-Focus 2. (* First focus on the only one we have problems with. *)
+revert cut.
+induction c; intros cut m_le_n; simpl; try f_equal;
+(* get rid of values *)
+try rewrite (vshifts_cancel n m cut v m_le_n); try reflexivity;
+(* get rid of trivial specialize cases *)
+try specialize (IHc cut m_le_n) as SIHc; try assumption;
+try specialize (IHc2 (cut+1) m_le_n) as SIHc2; try assumption.
+(* dispatch the rest *)
 + destruct p. simpl. f_equal.
-  - rewrite (vshifts_cancel n v). reflexivity.
-  Focus 2.
-  - specialize (IHc (n+2)). assumption. 
-all: simpl; f_equal.
-+ rewrite (vshifts_cancel n v). reflexivity.
-+ rewrite (vshifts_cancel n v). reflexivity.
-+ specialize (IHc1 (n+1)). assumption. 
-+ specialize (IHc2 (n+1)). assumption. 
-+ rewrite (vshifts_cancel n v). reflexivity.
-+ rewrite (vshifts_cancel n v0). reflexivity.
-+ rewrite (vshifts_cancel n v). reflexivity.
-+ specialize (IHc (n+1)). assumption. 
-+ specialize (IHc1 (n+2)). assumption. 
-+ specialize (IHc2 (n+1)). assumption. 
-+ specialize (IHc1 (n)). assumption. 
-+ specialize (IHc2 (n+1)). assumption. 
-+ rewrite (vshifts_cancel n v). reflexivity.
-+ specialize (IHc (n)). assumption.
-+ specialize (IHc (n)). assumption.
+  rewrite (vshifts_cancel n m cut v m_le_n). reflexivity.
+  specialize (IHc (cut+2) m_le_n). assumption.
++ specialize (IHc1 (cut+1) m_le_n). assumption.
++ rewrite (vshifts_cancel n m cut v0 m_le_n). reflexivity.
++ specialize (IHc (cut+1) m_le_n). assumption.
++ specialize (IHc1 (cut+2) m_le_n). assumption.
++ specialize (IHc1 cut m_le_n). assumption.
 }
 {
 clear hshifts_cancel.
-revert n.
-induction h; intro n.
-+ simpl. reflexivity.
-+ simpl. f_equal.
-  - specialize (IHh n). assumption.
-  - rewrite (cshifts_cancel (n+2) c). reflexivity.
+revert cut.
+induction h; intros cut m_le_n; simpl.
+reflexivity.
+f_equal.
++ specialize (IHh cut m_le_n). assumption.
++ rewrite (cshifts_cancel n m (cut+2) c m_le_n). reflexivity.
 }
 Qed.
 
