@@ -171,7 +171,9 @@ with hshifts_cancel (n:nat) (h:hcases) :
   Sub.h_negshift (Sub.h_shift h n) n = h.
 Proof.
 {
-induction v; simpl.
+clear vshifts_cancel.  
+revert n.
+induction v; intros n; simpl.
 + (* The only relevant case. *)
   destruct v as (name, db_i). simpl.
   f_equal. f_equal.
@@ -190,18 +192,50 @@ induction v; simpl.
   - simpl. rewrite <-Heqcmp. reflexivity.
 + f_equal. reflexivity.
 + f_equal. 
-+ f_equal. assumption.
-+ f_equal. assumption.
-+ f_equal. assumption. assumption.
++ f_equal. specialize (IHv n). assumption.
++ f_equal. specialize (IHv n). assumption.
++ f_equal. specialize (IHv1 n). assumption.
+  specialize (IHv2 n). assumption.
 + f_equal. rewrite (cshifts_cancel (n+1) c). reflexivity.
 + f_equal.
   - rewrite (cshifts_cancel (n+1) c). reflexivity.
   - rewrite (hshifts_cancel n h). reflexivity.
-+ f_equal. rewrite (vshifts_cancel n v). reflexivity.
-
++ f_equal. specialize (IHv n). assumption.
 }
 {
-
+clear cshifts_cancel.
+revert n.
+induction c; intro n.
+Focus 2. (* First focus on the only one we have problems with. *)
++ destruct p. simpl. f_equal.
+  - rewrite (vshifts_cancel n v). reflexivity.
+  Focus 2.
+  - specialize (IHc (n+2)). assumption. 
+all: simpl; f_equal.
++ rewrite (vshifts_cancel n v). reflexivity.
++ rewrite (vshifts_cancel n v). reflexivity.
++ specialize (IHc1 (n+1)). assumption. 
++ specialize (IHc2 (n+1)). assumption. 
++ rewrite (vshifts_cancel n v). reflexivity.
++ rewrite (vshifts_cancel n v0). reflexivity.
++ rewrite (vshifts_cancel n v). reflexivity.
++ specialize (IHc (n+1)). assumption. 
++ specialize (IHc1 (n+2)). assumption. 
++ specialize (IHc2 (n+1)). assumption. 
++ specialize (IHc1 (n)). assumption. 
++ specialize (IHc2 (n+1)). assumption. 
++ rewrite (vshifts_cancel n v). reflexivity.
++ specialize (IHc (n)). assumption.
++ specialize (IHc (n)). assumption.
+}
+{
+clear hshifts_cancel.
+revert n.
+induction h; intro n.
++ simpl. reflexivity.
++ simpl. f_equal.
+  - specialize (IHh n). assumption.
+  - rewrite (cshifts_cancel (n+2) c). reflexivity.
 }
 Qed.
 
