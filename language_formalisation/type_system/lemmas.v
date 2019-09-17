@@ -1,9 +1,16 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics".
+Add Rec LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation".
+(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation". *)
 Require Export syntax bidirectional substitution Omega Logic.
 
 Ltac inv H := inversion H; clear H; subst.
+
+
+Lemma vsub_safe
+  (Γ : ctx) (v : val) (A : vtype)
+  (v_s : val) (α : vtype) :
+  vcheck (CtxU Γ α) v A ->
+  vcheck (CtxU Γ α) v_s α ->
+  vcheck (CtxU Γ α) (Sub.v_sub v v_s) A
 
 
 Lemma vsub_lemma 
@@ -26,38 +33,62 @@ with hsub_lemma
   hcheck Γ (hsub_out h v_s) Σ D.
 Proof.
 {
-intros orig ty_v_s.
-induction v.
+clear vsub_lemma.
+revert Γ A.
+induction v; intros Γ A orig ty_v_s.
 - inv orig. inv H. unfold vsub_out. simpl.
   destruct v as (name, db_i). simpl.
   induction db_i; simpl.
   + simpl in H2.
-}
+    rewrite (vshifts_cancel 0 v_s).
+    injection H2. intro sametype.
+    rewrite <-sametype. assumption.
+  + simpl in H2.
+    assert (vsynth Γ (Var (name, db_i - 0)) A)
+    by exact (SynthVar Γ _ A H2).
+    exact (CheckVBySynth Γ _ A H).
+- inv orig. inv H. unfold vsub_out. simpl.
+  assert (vsynth Γ Unit TyUnit) by exact (SynthUnit _).
+  exact (CheckVBySynth _ _ _ H).
+- inv orig. inv H. unfold vsub_out. simpl.
+  assert (vsynth Γ (Int t) TyInt) by exact (SynthInt _ _).
+  exact (CheckVBySynth _ _ _ H).
+- inv orig. inv H. unfold vsub_out. simpl.
+  specialize (IHv Γ α0).
+  apply IHv in H1.
+  unfold vsub_out in H1.
+  exact (CheckInl Γ _ α0 β H1).
+  assumption.
+- inv orig. inv H. unfold vsub_out. simpl.
+  specialize (IHv Γ β).
+  apply IHv in H1.
+  unfold vsub_out in H1.
+  exact (CheckInr Γ _ α0 β H1).
+  assumption.
+- inv orig. 
+  + inv H. unfold vsub_out. simpl.
+    specialize (IHv1 Γ α0).
+    assert (vcheck (CtxU Γ α) v1 α0)
+    by exact (CheckVBySynth _ _ _ H3).
+    apply IHv1 in H.
+    specialize (IHv2 Γ β).
+    assert (vcheck (CtxU Γ α) v2 β)
+    by exact (CheckVBySynth _ _ _ H5).
+    apply IHv2 in H0.
+    exact (CheckPair Γ _ _ α0 β H H0).
+    assumption. assumption.
+  + unfold vsub_out. simpl.
+    specialize (IHv1 Γ α0).
+    apply IHv1 in H2.
+    specialize (IHv2 Γ β).
+    apply IHv2 in H4.
+    exact (CheckPair Γ _ _ α0 β H2 H4).
+    assumption. assumption.
+- inv orig. inv H.
+  unfold vsub_out. simpl.
+
+
+
+    }
 
 Qed.
-
-
-(* 
-Lemma v_sub_lemma
-  (Γ : ctx) (vprog : val) (A : vtype)
-  (x : var_id) (v : val) (α : vtype) :
-  vcheck (CtxU Γ α) vprog A ->
-  vcheck Γ v α ->
-  vcheck Γ (Sub.v_sub vprog (0, v)) A
-with c_sub_lemma
-  (Γ : ctx) (cprog : comp) (C : ctype)
-  (x : var_id) (v : val) (α : vtype) :
-  ccheck (CtxU Γ α) cprog C ->
-  vcheck Γ v α ->
-  ccheck Γ (Sub.c_sub cprog (0, v)) C.
-Proof.
-{
-induction vprog; intros typed_original typed_v.
-+ simpl. inv typed_original. inv H.
-  destruct v0 as (name, db_i).
-  induction db_i.
-  - simpl. simpl in H2. injection H2. 
-    intro sametype. rewrite sametype in typed_v. assumption.
-  - simpl. simpl in H2.
-}
-Qed. *)

@@ -1,4 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add Rec LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation".
+(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation". *)
 Require Import syntax.
 
 Inductive vsynth : ctx -> val -> vtype -> Type :=
@@ -46,6 +47,10 @@ with vcheck : ctx -> val -> vtype -> Type :=
 | CheckInr Γ v α β :
     vcheck Γ v β ->
     vcheck Γ (Inr v) (TyΣ α β)
+| CheckPair Γ v1 v2 α β :
+    vcheck Γ v1 α ->
+    vcheck Γ v2 β ->
+    vcheck Γ (Pair v1 v2) (TyΠ α β)
 | CheckFun Γ x c α C :
     ccheck (CtxU Γ α) c C ->
     vcheck Γ (Fun x c) (TyFun α C)
