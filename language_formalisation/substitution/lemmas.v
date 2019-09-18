@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export substitution Arith.
 Require Import Le Compare_dec.
 
@@ -41,6 +41,13 @@ induction c; intros a b c_le_b.
   - simpl. assert (forall n m, n + S m = S (n + m)) by auto.
     specialize (H a b). rewrite H. simpl. apply IHc. apply le_S_n. assumption.
 Qed.
+
+Lemma neq_plus n m:
+  n <> m -> n + 1 <> m + 1.
+Proof.
+revert m.
+induction n; intros m H.
++ induction m. auto.
 
 (* Main lemmas *)
 Lemma vzero_shift (cut:nat) (v:val) :
@@ -95,6 +102,9 @@ revert cut. induction h; intros cut; simpl.
   reflexivity.
 }
 Qed.
+
+
+
 (* Main lemmas *)
 Lemma vzero_negshift (cut:nat) (v:val) :
   Sub.v_negshift v 0 cut = v
@@ -225,4 +235,71 @@ f_equal.
 }
 Qed.
 
+Lemma vshift_moves_empty (v:val) (j:nat) :
+  v_no_var_j v j -> v_no_var_j (Sub.v_shift v 1 0) (j+1)
+
+with cshift_moves_empty (c:comp) (j:nat) :
+  c_no_var_j c j -> c_no_var_j (Sub.c_shift c 1 0) (j+1)
+  
+with hshift_moves_empty (h:hcases) (j:nat) :
+  h_no_var_j h j -> h_no_var_j (Sub.h_shift h 1 0) (j+1).
+Proof.
+{
+clear vshift_moves_empty.
+rename cshift_moves_empty into c_lemma.
+rename hshift_moves_empty into h_lemma.
+revert j. induction v; intros j orig_clean; simpl; auto.
++ destruct v as (name, num). simpl. simpl in orig_clean.
+
+}
+{
+rename vshift_moves_empty into v_lemma.
+clear cshift_moves_empty.
+rename hshift_moves_empty into h_lemma.
+}
+{
+rename vshift_moves_empty into v_lemma.
+rename cshift_moves_empty into c_lemma.
+clear hshift_moves_empty.
+}
+
+
+Lemma v_sub_j_removes_j (v:val) (j:nat) (v_s:val) :
+  v_no_var_j v_s j ->
+  v_no_var_j (Sub.v_sub v (j, v_s)) j
+
+with c_sub_j_removes_j (c:comp) (j:nat) (v_s:val) :
+  v_no_var_j v_s j ->
+  c_no_var_j (Sub.c_sub c (j, v_s)) j
+
+with h_sub_j_removes_j (h:hcases) (j:nat) (v_s:val) :
+  v_no_var_j v_s j ->
+  h_no_var_j (Sub.h_sub h (j, v_s)) j.
+Proof.
+{
+clear v_sub_j_removes_j.
+rename c_sub_j_removes_j into c_lemma.
+rename h_sub_j_removes_j into h_lemma.
+revert j. induction v; intros j v_s_clean; simpl;
+try specialize (IHv j v_s_clean) as sIHv; try assumption; try auto.
+- destruct v as (name, num). simpl.
+  remember (num =? j) as fits.
+  induction fits.
+  + assumption.
+  + simpl. apply eq_sym in Heqfits as H.
+    apply (beq_nat_false) in H. apply not_eq_sym. assumption.
+- apply c_lemma.
+- 
+    
+}
+{
+rename v_sub_j_removes_j into v_lemma.
+clear c_sub_j_removes_j.
+rename h_sub_j_removes_j into h_lemma.
+}
+{
+rename v_sub_j_removes_j into v_lemma.
+rename c_sub_j_removes_j into c_lemma.
+clear h_sub_j_removes_j.
+}
 End SubLemma.

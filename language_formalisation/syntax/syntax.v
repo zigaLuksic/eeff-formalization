@@ -111,3 +111,34 @@ Fixpoint find_op_case (h : hcases) (op : op_id)
       if op == op' then Some (x_op, k_op, c_op)
       else find_op_case h_others op
   end.
+
+
+Fixpoint v_no_var_j (v:val) (j:nat) :=
+match v with
+| Var (name, num) => not (j = num)
+| Unit => True
+| Int j => True
+| Inl v' => v_no_var_j v' j
+| Inr v' => v_no_var_j v' j
+| Pair v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
+| Fun x c => c_no_var_j c (j+1)
+| Handler x c_ret h => (c_no_var_j c_ret (j+1)) /\ (h_no_var_j h j)
+| VAnnot v' α => v_no_var_j v' j
+end
+with c_no_var_j (c:comp) (j:nat) :=
+match c with
+| Ret v => v_no_var_j v j
+| ΠMatch v (x, y) c => c_no_var_j c (j+2)
+| ΣMatch v xl cl xr cr => (c_no_var_j cl (j+1)) /\ (c_no_var_j cr (j+1))
+| App v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
+| Op op v_arg y c => (v_no_var_j v_arg j) /\ (c_no_var_j c (j+1))
+| LetRec f x f_ty c1 c2 => (c_no_var_j c1 (j+2)) /\ (c_no_var_j c2 (j+1))
+| DoBind x c1 c2 => (c_no_var_j c1 j) /\ (c_no_var_j c2 (j+1))
+| Handle v c' => (v_no_var_j v j) /\ (c_no_var_j c' j)
+| CAnnot c' C => (c_no_var_j c' j)
+end
+with h_no_var_j (h:hcases) (j:nat) :=
+match h with
+| CasesØ => True
+| CasesU h op x k c => (h_no_var_j h j) /\ (c_no_var_j c (j+2))
+end.

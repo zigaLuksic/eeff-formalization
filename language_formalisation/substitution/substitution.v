@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export syntax Arith.
 Require Import Le Compare_dec.
 
@@ -149,7 +149,7 @@ end
 
 End Sub.
 
-
+(* Instantiates the outer binder, takes care of all the shifting. *)
 Definition vsub_out (v:val) (v_s:val) :=
   Sub.v_negshift (Sub.v_sub v (0, (Sub.v_shift v_s 1 0))) 1 0.
 
