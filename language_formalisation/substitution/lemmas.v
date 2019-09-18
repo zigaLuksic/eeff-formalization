@@ -1,73 +1,11 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export substitution Arith.
 Require Import Le Compare_dec.
 
 Module SubLemma.
-
-(* Auxiliary lemmas *)
-Lemma n_plus_minus (n:nat):
-  n + 1 - 1 = n.
-Proof.
-induction n. auto.
-simpl.
-assert (forall n, n + 1 = S n).
-- intro. induction n0. auto. simpl. rewrite IHn0. auto.
-- rewrite (H n). auto.
-Qed.
-
-Lemma n_le_n_plus_m (n:nat) (m:nat):
-  n <= n + m.
-Proof.
-revert m. induction n; intro m.
-- simpl. apply le_0_n.
-- simpl. apply le_n_S. specialize (IHn m). assumption.
-Qed.
-
-Lemma safe_minus a b c:
-  c <= b -> a + b - c = a + (b - c).
-Proof.
-revert a b.
-induction c; intros a b c_le_b.
-+ assert (forall n, n - 0 = n).
-  { intro n. induction n; simpl; reflexivity. }
-  specialize (H b) as Hb.
-  specialize (H (a + b)) as Hab.
-  rewrite Hb. rewrite Hab. reflexivity.
-+ induction b.
-  - assert (~ S c <= 0) by apply (le_Sn_0 _ ). destruct H. assumption.
-  - simpl. assert (forall n m, n + S m = S (n + m)) by auto.
-    specialize (H a b). rewrite H. simpl. apply IHc. apply le_S_n. assumption.
-Qed.
-
-Lemma neq_plus n m:
-  n <> m -> n + 1 <> m + 1.
-Proof.
-intro Hneq. apply beq_nat_false.
-assert (forall a, a + 1 = S a).
-{ intro a. induction a. auto. simpl. rewrite IHa. auto. }
-specialize (H n) as Hn. specialize (H m) as Hm.
-rewrite Hn. rewrite Hm.
-apply Nat.eqb_neq in Hneq. auto.
-Qed.
-
-Check le_lt_trans.
-
-Lemma le_to_ge n m:
-  n <= m <-> m >= n.
-Proof.
-constructor.
-+ intro leH. destruct (ge_dec m n).
-  - auto.
-  - apply not_ge in n0 as probH.
-    assert (m < m) by apply (lt_le_trans _ _ _ probH leH).
-    apply (lt_irrefl) in H. auto.
-+ intro geH. destruct geH. auto.
-  apply le_n_S in geH. apply le_Sn_le. assumption.
-Qed.
-
 
 (* Main lemmas *)
 Lemma vzero_shift (cut:nat) (v:val) :
@@ -137,9 +75,7 @@ revert cut. induction v; intros cut;
 simpl; try (specialize (IHv cut)); try rewrite IHv; try reflexivity.
 + destruct v. simpl.
   induction (cut <=? v0).
-  assert (forall n, n - 0 = n).
-  intro n. induction n; simpl; try rewrite IHn; reflexivity.
-  specialize (H v0).
+  assert (v0 - 0 = v0) by omega.
   rewrite H; reflexivity. reflexivity.
 + specialize (IHv1 cut). rewrite IHv1.
   specialize (IHv2 cut). rewrite IHv2.
@@ -203,17 +139,12 @@ induction v; intros cut m_le_n; simpl.
     -- apply eq_sym in Heqcmp.
        apply (leb_complete _ _) in Heqcmp.
        assert (forall n, n + 1 = S n).
-       intro. induction n0. auto. simpl. rewrite IHn0. auto.
-       rewrite (H db_i).
-       apply (le_n_S _ _) in Heqcmp. apply (le_Sn_le _ _) in Heqcmp.
-       assumption.
+       intro. omega. omega.
     -- apply eq_sym in Heqcmp.
        apply (leb_complete _ _) in Heqcmp.
-       assert (cut <= db_i + n).
-       { assert (db_i <= db_i + n) by apply (n_le_n_plus_m _ _).
-         apply (le_trans _ _ _ Heqcmp H0). }
-       apply (leb_correct _ _) in H0. rewrite H0. simpl.
-       rewrite safe_minus. reflexivity. assumption.
+       assert (cut <= db_i + n) by omega.
+       apply (leb_correct _ _) in H0. rewrite H0.
+       f_equal. omega.
   - simpl. rewrite <-Heqcmp. reflexivity. }
 all : f_equal; try reflexivity;
 try specialize (IHv cut m_le_n); try assumption.
@@ -253,6 +184,77 @@ f_equal.
 }
 Qed.
 
+Lemma vshifts_add (n:nat) (m:nat) (cut:nat) (v:val) :
+  Sub.v_shift (Sub.v_shift v n cut) m cut = (Sub.v_shift v (n + m) cut)
+
+with cshifts_add (n:nat) (m:nat) (cut:nat) (c:comp) :
+  Sub.c_shift (Sub.c_shift c n cut) m cut = (Sub.c_shift c (n + m) cut)
+
+with hshifts_add (n:nat) (m:nat) (cut:nat) (h:hcases) :
+  Sub.h_shift (Sub.h_shift h n cut) m cut = (Sub.h_shift h (n + m) cut).
+Proof.
+{
+clear vshifts_add.
+revert cut.
+induction v; intros cut; simpl.
+{ (* The only relevant case. *)
+  f_equal.
+  destruct v as (name, db_i). simpl.
+  remember (cut <=? db_i) as cmp.
+  induction cmp.
+  - simpl. assert (cut <= db_i + 1).
+    -- apply eq_sym in Heqcmp.
+       apply (leb_complete _ _) in Heqcmp.
+       assert (forall n, n + 1 = S n).
+       intro. induction n0. auto. simpl. rewrite IHn0. auto.
+       rewrite (H db_i).
+       apply (le_n_S _ _) in Heqcmp. apply (le_Sn_le _ _) in Heqcmp.
+       assumption.
+    -- apply eq_sym in Heqcmp.
+       apply (leb_complete _ _) in Heqcmp.
+       assert (cut <= db_i + n) by omega.
+       apply (leb_correct _ _) in H0. rewrite H0. simpl.
+       assert (db_i + n + m = db_i + (n + m)) by omega.
+       rewrite H1. reflexivity.
+  - simpl. rewrite <-Heqcmp. reflexivity. }
+all : f_equal; try reflexivity;
+try specialize (IHv cut); try assumption.
++ specialize (IHv1 cut). assumption.
++ specialize (IHv2 cut). assumption.
++ rewrite (cshifts_add n m (cut+1) c). reflexivity.
++ rewrite (cshifts_add n m (cut+1) c). reflexivity.
++ rewrite (hshifts_add n m cut h). reflexivity.
+}
+{
+clear cshifts_add.
+revert cut.
+induction c; intros cut; simpl; try f_equal;
+(* get rid of values *)
+try rewrite (vshifts_add n m cut v); try reflexivity;
+(* get rid of trivial specialize cases *)
+try specialize (IHc cut) as SIHc; try assumption;
+try specialize (IHc2 (cut+1)) as SIHc2; try assumption.
+(* dispatch the rest *)
++ destruct p. simpl. f_equal.
+  rewrite (vshifts_add n m cut v). reflexivity.
+  specialize (IHc (cut+2)). assumption.
++ specialize (IHc1 (cut+1)). assumption.
++ rewrite (vshifts_add n m cut v0). reflexivity.
++ specialize (IHc (cut+1)). assumption.
++ specialize (IHc1 (cut+2)). assumption.
++ specialize (IHc1 cut). assumption.
+}
+{
+clear hshifts_add.
+revert cut.
+induction h; intros cut; simpl.
+reflexivity.
+f_equal.
++ specialize (IHh cut). assumption.
++ rewrite (cshifts_add n m (cut+2) c). reflexivity.
+}
+Qed.
+
 Lemma vshift_moves_empty (v:val) (j:nat) (cut:nat):
   v_no_var_j v j -> (cut <= j) -> 
   v_no_var_j (Sub.v_shift v 1 cut) (j+1)
@@ -265,14 +267,16 @@ with hshift_moves_empty (h:hcases) (j:nat) (cut:nat):
   h_no_var_j h j -> (cut <= j) -> 
   h_no_var_j (Sub.h_shift h 1 cut) (j+1).
 Proof.
-{
-clear vshift_moves_empty.
-rename cshift_moves_empty into c_lemma.
+all: 
+rename vshift_moves_empty into v_lemma;
+rename cshift_moves_empty into c_lemma;
 rename hshift_moves_empty into h_lemma.
+{
+clear v_lemma.
 revert j. induction v; intros j orig_clean j_le_cut; simpl; auto.
 + destruct v as (name, num). simpl. simpl in orig_clean.
   remember (cut <=? num) as cmp. induction cmp.
-  - apply neq_plus. assumption.
+  - omega.
   - apply eq_sym in Heqcmp. rewrite leb_iff_conv in Heqcmp.
     omega.
 + simpl in orig_clean. destruct orig_clean as (H1, H2). constructor.
@@ -289,9 +293,7 @@ revert j. induction v; intros j orig_clean j_le_cut; simpl; auto.
   - apply h_lemma; assumption. 
 }
 {
-rename vshift_moves_empty into v_lemma.
-clear cshift_moves_empty.
-rename hshift_moves_empty into h_lemma.
+clear c_lemma.
 revert j cut. induction c; intros j cut orig_clean j_le_cut; simpl;
 simpl in orig_clean; try destruct orig_clean; try constructor; auto.
 + destruct p as (name, num). simpl.
@@ -312,9 +314,7 @@ simpl in orig_clean; try destruct orig_clean; try constructor; auto.
 + apply IHc2. auto. assert (cut + 1 <= j + 1) by omega. auto.
 }
 {
-rename vshift_moves_empty into v_lemma.
-rename cshift_moves_empty into c_lemma.
-clear hshift_moves_empty.
+clear h_lemma.
 revert j cut. induction h; intros j cut orig_clean j_le_cut; simpl;
 destruct orig_clean; auto. constructor.
 + apply IHh. auto. auto.
@@ -336,10 +336,12 @@ with h_sub_j_removes_j (h:hcases) (j:nat) (v_s:val) :
   v_no_var_j v_s j ->
   h_no_var_j (Sub.h_sub h (j, v_s)) j.
 Proof.
-{
-clear v_sub_j_removes_j.
-rename c_sub_j_removes_j into c_lemma.
+all:
+rename v_sub_j_removes_j into v_lemma;
+rename c_sub_j_removes_j into c_lemma;
 rename h_sub_j_removes_j into h_lemma.
+{
+clear v_lemma.
 revert j. induction v; intros j v_s_clean; simpl;
 try specialize (IHv j v_s_clean) as sIHv; try assumption; try auto.
 - destruct v as (name, num). simpl.
@@ -354,24 +356,40 @@ try specialize (IHv j v_s_clean) as sIHv; try assumption; try auto.
   + apply h_lemma. assumption.
 }
 {
-rename v_sub_j_removes_j into v_lemma.
-clear c_sub_j_removes_j.
-rename h_sub_j_removes_j into h_lemma.
-revert v_s j. induction c; intros v_s j v_s_clean; simpl; try constructor; auto.
-{
-  destruct p as (name, num). simpl.
+clear c_lemma.
+revert j v_s. induction c; intros j v_s v_s_clean; simpl; try constructor; auto.
+{ destruct p as (name, num). simpl.
   apply IHc.
   assert (v_no_var_j (Sub.v_shift v_s 1 0) (j + 1)).
   { apply vshift_moves_empty. auto. omega. }
   apply (vshift_moves_empty _ _ 0) in H.
-  simpl in H.
-
-}
-
+  simpl in H. rewrite (vshifts_add _ _ _) in H.
+  assert (1+1=2) by omega. rewrite H0 in H.
+  assert (j+1+1=j+2) by omega. rewrite H1 in H.
+  auto. omega. }
+all: try apply IHc; try apply IHc1; try apply IHc2;
+try apply vshift_moves_empty; auto; try omega.
++ assert (v_no_var_j (Sub.v_shift v_s 1 0) (j + 1)).
+  { apply vshift_moves_empty. auto. omega. }
+  apply (vshift_moves_empty _ _ 0) in H.
+  simpl in H. rewrite (vshifts_add _ _ _) in H.
+  assert (1+1=2) by omega. rewrite H0 in H.
+  assert (j+1+1=j+2) by omega. rewrite H1 in H.
+  auto. omega.
 }
 {
-rename v_sub_j_removes_j into v_lemma.
-rename c_sub_j_removes_j into c_lemma.
-clear h_sub_j_removes_j.
+clear h_lemma.
+revert j v_s. induction h; intros j v_s v_s_clean; simpl; auto.
+constructor.
++ apply IHh. assumption.
++ assert (v_no_var_j (Sub.v_shift v_s 1 0) (j + 1)).
+  { apply vshift_moves_empty. auto. omega. }
+  apply (vshift_moves_empty _ _ 0) in H.
+  simpl in H. rewrite (vshifts_add _ _ _) in H.
+  assert (1+1=2) by omega. rewrite H0 in H.
+  assert (j+1+1=j+2) by omega. rewrite H1 in H.
+  auto. omega.
 }
+Qed.
+
 End SubLemma.
