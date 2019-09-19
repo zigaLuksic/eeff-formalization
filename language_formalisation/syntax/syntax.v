@@ -77,6 +77,10 @@ Definition id_eq (id1 : var_id) (id2 : var_id) : bool :=
   let (id_name2, id_n2) := id2 in
   Nat.eqb id_n1 id_n2.
 
+Definition id_has_dbi (id : var_id) (db_i : nat) : bool :=
+  let (id_name, id_n) := id in
+  Nat.eqb id_n db_i.
+
 Definition id_match_ctx (id : var_id) : bool:=
   let (id_name, id_n) := id in
   Nat.eqb id_n 0.
@@ -87,13 +91,16 @@ Definition id_n_reduce (id : var_id) : var_id :=
 Notation "x == y" := (string_dec x y) (at level 75, no associativity).
 
 (* Auxiliary Function Definitions *)
-Fixpoint get_vtype (Γ : ctx) (id : var_id) : option vtype :=
-  match Γ with
-  | CtxØ => None
-  | CtxU Γ' α =>
-      if id_match_ctx id then Some α
-      else get_vtype Γ' (id_n_reduce id)
+
+Fixpoint get_vtype_i (Γ : ctx) (i:nat) : option vtype :=
+  match Γ, i with
+  | CtxØ , _=> None
+  | CtxU Γ' α, 0 => Some α
+  | CtxU Γ' α, S i' =>  get_vtype_i Γ' i'
   end.
+
+Definition get_vtype (Γ : ctx) (id : var_id) : option vtype :=
+  let (name, num) := id in get_vtype_i Γ num.
 
 Fixpoint get_op_type (Σ : sig) (op : op_id) : option (vtype * vtype) :=
   match Σ with
@@ -128,8 +135,10 @@ end
 with c_no_var_j (c:comp) (j:nat) :=
 match c with
 | Ret v => v_no_var_j v j
-| ΠMatch v (x, y) c => c_no_var_j c (j+2)
-| ΣMatch v xl cl xr cr => (c_no_var_j cl (j+1)) /\ (c_no_var_j cr (j+1))
+| ΠMatch v (x, y) c => 
+    (v_no_var_j v j) /\ c_no_var_j c (j+2)
+| ΣMatch v xl cl xr cr =>
+    (v_no_var_j v j) /\ (c_no_var_j cl (j+1)) /\ (c_no_var_j cr (j+1))
 | App v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
 | Op op v_arg y c => (v_no_var_j v_arg j) /\ (c_no_var_j c (j+1))
 | LetRec f x f_ty c1 c2 => (c_no_var_j c1 (j+2)) /\ (c_no_var_j c2 (j+1))
@@ -142,3 +151,58 @@ match h with
 | CasesØ => True
 | CasesU h op x k c => (h_no_var_j h j) /\ (c_no_var_j c (j+2))
 end.
+
+Fixpoint v_switch_vars (v:val) (i:nat) (j:nat) :=
+match v with
+| Var (name, num) =>
+    if num =? i then Var (name, j)
+    else if num =? j then Var (name, i)
+    else Var (name, num)
+| Unit => Unit
+| Int n => Int n
+| Inl v' => Inl (v_switch_vars v' i j)
+| Inr v' => Inr (v_switch_vars v' i j)
+| Pair v1 v2 => Pair (v_switch_vars v1 i j) (v_switch_vars v2 i j)
+| Fun x c => Fun x (c_switch_vars c (i+1) (j+1))
+| Handler x c_ret h =>
+    Handler x (c_switch_vars c_ret (i+1) (j+1)) (h_switch_vars h i j)
+| VAnnot v' α => 
+    VAnnot (v_switch_vars v' i j) α
+end
+with c_switch_vars (c:comp) (i:nat) (j:nat) :=
+match c with
+| Ret v => Ret (v_switch_vars v i j)
+| ΠMatch v (x, y) c =>
+    ΠMatch (v_switch_vars v i j) (x,y) (c_switch_vars c (i+2) (j+2))
+| ΣMatch v xl cl xr cr =>
+    ΣMatch (v_switch_vars v i j) xl (c_switch_vars cl (i+1) (j+1)) 
+      xr (c_switch_vars cr (i+1) (j+1))
+| App v1 v2 => App (v_switch_vars v1 i j) (v_switch_vars v2 i j)
+| Op op v_arg y c => 
+    Op op (v_switch_vars v_arg i j) y (c_switch_vars c (i+1) (j+1))
+| LetRec f x f_ty c1 c2 =>
+    LetRec f x f_ty
+      (c_switch_vars c1 (i+2) (j+2)) (c_switch_vars c2 (i+1) (j+1))
+| DoBind x c1 c2 => 
+    DoBind x (c_switch_vars c1 i j) (c_switch_vars c2 (i+1) (j+1))
+| Handle v c' => Handle (v_switch_vars v i j) (c_switch_vars c' i j)
+| CAnnot c' C => CAnnot (c_switch_vars c' i j) C
+end
+with h_switch_vars (h:hcases) (i:nat) (j:nat) :=
+match h with
+| CasesØ => CasesØ
+| CasesU h op x k c =>
+    CasesU (h_switch_vars h i j) op x k (c_switch_vars c (i+2) (j+2))
+end.
+
+Fixpoint ctx_change_var (Γ:ctx) (i:nat) (A:vtype) :=
+  match Γ, i with
+  | CtxØ, _ => CtxØ
+  | CtxU Γ' α, 0 => CtxU Γ' A
+  | CtxU Γ' α, S i' => CtxU (ctx_change_var Γ' i' A) α
+  end.
+
+Definition ctx_switch_vars (Γ : ctx) (i:nat) (j:nat) (A:vtype) (B:vtype)
+  (proof_i : get_vtype_i Γ i = Some A) (proof_j: get_vtype_i Γ j = Some B) : ctx
+:=
+  ctx_change_var (ctx_change_var Γ i B) j A.

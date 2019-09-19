@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export substitution Arith.
 Require Import Le Compare_dec.
 
@@ -294,15 +294,16 @@ revert j. induction v; intros j orig_clean j_le_cut; simpl; auto.
 clear c_lemma.
 revert j cut. induction c; intros j cut orig_clean j_le_cut; simpl;
 simpl in orig_clean; try destruct orig_clean; try constructor; auto.
-+ destruct p as (name, num). simpl.
-  specialize (IHc (j + 2) (cut + 2) orig_clean).
-  assert (cut + 2 <= j + 2) by omega. specialize (IHc H).
-  assert (j + 1 + 2 = j + 2 + 1) by omega. rewrite H0.
-  assumption.
-+ apply (IHc1 (j+1) (cut+1)). assumption.
-  assert (cut + 1 <= j + 1) by omega. assumption.
-+ apply (IHc2 (j+1) (cut+1)). assumption.
-  assert (cut + 1 <= j + 1) by omega. assumption.
++ destruct p as (name, num). simpl. destruct orig_clean as (vH, cH).
+  constructor.
+  - apply v_lemma. assumption. assumption.
+  - specialize (IHc (j + 2) (cut + 2) cH).
+    assert (cut + 2 <= j + 2) by omega. specialize (IHc H).
+    assert (j + 1 + 2 = j + 2 + 1) by omega. rewrite H0.
+    assumption.
++ destruct H0. constructor.
+  - apply IHc1. assumption. omega.
+  - apply IHc2. assumption. omega.
 + apply (IHc (j+1) (cut+1)). assumption.
   assert (cut + 1 <= j + 1) by omega. assumption.
 + specialize (IHc1 (j+2) (cut+2) H).
@@ -356,7 +357,8 @@ try specialize (IHv j v_s_clean) as sIHv; try assumption; try auto.
 {
 clear c_lemma.
 revert j v_s. induction c; intros j v_s v_s_clean; simpl; try constructor; auto.
-{ destruct p as (name, num). simpl.
+{ destruct p as (name, num). simpl. constructor.
+  { apply v_lemma. assumption. }
   apply IHc.
   assert (v_no_var_j (Sub.v_shift v_s 1 0) (j + 1)).
   { apply vshift_moves_empty. auto. omega. }
@@ -367,6 +369,7 @@ revert j v_s. induction c; intros j v_s v_s_clean; simpl; try constructor; auto.
   auto. omega. }
 all: try apply IHc; try apply IHc1; try apply IHc2;
 try apply vshift_moves_empty; auto; try omega.
++ constructor; apply IHc1 || apply IHc2; apply vshift_moves_empty; auto; omega.
 + assert (v_no_var_j (Sub.v_shift v_s 1 0) (j + 1)).
   { apply vshift_moves_empty. auto. omega. }
   apply (vshift_moves_empty _ _ 0) in H.
