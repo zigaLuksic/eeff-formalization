@@ -30,7 +30,7 @@ with csynth : ctx -> comp -> ctype -> Type :=
 | SynthHandle Γ v c ctyC ctyD :
     vsynth Γ v (TyHandler ctyC ctyD) ->
     ccheck Γ c ctyC ->
-    csynth Γ (Handle v c) ctyC
+    csynth Γ (Handle v c) ctyD
 | SynthCAnnot Γ c ctyC :
     ccheck Γ c ctyC ->
     csynth Γ (CAnnot c ctyC) ctyC
@@ -60,7 +60,7 @@ with vcheck : ctx -> val -> vtype -> Type :=
     vcheck Γ (Handler x c_ret h) (TyHandler (CTy α sig eqs) D)
 with ccheck : ctx -> comp -> ctype -> Type :=
 | CheckCBySynth Γ c C C' : csynth Γ c C' -> C = C' -> ccheck Γ c C
-| CheckSMatch Γ v α β xl cl xr cr C :
+| CheckΣMatch Γ v α β xl cl xr cr C :
     vsynth Γ v (TyΣ α β) ->
     ccheck (CtxU Γ α) cl C ->
     ccheck (CtxU Γ β) cr C ->
