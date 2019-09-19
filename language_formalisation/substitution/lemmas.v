@@ -1,7 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 Require Export substitution Arith.
 Require Import Le Compare_dec.
 
@@ -138,8 +138,7 @@ induction v; intros cut m_le_n; simpl.
   - simpl. assert (cut <= db_i + 1).
     -- apply eq_sym in Heqcmp.
        apply (leb_complete _ _) in Heqcmp.
-       assert (forall n, n + 1 = S n).
-       intro. omega. omega.
+       omega.
     -- apply eq_sym in Heqcmp.
        apply (leb_complete _ _) in Heqcmp.
        assert (cut <= db_i + n) by omega.
@@ -213,9 +212,8 @@ induction v; intros cut; simpl.
     -- apply eq_sym in Heqcmp.
        apply (leb_complete _ _) in Heqcmp.
        assert (cut <= db_i + n) by omega.
-       apply (leb_correct _ _) in H0. rewrite H0. simpl.
-       assert (db_i + n + m = db_i + (n + m)) by omega.
-       rewrite H1. reflexivity.
+       apply (leb_correct _ _) in H0. rewrite H0.
+       f_equal. omega.
   - simpl. rewrite <-Heqcmp. reflexivity. }
 all : f_equal; try reflexivity;
 try specialize (IHv cut); try assumption.

@@ -1,4 +1,4 @@
-Add Rec LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
 (* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation". *)
 Require Import syntax.
 
