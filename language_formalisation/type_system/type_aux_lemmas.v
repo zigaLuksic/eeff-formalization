@@ -1,11 +1,11 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
 
 Require Export syntax syntax_lemmas bidirectional substitution Omega Logic.
 
@@ -20,33 +20,38 @@ induction Γ; rewrite H; auto.
 Qed.
 
 (* Switch lemmas *)
-Lemma v_switch_checksafe
+Fixpoint v_switch_checksafe
   (Γ:ctx) i (αi:vtype) j (αj:vtype) (v:val) (A:vtype)
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
+  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) 
+  {struct v} :
   vcheck Γ v A ->
   vcheck (ctx_switch_vars Γ i j αi αj p_i p_j) (v_switch_vars v i j) A
 
 with v_switch_synthsafe
   (Γ:ctx) i (αi:vtype) j (αj:vtype) (v:val) (A:vtype)
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
+  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj)
+  {struct v}:
   vsynth Γ v A ->
   vsynth (ctx_switch_vars Γ i j αi αj p_i p_j) (v_switch_vars v i j) A
 
 with c_switch_checksafe 
   (Γ:ctx) i (αi:vtype) j (αj:vtype) (c:comp) (C:ctype)
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
+  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj)
+  {struct c}:
   ccheck Γ c C -> 
   ccheck (ctx_switch_vars Γ i j αi αj p_i p_j) (c_switch_vars c i j) C
 
 with c_switch_synthsafe 
   (Γ:ctx) i (αi:vtype) j (αj:vtype) (c:comp) (C:ctype)
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
+  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj)
+  {struct c}:
   csynth Γ c C -> 
   csynth (ctx_switch_vars Γ i j αi αj p_i p_j) (c_switch_vars c i j) C
 
 with h_switch_checksafe
   (Γ:ctx) i (αi:vtype) j (αj:vtype) (h:hcases) (Σ:sig) (D:ctype)
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
+  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj)
+  {struct h}:
   hcheck Γ h Σ D ->
   hcheck (ctx_switch_vars Γ i j αi αj p_i p_j) (h_switch_vars h i j) Σ D.
 Proof.
@@ -57,7 +62,25 @@ revert Γ i j αi αj A p_i p_j; induction v;
 intros Γ i j αi αj A p_i p_j orig.
 
 all: inv orig; try inv H.
-+ apply CheckVBySynth. apply v_switch_synthsafe. apply SynthVar. assumption.
+{ (* relevant case *)
+  apply CheckVBySynth. simpl.
+  destruct v as (name, num).
+  remember (num =? i) as cmpi.
+  induction cmpi; try apply SynthVar; simpl.
+  + simpl in H2. apply eq_sym in Heqcmpi. apply beq_nat_true in Heqcmpi.
+    rewrite Heqcmpi in H2. rewrite <-H2. apply eq_sym.
+    apply get_in_switched_i.
+  + remember (num =? j) as cmpj.
+    induction cmpj.
+    * simpl in H2. apply eq_sym in Heqcmpj. apply beq_nat_true in Heqcmpj.
+      rewrite Heqcmpj in H2. apply SynthVar. rewrite <-H2. apply eq_sym.
+      apply get_in_switched_j.
+    * rewrite (gets_same Γ (name,num) num) in H2. apply SynthVar.
+      rewrite <-H2. apply eq_sym. apply get_in_switched_other.
+      apply eq_sym in Heqcmpi. apply beq_nat_false in Heqcmpi. auto.
+      apply eq_sym in Heqcmpj. apply beq_nat_false in Heqcmpj. auto.
+      simpl. apply eq_sym. apply beq_nat_refl.
+}
 + apply CheckVBySynth. apply SynthUnit.
 + apply CheckVBySynth. apply SynthInt.
 + apply CheckInl. apply IHv. assumption.
@@ -116,8 +139,17 @@ intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H.
   rewrite HeqC. apply SynthRet.
   apply v_switch_synthsafe. assumption.
 + apply (CheckCBySynth _ _ C' C'); auto.
-  apply c_switch_synthsafe.
-  apply (SynthΠMatch _ _ α β); auto.
+  apply (SynthΠMatch _ _ α β).
+  apply v_switch_synthsafe. assumption.
+  clear v_switch_checksafe.
+  apply (extend_get_proof _ α) in p_i as pp_i.
+  apply (extend_get_proof _ α) in p_j as pp_j.
+  apply (extend_get_proof _ β) in pp_i.
+  apply (extend_get_proof _ β) in pp_j.
+  assert (i+1+1=i+2) by omega. rewrite H in pp_i.
+  assert (j+1+1=j+2) by omega. rewrite H0 in pp_j.
+  rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
+  apply c_switch_synthsafe; assumption.
 + apply (CheckΣMatch _ _ α β); try apply v_switch_synthsafe; auto.
   - apply (extend_get_proof _ α) in p_i as pp_i;
     apply (extend_get_proof _ α) in p_j as pp_j.
@@ -128,20 +160,29 @@ intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H.
     rewrite (ctx_switch_extend1 Γ β i j αi αj p_i p_j pp_i pp_j).
     apply IHc2. assumption.
 + apply (CheckCBySynth _ _ C' C'); auto.
-  apply c_switch_synthsafe. apply (SynthApp _ _ _ α C'); assumption.
+  apply (SynthApp _ _ _ α C'). apply v_switch_synthsafe; assumption. auto.
 + simpl. apply (CheckOp _ _ _ _ _ α_op β_op α Σ eqs); auto.
   apply (extend_get_proof _ β_op) in p_i as pp_i.
   apply (extend_get_proof _ β_op) in p_j as pp_j.
   rewrite (ctx_switch_extend1 Γ β_op i j αi αj p_i p_j pp_i pp_j).
   apply IHc. assumption.
 + apply (CheckCBySynth _ _ C' C'); auto.
-  apply c_switch_synthsafe.
-  apply SynthLetRec. auto. auto.
+  apply SynthLetRec.
+  - apply (extend_get_proof _ A) in p_i as pp_i.
+    apply (extend_get_proof _ A) in p_j as pp_j.
+    apply (extend_get_proof _ (TyFun A C)) in pp_i.
+    apply (extend_get_proof _ (TyFun A C)) in pp_j.
+    assert (i+1+1=i+2) by omega. rewrite H in pp_i.
+    assert (j+1+1=j+2) by omega. rewrite H0 in pp_j.
+    rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
+    apply IHc1. auto.
+  - apply (extend_get_proof _ (TyFun A C)) in p_i as pp_i.
+    apply (extend_get_proof _ (TyFun A C)) in p_j as pp_j.
+    rewrite (ctx_switch_extend1 _ _ _ _ _ _  p_i p_j pp_i pp_j).
+    apply c_switch_synthsafe. auto.
 + apply (CheckCBySynth _ _ C' C'); auto.
-  apply c_switch_synthsafe.
   apply (SynthHandle _ _ _ ctyC); auto.
 + apply (CheckCBySynth _ _ C' C'); auto.
-  apply c_switch_synthsafe. simpl.
   apply SynthCAnnot. auto.
 }
 {

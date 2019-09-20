@@ -1,5 +1,5 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 Require Export Arith syntax.
 Require Import Le Compare_dec.
 
@@ -130,7 +130,6 @@ revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
     destruct i; auto; simpl.
     assert (i+2 = S (S i)) by omega; rewrite H0; auto.
 Qed.
-
 
 Lemma hcases_switch_None h i j op:
   find_op_case h op = None -> find_op_case (h_switch_vars h i j) op = None.
