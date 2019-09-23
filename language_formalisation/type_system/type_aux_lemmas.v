@@ -92,14 +92,14 @@ all: inv orig; try inv H.
   apply (extend_get_proof _ α) in p_i as pp_i.
   apply (extend_get_proof _ α) in p_j as pp_j.
   rewrite (ctx_switch_extend1 Γ α i j αi αj p_i p_j pp_i pp_j).
-  apply c_switch_checksafe. auto.
+  apply c_switch_checksafe. assumption.
 + apply CheckHandler.
   * apply (extend_get_proof _ α) in p_i as pp_i.
     apply (extend_get_proof _ α) in p_j as pp_j.
     rewrite (ctx_switch_extend1 Γ α i j αi αj p_i p_j pp_i pp_j).
-    apply c_switch_checksafe. auto.
-  * apply h_switch_checksafe. auto.
-+ apply CheckVBySynth. apply SynthVAnnot. apply IHv. auto.
+    apply c_switch_checksafe. assumption.
+  * apply h_switch_checksafe. assumption.
++ apply CheckVBySynth. apply SynthVAnnot. apply IHv. assumption.
 }
 {
 clear v_switch_synthsafe.
@@ -136,10 +136,10 @@ clear h_switch_checksafe.
 revert Γ i j αi αj C p_i p_j; induction c;
 intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H.
 + remember (CTy α SigØ EqsØ) as C.
-  apply (CheckCBySynth _ _ C C); auto.
+  apply (CheckCBySynth _ _ C C); try reflexivity.
   rewrite HeqC. apply SynthRet.
   apply v_switch_synthsafe. assumption.
-+ apply (CheckCBySynth _ _ C' C'); auto.
++ apply (CheckCBySynth _ _ C' C'); try reflexivity.
   apply (SynthΠMatch _ _ α β).
   apply v_switch_synthsafe. assumption.
   clear v_switch_checksafe.
@@ -160,14 +160,15 @@ intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H.
     apply (extend_get_proof _ β) in p_j as pp_j.
     rewrite (ctx_switch_extend1 Γ β i j αi αj p_i p_j pp_i pp_j).
     apply IHc2. assumption.
-+ apply (CheckCBySynth _ _ C' C'); auto.
-  apply (SynthApp _ _ _ α C'). apply v_switch_synthsafe; assumption. auto.
++ apply (CheckCBySynth _ _ C' C'); try reflexivity.
+  apply (SynthApp _ _ _ α C'). apply v_switch_synthsafe; assumption.
+  apply v_switch_checksafe. assumption.
 + simpl. apply (CheckOp _ _ _ _ _ α_op β_op α Σ eqs); auto.
   apply (extend_get_proof _ β_op) in p_i as pp_i.
   apply (extend_get_proof _ β_op) in p_j as pp_j.
   rewrite (ctx_switch_extend1 Γ β_op i j αi αj p_i p_j pp_i pp_j).
   apply IHc. assumption.
-+ apply (CheckCBySynth _ _ C' C'); auto.
++ apply (CheckCBySynth _ _ C' C'); try reflexivity.
   apply SynthLetRec.
   - apply (extend_get_proof _ A) in p_i as pp_i.
     apply (extend_get_proof _ A) in p_j as pp_j.
@@ -176,22 +177,24 @@ intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H.
     assert (i+1+1=i+2) by omega. rewrite H in pp_i.
     assert (j+1+1=j+2) by omega. rewrite H0 in pp_j.
     rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
-    apply IHc1. auto.
+    apply IHc1. assumption.
   - apply (extend_get_proof _ (TyFun A C)) in p_i as pp_i.
     apply (extend_get_proof _ (TyFun A C)) in p_j as pp_j.
     rewrite (ctx_switch_extend1 _ _ _ _ _ _  p_i p_j pp_i pp_j).
-    apply c_switch_synthsafe. auto.
-+ apply (CheckCBySynth _ _ C' C'); auto.
-  apply (SynthHandle _ _ _ ctyC); auto.
-+ apply (CheckCBySynth _ _ C' C'); auto.
-  apply SynthCAnnot. auto.
+    apply c_switch_synthsafe. assumption.
++ apply (CheckCBySynth _ _ C' C'); try reflexivity.
+  apply (SynthHandle _ _ _ ctyC).
+  - apply v_switch_synthsafe. assumption.
+  - apply IHc. assumption.
++ apply (CheckCBySynth _ _ C' C'); try reflexivity.
+  apply SynthCAnnot. apply IHc. assumption.
 }
 {
 clear c_switch_synthsafe.
 clear h_switch_checksafe.
 revert Γ i j αi αj C p_i p_j; induction c;
 intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H; simpl.
-+ apply SynthRet. apply v_switch_synthsafe. auto.
++ apply SynthRet. apply v_switch_synthsafe. assumption.
 + apply (SynthΠMatch _ _ α β).
   apply v_switch_synthsafe. assumption.
   clear v_switch_checksafe.
@@ -203,7 +206,9 @@ intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H; simpl.
   assert (j+1+1=j+2) by omega. rewrite H0 in pp_j.
   rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
   apply IHc. assumption.
-+ apply (SynthApp _ _ _ α C); auto.
++ apply (SynthApp _ _ _ α C).
+  - apply v_switch_synthsafe. assumption.
+  - apply v_switch_checksafe. assumption.
 + apply (SynthLetRec).
   - apply (extend_get_proof _ A) in p_i as pp_i.
     apply (extend_get_proof _ A) in p_j as pp_j.
@@ -212,15 +217,15 @@ intros Γ i j αi αj C p_i p_j orig; inv orig; try inv H; simpl.
     assert (i+1+1=i+2) by omega. rewrite H in pp_i.
     assert (j+1+1=j+2) by omega. rewrite H0 in pp_j.
     rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
-    apply c_switch_checksafe. auto.
+    apply c_switch_checksafe. assumption.
   - apply (extend_get_proof _ (TyFun A C0)) in p_i as pp_i.
     apply (extend_get_proof _ (TyFun A C0)) in p_j as pp_j.
     rewrite (ctx_switch_extend1 _ _ _ _ _ _  p_i p_j pp_i pp_j).
-    apply IHc2. auto.
+    apply IHc2. assumption.
 + apply (SynthHandle _ _ _ ctyC C).
-  - apply v_switch_synthsafe. auto.
-  - apply c_switch_checksafe. auto.
-+ apply SynthCAnnot. apply c_switch_checksafe. auto.
+  - apply v_switch_synthsafe. assumption.
+  - apply c_switch_checksafe. assumption.
++ apply SynthCAnnot. apply c_switch_checksafe. assumption.
 }
 {
 clear c_switch_synthsafe.
@@ -229,8 +234,8 @@ revert Γ i j αi αj Σ D p_i p_j; induction h;
 intros Γ i j αi αj Σ D p_i p_j orig; inv orig; try inv H; simpl.
 apply CheckCasesØ.
 apply CheckCasesU.
-+ apply hcases_switch_None. auto.
-+ apply IHh. auto.
++ apply hcases_switch_None. assumption.
++ apply IHh. assumption.
 + apply (extend_get_proof _ (TyFun β_op D)) in p_i as pp_i.
   apply (extend_get_proof _ (TyFun β_op D)) in p_j as pp_j.
   apply (extend_get_proof _ α_op) in pp_i.
@@ -238,7 +243,7 @@ apply CheckCasesU.
   assert (i+1+1=i+2) by omega. rewrite H in pp_i.
   assert (j+1+1=j+2) by omega. rewrite H0 in pp_j.
   rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
-  apply c_switch_checksafe. auto.
+  apply c_switch_checksafe. assumption.
 }
 Qed.
 

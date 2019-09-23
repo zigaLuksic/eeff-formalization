@@ -59,11 +59,12 @@ induction v; intros Γ A orig ty_v_s; inv orig; try inv H
 - apply CheckVBySynth. apply SynthInt.
 - apply CheckInl. apply IHv; auto.
 - apply CheckInr. apply IHv; auto.
-- apply CheckPair; apply IHv1 || apply IHv2; auto;
-  apply CheckVBySynth; auto.
-- apply CheckPair; apply IHv1 || apply IHv2; auto.
+- apply CheckVBySynth. apply SynthPair;
+  apply (vsynth_sub_lemma _ _ _ _ α); auto.
 - apply CheckFun.
-  rewrite c_switch_checksafe in H3.
+  apply c_switch10_checksafe in H3.
+  apply (ccheck_sub_lemma _ _ _ v_s) in H3.
+  unfold csub_out in H3. simpl in *.
   specialize (ccheck_sub_lemma (CtxU Γ α0) c C v_s α).
   
   

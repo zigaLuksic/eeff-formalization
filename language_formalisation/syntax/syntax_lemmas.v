@@ -157,3 +157,65 @@ induction h; auto.
   - f_equal. inv orig. auto.
   - apply IHh. auto.
 Qed.
+
+
+Lemma v_switch_ii v i : v_switch_vars v i i = v
+with c_switch_ii c i : c_switch_vars c i i = c
+with h_switch_ii h i : h_switch_vars h i i = h.
+Proof.
+{
+revert i. induction v; intros i; simpl; try reflexivity;
+try f_equal; try apply IHv || apply IHv1 || apply IHv2.
++ destruct v as (name, num). remember (num=?i) as cmp. destruct cmp.
+  apply beq_nat_eq in Heqcmp. rewrite Heqcmp. reflexivity. reflexivity.
++ apply c_switch_ii.
++ apply c_switch_ii.
++ apply h_switch_ii.
+}
+{
+revert i. induction c; intros i; simpl; try reflexivity; try destruct p;
+try f_equal; try apply v_switch_ii; try apply IHc || apply IHc1 || apply IHc2.
+}
+{
+revert i. induction h; intros i; simpl; try reflexivity.
+f_equal. apply IHh. apply c_switch_ii.
+}
+Qed.
+
+Lemma v_switchswitch v i j:
+  v_switch_vars (v_switch_vars v i j) i j = v
+with c_switchswitch c i j:
+  c_switch_vars (c_switch_vars c i j) i j = c
+with h_switchswitch h i j:
+  h_switch_vars (h_switch_vars h i j) i j = h.
+Proof.
+all: revert i j.
+{
+induction v; intros i j; simpl; try reflexivity; try f_equal;
+try apply IHv || apply IHv1 || apply IHv2;
+try apply c_switchswitch || apply h_switchswitch.
+
+destruct v as (name, num).
+remember (num=?i) as cmpi. destruct cmpi;
+remember (num=?j) as cmpj; destruct cmpj; simpl.
++ apply beq_nat_eq in Heqcmpi. apply beq_nat_eq in Heqcmpj. rewrite Heqcmpi.
+  rewrite Heqcmpi in Heqcmpj. rewrite Heqcmpj. rewrite <-beq_nat_refl. auto.
++ apply beq_nat_eq in Heqcmpi. rewrite Heqcmpi in Heqcmpj.
+  apply eq_sym in Heqcmpj. rewrite beq_nat_false_iff in Heqcmpj.
+  apply not_eq_sym in Heqcmpj. rewrite <-beq_nat_false_iff in Heqcmpj.
+  rewrite Heqcmpj. rewrite <-beq_nat_refl. rewrite Heqcmpi. reflexivity.
++ apply beq_nat_eq in Heqcmpj. rewrite Heqcmpj in Heqcmpi.
+  apply eq_sym in Heqcmpi. rewrite beq_nat_false_iff in Heqcmpi.
+  apply not_eq_sym in Heqcmpi. rewrite <-beq_nat_false_iff in Heqcmpi.
+  rewrite Heqcmpi. rewrite <-beq_nat_refl. rewrite Heqcmpj. reflexivity.
++ rewrite <-Heqcmpi. rewrite <-Heqcmpj. reflexivity.
+}
+{
+induction c; intros i j; try destruct p; simpl; f_equal;
+try apply v_switchswitch || apply IHc || apply IHc1 || apply IHc2.
+}
+{
+induction h; intros i j; simpl.
+reflexivity. f_equal. apply IHh. apply c_switchswitch.
+}
+Qed.
