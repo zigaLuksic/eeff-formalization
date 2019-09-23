@@ -47,10 +47,6 @@ with vcheck : ctx -> val -> vtype -> Type :=
 | CheckInr Γ v α β :
     vcheck Γ v β ->
     vcheck Γ (Inr v) (TyΣ α β)
-| CheckPair Γ v1 v2 α β :
-    vcheck Γ v1 α ->
-    vcheck Γ v2 β ->
-    vcheck Γ (Pair v1 v2) (TyΠ α β)
 | CheckFun Γ x c α C :
     ccheck (CtxU Γ α) c C ->
     vcheck Γ (Fun x c) (TyFun α C)

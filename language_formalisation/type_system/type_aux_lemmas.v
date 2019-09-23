@@ -85,8 +85,9 @@ all: inv orig; try inv H.
 + apply CheckVBySynth. apply SynthInt.
 + apply CheckInl. apply IHv. assumption.
 + apply CheckInr. apply IHv. assumption.
-+ apply CheckPair; apply IHv1 || apply IHv2; apply CheckVBySynth; assumption.
-+ apply CheckPair; apply IHv1 || apply IHv2; assumption.
++ apply CheckVBySynth. apply SynthPair.
+  apply (v_switch_synthsafe _ i αi j αj _ _ p_i p_j) in H3. assumption.
+  apply (v_switch_synthsafe _ i αi j αj _ _ p_i p_j) in H5. assumption.
 + apply CheckFun.
   apply (extend_get_proof _ α) in p_i as pp_i.
   apply (extend_get_proof _ α) in p_j as pp_j.
@@ -240,44 +241,112 @@ apply CheckCasesU.
   apply c_switch_checksafe. auto.
 }
 Qed.
-(* 
 
+(* Switch lemmas *)
+Fixpoint v_switch10_checksafe
+  (Γ:ctx) (α1:vtype) (α0:vtype) (v:val) (A:vtype)
+  {struct v} :
+  vcheck (CtxU (CtxU Γ α1) α0) v A ->
+  vcheck (CtxU (CtxU Γ α0) α1) (v_switch_vars v 1 0) A
 
-(* Other lemmas *)
-Lemma v_add_to_ctx_safe (Γ:ctx) (α:vtype) (v:val) (A:vtype) :
-  vcheck Γ v A ->
-  vcheck (CtxU Γ α) (Sub.v_shift v 1 0) A
-  /\
-  v_no_var_j v j
-with c_add_to_ctx_safe (Γ:ctx) (α:vtype) (c:comp) (C:ctype) :
-  ccheck Γ c C -> ccheck (CtxU Γ α) (Sub.c_shift c 1 0) C
-with h_add_to_ctx_safe (Γ:ctx) (α:vtype) (h:hcases) (Σ:sig) (D:ctype) :
-  hcheck Γ h Σ D -> hcheck (CtxU Γ α) (Sub.h_shift h 1 0) Σ D.
+with v_switch10_synthsafe
+  (Γ:ctx) (α1:vtype) (α0:vtype) (v:val) (A:vtype)
+  {struct v}:
+  vsynth (CtxU (CtxU Γ α1) α0) v A ->
+  vsynth (CtxU (CtxU Γ α0) α1) (v_switch_vars v 1 0) A
+
+with c_switch10_checksafe 
+  (Γ:ctx) (α1:vtype) (α0:vtype) (c:comp) (C:ctype)
+  {struct c}:
+  ccheck (CtxU (CtxU Γ α1) α0) c C -> 
+  ccheck (CtxU (CtxU Γ α0) α1) (c_switch_vars c 1 0) C
+
+with c_switch10_synthsafe 
+  (Γ:ctx) (α1:vtype) (α0:vtype) (c:comp) (C:ctype)
+  {struct c}:
+  csynth (CtxU (CtxU Γ α1) α0) c C -> 
+  csynth (CtxU (CtxU Γ α0) α1) (c_switch_vars c 1 0) C
+
+with h_switch10_checksafe
+  (Γ:ctx) (α1:vtype) (α0:vtype) (h:hcases) (Σ:sig) (D:ctype)
+  {struct h}:
+  hcheck (CtxU (CtxU Γ α1) α0) h Σ D ->
+  hcheck (CtxU (CtxU Γ α0) α1) (h_switch_vars h 1 0) Σ D.
 Proof.
-all:
-rename v_add_to_ctx_safe into v_lemma;
-rename c_add_to_ctx_safe into c_lemma;
-rename h_add_to_ctx_safe into h_lemma.
-{
-clear v_lemma.
-revert Γ α A. induction v; intros Γ α A orig; simpl.
-+ inv orig. inv H. apply CheckVBySynth. apply SynthVar.
-  destruct v as (name, num). simpl.
-  assert (num + 1 =? 0 = false).
-  { apply beq_nat_false_iff. omega. }
-  rewrite H. assert (num+1-1=num) by omega.
-  rewrite H0. auto.
-+ inv orig. inv H. apply CheckVBySynth. apply SynthUnit.
-+ inv orig. inv H. apply CheckVBySynth. apply SynthInt.
-+ inv orig. inv H. apply CheckInl. apply IHv. assumption.
-+ inv orig. inv H. apply CheckInr. apply IHv. assumption.
-+ inv orig. inv H.
-  - apply CheckPair.
-    * apply IHv1. apply CheckVBySynth. assumption. 
-    * apply IHv2. apply CheckVBySynth. assumption.
-  - apply CheckPair.
-    * apply IHv1. assumption. 
-    * apply IHv2. assumption.
-+ inv orig. inv H. apply CheckFun. apply c_lemma.  
+all: intro orig; remember (CtxU (CtxU Γ α1) α0) as Γ'.
+all: assert (get_vtype_i Γ' 1 = Some α1) as p_1.
+all: try (rewrite HeqΓ'; simpl; f_equal).
+all: assert (get_vtype_i Γ' 0 = Some α0) as p_0.
+all: try (rewrite HeqΓ'; simpl; f_equal).
+all: assert (ctx_switch_vars Γ' 1 0 α1 α0 p_1 p_0 = CtxU (CtxU Γ α0) α1).
+all: try (unfold ctx_switch_vars; rewrite HeqΓ'; simpl; f_equal).
+all: rewrite <-H.
++ apply v_switch_checksafe. assumption.
++ apply v_switch_synthsafe. assumption.
++ apply c_switch_checksafe. assumption.
++ apply c_switch_synthsafe. assumption.
++ apply h_switch_checksafe. assumption.
+Qed.
 
-} *)
+Definition v_switch210_vars v := (v_switch_vars (v_switch_vars v 1 0) 2 1).
+Definition c_switch210_vars c := (c_switch_vars (c_switch_vars c 1 0) 2 1).
+Definition h_switch210_vars h := (h_switch_vars (h_switch_vars h 1 0) 2 1).
+
+(* Switch lemmas *)
+Fixpoint v_switch210_checksafe
+  (Γ:ctx) (α2 : vtype) (α1:vtype) (α0:vtype) (v:val) (A:vtype)
+  {struct v} :
+  vcheck (CtxU (CtxU (CtxU Γ α2) α1) α0) v A ->
+  vcheck (CtxU (CtxU (CtxU Γ α0) α2) α1) (v_switch210_vars v) A
+
+with v_switch210_synthsafe
+  (Γ:ctx) (α2 : vtype) (α1:vtype) (α0:vtype) (v:val) (A:vtype)
+  {struct v}:
+  vsynth (CtxU (CtxU (CtxU Γ α2) α1) α0) v A ->
+  vsynth (CtxU (CtxU (CtxU Γ α0) α2) α1) (v_switch210_vars v) A
+
+with c_switch210_checksafe 
+  (Γ:ctx) (α2 : vtype) (α1:vtype) (α0:vtype) (c:comp) (C:ctype)
+  {struct c}:
+  ccheck (CtxU (CtxU (CtxU Γ α2) α1) α0) c C -> 
+  ccheck (CtxU (CtxU (CtxU Γ α0) α2) α1) (c_switch210_vars c) C
+
+with c_switch210_synthsafe 
+  (Γ:ctx) (α2 : vtype) (α1:vtype) (α0:vtype) (c:comp) (C:ctype)
+  {struct c}:
+  csynth (CtxU (CtxU (CtxU Γ α2) α1) α0) c C -> 
+  csynth (CtxU (CtxU (CtxU Γ α0) α2) α1) (c_switch210_vars c) C
+
+with h_switch210_checksafe
+  (Γ:ctx) (α2 : vtype) (α1:vtype) (α0:vtype) (h:hcases) (Σ:sig) (D:ctype)
+  {struct h}:
+  hcheck (CtxU (CtxU (CtxU Γ α2) α1) α0) h Σ D ->
+  hcheck (CtxU (CtxU (CtxU Γ α0) α2) α1) (h_switch210_vars h) Σ D.
+Proof.
+all: intro orig; remember (CtxU (CtxU (CtxU Γ α2) α1) α0) as Γ'.
+all: remember (CtxU (CtxU (CtxU Γ α2) α0) α1) as Γ''.
+all: remember (CtxU (CtxU (CtxU Γ α0) α2) α1) as Γ'''.
+all: assert (get_vtype_i Γ' 0 = Some α0) as p_0.
+all: try (rewrite HeqΓ'; simpl; f_equal).
+all: assert (get_vtype_i Γ' 1 = Some α1) as p_1.
+all: try (rewrite HeqΓ'; simpl; f_equal).
+all: assert (get_vtype_i Γ'' 1 = Some α0) as p'_0.
+all: try (rewrite HeqΓ''; simpl; f_equal).
+all: assert (get_vtype_i Γ'' 2 = Some α2) as p'_2.
+all: try (rewrite HeqΓ''; simpl; f_equal).
+all: assert (ctx_switch_vars Γ' 1 0 α1 α0 p_1 p_0 = Γ'').
+all: try (unfold ctx_switch_vars; rewrite HeqΓ'; rewrite HeqΓ''; simpl; f_equal).
+all: assert (ctx_switch_vars Γ'' 2 1 α2 α0 p'_2 p'_0 = Γ''').
+all: try (unfold ctx_switch_vars; rewrite HeqΓ''; rewrite HeqΓ'''; simpl; f_equal).
+all: rewrite <-H0.
++ apply v_switch_checksafe. rewrite <-H.
+  apply v_switch_checksafe. assumption.
++ apply v_switch_synthsafe. rewrite <-H.
+  apply v_switch_synthsafe. assumption.
++ apply c_switch_checksafe. rewrite <-H.
+  apply c_switch_checksafe. assumption.
++ apply c_switch_synthsafe. rewrite <-H.
+  apply c_switch_synthsafe. assumption.
++ apply h_switch_checksafe. rewrite <-H.
+  apply h_switch_checksafe. assumption.
+Qed.
