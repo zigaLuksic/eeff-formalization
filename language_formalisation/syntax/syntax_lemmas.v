@@ -219,3 +219,34 @@ induction h; intros i j; simpl.
 reflexivity. f_equal. apply IHh. apply c_switchswitch.
 }
 Qed.
+
+Lemma v_switch_sym v i j :
+  v_switch_vars v i j = v_switch_vars v j i
+with c_switch_sym c i j :
+  c_switch_vars c i j = c_switch_vars c j i
+with h_switch_sym h i j :
+  h_switch_vars h i j = h_switch_vars h j i.
+Proof.
+{
+induction v; simpl;
+try f_equal; try apply IHv || apply IHv1 || apply IHv2;
+try apply h_switch_sym || apply c_switch_sym; try reflexivity.
+destruct v as (name, num).
+remember (num=?i) as cmpi.
+remember (num=?j) as cmpj.
+destruct cmpi; destruct cmpj; auto.
+apply eq_sym in Heqcmpi. 
+apply eq_sym in Heqcmpj. 
+apply beq_nat_true_iff in Heqcmpi. 
+apply beq_nat_true_iff in Heqcmpj.
+rewrite Heqcmpj in Heqcmpi. rewrite Heqcmpi. auto.
+}
+{
+revert i j. induction c; intros i j; try destruct p; simpl;
+try f_equal; try apply IHc || apply IHc1 || apply IHc2;
+apply v_switch_sym.
+}
+{
+induction h; simpl; f_equal; try auto || apply IHh.
+}
+Qed.
