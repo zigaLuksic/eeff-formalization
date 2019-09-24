@@ -69,14 +69,14 @@ all: inv orig; try inv H.
   induction cmpi; try apply SynthVar; simpl.
   + simpl in H2. apply eq_sym in Heqcmpi. apply beq_nat_true in Heqcmpi.
     rewrite Heqcmpi in H2. rewrite <-H2. apply eq_sym.
-    apply get_in_switched_i.
+    apply switch_ij_get_j.
   + remember (num =? j) as cmpj.
     induction cmpj.
     * simpl in H2. apply eq_sym in Heqcmpj. apply beq_nat_true in Heqcmpj.
       rewrite Heqcmpj in H2. apply SynthVar. rewrite <-H2. apply eq_sym.
-      apply get_in_switched_j.
+      apply switch_ij_get_i.
     * rewrite (gets_same Γ (name,num) num) in H2. apply SynthVar.
-      rewrite <-H2. apply eq_sym. apply get_in_switched_other.
+      rewrite <-H2. apply eq_sym. apply switch_ij_get_k.
       apply eq_sym in Heqcmpi. apply beq_nat_false in Heqcmpi. auto.
       apply eq_sym in Heqcmpj. apply beq_nat_false in Heqcmpj. auto.
       simpl. apply eq_sym. apply beq_nat_refl.
@@ -113,14 +113,14 @@ intros Γ i j αi αj A p_i p_j orig; inv orig; try inv H; simpl.
   induction cmpi; try apply SynthVar; simpl.
   + simpl in H1. apply eq_sym in Heqcmpi. apply beq_nat_true in Heqcmpi.
     rewrite Heqcmpi in H1. rewrite <-H1. apply eq_sym.
-    apply get_in_switched_i.
+    apply switch_ij_get_j.
   + remember (num =? j) as cmpj.
     induction cmpj.
     * simpl in H1. apply eq_sym in Heqcmpj. apply beq_nat_true in Heqcmpj.
       rewrite Heqcmpj in H1. apply SynthVar. rewrite <-H1. apply eq_sym.
-      apply get_in_switched_j.
+      apply switch_ij_get_i.
     * rewrite (gets_same Γ (name,num) num) in H1. apply SynthVar.
-      rewrite <-H1. apply eq_sym. apply get_in_switched_other.
+      rewrite <-H1. apply eq_sym. apply switch_ij_get_k.
       apply eq_sym in Heqcmpi. apply beq_nat_false in Heqcmpi. auto.
       apply eq_sym in Heqcmpj. apply beq_nat_false in Heqcmpj. auto.
       simpl. apply eq_sym. apply beq_nat_refl.
@@ -234,7 +234,7 @@ revert Γ i j αi αj Σ D p_i p_j; induction h;
 intros Γ i j αi αj Σ D p_i p_j orig; inv orig; try inv H; simpl.
 apply CheckCasesØ.
 apply CheckCasesU.
-+ apply hcases_switch_None. assumption.
++ apply find_op_None_switch. assumption.
 + apply IHh. assumption.
 + apply (extend_get_proof _ (TyFun β_op D)) in p_i as pp_i.
   apply (extend_get_proof _ (TyFun β_op D)) in p_j as pp_j.

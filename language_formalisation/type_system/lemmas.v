@@ -8,6 +8,19 @@ Require Export syntax bidirectional substitution
 
 Ltac inv H := inversion H; clear H; subst.
 
+Lemma v_subs_checksafe
+  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (α:vtype) :
+  vcheck Γ v A -> get_vtype_i Γ i = Some α ->
+  vcheck Γ v_s α ->
+  vcheck Γ (Sub.v_sub v (i, v_s)) A
+Lemma v_subs_synthsafe
+  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (α:vtype) :
+  vsynth Γ v A -> get_vtype_i Γ i = Some α ->
+  vcheck Γ v_s α ->
+  vsynth Γ (Sub.v_sub v (i, v_s)) A
+
+
+(* 
 Lemma vcheck_sub_lemma 
   (Γ:ctx) (v:val) (A:vtype) (v_s:val) (α:vtype) :
   vcheck (CtxU Γ α) v A ->
@@ -38,38 +51,7 @@ with hcheck_sub_lemma
   vcheck Γ v_s α ->
   hcheck Γ (hsub_out h v_s) Σ D.
 
-Proof.
-{
-clear vcheck_sub_lemma.
-clear csynth_sub_lemma.
-revert Γ A.
-induction v; intros Γ A orig ty_v_s; inv orig; try inv H
-; unfold vsub_out; simpl.
-- destruct v as (name, db_i). simpl.
-  destruct db_i; simpl.
-  + simpl in H2.
-    rewrite (vshifts_cancel 1 1 0 v_s). simpl.
-    rewrite (vzero_shift 0 v_s).
-    injection H2. intro sametype.
-    rewrite <-sametype. assumption. omega.
-  + apply CheckVBySynth. apply SynthVar.
-    simpl in *. assert (db_i - 0 = db_i) by omega. rewrite H.
-    assumption.
-- apply CheckVBySynth. apply SynthUnit.
-- apply CheckVBySynth. apply SynthInt.
-- apply CheckInl. apply IHv; auto.
-- apply CheckInr. apply IHv; auto.
-- apply CheckVBySynth. apply SynthPair;
-  apply (vsynth_sub_lemma _ _ _ _ α); auto.
-- apply CheckFun.
-  apply c_switch10_checksafe in H3.
-  rewrite vshifts_add. simpl.
-  apply (ccheck_sub_lemma _ _ _ (Sub.v_shift v_s 1 0)) in H3.
-  unfold csub_out in H3.
-  rewrite vshifts_add in H3.
-  rewrite c_switch_sym in H3.
-  (* TODO *)
-
+Proof. *)
 
 
     }
