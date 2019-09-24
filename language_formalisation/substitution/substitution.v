@@ -27,7 +27,7 @@ match v with
 | Fun x c => Fun x (c_shift c d (cut+1))
 | Handler x c_ret h =>
     Handler x (c_shift c_ret d (cut+1)) (h_shift h d cut)
-| VAnnot v' α => VAnnot (v_shift v' d cut) α
+| VAnnot v' A => VAnnot (v_shift v' d cut) A
 end
 with c_shift (c : comp) d (cut : nat) :=
 match c with
@@ -70,7 +70,7 @@ match v with
 | Fun x c => Fun x (c_negshift c d (cut+1))
 | Handler x c_ret h =>
     Handler x (c_negshift c_ret d (cut+1)) (h_negshift h d cut)
-| VAnnot v' α => VAnnot (v_negshift v' d cut) α
+| VAnnot v' A => VAnnot (v_negshift v' d cut) A
 end
 with c_negshift (c : comp) d (cut : nat) :=
 match c with
@@ -112,7 +112,7 @@ match v with
     Handler x
       (c_sub c_ret (sub_shift sub 1))
       (h_sub h sub)
-| VAnnot v' α => VAnnot (v_sub v' sub) α
+| VAnnot v' A => VAnnot (v_sub v' sub) A
 end
 with c_sub (c : comp) (sub : nat * val) :=
 match c with

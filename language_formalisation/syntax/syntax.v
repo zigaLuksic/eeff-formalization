@@ -95,8 +95,8 @@ Notation "x == y" := (string_dec x y) (at level 75, no associativity).
 Fixpoint get_vtype_i (Γ : ctx) (i:nat) : option vtype :=
   match Γ, i with
   | CtxØ , _=> None
-  | CtxU Γ' α, 0 => Some α
-  | CtxU Γ' α, S i' =>  get_vtype_i Γ' i'
+  | CtxU Γ' A, 0 => Some A
+  | CtxU Γ' A, S i' =>  get_vtype_i Γ' i'
   end.
 
 Definition get_vtype (Γ : ctx) (id : var_id) : option vtype :=
@@ -105,8 +105,8 @@ Definition get_vtype (Γ : ctx) (id : var_id) : option vtype :=
 Fixpoint get_op_type (Σ : sig) (op : op_id) : option (vtype * vtype) :=
   match Σ with
   | SigØ => None
-  | SigU Σ' op' α β =>
-      if op == op' then Some (α, β)
+  | SigU Σ' op' A B =>
+      if op == op' then Some (A, B)
       else get_op_type Σ' op
   end.
 
@@ -130,7 +130,7 @@ match v with
 | Pair v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
 | Fun x c => c_no_var_j c (j+1)
 | Handler x c_ret h => (c_no_var_j c_ret (j+1)) /\ (h_no_var_j h j)
-| VAnnot v' α => v_no_var_j v' j
+| VAnnot v' A => v_no_var_j v' j
 end
 with c_no_var_j (c:comp) (j:nat) :=
 match c with
@@ -166,8 +166,8 @@ match v with
 | Fun x c => Fun x (c_switch_vars c (i+1) (j+1))
 | Handler x c_ret h =>
     Handler x (c_switch_vars c_ret (i+1) (j+1)) (h_switch_vars h i j)
-| VAnnot v' α => 
-    VAnnot (v_switch_vars v' i j) α
+| VAnnot v' A => 
+    VAnnot (v_switch_vars v' i j) A
 end
 with c_switch_vars (c:comp) (i:nat) (j:nat) :=
 match c with
@@ -198,8 +198,8 @@ end.
 Fixpoint ctx_change_var (Γ:ctx) (i:nat) (A:vtype) :=
   match Γ, i with
   | CtxØ, _ => CtxØ
-  | CtxU Γ' α, 0 => CtxU Γ' A
-  | CtxU Γ' α, S i' => CtxU (ctx_change_var Γ' i' A) α
+  | CtxU Γ' A', 0 => CtxU Γ' A
+  | CtxU Γ' A', S i' => CtxU (ctx_change_var Γ' i' A) A'
   end.
 
 Definition ctx_switch_vars (Γ : ctx) (i:nat) (j:nat) (A:vtype) (B:vtype)

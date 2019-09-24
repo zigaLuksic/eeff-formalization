@@ -14,8 +14,8 @@ revert id db_i. induction Γ; intros id db_i matches; destruct id as (name, num)
   rewrite matches. auto.
 Qed.
 
-Lemma change_j_get_k Γ j k αj :
-  j <> k -> get_vtype_i Γ k = get_vtype_i (ctx_change_var Γ j αj) k.
+Lemma change_j_get_k Γ j k Aj :
+  j <> k -> get_vtype_i Γ k = get_vtype_i (ctx_change_var Γ j Aj) k.
 Proof.
 revert j k. induction Γ; intros j k neq_jk; auto.
 destruct k; destruct j; auto.
@@ -23,9 +23,9 @@ destruct k; destruct j; auto.
 + simpl. apply IHΓ. omega.
 Qed.
 
-Lemma change_j_get_j Γ j αj_orig αj 
-  (p_j : get_vtype_i Γ j = Some αj_orig) :
-  get_vtype_i (ctx_change_var Γ j αj) j = Some αj.
+Lemma change_j_get_j Γ j Aj_orig Aj 
+  (p_j : get_vtype_i Γ j = Some Aj_orig) :
+  get_vtype_i (ctx_change_var Γ j Aj) j = Some Aj.
 Proof.
 revert j p_j. induction Γ; intros j p_j; simpl in p_j.
 + discriminate.
@@ -117,10 +117,10 @@ induction h; simpl; f_equal; try auto || apply IHh.
 }
 Qed.
 
-Lemma switch_ij_get_k Γ k i j αi αj
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
+Lemma switch_ij_get_k Γ k i j Ai Aj
+  (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) :
   i <> k -> j <> k ->
-  get_vtype_i Γ k = get_vtype_i (ctx_switch_vars Γ i j αi αj p_i p_j) k.
+  get_vtype_i Γ k = get_vtype_i (ctx_switch_vars Γ i j Ai Aj p_i p_j) k.
 Proof.
 revert k i j p_i p_j. induction Γ;
 intros k i j p_i p_j neq_ik neq_jk. auto.
@@ -136,71 +136,71 @@ intros i j p_i p_j neq_ik neq_jk.
   - unfold ctx_switch_vars in IHΓ. apply IHΓ; auto; omega.
 Qed.
       
-Lemma switch_ij_get_j Γ i j αi αj
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
-  get_vtype_i Γ i = get_vtype_i (ctx_switch_vars Γ i j αi αj p_i p_j) j.
+Lemma switch_ij_get_j Γ i j Ai Aj
+  (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) :
+  get_vtype_i Γ i = get_vtype_i (ctx_switch_vars Γ i j Ai Aj p_i p_j) j.
 Proof.
 revert i j p_i p_j. induction Γ; intros i j p_i p_j.
 auto.
 destruct i; destruct j; auto; simpl.
 + apply eq_sym. simpl in p_i. rewrite p_i.
-  apply (change_j_get_j Γ j αj). auto.
+  apply (change_j_get_j Γ j Aj). auto.
 + unfold ctx_switch_vars in IHΓ. apply IHΓ. auto. auto.
 Qed.
 
-Lemma switch_ij_get_i Γ i j αi αj
-  (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) :
-  get_vtype_i Γ j = get_vtype_i (ctx_switch_vars Γ i j αi αj p_i p_j) i.
+Lemma switch_ij_get_i Γ i j Ai Aj
+  (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) :
+  get_vtype_i Γ j = get_vtype_i (ctx_switch_vars Γ i j Ai Aj p_i p_j) i.
 Proof.
 revert i j p_i p_j. induction Γ; intros i j p_i p_j.
 auto.
 destruct i; destruct j; auto; simpl.
 + apply eq_sym. simpl in p_j. rewrite p_j.
-  apply (change_j_get_j Γ i αi). auto.
+  apply (change_j_get_j Γ i Ai). auto.
 + unfold ctx_switch_vars in IHΓ. apply IHΓ. auto. auto.
 Qed.
 
-Lemma ctx_switch_extend1 Γ α i j αi αj
-    (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) 
-    (pp_i : get_vtype_i (CtxU Γ α) (i+1) = Some αi)
-    (pp_j : get_vtype_i (CtxU Γ α) (j+1) = Some αj) :
-  CtxU (ctx_switch_vars Γ i j αi αj p_i p_j) α
+Lemma ctx_switch_extend1 Γ A i j Ai Aj
+    (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) 
+    (pp_i : get_vtype_i (CtxU Γ A) (i+1) = Some Ai)
+    (pp_j : get_vtype_i (CtxU Γ A) (j+1) = Some Aj) :
+  CtxU (ctx_switch_vars Γ i j Ai Aj p_i p_j) A
     = 
-  (ctx_switch_vars (CtxU Γ α) (i+1) (j+1) αi αj pp_i pp_j).
+  (ctx_switch_vars (CtxU Γ A) (i+1) (j+1) Ai Aj pp_i pp_j).
 Proof.
 revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
 + destruct i; destruct j; auto.
-+ rename v into γ. unfold ctx_switch_vars.
++ rename v into G. unfold ctx_switch_vars.
   assert (forall Γ',
-    CtxU (ctx_change_var Γ' j αi) α
+    CtxU (ctx_change_var Γ' j Ai) A
       =
-    ctx_change_var (CtxU Γ' α) (j + 1) αi).
+    ctx_change_var (CtxU Γ' A) (j + 1) Ai).
   * intro. simpl. destruct i; auto; simpl;
     assert (j+1 = S j) by omega; rewrite H; auto.
-  * specialize (H (ctx_change_var (CtxU Γ γ) i αj)).
+  * specialize (H (ctx_change_var (CtxU Γ G) i Aj)).
     rewrite H. f_equal.
     destruct i; auto; simpl.
     assert (i+1 = S i) by omega; rewrite H0; auto.
 Qed.
 
-Lemma ctx_switch_extend2 Γ β α i j αi αj
-    (p_i : get_vtype_i Γ i = Some αi) (p_j : get_vtype_i Γ j = Some αj) 
-    (pp_i : get_vtype_i (CtxU (CtxU Γ β) α) (i+2) = Some αi)
-    (pp_j : get_vtype_i (CtxU (CtxU Γ β) α) (j+2) = Some αj) :
-  CtxU (CtxU (ctx_switch_vars Γ i j αi αj p_i p_j) β) α
+Lemma ctx_switch_extend2 Γ B A i j Ai Aj
+    (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) 
+    (pp_i : get_vtype_i (CtxU (CtxU Γ B) A) (i+2) = Some Ai)
+    (pp_j : get_vtype_i (CtxU (CtxU Γ B) A) (j+2) = Some Aj) :
+  CtxU (CtxU (ctx_switch_vars Γ i j Ai Aj p_i p_j) B) A
     = 
-  (ctx_switch_vars (CtxU (CtxU Γ β) α) (i+2) (j+2) αi αj pp_i pp_j).
+  (ctx_switch_vars (CtxU (CtxU Γ B) A) (i+2) (j+2) Ai Aj pp_i pp_j).
 Proof.
 revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
 + destruct i; destruct j; simpl in *; discriminate.
-+ rename v into γ. unfold ctx_switch_vars.
++ rename v into G. unfold ctx_switch_vars.
   assert (forall Γ',
-    CtxU (CtxU (ctx_change_var Γ' j αi) β) α
+    CtxU (CtxU (ctx_change_var Γ' j Ai) B) A
       =
-    ctx_change_var (CtxU (CtxU Γ' β) α) (j + 2) αi).
+    ctx_change_var (CtxU (CtxU Γ' B) A) (j + 2) Ai).
   * intro. simpl. destruct i; auto; simpl;
     assert (j+2 = S (S j)) by omega; rewrite H; auto.
-  * specialize (H (ctx_change_var (CtxU Γ γ) i αj)).
+  * specialize (H (ctx_change_var (CtxU Γ G) i Aj)).
     rewrite H. f_equal.
     destruct i; auto; simpl.
     assert (i+2 = S (S i)) by omega; rewrite H0; auto.
