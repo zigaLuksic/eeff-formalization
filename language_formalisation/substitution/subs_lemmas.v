@@ -254,8 +254,8 @@ remember (n=?i) as n_i; destruct n_i; simpl;
 apply leb_correct in cutj; try rewrite cutj; simpl.
 + apply beq_nat_eq in Heqn_i. rewrite Heqn_i. rewrite <-beq_nat_refl. auto.
 + assert (n+d =? i+d = false).
-  - apply beq_nat_false_iff. apply eq_sym in Heqn_i. 
-    apply beq_nat_false_iff in Heqn_i. omega.
+  - apply Nat.eqb_neq. apply eq_sym in Heqn_i. 
+    apply Nat.eqb_neq in Heqn_i. omega.
   - rewrite H.
     remember (n=?j) as n_j; destruct n_j; simpl.
     * apply beq_nat_eq in Heqn_j. rewrite Heqn_j. rewrite <-beq_nat_refl.
@@ -263,14 +263,14 @@ apply leb_correct in cutj; try rewrite cutj; simpl.
       { apply leb_correct. assumption. }
       rewrite H0. reflexivity.
     * assert (n+d =? j+d = false).
-      -- apply beq_nat_false_iff. apply eq_sym in Heqn_j. 
-         apply beq_nat_false_iff in Heqn_j. omega.
+      -- apply Nat.eqb_neq. apply eq_sym in Heqn_j. 
+         apply Nat.eqb_neq in Heqn_j. omega.
       -- rewrite H0. rewrite <-Heqcut_n. reflexivity.
 + apply beq_nat_eq in Heqn_i. rewrite Heqn_i.
   remember (d=?0) as d0. destruct d0.
   - apply beq_nat_eq in Heqd0. rewrite Heqd0.
     assert (i =? i+0 = true).
-    { apply beq_nat_true_iff. omega. }
+    { apply Nat.eqb_eq. omega. }
     rewrite H. reflexivity.
   - rewrite Heqn_i in Heqcut_n. apply leb_correct in cuti.
     rewrite cuti in Heqcut_n. discriminate.
@@ -338,8 +338,8 @@ try f_equal; try apply IHv || apply IHv1 || apply IHv2.
     remember (j=?i) as cmp. destruct cmp.
     * apply beq_nat_eq in Heqcmp. rewrite Heqcmp. rewrite <-beq_nat_refl.
       rewrite v_switch_ii. rewrite v_switch_ii. reflexivity.
-    * apply eq_sym in Heqcmp. rewrite beq_nat_false_iff in Heqcmp.
-      apply not_eq_sym in Heqcmp. rewrite <-beq_nat_false_iff in Heqcmp.
+    * apply eq_sym in Heqcmp. rewrite Nat.eqb_neq in Heqcmp.
+      apply not_eq_sym in Heqcmp. rewrite <-Nat.eqb_neq in Heqcmp.
       rewrite Heqcmp. simpl. rewrite <-beq_nat_refl. reflexivity.
   - simpl. remember (num=?j) as cmpj. destruct cmpj.
     * simpl. rewrite <-beq_nat_refl. rewrite v_switchswitch. reflexivity.
@@ -362,4 +362,130 @@ induction h; intros i j; simpl; f_equal; try auto.
 rewrite c_sub_switch. f_equal. f_equal. f_equal.
 apply v_switch_shift; omega.
 }
+Qed.
+
+Lemma v_switch_Si_i_shift_1 v i:
+  v_switch_vars (Sub.v_shift v 1 (S i)) (S i) i = Sub.v_shift v 1 i
+with c_switch_Si_i_shift_1 c i:
+  c_switch_vars (Sub.c_shift c 1 (S i)) (S i) i = Sub.c_shift c 1 i
+with h_switch_Si_i_shift_1 h i:
+  h_switch_vars (Sub.h_shift h 1 (S i)) (S i) i = Sub.h_shift h 1 i.
+Proof.
+{
+clear v_switch_Si_i_shift_1.
+revert i. induction v; intros i; simpl.
+{
+destruct v as (name, n). simpl.
+destruct n; simpl.
++ destruct i; auto.
++ remember (i <=? n) as cmp. destruct cmp; simpl.
+  - apply eq_sym in Heqcmp. apply leb_complete in Heqcmp.
+    assert (n + 1 <> i) by omega.
+    rewrite <-Nat.eqb_neq in H. rewrite H.
+    assert (i <= S n) by omega. apply leb_correct in H0. rewrite H0.
+    destruct i; auto.
+    assert (n + 1 <> i) by omega.
+    rewrite <-Nat.eqb_neq in H1. rewrite H1. auto.
+  - apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp.
+    assert (n<>i) by omega. rewrite <-Nat.eqb_neq in H. rewrite H.
+    remember (i =? S n) as iSn. destruct iSn.
+    * apply eq_sym in HeqiSn. rewrite Nat.eqb_eq in HeqiSn.
+      assert (i<=S n) by omega. apply leb_correct in H0. rewrite H0.
+      rewrite HeqiSn. assert (true = (n =? n)) by apply beq_nat_refl.
+      rewrite <-H1. f_equal. f_equal. omega.
+    * apply eq_sym in HeqiSn. rewrite Nat.eqb_neq in HeqiSn.
+      assert (i > S n) by omega. apply leb_iff_conv in H0. rewrite H0.
+      destruct i; auto.
+      assert (n<>i) by omega. apply Nat.eqb_neq in H1. rewrite H1. auto.
+}
+all: f_equal; auto.
+}{
+clear c_switch_Si_i_shift_1.
+revert i. induction c; intros i; try destruct p; simpl; f_equal; auto.
+}{
+clear h_switch_Si_i_shift_1.
+revert i. induction h; intros i; simpl; f_equal; auto.
+}
+Qed.
+
+ 
+Lemma v_switch_SSi_Si_i_shift_1 v i:
+  (v_switch_vars (v_switch_vars (Sub.v_shift v 1 i) (S i) i) (S (S i)) (S i)) 
+    =
+  Sub.v_shift v 1 (S (S i))
+with c_switch_SSi_Si_i_shift_1 c i:
+  (c_switch_vars (c_switch_vars (Sub.c_shift c 1 i) (S i) i) (S (S i)) (S i)) 
+    =
+  Sub.c_shift c 1 (S (S i))
+with h_switch_SSi_Si_i_shift_1 h i:
+  (h_switch_vars (h_switch_vars (Sub.h_shift h 1 i) (S i) i) (S (S i)) (S i)) 
+    =
+  Sub.h_shift h 1 (S (S i)).
+Proof.
+{
+clear v_switch_SSi_Si_i_shift_1.
+revert i. induction v; intros i; simpl.
+{
+destruct v as (name, n). simpl.
+remember (i <=? n) as cmp. destruct cmp; simpl.
++ remember (n+1=?S i) as eqSnSi. destruct eqSnSi; simpl.
+  - apply eq_sym in HeqeqSnSi as SnSi. apply Nat.eqb_eq in SnSi.
+    assert (n+1=S n) by omega. rewrite H in SnSi. assert (i=n) by omega.
+    rewrite H0.
+    assert (n <> S (S n)) by omega. apply Nat.eqb_neq in H1. rewrite H1.
+    assert (n <> S n) by omega. apply Nat.eqb_neq in H2. rewrite H2.
+    destruct n; auto.
+    destruct n; auto.
+    assert (n < S (S n)) by omega. apply leb_iff_conv in H3. rewrite H3. auto.
+  - apply eq_sym in Heqcmp. apply leb_complete in Heqcmp.
+    assert (n+1 <> i) by omega. apply Nat.eqb_neq in H. rewrite H.
+    simpl.
+    remember (n+1=?S(S i)) as eqSnSSi. destruct eqSnSSi; simpl.
+    * rename HeqeqSnSSi into Heq. apply eq_sym in Heq. apply Nat.eqb_eq in Heq.
+      assert (n+1= S n) by omega. rewrite H0 in Heq. injection Heq.
+      intro eq. rewrite eq. rewrite eq in *.
+      destruct i. auto.
+      assert (S i > i) by omega. apply leb_iff_conv in H1. rewrite H1. auto.
+    * rewrite <-HeqeqSnSi.
+      destruct n.
+      ++ assert (i=0) by omega. rewrite H0 in *. simpl in *. discriminate.
+      ++ destruct n.
+        ** apply eq_sym in HeqeqSnSi. apply Nat.eqb_neq in HeqeqSnSi.
+           assert (i = 0) by omega. rewrite H0 in *. simpl in *. discriminate.
+        ** apply eq_sym in HeqeqSnSi. apply Nat.eqb_neq in HeqeqSnSi.
+           apply eq_sym in HeqeqSnSSi. apply Nat.eqb_neq in HeqeqSnSSi.
+           assert (i<=n) by omega. apply leb_correct in H0. rewrite H0. auto.
++ apply eq_sym in Heqcmp as cmp. apply leb_iff_conv in cmp.
+  assert (n <> i) by omega. apply Nat.eqb_neq in H as Hneq.
+  assert (n <> S i) by omega. apply Nat.eqb_neq in H0 as HSneq.
+  assert (n <> S (S i)) by omega. apply Nat.eqb_neq in H1 as HSSneq.
+  rewrite Hneq, HSneq. simpl. rewrite HSneq, HSSneq. f_equal.
+  destruct n; auto. destruct n; auto.
+  assert (i > n) by omega. apply leb_iff_conv in H2. rewrite H2. auto.
+}
+all: f_equal; auto.
+}{
+clear c_switch_SSi_Si_i_shift_1.
+revert i. induction c; intros i; try destruct p; simpl; f_equal; auto.
+}{
+clear h_switch_SSi_Si_i_shift_1.
+revert i. induction h; intros i; simpl; f_equal; auto.
+}
+Qed.
+
+Lemma c_switch_1_0_shift_1_0 c :
+  c_switch_vars (Sub.c_shift c 1 0) 1 0 = Sub.c_shift c 1 1.
+Proof.
+  rewrite <-(c_switchswitch (Sub.c_shift c 1 1) 1 0).
+  rewrite (c_switch_Si_i_shift_1 c 0). auto.
+Qed.
+
+Definition v_switch210_vars v := (v_switch_vars (v_switch_vars v 1 0) 2 1).
+Definition c_switch210_vars c := (c_switch_vars (c_switch_vars c 1 0) 2 1).
+Definition h_switch210_vars h := (h_switch_vars (h_switch_vars h 1 0) 2 1).
+
+Lemma c_switch_2_1_0_shift_1_0 c :
+  c_switch210_vars (Sub.c_shift c 1 0) = Sub.c_shift c 1 2.
+Proof.
+  apply c_switch_SSi_Si_i_shift_1.
 Qed.

@@ -135,3 +135,119 @@ revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig.
 + apply TypeCasesU; auto.
 }
 Qed.
+
+
+Fixpoint v_remove_annot v :=
+match v with
+| Var id => Var id
+| Unit => Unit
+| Int n => Int n
+| Inl v' => Inl (v_remove_annot v')
+| Inr v' => Inr (v_remove_annot v')
+| Pair v1 v2 => Pair (v_remove_annot v1) (v_remove_annot v2)
+| Fun x c => Fun x (c_remove_annot c)
+| Handler x c_ret h => Handler x (c_remove_annot c_ret) (h_remove_annot h)
+| VAnnot v' A => v_remove_annot v'
+end
+with c_remove_annot c :=
+match c with
+| Ret v => Ret (v_remove_annot v)
+| ΠMatch v (x, y) c => ΠMatch (v_remove_annot v) (x,y) (c_remove_annot c)
+| ΣMatch v xl cl xr cr => 
+    ΣMatch (v_remove_annot v) xl (c_remove_annot cl) xr (c_remove_annot cr)
+| App v1 v2 => App (v_remove_annot v1) (v_remove_annot v2)
+| Op op v_arg y c => Op op (v_remove_annot v_arg) y (c_remove_annot c)
+| LetRec f x f_ty c1 c2 =>
+    LetRec f x f_ty (c_remove_annot c1) (c_remove_annot c2)
+| DoBind x c1 c2 => DoBind x (c_remove_annot c1) (c_remove_annot c2)
+| Handle v c' => Handle (v_remove_annot v) (c_remove_annot c')
+| CAnnot c' C => CAnnot (c_remove_annot c') C
+end
+with h_remove_annot h :=
+match h with
+| CasesØ => CasesØ
+| CasesU h op x k c =>
+    CasesU (h_remove_annot h) op x k (c_remove_annot c)
+end.
+
+Lemma v_type_remove_annot Γ v A:
+  has_vtype Γ v A -> has_vtype Γ (v_remove_annot v) A
+with c_type_remove_annot Γ c C:
+  has_ctype Γ c C -> has_ctype Γ (c_remove_annot c) C
+with h_type_remove_annot Γ h Σ D:
+  has_htype Γ h Σ D -> has_htype Γ (h_remove_annot h) Σ D.
+Proof.
+{
+revert Γ A. induction v; intros Γ A orig; inv orig; simpl; auto.
++ apply TypeVar. assumption.
++ apply TypeUnit.
++ apply TypeInt.
++ apply TypeInl. apply IHv. assumption.
++ apply TypeInr. apply IHv. assumption.
++ apply TypePair; auto.
++ apply TypeFun. auto.
++ apply TypeHandler; auto.
+}{
+revert Γ C. induction c; intros Γ C orig; inv orig; simpl; auto.
++ apply TypeRet. auto.
++ eapply TypeΠMatch. apply v_type_remove_annot. exact H4.
+  apply c_type_remove_annot. assumption.
++ eapply TypeΣMatch. apply v_type_remove_annot. exact H6. auto. auto.
++ eapply TypeApp. apply v_type_remove_annot. exact H2. auto.
++ eapply TypeOp; try exact H5 || auto.
++ apply TypeLetRec; auto.
++ eapply TypeHandle. apply v_type_remove_annot. exact H2. auto.
++ apply TypeCAnnot. auto.
+}{
+revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig; simpl; auto.
++ apply TypeCasesØ.
++ apply TypeCasesU; auto.
+  assert (forall h o,
+    find_op_case h o = None -> find_op_case (h_remove_annot h) o = None).
+  { intros h' op orig. induction h'.
+    * simpl. auto.
+    * simpl. simpl in *. destruct (op == o0).
+      ++ discriminate.
+      ++ auto.
+  }
+  apply H. auto.
+}
+Qed.
+(* 
+Inductive VChecks : ctx -> val -> vtype -> Prop :=
+| VCheck Γ v' A : vcheck Γ v' A -> VChecks Γ v' A.
+Inductive CChecks : ctx -> comp -> ctype -> Prop :=
+| CCheck Γ c' C : ccheck Γ c' C -> CChecks Γ c' C.
+Inductive HChecks : ctx -> hcases -> sig -> ctype -> Prop :=
+| HCheck Γ h' Σ D : hcheck Γ h' Σ D -> HChecks Γ h' Σ D.
+
+Fixpoint has_vtype_vchecks_with_annot Γ v A {struct v}:
+  has_vtype Γ v A -> exists v',
+    (VChecks Γ v' A) /\ v_remove_annot v = v_remove_annot v'
+with has_ctype_cchecks_with_annot Γ c C {struct c}:
+  has_ctype Γ c C -> exists c',
+    (CChecks Γ c' C) /\ c_remove_annot c = c_remove_annot c'
+with has_htype_hchecks_with_annot Γ h Σ D {struct h}:
+  has_htype Γ h Σ D -> exists h',
+    (HChecks Γ h' Σ D) /\ h_remove_annot h = h_remove_annot h'.
+Proof.
+all:
+rename has_vtype_vchecks_with_annot into vLemma;
+rename has_ctype_cchecks_with_annot into cLemma;
+rename has_htype_hchecks_with_annot into hLemma.
+{
+clear vLemma.
+revert Γ A. induction v; intros Γ A orig; inv orig.
+- exists (Var v). constructor.
+  + constructor. apply CheckVBySynth. apply SynthVar. assumption.
+  + reflexivity.
+- exists Unit. constructor.
+  + constructor. apply CheckVBySynth. apply SynthUnit.
+  + reflexivity.
+- exists (Int t). constructor.
+  + constructor. apply CheckVBySynth. apply SynthInt.
+  + reflexivity.
+- apply IHv in H1. destruct H1 as [v' P]. destruct P.
+  exists (Inl v'). constructor.
+  + constructor. destruct H.
+} *)

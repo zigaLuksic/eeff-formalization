@@ -8,16 +8,51 @@ Require Export syntax bidirectional substitution
 
 Ltac inv H := inversion H; clear H; subst.
 
-Lemma v_subs_checksafe
-  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (A:vtype) :
-  vcheck Γ v A -> get_vtype_i Γ i = Some A ->
-  vcheck Γ v_s A ->
-  vcheck Γ (Sub.v_sub v (i, v_s)) A
-Lemma v_subs_synthsafe
-  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (A:vtype) :
-  vsynth Γ v A -> get_vtype_i Γ i = Some A ->
-  vcheck Γ v_s A ->
-  vsynth Γ (Sub.v_sub v (i, v_s)) A
+Lemma v_subs_typesafe
+  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (A_s:vtype) :
+  has_vtype Γ v A -> get_vtype_i Γ i = Some A_s ->
+  has_vtype Γ v_s A_s ->
+  has_vtype Γ (Sub.v_sub v (i, v_s)) A
+with c_subs_typesafe
+  (Γ:ctx) (c:comp) (C:ctype) (i:nat) (v_s:val) (A_s:vtype) :
+  has_ctype Γ c C -> get_vtype_i Γ i = Some A_s ->
+  has_vtype Γ v_s A_s ->
+  has_ctype Γ (Sub.c_sub c (i, v_s)) C
+with h_subs_typesafe
+  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (i:nat) (v_s:val) (A_s:vtype) :
+  has_htype Γ h Σ D -> get_vtype_i Γ i = Some A_s ->
+  has_vtype Γ v_s A_s ->
+  has_htype Γ (Sub.h_sub h (i, v_s)) Σ D.
+Proof.
+{
+clear v_subs_typesafe.
+revert Γ A i. induction v; intros Γ A i orig in_ctx vstyped;
+simpl; inv orig.
++ destruct v as (name, num). simpl.
+  remember (num=?i) as cmp. destruct cmp.
+  - rewrite (gets_same _ _ i) in H1.
+    * rewrite H1 in in_ctx. injection in_ctx. intro samety.
+      rewrite samety. assumption.
+    * simpl. apply eq_sym. assumption.
+  - apply TypeVar. assumption.
++ apply TypeUnit.
++ apply TypeInt.
++ apply TypeInl. apply IHv; auto.
++ apply TypeInr. apply IHv; auto.
++ apply TypePair; try apply IHv1 || apply IHv2; auto.
++ apply TypeFun. eapply c_subs_typesafe.
+  - assumption.
+  - assert (i+1=S i) by omega. rewrite H. simpl.
+    exact in_ctx.
+  - 
+
+
+
+
+}
+
+
+
 
 
 (* 
