@@ -230,3 +230,64 @@ induction h; auto; simpl; simpl in *.
   - apply IHh. auto.
 Qed.
 
+Lemma v_no_var_j_switch_i_j v i j:
+  v_no_var_j v j -> v_no_var_j (v_switch_vars v j i) i
+with c_no_var_j_switch_i_j c i j:
+  c_no_var_j c j -> c_no_var_j (c_switch_vars c j i) i
+with h_no_var_j_switch_i_j h i j:
+  h_no_var_j h j -> h_no_var_j (h_switch_vars h j i) i.
+Proof.
+{
+clear v_no_var_j_switch_i_j.
+revert i j; induction v; intros i j orig; simpl; auto;
+try constructor; try destruct orig; simpl; auto.
+destruct v as (name, num).
+remember (num=?j) as cmpj. destruct cmpj.
++ simpl in orig. destruct orig.
+  apply eq_sym in Heqcmpj. apply Nat.eqb_eq in Heqcmpj. auto.
++ remember (num=?i) as cmpi. destruct cmpi; simpl.
+  * apply eq_sym in Heqcmpi. apply Nat.eqb_eq in Heqcmpi. rewrite Heqcmpi in *.
+    simpl in orig. auto.
+  * apply eq_sym in Heqcmpi. apply Nat.eqb_neq in Heqcmpi. auto.
+}{
+clear c_no_var_j_switch_i_j.
+revert i j; induction c; intros i j orig; try destruct p; simpl; auto;
+try constructor; try destruct orig; simpl; auto.
+constructor; destruct H0; auto.
+}{
+clear h_no_var_j_switch_i_j.
+revert i j; induction h; intros i j orig; simpl; auto;
+try constructor; try destruct orig; simpl; auto.
+}
+Qed.
+
+Lemma get_ctx_remove_unchanged Γ i j :
+  i > j -> get_vtype_i Γ j = get_vtype_i (ctx_remove_var Γ i) j.
+Proof.
+revert i j; induction Γ; intros i j lt; auto.
+destruct i; destruct j; simpl.
++ assert (0>=0) by omega. apply leb_iff_conv in lt. apply leb_correct in H.
+  discriminate.
++ assert (S j>=0) by omega. apply leb_iff_conv in lt. apply leb_correct in H.
+  discriminate.
++ reflexivity.
++ apply IHΓ. omega.
+Qed.
+
+Lemma get_ctx_remove_changed Γ i j :
+  i <= j -> get_vtype_i Γ (S j) = get_vtype_i (ctx_remove_var Γ i) j.
+Proof.
+revert i j; induction Γ; intros i j lt; auto.
+destruct i; destruct j; simpl; auto.
++ assert (S i>=0) by omega. apply leb_iff_conv in lt. apply leb_correct in H.
+  discriminate.
++ apply IHΓ. omega.
+Qed.
+
+Lemma ctx_remove_extend Γ i A :
+  CtxU (ctx_remove_var Γ i) A = ctx_remove_var (CtxU Γ A) (i+1).
+Proof.
+revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H.
++ reflexivity.
++ simpl. reflexivity.
+Qed.

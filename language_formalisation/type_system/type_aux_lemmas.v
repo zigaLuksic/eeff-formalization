@@ -255,10 +255,10 @@ revert Γ A0 A. induction v; intros Γ A0 A orig; simpl; inv orig.
 + apply TypePair. apply IHv1. assumption. apply IHv2. assumption.
 + apply TypeFun.
   specialize (c_switch10_typesafe Γ A1 A0 (Sub.c_shift c 1 0) C) as Hs.
-  rewrite c_switch_1_0_shift_1_0 in Hs. auto.
+  rewrite c_switch10_shift_1_0 in Hs. auto.
 + apply TypeHandler.
   - specialize (c_switch10_typesafe Γ A1 A0 (Sub.c_shift c 1 0) D) as Hs.
-    rewrite c_switch_1_0_shift_1_0 in Hs. auto.
+    rewrite c_switch10_shift_1_0 in Hs. auto.
   - apply h_shift_typesafe. assumption.
 + apply TypeVAnnot. apply IHv. assumption.
 }{
@@ -268,13 +268,13 @@ revert Γ A0 C. induction c; intros Γ A0 C orig; simpl; inv orig.
 + eapply TypeΠMatch.
   - apply v_shift_typesafe. exact H4.
   - specialize (c_switch210_typesafe Γ A B A0 (Sub.c_shift c 1 0) C) as Hs.
-    rewrite <-c_switch_2_1_0_shift_1_0. apply Hs.
+    rewrite <-c_switch210_shift_1_0. apply Hs.
     apply IHc. assumption.
 + eapply TypeΣMatch.
   - apply v_shift_typesafe. exact H6.
-  - rewrite <-c_switch_1_0_shift_1_0. apply c_switch10_typesafe.
+  - rewrite <-c_switch10_shift_1_0. apply c_switch10_typesafe.
     apply IHc1. assumption.
-  - rewrite <-c_switch_1_0_shift_1_0. apply c_switch10_typesafe.
+  - rewrite <-c_switch10_shift_1_0. apply c_switch10_typesafe.
     apply IHc2. assumption.
 + eapply TypeApp.
   - apply v_shift_typesafe. exact H2.
@@ -282,12 +282,12 @@ revert Γ A0 C. induction c; intros Γ A0 C orig; simpl; inv orig.
 + eapply TypeOp.
   - exact H5.
   - auto.
-  - rewrite <-c_switch_1_0_shift_1_0.
+  - rewrite <-c_switch10_shift_1_0.
     apply c_switch10_typesafe. auto.
 + apply TypeLetRec.
-  - rewrite <-c_switch_2_1_0_shift_1_0.
+  - rewrite <-c_switch210_shift_1_0.
     apply c_switch210_typesafe. auto.
-  - rewrite <-c_switch_1_0_shift_1_0.
+  - rewrite <-c_switch10_shift_1_0.
     apply c_switch10_typesafe. auto.
 + eapply TypeHandle.
   - apply v_shift_typesafe. exact H2.
@@ -304,8 +304,100 @@ revert Γ Σ. induction h; intros Γ Σ orig; simpl; inv orig.
       simpl. simpl in orig'. destruct (o==o0); try discriminate || auto. }
     apply H. assumption.
   - apply IHh. assumption.
-  - rewrite <-c_switch_2_1_0_shift_1_0. apply c_switch210_typesafe.
+  - rewrite <-c_switch210_shift_1_0. apply c_switch210_typesafe.
     apply c_shift_typesafe. assumption.
+}
+Qed.
+
+Fixpoint v_negshift_typesafe
+  (Γ:ctx) v A i {struct v} :
+  has_vtype Γ v A ->
+  v_no_var_j v i ->
+  has_vtype (ctx_remove_var Γ i) (Sub.v_negshift v 1 i) A
+
+with c_negshift_typesafe
+  (Γ:ctx) c C i {struct c} :
+  has_ctype Γ c C ->
+  c_no_var_j c i ->
+  has_ctype (ctx_remove_var Γ i) (Sub.c_negshift c 1 i) C
+
+with h_negshift_typesafe
+  (Γ:ctx) h Σ D i {struct h} :
+  has_htype Γ h Σ D ->
+  h_no_var_j h i ->
+  has_htype (ctx_remove_var Γ i) (Sub.h_negshift h 1 i) Σ D.
+Proof.
+{
+clear v_negshift_typesafe.
+revert Γ A i. induction v; intros Γ A i orig no_var; simpl; inv orig;
+simpl in no_var.
++ destruct v as (name, num). simpl in *.
+  apply TypeVar. remember (i<=?num) as cmp. destruct cmp.
+  - erewrite gets_same. instantiate (1:=(num - 1)).
+    erewrite <-get_ctx_remove_changed;
+    apply eq_sym in Heqcmp; apply leb_complete in Heqcmp.
+    * destruct num. destruct no_var. omega.
+      simpl. assert (num-0=num) by omega. rewrite H. assumption.
+    * omega.
+    * simpl. apply Nat.eqb_eq. omega.
+  - erewrite gets_same. instantiate (1:=num).
+    erewrite <-get_ctx_remove_unchanged. assumption.
+    * apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp. omega.
+    * simpl. apply Nat.eqb_eq. omega.
++ apply TypeUnit.
++ apply TypeInt.
++ apply TypeInl. eapply IHv. exact H1. assumption.
++ apply TypeInr. eapply IHv. exact H1. assumption.
++ apply TypePair; destruct no_var.
+  - eapply IHv1. exact H2. assumption.
+  - eapply IHv2. exact H4. assumption.
++ apply TypeFun. rewrite ctx_remove_extend.
+  apply c_negshift_typesafe; assumption.
++ apply TypeHandler; destruct no_var.
+  - rewrite ctx_remove_extend. apply c_negshift_typesafe; assumption.
+  - apply h_negshift_typesafe; assumption.
++ apply TypeVAnnot. apply IHv; assumption.
+}{
+clear c_negshift_typesafe.
+revert Γ C i. induction c; intros Γ C i orig no_var; simpl; inv orig;
+simpl in no_var; try destruct no_var.
++ apply TypeRet. apply v_negshift_typesafe; assumption.
++ eapply TypeΠMatch.
+  - apply v_negshift_typesafe. exact H4. assumption.
+  - rewrite ctx_remove_extend. rewrite ctx_remove_extend.
+    assert (i+1+1=i+2) by omega. rewrite H1. apply IHc; assumption.
++ eapply TypeΣMatch; destruct H0.
+  - apply v_negshift_typesafe. exact H6. assumption.
+  - rewrite ctx_remove_extend. apply IHc1; assumption.
+  - rewrite ctx_remove_extend. apply IHc2; assumption.
++ eapply TypeApp; apply v_negshift_typesafe.
+  exact H2. all: assumption.
++ eapply TypeOp. exact H5.
+  - apply v_negshift_typesafe; assumption.
+  - rewrite ctx_remove_extend. apply IHc; assumption.
++ eapply TypeLetRec.
+  - rewrite ctx_remove_extend. rewrite ctx_remove_extend.
+    assert (i+1+1=i+2) by omega. rewrite H1. apply IHc1; assumption.
+  - rewrite ctx_remove_extend. apply IHc2; assumption.
++ eapply TypeHandle.
+  - apply v_negshift_typesafe. exact H2. assumption.
+  - apply IHc; assumption.
++ eapply TypeCAnnot. apply IHc; assumption.
+}{
+clear h_negshift_typesafe.
+revert Γ Σ i. induction h; intros Γ Σ i orig no_var; simpl; inv orig;
+simpl in no_var; try destruct no_var.
+- apply TypeCasesØ.
+- apply TypeCasesU.
+  assert (forall h, find_op_case h o = None 
+    -> find_op_case (Sub.h_negshift h 1 i) o = None).
+  + intro h'. induction h'; intro orig; auto.
+    simpl. simpl in orig. destruct (o==o0); auto. discriminate.
+  + apply H1. assumption.
+  + auto.
+  + rewrite ctx_remove_extend. rewrite ctx_remove_extend.
+    assert (i+1+1=i+2) by omega. rewrite H1.
+    apply c_negshift_typesafe; assumption.
 }
 Qed.
 

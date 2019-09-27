@@ -206,3 +206,10 @@ Definition ctx_switch_vars (Γ : ctx) (i:nat) (j:nat) (A:vtype) (B:vtype)
   (proof_i : get_vtype_i Γ i = Some A) (proof_j: get_vtype_i Γ j = Some B) : ctx
 :=
   ctx_change_var (ctx_change_var Γ i B) j A.
+
+Fixpoint ctx_remove_var (Γ:ctx) (i:nat) :=
+  match Γ, i with
+  | CtxØ, _ => CtxØ
+  | CtxU Γ' A', 0 => Γ'
+  | CtxU Γ' A', S i' => CtxU (ctx_remove_var Γ' i') A'
+  end.

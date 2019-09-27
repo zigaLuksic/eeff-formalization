@@ -116,43 +116,40 @@ simpl; inv orig.
 Qed.
 
 
-
-
-
-(* 
-Lemma vcheck_sub_lemma 
-  (Γ:ctx) (v:val) (A:vtype) (v_s:val) (A:vtype) :
-  vcheck (CtxU Γ A) v A ->
-  vcheck Γ v_s A ->
-  vcheck Γ (vsub_out v v_s) A
-
-with vsynth_sub_lemma 
-  (Γ:ctx) (v:val) (A:vtype) (v_s:val) (A:vtype) :
-  vsynth (CtxU Γ A) v A ->
-  vcheck Γ v_s A ->
-  vsynth Γ (vsub_out v v_s) A
-
-with ccheck_sub_lemma 
-  (Γ:ctx) (c:comp) (C:ctype) (v_s:val) (A:vtype) :
-  ccheck (CtxU Γ A) c C ->
-  vcheck Γ v_s A ->
-  ccheck Γ (csub_out c v_s) C
-
-with csynth_sub_lemma 
-  (Γ:ctx) (c:comp) (C:ctype) (v_s:val) (A:vtype) :
-  csynth (CtxU Γ A) c C ->
-  vcheck Γ v_s A ->
-  csynth Γ (csub_out c v_s) C
-
-with hcheck_sub_lemma 
-  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (v_s:val) (A:vtype) :
-  hcheck (CtxU Γ A) h Σ D ->
-  vcheck Γ v_s A ->
-  hcheck Γ (hsub_out h v_s) Σ D.
-
-Proof. *)
-
-
-    }
-
+Fixpoint v_sub_out_typesafe
+  (Γ:ctx) (v:val) (A:vtype) (v_s:val) (A_s:vtype) {struct v}:
+  has_vtype (CtxU Γ A_s) v A -> has_vtype Γ v_s A_s ->
+  has_vtype Γ (vsub_out v v_s) A
+with c_sub_out_typesafe
+  (Γ:ctx) (c:comp) (C:ctype) (v_s:val) (A_s:vtype) {struct c}:
+  has_ctype (CtxU Γ A_s) c C -> has_vtype Γ v_s A_s ->
+  has_ctype Γ (csub_out c v_s) C
+with h_sub_out_typesafe
+  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (v_s:val) (A_s:vtype) {struct h}:
+  has_htype (CtxU Γ A_s) h Σ D -> has_vtype Γ v_s A_s ->
+  has_htype Γ (hsub_out h v_s) Σ D.
+Proof.
+{
+intros orig sub. unfold vsub_out.
+assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
+rewrite H. apply v_negshift_typesafe.
+eapply v_subs_typesafe. assumption. simpl. reflexivity.
+apply v_shift_typesafe. assumption.
+apply v_no_var_sub. apply v_shift_makes_no_var.
+}{
+intros orig sub. unfold csub_out.
+assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
+rewrite H. apply c_negshift_typesafe.
+eapply c_subs_typesafe. assumption. simpl. reflexivity.
+apply v_shift_typesafe. assumption.
+apply c_no_var_sub. apply v_shift_makes_no_var.
+}{
+intros orig sub. unfold hsub_out.
+assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
+rewrite H. apply h_negshift_typesafe.
+eapply h_subs_typesafe. assumption. simpl. reflexivity.
+apply v_shift_typesafe. assumption.
+apply h_no_var_sub. apply v_shift_makes_no_var.
+}
 Qed.
+

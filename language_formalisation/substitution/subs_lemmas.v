@@ -6,7 +6,6 @@ Require Export substitution Arith syntax_lemmas.
 Require Import Le Compare_dec PeanoNat.
 
 
-(* Main lemmas *)
 Lemma v_shift_0 (cut:nat) (v:val) :
   Sub.v_shift v 0 cut = v
 with c_shift_0 (cut:nat) (c:comp) :
@@ -131,6 +130,27 @@ try apply v_shift_shift || apply IHc || apply IHc1 || apply IHc2.
 clear h_shift_shift.
 revert cut. induction h; intros cut; simpl; f_equal.
 reflexivity. apply IHh. apply c_shift_shift.
+}
+Qed.
+
+Lemma v_shift_makes_no_var v (j:nat):
+  v_no_var_j (Sub.v_shift v 1 j) j
+with c_shift_makes_no_var c (j:nat):
+  c_no_var_j (Sub.c_shift c 1 j) j
+with h_shift_makes_no_var h (j:nat):
+  h_no_var_j (Sub.h_shift h 1 j) j.
+Proof.
+{
+clear v_shift_makes_no_var.
+revert j; induction v; intros j; simpl; auto.
+destruct v as (name, num). simpl.
+remember (j<=?num) as cmp. destruct cmp.
++ apply eq_sym in Heqcmp. apply leb_complete in Heqcmp. omega.
++ apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp. omega.
+}{
+revert j; induction c; intros j; try destruct p; simpl; auto.
+}{
+revert j; induction h; intros j; simpl; auto.
 }
 Qed.
 
@@ -473,7 +493,7 @@ revert i. induction h; intros i; simpl; f_equal; auto.
 }
 Qed.
 
-Lemma c_switch_1_0_shift_1_0 c :
+Lemma c_switch10_shift_1_0 c :
   c_switch_vars (Sub.c_shift c 1 0) 1 0 = Sub.c_shift c 1 1.
 Proof.
   rewrite <-(c_switchswitch (Sub.c_shift c 1 1) 1 0).
@@ -484,8 +504,78 @@ Definition v_switch210_vars v := (v_switch_vars (v_switch_vars v 1 0) 2 1).
 Definition c_switch210_vars c := (c_switch_vars (c_switch_vars c 1 0) 2 1).
 Definition h_switch210_vars h := (h_switch_vars (h_switch_vars h 1 0) 2 1).
 
-Lemma c_switch_2_1_0_shift_1_0 c :
+
+Lemma c_switch210_shift_1_0 c :
   c_switch210_vars (Sub.c_shift c 1 0) = Sub.c_shift c 1 2.
 Proof.
   apply c_switch_SSi_Si_i_shift_1.
+Qed.
+
+
+Lemma v_negshift_1_switch_Si_i v i:
+  v_no_var_j v i ->
+  Sub.v_negshift (v_switch_vars v (S i) i) 1 (S i) 
+    = Sub.v_negshift v 1 i
+with c_negshift_1_switch_Si_i c i:
+  c_no_var_j c i ->
+  Sub.c_negshift (c_switch_vars c (S i) i) 1 (S i) 
+    = Sub.c_negshift c 1 i
+with h_negshift_1_switch_Si_i h i:
+  h_no_var_j h i ->
+  Sub.h_negshift (h_switch_vars h (S i) i) 1 (S i) 
+    = Sub.h_negshift h 1 i.
+Proof.
+{
+specialize (v_negshift_1_switch_Si_i v 0).
+clear v_negshift_1_switch_Si_i.
+revert i. induction v; intros i no_var; simpl.
+{
+destruct v as (name, n). simpl.
+destruct n; simpl.
++ destruct i; auto.
++ remember (i <=? S n) as cmp. destruct cmp; simpl.
+  - apply eq_sym in Heqcmp. apply leb_complete in Heqcmp. simpl in no_var.
+    assert (n-0=n) as nzero by omega. rewrite nzero.
+    remember (n=?i) as ni. destruct ni.
+    * simpl. apply eq_sym in Heqni. apply Nat.eqb_eq in Heqni. rewrite Heqni.
+      destruct i; auto. assert (S i > i) by omega. apply leb_iff_conv in H.
+      rewrite H. reflexivity.
+    * destruct i. { simpl. rewrite nzero. reflexivity. }
+      assert (n<>i) by omega. apply Nat.eqb_neq in H. rewrite H.
+      simpl. destruct n.
+      ** assert (i=0) by omega. rewrite H0 in no_var. destruct no_var. auto.
+      ** apply eq_sym in Heqni. apply Nat.eqb_neq in Heqni.
+         assert (i <= n) by omega. apply leb_correct in H0. rewrite H0. f_equal.
+  - simpl in no_var. apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp.
+    assert (n<>i) by omega. apply Nat.eqb_neq in H. rewrite H.
+    destruct i.
+    { assert (0<=S n) by omega. apply leb_correct in H0.
+      apply leb_iff_conv in Heqcmp. discriminate. }
+    assert (n<>i) by omega. apply Nat.eqb_neq in H0. rewrite H0.
+    simpl. destruct n; auto.
+    apply Nat.eqb_neq in H. assert (n<i) by omega. apply leb_iff_conv in H1.
+    rewrite H1. reflexivity.
+}
+all: f_equal; auto; try destruct no_var; auto.
+}{
+clear c_negshift_1_switch_Si_i.
+revert i. induction c; intros i no_var; simpl in no_var; try destruct no_var;
+try destruct p; simpl; f_equal; auto; try destruct no_var; auto;
+try destruct H0; auto.
+}{
+clear h_negshift_1_switch_Si_i.
+revert i. induction h; intros i no_var; simpl; simpl in no_var; auto.
+f_equal; destruct no_var; auto.
+}
+Qed.
+
+
+Lemma c_negshift_1_0_switch10 c :
+  c_no_var_j c 1 ->
+  Sub.c_negshift (c_switch_vars c 1 0) 1 0 = Sub.c_negshift c 1 1.
+Proof.
+  intro novar.
+  rewrite <-(c_negshift_1_switch_Si_i).
+  rewrite c_switchswitch. reflexivity.
+  apply c_no_var_j_switch_i_j. assumption.
 Qed.
