@@ -148,7 +148,7 @@ apply TypeCasesU.
   rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
   apply c_switch_typesafe. assumption.
 }
-Admitted.
+Qed.
 
 (* Switch lemmas *)
 Fixpoint v_switch10_typesafe
@@ -181,10 +181,6 @@ all: rewrite <-H.
 + apply c_switch_typesafe. assumption.
 + apply h_switch_typesafe. assumption.
 Qed.
-
-Definition v_switch210_vars v := (v_switch_vars (v_switch_vars v 1 0) 2 1).
-Definition c_switch210_vars c := (c_switch_vars (c_switch_vars c 1 0) 2 1).
-Definition h_switch210_vars h := (h_switch_vars (h_switch_vars h 1 0) 2 1).
 
 (* Switch lemmas *)
 Fixpoint v_switch210_typesafe
@@ -272,8 +268,44 @@ revert Γ A0 C. induction c; intros Γ A0 C orig; simpl; inv orig.
 + eapply TypeΠMatch.
   - apply v_shift_typesafe. exact H4.
   - specialize (c_switch210_typesafe Γ A B A0 (Sub.c_shift c 1 0) C) as Hs.
-
-
-
-
+    rewrite <-c_switch_2_1_0_shift_1_0. apply Hs.
+    apply IHc. assumption.
++ eapply TypeΣMatch.
+  - apply v_shift_typesafe. exact H6.
+  - rewrite <-c_switch_1_0_shift_1_0. apply c_switch10_typesafe.
+    apply IHc1. assumption.
+  - rewrite <-c_switch_1_0_shift_1_0. apply c_switch10_typesafe.
+    apply IHc2. assumption.
++ eapply TypeApp.
+  - apply v_shift_typesafe. exact H2.
+  - auto.
++ eapply TypeOp.
+  - exact H5.
+  - auto.
+  - rewrite <-c_switch_1_0_shift_1_0.
+    apply c_switch10_typesafe. auto.
++ apply TypeLetRec.
+  - rewrite <-c_switch_2_1_0_shift_1_0.
+    apply c_switch210_typesafe. auto.
+  - rewrite <-c_switch_1_0_shift_1_0.
+    apply c_switch10_typesafe. auto.
++ eapply TypeHandle.
+  - apply v_shift_typesafe. exact H2.
+  - auto.
++ apply TypeCAnnot. auto.
+}{
+clear h_shift_typesafe.
+revert Γ Σ. induction h; intros Γ Σ orig; simpl; inv orig.
++ apply TypeCasesØ.
++ apply TypeCasesU.
+  - assert (forall h', find_op_case h' o = None 
+      -> find_op_case (Sub.h_shift h' 1 0) o = None).
+    { intros h' orig'. induction h'. auto.
+      simpl. simpl in orig'. destruct (o==o0); try discriminate || auto. }
+    apply H. assumption.
+  - apply IHh. assumption.
+  - rewrite <-c_switch_2_1_0_shift_1_0. apply c_switch210_typesafe.
+    apply c_shift_typesafe. assumption.
 }
+Qed.
+

@@ -8,18 +8,18 @@ Require Export syntax bidirectional substitution
 
 Ltac inv H := inversion H; clear H; subst.
 
-Lemma v_subs_typesafe
-  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (A_s:vtype) :
+Fixpoint v_subs_typesafe
+  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (A_s:vtype) {struct v}:
   has_vtype Γ v A -> get_vtype_i Γ i = Some A_s ->
   has_vtype Γ v_s A_s ->
   has_vtype Γ (Sub.v_sub v (i, v_s)) A
 with c_subs_typesafe
-  (Γ:ctx) (c:comp) (C:ctype) (i:nat) (v_s:val) (A_s:vtype) :
+  (Γ:ctx) (c:comp) (C:ctype) (i:nat) (v_s:val) (A_s:vtype) {struct c}:
   has_ctype Γ c C -> get_vtype_i Γ i = Some A_s ->
   has_vtype Γ v_s A_s ->
   has_ctype Γ (Sub.c_sub c (i, v_s)) C
 with h_subs_typesafe
-  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (i:nat) (v_s:val) (A_s:vtype) :
+  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (i:nat) (v_s:val) (A_s:vtype) {struct h}:
   has_htype Γ h Σ D -> get_vtype_i Γ i = Some A_s ->
   has_vtype Γ v_s A_s ->
   has_htype Γ (Sub.h_sub h (i, v_s)) Σ D.
@@ -44,12 +44,76 @@ simpl; inv orig.
   - assumption.
   - assert (i+1=S i) by omega. rewrite H. simpl.
     exact in_ctx.
-  - 
-
-
-
-
+  - apply v_shift_typesafe. assumption.
++ apply TypeHandler.
+  - eapply c_subs_typesafe.
+    * assumption.
+    * assert (i+1=S i) by omega. rewrite H. simpl. exact in_ctx.
+    * apply v_shift_typesafe. assumption.
+  - eapply h_subs_typesafe.
+    * assumption.
+    * exact in_ctx.
+    * assumption.
++ apply TypeVAnnot. apply IHv; assumption.
+}{
+clear c_subs_typesafe.
+assert (forall i, i+1=S i) as Si by (intro; omega).
+assert (forall i, i+2=S(S i)) as SSi by (intro; omega).
+revert Γ C i v_s. induction c; intros Γ C i v_s orig in_ctx vstyped;
+simpl; inv orig.
++ apply TypeRet. eapply v_subs_typesafe. 2 : exact in_ctx. all: assumption.
++ eapply TypeΠMatch.
+  - eapply v_subs_typesafe. exact H4. exact in_ctx. assumption.
+  - apply IHc. assumption.
+    * rewrite SSi. assumption.
+    * rewrite <-(v_shift_shift 1 1 0).
+      apply v_shift_typesafe. apply v_shift_typesafe. assumption.
++ eapply TypeΣMatch.
+  { eapply v_subs_typesafe. exact H6. exact in_ctx. assumption. }
+  all: try apply IHc1 || apply IHc2; try apply v_shift_typesafe; auto.
+  all: rewrite Si; assumption.
++ eapply TypeApp.
+  - eapply v_subs_typesafe. exact H2. exact in_ctx. assumption.
+  - eapply v_subs_typesafe. auto. exact in_ctx. assumption.
++ eapply TypeOp. exact H5.
+  - eapply v_subs_typesafe. 2: exact in_ctx. assumption. assumption.
+  - apply IHc; auto.
+    * rewrite Si. assumption.
+    * apply v_shift_typesafe. assumption.
++ eapply TypeLetRec.
+  - apply IHc1. assumption.
+    * rewrite SSi. assumption.
+    * rewrite <-(v_shift_shift 1 1 0).
+      apply v_shift_typesafe. apply v_shift_typesafe. assumption.
+  - apply IHc2. assumption.
+    * rewrite Si. assumption.
+    * apply v_shift_typesafe. assumption.
++ eapply TypeHandle.
+  - eapply v_subs_typesafe. exact H2. exact in_ctx. assumption.
+  - apply IHc; auto.
++ eapply TypeCAnnot. auto.
+}{
+clear h_subs_typesafe.
+assert (forall i, i+1=S i) as Si by (intro; omega).
+assert (forall i, i+2=S(S i)) as SSi by (intro; omega).
+revert Γ Σ D i v_s. induction h; intros Γ Σ D i v_s orig in_ctx vstyped;
+simpl; inv orig.
++ apply TypeCasesØ.
++ apply TypeCasesU.
+  assert (forall h,
+    find_op_case h o = None ->
+    find_op_case (Sub.h_sub h (i, v_s)) o = None).
+  * intros h' cantfind. induction h'. auto.
+    simpl. simpl in cantfind. destruct (o==o0). discriminate.
+    apply IHh'. exact cantfind.
+  * apply H. assumption.
+  * auto.
+  * rewrite SSi. eapply c_subs_typesafe; auto.
+    - simpl. exact in_ctx.
+    - rewrite <-(v_shift_shift 1 1 0).
+      apply v_shift_typesafe. apply v_shift_typesafe. assumption.
 }
+Qed.
 
 
 
