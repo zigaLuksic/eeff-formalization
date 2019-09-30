@@ -78,14 +78,13 @@ clear v_negshift_shift.
 revert cut. induction v; intros cut m_le_n; simpl; f_equal.
 { (* The only relevant case. *)
   destruct v as (name, db_i). simpl.
-  remember (cut <=? db_i) as cmp. induction cmp; simpl.
-  - apply eq_sym in Heqcmp.
-    apply (leb_complete _ _) in Heqcmp.
+  induction (cut <=? db_i) eqn:cmp; simpl.
+  - apply (leb_complete _ _) in cmp.
     assert (cut <= db_i + 1) by omega.
     assert (cut <= db_i + n) by omega.
     apply (leb_correct _ _) in H0. rewrite H0.
     f_equal. omega.
-  - rewrite <-Heqcmp. reflexivity. }
+  - rewrite cmp. reflexivity. }
 all : try reflexivity || apply IHv || apply IHv1 || apply IHv2.
 all : try apply c_negshift_shift || apply h_negshift_shift; assumption.
 }{
@@ -113,13 +112,12 @@ clear v_shift_shift.
 revert cut. induction v; intros cut; simpl; f_equal.
 { (* The only relevant case. *)
   destruct v as (name, db_i). simpl.
-  remember (cut <=? db_i) as cmp. destruct cmp; simpl.
-  - apply eq_sym in Heqcmp.
-    apply (leb_complete _ _) in Heqcmp.
+  destruct (cut <=? db_i) eqn:cmp; simpl.
+  - apply (leb_complete _ _) in cmp.
     assert (cut <= db_i + n) by omega.
     apply leb_correct in H. rewrite H.
     f_equal. omega.
-  - simpl. rewrite <-Heqcmp. reflexivity. }
+  - simpl. rewrite cmp. reflexivity. }
 all : try reflexivity || apply IHv || apply IHv1 || apply IHv2.
 all : try apply c_shift_shift || apply h_shift_shift; assumption.
 }{
@@ -144,9 +142,9 @@ Proof.
 clear v_shift_makes_no_var.
 revert j; induction v; intros j; simpl; auto.
 destruct v as (name, num). simpl.
-remember (j<=?num) as cmp. destruct cmp.
-+ apply eq_sym in Heqcmp. apply leb_complete in Heqcmp. omega.
-+ apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp. omega.
+destruct (j<=?num) eqn:cmp.
++ apply leb_complete in cmp. omega.
++ apply leb_iff_conv in cmp. omega.
 }{
 revert j; induction c; intros j; try destruct p; simpl; auto.
 }{
@@ -171,9 +169,7 @@ clear v_no_var_shift.
 revert j. induction v; intros j orig_clean j_le_cut; simpl; simpl in orig_clean;
 try constructor || unfold Sub.id_up; auto.
 + destruct v as (name, num). simpl. simpl in orig_clean.
-  remember (cut <=? num) as cmp. destruct cmp.
-  - omega.
-  - apply eq_sym in Heqcmp. rewrite leb_iff_conv in Heqcmp. omega.
+  destruct (cut <=? num) eqn:cmp; try rewrite leb_iff_conv in cmp; omega.
 + inv orig_clean. apply IHv1; assumption.
 + inv orig_clean. apply IHv2; assumption.
 + apply c_no_var_shift. assumption. omega. 
@@ -215,10 +211,9 @@ clear v_no_var_sub.
 revert j. induction v; intros j v_s_clean; simpl; try constructor;
 try (apply IHv; assumption); auto.
 - destruct v as (name, num). simpl.
-  remember (num =? j) as fits. induction fits.
+  induction (num =? j) eqn:fits.
   + assumption.
-  + simpl. apply eq_sym in Heqfits as H.
-    apply (beq_nat_false) in H. omega.
+  + simpl. apply Nat.eqb_neq in fits. omega.
 - apply c_no_var_sub. apply v_no_var_shift. assumption. omega.
 - apply c_no_var_sub. apply v_no_var_shift. assumption. omega.
 }{
@@ -269,46 +264,44 @@ try apply IHv || apply IHv1 || apply IHv2 || apply h_switch_shift; try omega.
 {
 destruct v as (name, n). simpl.
 
-remember (cut<=?n) as cut_n. destruct cut_n;
-remember (n=?i) as n_i; destruct n_i; simpl;
+destruct (cut<=?n) eqn:cut_n;
+destruct (n=?i) eqn:n_i; simpl;
 apply leb_correct in cutj; try rewrite cutj; simpl.
-+ apply beq_nat_eq in Heqn_i. rewrite Heqn_i. rewrite <-beq_nat_refl. auto.
++ apply Nat.eqb_eq in n_i. rewrite n_i. rewrite <-beq_nat_refl. auto.
 + assert (n+d =? i+d = false).
-  - apply Nat.eqb_neq. apply eq_sym in Heqn_i. 
-    apply Nat.eqb_neq in Heqn_i. omega.
+  - apply Nat.eqb_neq. apply Nat.eqb_neq in n_i. omega.
   - rewrite H.
-    remember (n=?j) as n_j; destruct n_j; simpl.
-    * apply beq_nat_eq in Heqn_j. rewrite Heqn_j. rewrite <-beq_nat_refl.
+    destruct (n=?j) eqn:n_j; simpl.
+    * apply Nat.eqb_eq in n_j. rewrite n_j. rewrite <-beq_nat_refl.
       assert (cut <=? i = true).
       { apply leb_correct. assumption. }
       rewrite H0. reflexivity.
     * assert (n+d =? j+d = false).
-      -- apply Nat.eqb_neq. apply eq_sym in Heqn_j. 
-         apply Nat.eqb_neq in Heqn_j. omega.
-      -- rewrite H0. rewrite <-Heqcut_n. reflexivity.
-+ apply beq_nat_eq in Heqn_i. rewrite Heqn_i.
-  remember (d=?0) as d0. destruct d0.
-  - apply beq_nat_eq in Heqd0. rewrite Heqd0.
+      -- apply Nat.eqb_neq. apply Nat.eqb_neq in n_j. omega.
+      -- rewrite H0. rewrite cut_n. reflexivity.
++ apply Nat.eqb_eq in n_i. rewrite n_i.
+  destruct (d=?0) eqn:d0.
+  - apply Nat.eqb_eq in d0. rewrite d0.
     assert (i =? i+0 = true).
     { apply Nat.eqb_eq. omega. }
     rewrite H. reflexivity.
-  - rewrite Heqn_i in Heqcut_n. apply leb_correct in cuti.
-    rewrite cuti in Heqcut_n. discriminate.
-+ remember (n=?j) as nj. destruct nj.
-  - apply beq_nat_eq in Heqnj. rewrite <-Heqnj in cutj.
-    rewrite cutj in Heqcut_n. discriminate.
-  - remember (n=?j+d) as njd. destruct njd.
-    * apply beq_nat_eq in Heqnjd. rewrite Heqnjd in Heqcut_n.
+  - rewrite n_i in cut_n. apply leb_correct in cuti.
+    rewrite cuti in cut_n. discriminate.
++ destruct (n=?j) eqn:nj.
+  - apply Nat.eqb_eq in nj. rewrite <-nj in cutj.
+    rewrite cutj in cut_n. discriminate.
+  - destruct (n=?j+d) eqn:njd.
+    * apply Nat.eqb_eq in njd. rewrite njd in cut_n.
       apply leb_complete in cutj.
       assert ((cut <=? j + d) = true).
       apply leb_correct. omega.
-      rewrite H in Heqcut_n. discriminate.
-    * remember (n=?i+d) as nid. destruct nid.
-      ** apply beq_nat_eq in Heqnid. rewrite Heqnid in Heqcut_n.
+      rewrite H in cut_n. discriminate.
+    * destruct (n=?i+d) eqn:nid.
+      ** apply Nat.eqb_eq in nid. rewrite nid in cut_n.
         assert ((cut <=? i + d) = true).
         apply leb_correct. omega.
-        rewrite H in Heqcut_n. discriminate.
-      ** simpl. rewrite <-Heqcut_n. reflexivity.
+        rewrite H in cut_n. discriminate.
+      ** simpl. rewrite cut_n. reflexivity.
 }
 all: assert (i+d+1=i+1+d) by omega.
 all: assert (j+d+1=j+1+d) by omega;
@@ -353,17 +346,17 @@ all: revert i j.
 clear v_sub_switch. induction v; intros i j; simpl; try reflexivity;
 try f_equal; try apply IHv || apply IHv1 || apply IHv2.
 + destruct v as (name, num). simpl.
-  remember (num=?i) as cmpi. destruct cmpi.
-  - apply beq_nat_eq in Heqcmpi. rewrite Heqcmpi. simpl.
-    remember (j=?i) as cmp. destruct cmp.
-    * apply beq_nat_eq in Heqcmp. rewrite Heqcmp. rewrite <-beq_nat_refl.
+  destruct (num=?i) eqn:cmpi.
+  - apply Nat.eqb_eq in cmpi. rewrite cmpi. simpl.
+    destruct (j=?i) eqn:cmp.
+    * apply Nat.eqb_eq in cmp. rewrite cmp. rewrite <-beq_nat_refl.
       rewrite v_switch_ii. rewrite v_switch_ii. reflexivity.
-    * apply eq_sym in Heqcmp. rewrite Nat.eqb_neq in Heqcmp.
-      apply not_eq_sym in Heqcmp. rewrite <-Nat.eqb_neq in Heqcmp.
-      rewrite Heqcmp. simpl. rewrite <-beq_nat_refl. reflexivity.
-  - simpl. remember (num=?j) as cmpj. destruct cmpj.
+    * rewrite Nat.eqb_neq in cmp.
+      apply not_eq_sym in cmp. rewrite <-Nat.eqb_neq in cmp.
+      rewrite cmp. simpl. rewrite <-beq_nat_refl. reflexivity.
+  - simpl. destruct (num=?j) eqn:cmpj.
     * simpl. rewrite <-beq_nat_refl. rewrite v_switchswitch. reflexivity.
-    * simpl. rewrite <-Heqcmpi. rewrite <-Heqcmpj. reflexivity.
+    * simpl. rewrite cmpi. rewrite cmpj. reflexivity.
 + specialize (c_sub_switch c (Sub.v_shift v_s 1 0) (i+1) (j+1)).
   rewrite c_sub_switch. f_equal. f_equal. f_equal. apply v_switch_shift; omega.
 + specialize(c_sub_switch c (Sub.v_shift v_s 1 0) (i+1) (j+1)).
@@ -398,22 +391,22 @@ revert i. induction v; intros i; simpl.
 destruct v as (name, n). simpl.
 destruct n; simpl.
 + destruct i; auto.
-+ remember (i <=? n) as cmp. destruct cmp; simpl.
-  - apply eq_sym in Heqcmp. apply leb_complete in Heqcmp.
++ destruct (i <=? n) eqn:cmp; simpl.
+  - apply leb_complete in cmp.
     assert (n + 1 <> i) by omega.
     rewrite <-Nat.eqb_neq in H. rewrite H.
     assert (i <= S n) by omega. apply leb_correct in H0. rewrite H0.
     destruct i; auto.
     assert (n + 1 <> i) by omega.
     rewrite <-Nat.eqb_neq in H1. rewrite H1. auto.
-  - apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp.
+  - apply leb_iff_conv in cmp.
     assert (n<>i) by omega. rewrite <-Nat.eqb_neq in H. rewrite H.
-    remember (i =? S n) as iSn. destruct iSn.
-    * apply eq_sym in HeqiSn. rewrite Nat.eqb_eq in HeqiSn.
+    destruct (i =? S n) eqn:iSn. 
+    * rewrite Nat.eqb_eq in iSn.
       assert (i<=S n) by omega. apply leb_correct in H0. rewrite H0.
-      rewrite HeqiSn. assert (true = (n =? n)) by apply beq_nat_refl.
+      rewrite iSn. assert (true = (n =? n)) by apply beq_nat_refl.
       rewrite <-H1. f_equal. f_equal. omega.
-    * apply eq_sym in HeqiSn. rewrite Nat.eqb_neq in HeqiSn.
+    * rewrite Nat.eqb_neq in iSn.
       assert (i > S n) by omega. apply leb_iff_conv in H0. rewrite H0.
       destruct i; auto.
       assert (n<>i) by omega. apply Nat.eqb_neq in H1. rewrite H1. auto.
@@ -447,35 +440,32 @@ clear v_switch_SSi_Si_i_shift_1.
 revert i. induction v; intros i; simpl.
 {
 destruct v as (name, n). simpl.
-remember (i <=? n) as cmp. destruct cmp; simpl.
-+ remember (n+1=?S i) as eqSnSi. destruct eqSnSi; simpl.
-  - apply eq_sym in HeqeqSnSi as SnSi. apply Nat.eqb_eq in SnSi.
-    assert (n+1=S n) by omega. rewrite H in SnSi. assert (i=n) by omega.
-    rewrite H0.
+destruct (i <=? n) eqn:cmp; simpl.
++ destruct (n+1=?S i) eqn:eqSnSi; simpl.
+  - apply Nat.eqb_eq in eqSnSi.
+    assert (n+1=S n) by omega. rewrite H in eqSnSi.
+    assert (i=n) by omega. rewrite H0.
     assert (n <> S (S n)) by omega. apply Nat.eqb_neq in H1. rewrite H1.
     assert (n <> S n) by omega. apply Nat.eqb_neq in H2. rewrite H2.
     destruct n; auto.
     destruct n; auto.
     assert (n < S (S n)) by omega. apply leb_iff_conv in H3. rewrite H3. auto.
-  - apply eq_sym in Heqcmp. apply leb_complete in Heqcmp.
-    assert (n+1 <> i) by omega. apply Nat.eqb_neq in H. rewrite H.
-    simpl.
-    remember (n+1=?S(S i)) as eqSnSSi. destruct eqSnSSi; simpl.
-    * rename HeqeqSnSSi into Heq. apply eq_sym in Heq. apply Nat.eqb_eq in Heq.
-      assert (n+1= S n) by omega. rewrite H0 in Heq. injection Heq.
+  - apply leb_complete in cmp.
+    assert (n+1 <> i) by omega. apply Nat.eqb_neq in H. rewrite H. simpl.
+    destruct (n+1=?S(S i)) eqn:eqSnSSi; simpl.
+    * apply Nat.eqb_eq in eqSnSSi.
+      assert (n+1= S n) by omega. rewrite H0 in eqSnSSi. injection eqSnSSi.
       intro eq. rewrite eq. rewrite eq in *.
       destruct i. auto.
       assert (S i > i) by omega. apply leb_iff_conv in H1. rewrite H1. auto.
-    * rewrite <-HeqeqSnSi.
-      destruct n.
+    * rewrite eqSnSi. destruct n.
       ++ assert (i=0) by omega. rewrite H0 in *. simpl in *. discriminate.
       ++ destruct n.
-        ** apply eq_sym in HeqeqSnSi. apply Nat.eqb_neq in HeqeqSnSi.
+        ** apply Nat.eqb_neq in eqSnSi.
            assert (i = 0) by omega. rewrite H0 in *. simpl in *. discriminate.
-        ** apply eq_sym in HeqeqSnSi. apply Nat.eqb_neq in HeqeqSnSi.
-           apply eq_sym in HeqeqSnSSi. apply Nat.eqb_neq in HeqeqSnSSi.
+        ** apply Nat.eqb_neq in eqSnSi. apply Nat.eqb_neq in eqSnSSi.
            assert (i<=n) by omega. apply leb_correct in H0. rewrite H0. auto.
-+ apply eq_sym in Heqcmp as cmp. apply leb_iff_conv in cmp.
++ apply leb_iff_conv in cmp.
   assert (n <> i) by omega. apply Nat.eqb_neq in H as Hneq.
   assert (n <> S i) by omega. apply Nat.eqb_neq in H0 as HSneq.
   assert (n <> S (S i)) by omega. apply Nat.eqb_neq in H1 as HSSneq.
@@ -533,24 +523,24 @@ revert i. induction v; intros i no_var; simpl.
 destruct v as (name, n). simpl.
 destruct n; simpl.
 + destruct i; auto.
-+ remember (i <=? S n) as cmp. destruct cmp; simpl.
-  - apply eq_sym in Heqcmp. apply leb_complete in Heqcmp. simpl in no_var.
++ destruct (i <=? S n) eqn:cmp; simpl.
+  - apply leb_complete in cmp. simpl in no_var.
     assert (n-0=n) as nzero by omega. rewrite nzero.
-    remember (n=?i) as ni. destruct ni.
-    * simpl. apply eq_sym in Heqni. apply Nat.eqb_eq in Heqni. rewrite Heqni.
+    destruct (n=?i) eqn:ni.
+    * simpl. apply Nat.eqb_eq in ni. rewrite ni.
       destruct i; auto. assert (S i > i) by omega. apply leb_iff_conv in H.
       rewrite H. reflexivity.
     * destruct i. { simpl. rewrite nzero. reflexivity. }
       assert (n<>i) by omega. apply Nat.eqb_neq in H. rewrite H.
       simpl. destruct n.
       ** assert (i=0) by omega. rewrite H0 in no_var. destruct no_var. auto.
-      ** apply eq_sym in Heqni. apply Nat.eqb_neq in Heqni.
+      ** apply Nat.eqb_neq in ni.
          assert (i <= n) by omega. apply leb_correct in H0. rewrite H0. f_equal.
-  - simpl in no_var. apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp.
+  - simpl in no_var. apply leb_iff_conv in cmp.
     assert (n<>i) by omega. apply Nat.eqb_neq in H. rewrite H.
     destruct i.
     { assert (0<=S n) by omega. apply leb_correct in H0.
-      apply leb_iff_conv in Heqcmp. discriminate. }
+      apply leb_iff_conv in cmp. discriminate. }
     assert (n<>i) by omega. apply Nat.eqb_neq in H0. rewrite H0.
     simpl. destruct n; auto.
     apply Nat.eqb_neq in H. assert (n<i) by omega. apply leb_iff_conv in H1.

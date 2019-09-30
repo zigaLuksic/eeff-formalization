@@ -214,22 +214,19 @@ revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig; simpl; auto.
 }
 Qed.
 (* 
-Inductive VChecks : ctx -> val -> vtype -> Prop :=
-| VCheck Γ v' A : vcheck Γ v' A -> VChecks Γ v' A.
-Inductive CChecks : ctx -> comp -> ctype -> Prop :=
-| CCheck Γ c' C : ccheck Γ c' C -> CChecks Γ c' C.
-Inductive HChecks : ctx -> hcases -> sig -> ctype -> Prop :=
-| HCheck Γ h' Σ D : hcheck Γ h' Σ D -> HChecks Γ h' Σ D.
+Inductive truth : Prop -> Type :=
+| IsTrue p : p = True -> truth p.
+
 
 Fixpoint has_vtype_vchecks_with_annot Γ v A {struct v}:
-  has_vtype Γ v A -> exists v',
-    (VChecks Γ v' A) /\ v_remove_annot v = v_remove_annot v'
+  has_vtype Γ v A -> 
+    {v' | prod (vcheck Γ v' A) (truth (v_remove_annot v = v_remove_annot v'))}
 with has_ctype_cchecks_with_annot Γ c C {struct c}:
-  has_ctype Γ c C -> exists c',
-    (CChecks Γ c' C) /\ c_remove_annot c = c_remove_annot c'
+  has_ctype Γ c C ->
+    {c' | prod (ccheck Γ c' C) (truth (c_remove_annot c = c_remove_annot c'))}
 with has_htype_hchecks_with_annot Γ h Σ D {struct h}:
-  has_htype Γ h Σ D -> exists h',
-    (HChecks Γ h' Σ D) /\ h_remove_annot h = h_remove_annot h'.
+  has_htype Γ h Σ D ->
+    {h' | prod (hcheck Γ h' Σ D) (truth (h_remove_annot h = h_remove_annot h'))}.
 Proof.
 all:
 rename has_vtype_vchecks_with_annot into vLemma;

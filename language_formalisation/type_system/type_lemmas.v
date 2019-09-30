@@ -29,11 +29,11 @@ clear v_subs_typesafe.
 revert Γ A i. induction v; intros Γ A i orig in_ctx vstyped;
 simpl; inv orig.
 + destruct v as (name, num). simpl.
-  remember (num=?i) as cmp. destruct cmp.
+  destruct (num=?i) eqn:cmp.
   - rewrite (gets_same _ _ i) in H1.
     * rewrite H1 in in_ctx. injection in_ctx. intro samety.
       rewrite samety. assumption.
-    * simpl. apply eq_sym. assumption.
+    * simpl. assumption.
   - apply TypeVar. assumption.
 + apply TypeUnit.
 + apply TypeInt.

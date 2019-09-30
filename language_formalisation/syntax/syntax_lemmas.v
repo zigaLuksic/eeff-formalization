@@ -40,8 +40,8 @@ Proof.
 {
 revert i. induction v; intros i; simpl; try reflexivity;
 try f_equal; try apply IHv || apply IHv1 || apply IHv2.
-+ destruct v as (name, num). remember (num=?i) as cmp. destruct cmp.
-  apply beq_nat_eq in Heqcmp. rewrite Heqcmp. reflexivity. reflexivity.
++ destruct v as (name, num). destruct (num=?i) eqn:cmp.
+  apply Nat.eqb_eq in cmp. rewrite cmp. reflexivity. reflexivity.
 + apply c_switch_ii.
 + apply c_switch_ii.
 + apply h_switch_ii.
@@ -68,19 +68,17 @@ try apply IHv || apply IHv1 || apply IHv2;
 try apply c_switchswitch || apply h_switchswitch.
 
 destruct v as (name, num).
-remember (num=?i) as cmpi. destruct cmpi;
-remember (num=?j) as cmpj; destruct cmpj; simpl.
-+ apply beq_nat_eq in Heqcmpi. apply beq_nat_eq in Heqcmpj. rewrite Heqcmpi.
-  rewrite Heqcmpi in Heqcmpj. rewrite Heqcmpj. rewrite <-beq_nat_refl. auto.
-+ apply beq_nat_eq in Heqcmpi. rewrite Heqcmpi in Heqcmpj.
-  apply eq_sym in Heqcmpj. rewrite beq_nat_false_iff in Heqcmpj.
-  apply not_eq_sym in Heqcmpj. rewrite <-beq_nat_false_iff in Heqcmpj.
-  rewrite Heqcmpj. rewrite <-beq_nat_refl. rewrite Heqcmpi. reflexivity.
-+ apply beq_nat_eq in Heqcmpj. rewrite Heqcmpj in Heqcmpi.
-  apply eq_sym in Heqcmpi. rewrite beq_nat_false_iff in Heqcmpi.
-  apply not_eq_sym in Heqcmpi. rewrite <-beq_nat_false_iff in Heqcmpi.
-  rewrite Heqcmpi. rewrite <-beq_nat_refl. rewrite Heqcmpj. reflexivity.
-+ rewrite <-Heqcmpi. rewrite <-Heqcmpj. reflexivity.
+destruct (num=?i) eqn:cmpi;
+destruct (num=?j) eqn:cmpj; simpl.
++ apply Nat.eqb_eq in cmpi. apply Nat.eqb_eq in cmpj. rewrite cmpi in *.
+  rewrite cmpj. rewrite <-beq_nat_refl. auto.
++ apply Nat.eqb_eq in cmpi. rewrite cmpi in *. rewrite Nat.eqb_neq in cmpj.
+  apply not_eq_sym in cmpj. rewrite <-Nat.eqb_neq in cmpj.
+  rewrite cmpj. rewrite <-beq_nat_refl. reflexivity.
++ apply Nat.eqb_eq in cmpj. rewrite cmpj in *. rewrite Nat.eqb_neq in cmpi.
+  apply not_eq_sym in cmpi. rewrite <-Nat.eqb_neq in cmpi.
+  rewrite cmpi. rewrite <-beq_nat_refl. reflexivity.
++ rewrite cmpi. rewrite cmpj. reflexivity.
 }{
 induction c; intros i j; try destruct p; simpl; f_equal;
 try apply v_switchswitch || apply IHc || apply IHc1 || apply IHc2.
@@ -102,12 +100,9 @@ induction v; simpl;
 try f_equal; try apply IHv || apply IHv1 || apply IHv2;
 try apply h_switch_sym || apply c_switch_sym; try reflexivity.
 destruct v as (name, num).
-remember (num=?i) as cmpi. remember (num=?j) as cmpj.
-destruct cmpi; destruct cmpj; auto.
-apply eq_sym in Heqcmpi. apply eq_sym in Heqcmpj. 
-apply beq_nat_true_iff in Heqcmpi. 
-apply beq_nat_true_iff in Heqcmpj.
-rewrite Heqcmpj in Heqcmpi. rewrite Heqcmpi. auto.
+destruct (num=?i) eqn:cmpi. destruct (num=?j) eqn:cmpj.
+apply Nat.eqb_eq in cmpi. apply Nat.eqb_eq in cmpj.
+rewrite cmpj, cmpi in *. all: auto.
 }{
 revert i j. induction c; intros i j; try destruct p; simpl;
 try f_equal; try apply IHc || apply IHc1 || apply IHc2;
@@ -242,13 +237,11 @@ clear v_no_var_j_switch_i_j.
 revert i j; induction v; intros i j orig; simpl; auto;
 try constructor; try destruct orig; simpl; auto.
 destruct v as (name, num).
-remember (num=?j) as cmpj. destruct cmpj.
-+ simpl in orig. destruct orig.
-  apply eq_sym in Heqcmpj. apply Nat.eqb_eq in Heqcmpj. auto.
-+ remember (num=?i) as cmpi. destruct cmpi; simpl.
-  * apply eq_sym in Heqcmpi. apply Nat.eqb_eq in Heqcmpi. rewrite Heqcmpi in *.
-    simpl in orig. auto.
-  * apply eq_sym in Heqcmpi. apply Nat.eqb_neq in Heqcmpi. auto.
+destruct (num=?j) eqn:cmpj.
++ simpl in orig. destruct orig. apply Nat.eqb_eq in cmpj. auto.
++ destruct (num=?i) eqn:cmpi; simpl.
+  * apply Nat.eqb_eq in cmpi. rewrite cmpi in *. simpl in orig. auto.
+  * apply Nat.eqb_neq in cmpi. auto.
 }{
 clear c_no_var_j_switch_i_j.
 revert i j; induction c; intros i j orig; try destruct p; simpl; auto;

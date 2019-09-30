@@ -50,19 +50,19 @@ revert Γ i j Ai Aj A p_i p_j; induction v; intros Γ i j Ai Aj A p_i p_j orig.
 all: inv orig; try inv H; simpl.
 { (* relevant case *)
   destruct v as (name, num).
-  remember (num =? i) as cmpi. destruct cmpi; simpl.
+  destruct (num =? i) eqn:cmpi; simpl.
   + apply TypeVar. simpl.
-    simpl in *. apply eq_sym in Heqcmpi. apply beq_nat_true in Heqcmpi.
-    rewrite Heqcmpi in H1. rewrite <-H1. apply eq_sym.
+    simpl in *. apply Nat.eqb_eq in cmpi.
+    rewrite cmpi in H1. rewrite <-H1. apply eq_sym.
     apply switch_ij_get_j.
-  + remember (num =? j) as cmpj. destruct cmpj.
-    * simpl in *. apply eq_sym in Heqcmpj. apply beq_nat_true in Heqcmpj.
-      rewrite Heqcmpj in H1. apply TypeVar. rewrite <-H1. apply eq_sym.
+  + destruct (num =? j) eqn:cmpj.
+    * simpl in *. apply Nat.eqb_eq in cmpj.
+      rewrite cmpj in H1. apply TypeVar. rewrite <-H1. apply eq_sym.
       apply switch_ij_get_i.
     * rewrite (gets_same Γ (name,num) num) in H1. apply TypeVar.
       rewrite <-H1. apply eq_sym. apply switch_ij_get_k.
-      - apply eq_sym in Heqcmpi. apply beq_nat_false in Heqcmpi. auto.
-      - apply eq_sym in Heqcmpj. apply beq_nat_false in Heqcmpj. auto.
+      - apply Nat.eqb_neq in cmpi. auto.
+      - apply Nat.eqb_neq in cmpj. auto.
       - simpl. apply eq_sym. apply beq_nat_refl.
 }
 + apply TypeUnit.
@@ -332,17 +332,16 @@ clear v_negshift_typesafe.
 revert Γ A i. induction v; intros Γ A i orig no_var; simpl; inv orig;
 simpl in no_var.
 + destruct v as (name, num). simpl in *.
-  apply TypeVar. remember (i<=?num) as cmp. destruct cmp.
+  apply TypeVar. destruct (i<=?num) eqn:cmp.
   - erewrite gets_same. instantiate (1:=(num - 1)).
-    erewrite <-get_ctx_remove_changed;
-    apply eq_sym in Heqcmp; apply leb_complete in Heqcmp.
+    erewrite <-get_ctx_remove_changed; apply leb_complete in cmp.
     * destruct num. destruct no_var. omega.
       simpl. assert (num-0=num) by omega. rewrite H. assumption.
     * omega.
     * simpl. apply Nat.eqb_eq. omega.
   - erewrite gets_same. instantiate (1:=num).
     erewrite <-get_ctx_remove_unchanged. assumption.
-    * apply eq_sym in Heqcmp. apply leb_iff_conv in Heqcmp. omega.
+    * apply leb_iff_conv in cmp. omega.
     * simpl. apply Nat.eqb_eq. omega.
 + apply TypeUnit.
 + apply TypeInt.
