@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export substitution Arith syntax_lemmas.
 Require Import Le Compare_dec PeanoNat.
 
@@ -538,9 +538,7 @@ destruct n; simpl.
          assert (i <= n) by omega. apply leb_correct in H0. rewrite H0. f_equal.
   - simpl in no_var. apply leb_iff_conv in cmp.
     assert (n<>i) by omega. apply Nat.eqb_neq in H. rewrite H.
-    destruct i.
-    { assert (0<=S n) by omega. apply leb_correct in H0.
-      apply leb_iff_conv in cmp. discriminate. }
+    destruct i. omega.
     assert (n<>i) by omega. apply Nat.eqb_neq in H0. rewrite H0.
     simpl. destruct n; auto.
     apply Nat.eqb_neq in H. assert (n<i) by omega. apply leb_iff_conv in H1.

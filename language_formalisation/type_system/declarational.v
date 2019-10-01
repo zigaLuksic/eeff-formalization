@@ -1,6 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
 Require Import syntax bidirectional.
 
 Inductive has_vtype : ctx -> val -> vtype -> Type :=
@@ -213,38 +214,3 @@ revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig; simpl; auto.
   apply H. auto.
 }
 Qed.
-(* 
-Inductive truth : Prop -> Type :=
-| IsTrue p : p = True -> truth p.
-
-
-Fixpoint has_vtype_vchecks_with_annot Γ v A {struct v}:
-  has_vtype Γ v A -> 
-    {v' | prod (vcheck Γ v' A) (truth (v_remove_annot v = v_remove_annot v'))}
-with has_ctype_cchecks_with_annot Γ c C {struct c}:
-  has_ctype Γ c C ->
-    {c' | prod (ccheck Γ c' C) (truth (c_remove_annot c = c_remove_annot c'))}
-with has_htype_hchecks_with_annot Γ h Σ D {struct h}:
-  has_htype Γ h Σ D ->
-    {h' | prod (hcheck Γ h' Σ D) (truth (h_remove_annot h = h_remove_annot h'))}.
-Proof.
-all:
-rename has_vtype_vchecks_with_annot into vLemma;
-rename has_ctype_cchecks_with_annot into cLemma;
-rename has_htype_hchecks_with_annot into hLemma.
-{
-clear vLemma.
-revert Γ A. induction v; intros Γ A orig; inv orig.
-- exists (Var v). constructor.
-  + constructor. apply CheckVBySynth. apply SynthVar. assumption.
-  + reflexivity.
-- exists Unit. constructor.
-  + constructor. apply CheckVBySynth. apply SynthUnit.
-  + reflexivity.
-- exists (Int t). constructor.
-  + constructor. apply CheckVBySynth. apply SynthInt.
-  + reflexivity.
-- apply IHv in H1. destruct H1 as [v' P]. destruct P.
-  exists (Inl v'). constructor.
-  + constructor. destruct H.
-} *)

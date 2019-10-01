@@ -1,11 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
 
 Require Export syntax syntax_lemmas declarational substitution Omega Logic.
 Require Export subs_lemmas.
@@ -226,7 +224,6 @@ all: rewrite <-H0.
 Qed.
 
 
-
 Fixpoint v_shift_typesafe
   (Γ:ctx) (A0:vtype) v A {struct v} :
   has_vtype Γ v A ->
@@ -308,6 +305,84 @@ revert Γ Σ. induction h; intros Γ Σ orig; simpl; inv orig.
     apply c_shift_typesafe. assumption.
 }
 Qed.
+
+Fixpoint v_insert_typesafe Γ v A A_ins i {struct v} :
+  has_vtype Γ v A ->
+  has_vtype (ctx_insert_var Γ A_ins i) (Sub.v_shift v 1 i) A
+with c_insert_typesafe Γ c C A_ins i {struct c} :
+  has_ctype Γ c C ->
+  has_ctype (ctx_insert_var Γ A_ins i) (Sub.c_shift c 1 i) C
+with h_insert_typesafe Γ h Σ D A_ins i {struct h} :
+  has_htype Γ h Σ D ->
+  has_htype (ctx_insert_var Γ A_ins i) (Sub.h_shift h 1 i) Σ D.
+Proof.
+{
+clear v_insert_typesafe.
+revert A i. induction v; intros A i orig; simpl; inv orig.
++ apply TypeVar. simpl. destruct v as (name, num).
+  simpl. destruct (i<=?num) eqn:cmp.
+  - erewrite gets_same. instantiate (1:=num+1).
+    erewrite <-get_ctx_insert_changed.
+    * erewrite gets_same in H1. 2:instantiate (1:=num). assumption.
+      simpl. apply Nat.eqb_eq. reflexivity.
+    * apply leb_complete in cmp. omega.
+    * simpl. apply Nat.eqb_eq. reflexivity.
+  - erewrite gets_same. instantiate (1:=num).
+    erewrite <-get_ctx_insert_unchanged.
+    * erewrite gets_same in H1. 2:instantiate (1:=num). assumption.
+      simpl. apply Nat.eqb_eq. reflexivity.
+    * apply leb_iff_conv in cmp. omega.
+    * simpl. apply Nat.eqb_eq. reflexivity.
++ apply TypeUnit.
++ apply TypeInt.
++ apply TypeInl. apply IHv. assumption.
++ apply TypeInr. apply IHv. assumption.
++ apply TypePair; try apply IHv1 || apply IHv2; assumption.
++ apply TypeFun. rewrite ctx_insert_extend. auto.
++ apply TypeHandler; auto. rewrite ctx_insert_extend. auto.
++ apply TypeVAnnot. apply IHv. assumption.
+}{
+clear c_insert_typesafe.
+revert Γ C i. induction c; intros Γ C i orig; simpl; inv orig.
++ apply TypeRet. auto.
++ eapply TypeΠMatch.
+  - eapply v_insert_typesafe. exact H4.
+  - rewrite ctx_insert_extend. rewrite ctx_insert_extend.
+    assert (i+1+1=i+2) by omega. rewrite H. auto.
++ eapply TypeΣMatch.
+  - apply v_insert_typesafe. exact H6.
+  - rewrite ctx_insert_extend. auto.
+  - rewrite ctx_insert_extend. auto.
++ eapply TypeApp.
+  - apply v_insert_typesafe. exact H2.
+  - auto.
++ eapply TypeOp. exact H5. auto.
+  rewrite ctx_insert_extend. auto.
++ eapply TypeLetRec.
+  - rewrite ctx_insert_extend. rewrite ctx_insert_extend.
+    assert (i+1+1=i+2) by omega. rewrite H. auto.
+  - rewrite ctx_insert_extend. auto.
++ eapply TypeHandle.
+  - apply v_insert_typesafe. exact H2.
+  - auto.
++ eapply TypeCAnnot. auto.
+}{
+clear h_insert_typesafe.
+revert Γ Σ D i. induction h; intros Γ Σ D i orig; simpl; inv orig.
++ apply TypeCasesØ.
++ apply TypeCasesU; auto.
+  - assert (forall h,
+      find_op_case h o = None ->
+      find_op_case (Sub.h_shift h 1 i) o = None).
+    * intros h' orig. induction h'; auto.
+      simpl in *. destruct (o==o0). discriminate. auto.
+    * apply H. assumption.
+  - rewrite ctx_insert_extend. rewrite ctx_insert_extend.
+    assert (i+1+1=i+2) by omega. rewrite H. auto.
+}
+Qed.
+
+
 
 Fixpoint v_negshift_typesafe
   (Γ:ctx) v A i {struct v} :

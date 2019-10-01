@@ -213,3 +213,10 @@ Fixpoint ctx_remove_var (Γ:ctx) (i:nat) :=
   | CtxU Γ' A', 0 => Γ'
   | CtxU Γ' A', S i' => CtxU (ctx_remove_var Γ' i') A'
   end.
+
+Fixpoint ctx_insert_var (Γ:ctx) A (i:nat) :=
+  match Γ, i with
+  | Γ', 0 => CtxU Γ' A
+  | CtxØ, _ => CtxØ
+  | CtxU Γ' A', S i' => CtxU (ctx_insert_var Γ' A i') A'
+  end.

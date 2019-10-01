@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export Arith syntax.
 Require Import Le Compare_dec.
 
@@ -19,7 +19,7 @@ Lemma change_j_get_k Γ j k Aj :
 Proof.
 revert j k. induction Γ; intros j k neq_jk; auto.
 destruct k; destruct j; auto.
-+ apply beq_nat_false_iff in neq_jk. simpl in neq_jk. discriminate.
++ omega.
 + simpl. apply IHΓ. omega.
 Qed.
 
@@ -122,9 +122,8 @@ intros k i j p_i p_j neq_ik neq_jk. auto.
 revert i j p_i p_j neq_ik neq_jk. destruct k;
 intros i j p_i p_j neq_ik neq_jk.
 + destruct i.
-  - apply beq_nat_false_iff in neq_ik. simpl in neq_ik. discriminate.
-  - simpl. destruct j; auto.
-    apply beq_nat_false_iff in neq_jk. simpl in neq_jk. discriminate.
+  - omega.
+  - simpl. destruct j; auto. omega.
 + destruct i; destruct j; simpl; auto.
   - apply change_j_get_k. omega.
   - apply change_j_get_k. omega.
@@ -259,10 +258,8 @@ Lemma get_ctx_remove_unchanged Γ i j :
 Proof.
 revert i j; induction Γ; intros i j lt; auto.
 destruct i; destruct j; simpl.
-+ assert (0>=0) by omega. apply leb_iff_conv in lt. apply leb_correct in H.
-  discriminate.
-+ assert (S j>=0) by omega. apply leb_iff_conv in lt. apply leb_correct in H.
-  discriminate.
++ omega.
++ omega.
 + reflexivity.
 + apply IHΓ. omega.
 Qed.
@@ -272,13 +269,43 @@ Lemma get_ctx_remove_changed Γ i j :
 Proof.
 revert i j; induction Γ; intros i j lt; auto.
 destruct i; destruct j; simpl; auto.
-+ assert (S i>=0) by omega. apply leb_iff_conv in lt. apply leb_correct in H.
-  discriminate.
++ omega.
 + apply IHΓ. omega.
 Qed.
 
 Lemma ctx_remove_extend Γ i A :
   CtxU (ctx_remove_var Γ i) A = ctx_remove_var (CtxU Γ A) (i+1).
+Proof.
+revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H.
++ reflexivity.
++ simpl. reflexivity.
+Qed.
+
+Lemma get_ctx_insert_unchanged Γ A i j:
+  i < j -> get_vtype_i Γ i = get_vtype_i (ctx_insert_var Γ A j) i.
+Proof.
+revert i j. induction Γ; intros i j cmp; simpl.
+destruct i; destruct j; simpl; try reflexivity.
++  omega.
++ destruct j.
+  - omega.
+  - simpl. destruct i; auto. apply IHΓ. omega.
+Qed.
+
+Lemma get_ctx_insert_changed Γ A i j:
+  i >= j -> get_vtype_i Γ i = get_vtype_i (ctx_insert_var Γ A j) (i+1).
+Proof.
+revert i j. induction Γ; intros i j cmp; simpl.
+destruct i; destruct j; simpl; try reflexivity.
+destruct j; destruct i.
++ auto.
++ assert (S i + 1 = S (S i)) by omega. rewrite H. auto.
++ omega.
++ simpl. apply IHΓ. omega.
+Qed.
+
+Lemma ctx_insert_extend Γ i A_ins A :
+  CtxU (ctx_insert_var Γ A_ins i) A = ctx_insert_var (CtxU Γ A) A_ins (i+1).
 Proof.
 revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H.
 + reflexivity.
