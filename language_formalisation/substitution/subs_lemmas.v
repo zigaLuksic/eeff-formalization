@@ -490,17 +490,6 @@ Proof.
   rewrite (c_switch_Si_i_shift_1 c 0). auto.
 Qed.
 
-Definition v_switch210_vars v := (v_switch_vars (v_switch_vars v 1 0) 2 1).
-Definition c_switch210_vars c := (c_switch_vars (c_switch_vars c 1 0) 2 1).
-Definition h_switch210_vars h := (h_switch_vars (h_switch_vars h 1 0) 2 1).
-
-
-Lemma c_switch210_shift_1_0 c :
-  c_switch210_vars (Sub.c_shift c 1 0) = Sub.c_shift c 1 2.
-Proof.
-  apply c_switch_SSi_Si_i_shift_1.
-Qed.
-
 
 Lemma v_negshift_1_switch_Si_i v i:
   v_no_var_j v i ->
