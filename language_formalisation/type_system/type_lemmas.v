@@ -1,11 +1,11 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
 Require Export syntax bidirectional substitution
   subs_lemmas Omega Logic type_aux_lemmas operational_semantics.
 
@@ -117,7 +117,7 @@ simpl; inv orig.
     - rewrite <-(v_shift_shift 1 1 0).
       apply v_shift_typesafe. apply v_shift_typesafe. assumption.
 }
-Admitted.
+Qed.
 
 
 Fixpoint v_sub_out_typesafe
@@ -195,23 +195,14 @@ intros orig step. revert C orig. induction step; intros C orig; inv orig.
       (c_sub_out c_op (Sub.v_shift v_arg 1 0)) C).
   - intro h'. induction h'; intros Σ' finds gets types.
     * simpl in finds. discriminate.
-    * simpl in finds. inv H12; destruct (op_id==o) eqn:name; simpl.
-      ++ simpl in H7. discriminate.
-      ++ inv types. eapply IHh'; simpl in gets; rewrite name in gets.
-         assumption. exact gets. assumption. 
-      ++ inv types.
-         injection finds. intros. subst.
+    * clear e H7 H9 H3 H12.
+      simpl in finds. inv types; destruct (op_id==o) eqn:name; simpl.
+      ++ injection finds. intros. subst.
          simpl in gets. rewrite name in gets.
          injection gets. intros. subst.
-         eapply c_sub_out_typesafe. exact H16.
+         eapply c_sub_out_typesafe. exact H10.
          apply v_shift_typesafe. assumption.
-      ++ inv types. eapply IHh'; simpl in gets; rewrite name in gets.
+      ++ eapply IHh'; simpl in gets; rewrite name in gets.
          assumption. exact gets. assumption. 
-  - inv H12.
-    * simpl in e. discriminate.
-    * simpl in *. destruct (op_id==op_id0) eqn:name.
-      ++ injection e. intros. subst. injection H7. intros. subst.
-         eapply c_sub_out_typesafe. exact H2.
-         apply v_shift_typesafe. assumption.
-      ++ eapply H. exact e. exact H7. assumption.
+  - eapply H. exact e. exact H7. assumption. 
 Qed.

@@ -1,10 +1,10 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
 Require Import syntax bidirectional.
 
-Inductive has_vtype : ctx -> val -> vtype -> Type :=
+Inductive has_vtype : ctx -> val -> vtype -> Prop :=
 | TypeUnit Γ : has_vtype Γ Unit TyUnit 
 | TypeInt Γ n : has_vtype Γ (Int n) TyInt
 | TypeVar Γ id A :
@@ -30,7 +30,7 @@ Inductive has_vtype : ctx -> val -> vtype -> Type :=
     has_ctype (CtxU Γ A) c_ret D ->
     has_htype Γ h sig D ->
     has_vtype Γ (Handler x c_ret h) (TyHandler (CTy A sig eqs) D)
-with has_ctype : ctx -> comp -> ctype -> Type :=
+with has_ctype : ctx -> comp -> ctype -> Prop :=
 | TypeRet Γ v A : 
     has_vtype Γ v A ->
     has_ctype Γ (Ret v) (CTy A SigØ EqsØ)
@@ -63,7 +63,7 @@ with has_ctype : ctx -> comp -> ctype -> Type :=
     has_vtype Γ v A_op ->
     has_ctype (CtxU Γ B_op) c (CTy A Σ eqs) ->
     has_ctype Γ (Op op_id v y c) (CTy A Σ eqs)
-with has_htype : ctx -> hcases -> sig -> ctype -> Type :=
+with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesØ Γ D : has_htype Γ CasesØ SigØ D
 | TypeCasesU Γ h op_id x k c_op A_op B_op Σ D :
     find_op_case h op_id = None ->
@@ -162,7 +162,7 @@ match c with
     LetRec f x f_ty (c_remove_annot c1) (c_remove_annot c2)
 | DoBind x c1 c2 => DoBind x (c_remove_annot c1) (c_remove_annot c2)
 | Handle v c' => Handle (v_remove_annot v) (c_remove_annot c')
-| CAnnot c' C => CAnnot (c_remove_annot c') C
+| CAnnot c' C => (c_remove_annot c')
 end
 with h_remove_annot h :=
 match h with
@@ -198,7 +198,6 @@ revert Γ C. induction c; intros Γ C orig; inv orig; simpl; auto.
 + eapply TypeOp; try exact H5 || auto.
 + apply TypeLetRec; auto.
 + eapply TypeHandle. apply v_type_remove_annot. exact H2. auto.
-+ apply TypeCAnnot. auto.
 }{
 revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig; simpl; auto.
 + apply TypeCasesØ.
@@ -214,3 +213,145 @@ revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig; simpl; auto.
   apply H. auto.
 }
 Qed.
+
+
+Fixpoint has_vtype_vsynths_with_annot Γ v A {struct v}:
+  has_vtype Γ v A -> 
+    exists v', vsynth Γ v' A /\ v_remove_annot v = v_remove_annot v'
+with has_ctype_csynths_with_annot Γ c C {struct c}:
+  has_ctype Γ c C ->
+    exists c', csynth Γ c' C /\ c_remove_annot c = c_remove_annot c'
+with has_htype_hchecks_with_annot Γ h Σ D {struct h}:
+  has_htype Γ h Σ D ->
+    exists h', hcheck Γ h' Σ D /\ h_remove_annot h = h_remove_annot h'.
+Proof.
+all:
+rename has_vtype_vsynths_with_annot into vLemma;
+rename has_ctype_csynths_with_annot into cLemma;
+rename has_htype_hchecks_with_annot into hLemma.
+{
+clear vLemma.
+revert Γ A. induction v; intros Γ A orig.
+- exists (Var v). constructor.
+  + apply SynthVar. inv orig. assumption.
+  + reflexivity.
+- exists Unit. constructor.
+  + inv orig. apply SynthUnit.
+  + reflexivity.
+- exists (Int t). constructor.
+  + inv orig. apply SynthInt.
+  + reflexivity.
+- (* Annotate sumtypes *)
+  inv orig. apply IHv in H1. destruct H1 as [v' [vty' same]].
+  exists (VAnnot (Inl v') (TyΣ A0 B)). constructor.
+  + apply SynthVAnnot. apply CheckInl. apply CheckVBySynth. assumption.
+  + simpl. f_equal. assumption.
+- (* Annotate sumtypes *)
+  inv orig. apply IHv in H1. destruct H1 as [v' [vty' same]].
+  exists (VAnnot (Inr v') (TyΣ A0 B)). constructor.
+  + apply SynthVAnnot. apply CheckInr. apply CheckVBySynth. assumption.
+  + simpl. f_equal. assumption.
+- inv orig.
+  apply IHv1 in H2. destruct H2 as [v1' [v1ty' same1]].
+  apply IHv2 in H4. destruct H4 as [v2' [v2ty' same2]].
+  exists (Pair v1' v2'). constructor.
+  + apply SynthPair; assumption.
+  + simpl. f_equal; assumption.
+- inv orig. (* Annotate functions. *)
+  apply cLemma in H3. destruct H3 as [c' [cty' same]].
+  exists (VAnnot (Fun v c') (TyFun A0 C)). constructor.
+  + apply SynthVAnnot. apply CheckFun. eapply CheckCBySynth. exact cty'. auto.
+  + simpl. f_equal. assumption.
+- inv orig. (* Annotate functions. *)
+  apply cLemma in H4. destruct H4 as [c_r' [cty' samec]].
+  apply hLemma in H5. destruct H5 as [h' [hty' sameh]].
+  exists (VAnnot (Handler v c_r' h') (TyHandler (CTy A0 sig eqs) D)).
+  constructor.
+  + apply SynthVAnnot. apply CheckHandler;
+    try eapply CheckCBySynth; auto. auto.
+  + simpl. f_equal; assumption.
+- inv orig. apply IHv in H3. destruct H3 as [v' [vty' same1]].
+  exists (VAnnot v' A). constructor.
+  + apply SynthVAnnot. apply CheckVBySynth. assumption.
+  + simpl. assumption.
+}{
+clear cLemma.
+revert Γ C. induction c; intros Γ C orig.
+- inv orig.
+  apply vLemma in H1. destruct H1 as [v' [vty' same]].
+  exists (Ret v'). constructor.
+  + apply SynthRet. assumption.
+  + simpl. f_equal. assumption.
+- inv orig.
+  apply vLemma in H4. destruct H4 as [v' [vty' same]].
+  apply IHc in H5. destruct H5 as [c' [cty' csame]].
+  exists (ΠMatch v' (x,y) c'). constructor.
+  + eapply SynthΠMatch. exact vty'. assumption.
+  + simpl. f_equal; assumption.
+- (* Annotate sum match. *)
+  inv orig. rename v0 into x. rename v1 into y.
+  apply vLemma in H6. destruct H6 as [v' [vty' vsame]]. 
+  apply IHc1 in H7. destruct H7 as [c1' [c1ty' c1same]].
+  apply IHc2 in H8. destruct H8 as [c2' [c2ty' c2same]].
+  exists (CAnnot (ΣMatch v' x c1' y c2') C). constructor.
+  + apply SynthCAnnot. eapply CheckΣMatch. exact vty'. 
+    eapply CheckCBySynth. exact c1ty'. reflexivity.
+    eapply CheckCBySynth. exact c2ty'. reflexivity.
+  + simpl. f_equal; assumption.
+- inv orig.
+  apply vLemma in H2. destruct H2 as [v1' [v1ty' v1same]]. 
+  apply vLemma in H4. destruct H4 as [v2' [v2ty' v2same]].
+  exists (App v1' v2'). constructor.
+  + eapply SynthApp. exact v1ty'. apply CheckVBySynth. assumption.
+  + simpl. f_equal; assumption.
+- inv orig. (* Annotate operations! *)
+  apply vLemma in H6. destruct H6 as [v' [vty' vsame]].
+  apply IHc in H7. destruct H7 as [c' [cty' csame]].
+  exists (CAnnot (Op o v' v0 c') (CTy A Σ eqs)). constructor.
+  + eapply SynthCAnnot. eapply CheckOp. exact H5.
+    apply CheckVBySynth. assumption. eapply CheckCBySynth. exact cty'. auto.
+  + simpl. f_equal; assumption.
+- inv orig. rename v into f. rename v0 into x.
+  apply IHc1 in H6. destruct H6 as [c1' [c1ty' c1same]].
+  apply IHc2 in H7. destruct H7 as [c2' [c2ty' c2same]].
+  exists (LetRec f x (TyFun A C0) c1' c2'). constructor.
+  + apply SynthLetRec. eapply CheckCBySynth. exact c1ty'. auto. assumption.
+  + simpl. f_equal; assumption.
+- inv orig.
+- inv orig.
+  apply vLemma in H2. destruct H2 as [v' [vty' vsame]].
+  apply IHc in H4. destruct H4 as [c' [cty' csame]].
+  exists (Handle v' c'). constructor.
+  + eapply SynthHandle. exact vty'. eapply CheckCBySynth. exact cty'. auto.
+  + simpl. f_equal; assumption.
+- inv orig.
+  apply IHc in H3. destruct H3 as [c' [cty' csame]].
+  exists (CAnnot c' C). constructor.
+  + apply SynthCAnnot. eapply CheckCBySynth. exact cty'. auto.
+  + simpl. auto.
+}{
+clear hLemma.
+revert Γ Σ D. induction h; intros Γ Σ D orig.
+- inv orig. exists CasesØ. constructor. apply CheckCasesØ. reflexivity.
+- inv orig. rename v into x. rename v0 into k.
+  apply IHh in H8. destruct H8 as [h' [hty' hsame]].
+  apply cLemma in H9. destruct H9 as [c' [cty' csame]].
+  exists (CasesU h' o x k c'). constructor.
+  + apply CheckCasesU.
+    * assert (forall h h',
+        h_remove_annot h = h_remove_annot h' ->
+        find_op_case h o = None -> find_op_case h' o = None ).
+      intros H. induction H; intros H' eq nocase; destruct H'.
+      ++ assumption.
+      ++ simpl in eq. discriminate.
+      ++ simpl in eq. discriminate.
+      ++ simpl in eq. injection eq. intros. subst.
+         simpl in *. destruct (o==o1). discriminate.
+         apply IHhcases; assumption.
+      ++ eapply H. exact hsame. assumption.
+    * assumption.
+    * eapply CheckCBySynth. exact cty'. auto.
+  + simpl. f_equal; assumption.
+}
+Qed.
+

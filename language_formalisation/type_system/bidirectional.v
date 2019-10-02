@@ -1,8 +1,8 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 Require Import syntax.
 
-Inductive vsynth : ctx -> val -> vtype -> Type :=
+Inductive vsynth : ctx -> val -> vtype -> Prop :=
 | SynthUnit Γ : vsynth Γ Unit TyUnit 
 | SynthInt Γ n : vsynth Γ (Int n) TyInt
 | SynthVar Γ id A :
@@ -15,7 +15,7 @@ Inductive vsynth : ctx -> val -> vtype -> Type :=
 | SynthVAnnot Γ v A :
     vcheck Γ v A ->
     vsynth Γ (VAnnot v A) A
-with csynth : ctx -> comp -> ctype -> Type :=
+with csynth : ctx -> comp -> ctype -> Prop :=
 | SynthRet Γ v A : 
     vsynth Γ v A ->
     csynth Γ (Ret v) (CTy A SigØ EqsØ)
@@ -39,7 +39,7 @@ with csynth : ctx -> comp -> ctype -> Type :=
     csynth (CtxU Γ (TyFun A C)) c2 D ->
     csynth Γ (LetRec f x (TyFun A C) c1 c2) D
 (* with hsynth : ctx -> hcases -> sig -> ctype -> Type := *)
-with vcheck : ctx -> val -> vtype -> Type :=
+with vcheck : ctx -> val -> vtype -> Prop :=
 | CheckVBySynth Γ v A : vsynth Γ v A -> vcheck Γ v A
 | CheckInl Γ v A B :
     vcheck Γ v A ->
@@ -54,7 +54,7 @@ with vcheck : ctx -> val -> vtype -> Type :=
     ccheck (CtxU Γ A) c_ret D ->
     hcheck Γ h sig D ->
     vcheck Γ (Handler x c_ret h) (TyHandler (CTy A sig eqs) D)
-with ccheck : ctx -> comp -> ctype -> Type :=
+with ccheck : ctx -> comp -> ctype -> Prop :=
 | CheckCBySynth Γ c C C' : csynth Γ c C' -> C = C' -> ccheck Γ c C
 | CheckΣMatch Γ v A B xl cl xr cr C :
     vsynth Γ v (TyΣ A B) ->
@@ -66,7 +66,7 @@ with ccheck : ctx -> comp -> ctype -> Type :=
     vcheck Γ v A_op ->
     ccheck (CtxU Γ B_op) c (CTy A Σ eqs) ->
     ccheck Γ (Op op_id v y c) (CTy A Σ eqs)
-with hcheck : ctx -> hcases -> sig -> ctype -> Type :=
+with hcheck : ctx -> hcases -> sig -> ctype -> Prop :=
 | CheckCasesØ Γ D : hcheck Γ CasesØ SigØ D
 | CheckCasesU Γ h op_id x k c_op A_op B_op Σ D :
     find_op_case h op_id = None ->
