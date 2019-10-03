@@ -10,7 +10,38 @@ Definition op_id := string.
 Definition int := Z.t.
 
 (* Syntax Definitions *)
-Inductive val : Type :=
+Inductive ann_val : Type :=
+| Ann_Var : var_id -> ann_val
+| Ann_Unit : ann_val
+| Ann_Int : Z.t -> ann_val
+| Ann_Inl : ann_val -> ann_val
+| Ann_Inr : ann_val -> ann_val
+| Ann_Pair : ann_val -> ann_val -> ann_val
+| Ann_Fun : var_name -> ann_comp -> ann_val
+| Ann_Handler : var_name -> ann_comp -> ann_hcases -> ann_val
+| Ann_Val : ann_val -> vtype -> ann_val
+
+with ann_comp : Type :=
+| Ann_Ret : ann_val -> ann_comp
+| Ann_ΠMatch :
+    ann_val -> var_name * var_name -> ann_comp -> ann_comp (* x~1 y~0 *)
+| Ann_ΣMatch :
+    ann_val -> var_name -> ann_comp -> var_name -> ann_comp -> ann_comp
+| Ann_App : ann_val -> ann_val -> ann_comp
+| Ann_Op : op_id -> ann_val -> var_name -> ann_comp -> ann_comp (* x~1 k~0 *)
+| Ann_LetRec :
+    var_name -> var_name -> vtype
+    -> ann_comp -> ann_comp -> ann_comp (* f~0 x~1 *)
+| Ann_DoBind : var_name -> ann_comp -> ann_comp -> ann_comp
+| Ann_Handle : ann_val -> ann_comp -> ann_comp
+| Ann_Comp : ann_comp -> ctype -> ann_comp
+
+with ann_hcases : Type :=
+| Ann_CasesØ : ann_hcases
+| Ann_CasesU :
+    ann_hcases -> op_id -> var_name -> var_name -> ann_comp -> ann_hcases
+
+with val : Type :=
 | Var : var_id -> val
 | Unit : val
 | Int : Z.t -> val
@@ -19,7 +50,6 @@ Inductive val : Type :=
 | Pair : val -> val -> val
 | Fun : var_name -> comp -> val
 | Handler : var_name -> comp -> hcases -> val
-| VAnnot : val -> vtype -> val
 
 with comp : Type :=
 | Ret : val -> comp
@@ -27,10 +57,9 @@ with comp : Type :=
 | ΣMatch : val -> var_name -> comp -> var_name -> comp -> comp
 | App : val -> val -> comp
 | Op : op_id -> val -> var_name -> comp -> comp (* x~1 k~0 *)
-| LetRec : var_name -> var_name -> vtype -> comp -> comp -> comp (* f~0 x~1 *)
+| LetRec : var_name -> var_name -> comp -> comp -> comp (* f~0 x~1 *)
 | DoBind : var_name -> comp -> comp -> comp
 | Handle : val -> comp -> comp
-| CAnnot : comp -> ctype -> comp
 
 with hcases : Type :=
 | CasesØ : hcases
@@ -90,17 +119,17 @@ Definition id_n_reduce (id : var_id) : var_id :=
 
 Notation "x == y" := (string_dec x y) (at level 75, no associativity).
 
+
+
 (* Auxiliary Function Definitions *)
 
-Fixpoint get_vtype_i (Γ : ctx) (i:nat) : option vtype :=
+Fixpoint get_vtype (Γ : ctx) (i:nat) : option vtype :=
   match Γ, i with
   | CtxØ , _=> None
   | CtxU Γ' A, 0 => Some A
-  | CtxU Γ' A, S i' =>  get_vtype_i Γ' i'
+  | CtxU Γ' A, S i' =>  get_vtype Γ' i'
   end.
 
-Definition get_vtype (Γ : ctx) (id : var_id) : option vtype :=
-  let (name, num) := id in get_vtype_i Γ num.
 
 Fixpoint get_op_type (Σ : sig) (op : op_id) : option (vtype * vtype) :=
   match Σ with
@@ -110,6 +139,7 @@ Fixpoint get_op_type (Σ : sig) (op : op_id) : option (vtype * vtype) :=
       else get_op_type Σ' op
   end.
 
+
 Fixpoint find_op_case (h : hcases) (op : op_id) 
   : option (var_name * var_name * comp) :=
   match h with
@@ -117,6 +147,15 @@ Fixpoint find_op_case (h : hcases) (op : op_id)
   | CasesU h_others op' x_op k_op c_op =>
       if op == op' then Some (x_op, k_op, c_op)
       else find_op_case h_others op
+  end.
+
+Fixpoint find_op_ann_case (h : ann_hcases) (op : op_id) 
+  : option (var_name * var_name * ann_comp) :=
+  match h with
+  | Ann_CasesØ => None
+  | Ann_CasesU h_others op' x_op k_op c_op =>
+      if op == op' then Some (x_op, k_op, c_op)
+      else find_op_ann_case h_others op
   end.
 
 
@@ -130,7 +169,6 @@ match v with
 | Pair v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
 | Fun x c => c_no_var_j c (j+1)
 | Handler x c_ret h => (c_no_var_j c_ret (j+1)) /\ (h_no_var_j h j)
-| VAnnot v' A => v_no_var_j v' j
 end
 with c_no_var_j (c:comp) (j:nat) :=
 match c with
@@ -141,16 +179,16 @@ match c with
     (v_no_var_j v j) /\ (c_no_var_j cl (j+1)) /\ (c_no_var_j cr (j+1))
 | App v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
 | Op op v_arg y c => (v_no_var_j v_arg j) /\ (c_no_var_j c (j+1))
-| LetRec f x f_ty c1 c2 => (c_no_var_j c1 (j+2)) /\ (c_no_var_j c2 (j+1))
+| LetRec f x c1 c2 => (c_no_var_j c1 (j+2)) /\ (c_no_var_j c2 (j+1))
 | DoBind x c1 c2 => (c_no_var_j c1 j) /\ (c_no_var_j c2 (j+1))
 | Handle v c' => (v_no_var_j v j) /\ (c_no_var_j c' j)
-| CAnnot c' C => (c_no_var_j c' j)
 end
 with h_no_var_j (h:hcases) (j:nat) :=
 match h with
 | CasesØ => True
 | CasesU h op x k c => (h_no_var_j h j) /\ (c_no_var_j c (j+2))
 end.
+
 
 Fixpoint v_switch_vars (v:val) (i:nat) (j:nat) :=
 match v with
@@ -166,8 +204,6 @@ match v with
 | Fun x c => Fun x (c_switch_vars c (i+1) (j+1))
 | Handler x c_ret h =>
     Handler x (c_switch_vars c_ret (i+1) (j+1)) (h_switch_vars h i j)
-| VAnnot v' A => 
-    VAnnot (v_switch_vars v' i j) A
 end
 with c_switch_vars (c:comp) (i:nat) (j:nat) :=
 match c with
@@ -180,13 +216,11 @@ match c with
 | App v1 v2 => App (v_switch_vars v1 i j) (v_switch_vars v2 i j)
 | Op op v_arg y c => 
     Op op (v_switch_vars v_arg i j) y (c_switch_vars c (i+1) (j+1))
-| LetRec f x f_ty c1 c2 =>
-    LetRec f x f_ty
-      (c_switch_vars c1 (i+2) (j+2)) (c_switch_vars c2 (i+1) (j+1))
+| LetRec f x c1 c2 =>
+    LetRec f x (c_switch_vars c1 (i+2) (j+2)) (c_switch_vars c2 (i+1) (j+1))
 | DoBind x c1 c2 => 
     DoBind x (c_switch_vars c1 i j) (c_switch_vars c2 (i+1) (j+1))
 | Handle v c' => Handle (v_switch_vars v i j) (c_switch_vars c' i j)
-| CAnnot c' C => CAnnot (c_switch_vars c' i j) C
 end
 with h_switch_vars (h:hcases) (i:nat) (j:nat) :=
 match h with
@@ -195,6 +229,7 @@ match h with
     CasesU (h_switch_vars h i j) op x k (c_switch_vars c (i+2) (j+2))
 end.
 
+
 Fixpoint ctx_change_var (Γ:ctx) (i:nat) (A:vtype) :=
   match Γ, i with
   | CtxØ, _ => CtxØ
@@ -202,10 +237,12 @@ Fixpoint ctx_change_var (Γ:ctx) (i:nat) (A:vtype) :=
   | CtxU Γ' A', S i' => CtxU (ctx_change_var Γ' i' A) A'
   end.
 
+
 Definition ctx_switch_vars (Γ : ctx) (i:nat) (j:nat) (A:vtype) (B:vtype)
-  (proof_i : get_vtype_i Γ i = Some A) (proof_j: get_vtype_i Γ j = Some B) : ctx
+  (proof_i : get_vtype Γ i = Some A) (proof_j: get_vtype Γ j = Some B) : ctx
 :=
   ctx_change_var (ctx_change_var Γ i B) j A.
+
 
 Fixpoint ctx_remove_var (Γ:ctx) (i:nat) :=
   match Γ, i with
@@ -214,9 +251,44 @@ Fixpoint ctx_remove_var (Γ:ctx) (i:nat) :=
   | CtxU Γ' A', S i' => CtxU (ctx_remove_var Γ' i') A'
   end.
 
+
 Fixpoint ctx_insert_var (Γ:ctx) A (i:nat) :=
   match Γ, i with
   | Γ', 0 => CtxU Γ' A
   | CtxØ, _ => CtxØ
   | CtxU Γ' A', S i' => CtxU (ctx_insert_var Γ' A i') A'
   end.
+
+
+Fixpoint v_remove_annot v :=
+match v with
+| Ann_Var id => Var id
+| Ann_Unit => Unit
+| Ann_Int n => Int n
+| Ann_Inl v' => Inl (v_remove_annot v')
+| Ann_Inr v' => Inr (v_remove_annot v')
+| Ann_Pair v1 v2 => Pair (v_remove_annot v1) (v_remove_annot v2)
+| Ann_Fun x c => Fun x (c_remove_annot c)
+| Ann_Handler x c_ret h => Handler x (c_remove_annot c_ret) (h_remove_annot h)
+| Ann_Val v' A => v_remove_annot v'
+end
+with c_remove_annot c :=
+match c with
+| Ann_Ret v => Ret (v_remove_annot v)
+| Ann_ΠMatch v (x, y) c => ΠMatch (v_remove_annot v) (x,y) (c_remove_annot c)
+| Ann_ΣMatch v xl cl xr cr => 
+    ΣMatch (v_remove_annot v) xl (c_remove_annot cl) xr (c_remove_annot cr)
+| Ann_App v1 v2 => App (v_remove_annot v1) (v_remove_annot v2)
+| Ann_Op op v_arg y c => Op op (v_remove_annot v_arg) y (c_remove_annot c)
+| Ann_LetRec f x f_ty c1 c2 =>
+    LetRec f x (c_remove_annot c1) (c_remove_annot c2)
+| Ann_DoBind x c1 c2 => DoBind x (c_remove_annot c1) (c_remove_annot c2)
+| Ann_Handle v c' => Handle (v_remove_annot v) (c_remove_annot c')
+| Ann_Comp c' C => (c_remove_annot c')
+end
+with h_remove_annot h :=
+match h with
+| Ann_CasesØ => CasesØ
+| Ann_CasesU h op x k c =>
+    CasesU (h_remove_annot h) op x k (c_remove_annot c)
+end.

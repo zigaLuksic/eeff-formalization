@@ -27,7 +27,6 @@ match v with
 | Fun x c => Fun x (c_shift c d (cut+1))
 | Handler x c_ret h =>
     Handler x (c_shift c_ret d (cut+1)) (h_shift h d cut)
-| VAnnot v' A => VAnnot (v_shift v' d cut) A
 end
 with c_shift (c : comp) d (cut : nat) :=
 match c with
@@ -41,12 +40,11 @@ match c with
 | App v1 v2 => App (v_shift v1 d cut) (v_shift v2 d cut)
 | Op op v_arg y c =>
     Op op (v_shift v_arg d cut) y (c_shift c d (cut+1))
-| LetRec f x f_ty c1 c2 =>
-    LetRec f x f_ty (c_shift c1 d (cut+2)) (c_shift c2 d (cut+1))
+| LetRec f x c1 c2 =>
+    LetRec f x (c_shift c1 d (cut+2)) (c_shift c2 d (cut+1))
 | DoBind x c1 c2 =>
     DoBind x (c_shift c1 d cut) (c_shift c2 d (cut+1))
 | Handle v c' => Handle (v_shift v d cut) (c_shift c' d cut)
-| CAnnot c' C => CAnnot (c_shift c' d cut) C
 end
 with h_shift (h : hcases) d (cut : nat) :=
 match h with
@@ -70,7 +68,6 @@ match v with
 | Fun x c => Fun x (c_negshift c d (cut+1))
 | Handler x c_ret h =>
     Handler x (c_negshift c_ret d (cut+1)) (h_negshift h d cut)
-| VAnnot v' A => VAnnot (v_negshift v' d cut) A
 end
 with c_negshift (c : comp) d (cut : nat) :=
 match c with
@@ -84,12 +81,11 @@ match c with
 | App v1 v2 => App (v_negshift v1 d cut) (v_negshift v2 d cut)
 | Op op v_arg y c =>
     Op op (v_negshift v_arg d cut) y (c_negshift c d (cut+1))
-| LetRec f x f_ty c1 c2 =>
-    LetRec f x f_ty (c_negshift c1 d (cut+2)) (c_negshift c2 d (cut+1))
+| LetRec f x c1 c2 =>
+    LetRec f x (c_negshift c1 d (cut+2)) (c_negshift c2 d (cut+1))
 | DoBind x c1 c2 =>
     DoBind x (c_negshift c1 d cut) (c_negshift c2 d (cut+1))
 | Handle v c' => Handle (v_negshift v d cut) (c_negshift c' d cut)
-| CAnnot c' C => CAnnot (c_negshift c' d cut) C
 end
 with h_negshift (h : hcases) d (cut : nat) :=
 match h with
@@ -112,7 +108,6 @@ match v with
     Handler x
       (c_sub c_ret (sub_shift sub 1))
       (h_sub h sub)
-| VAnnot v' A => VAnnot (v_sub v' sub) A
 end
 with c_sub (c : comp) (sub : nat * val) :=
 match c with
@@ -127,14 +122,13 @@ match c with
 | App v1 v2 => App (v_sub v1 sub) (v_sub v2 sub)
 | Op op v_arg y c =>
     Op op (v_sub v_arg sub) y (c_sub c (sub_shift sub 1))
-| LetRec f x f_ty c1 c2 =>
-    LetRec f x f_ty
+| LetRec f x c1 c2 =>
+    LetRec f x 
       (c_sub c1 (sub_shift sub 2))
       (c_sub c2 (sub_shift sub 1))
 | DoBind x c1 c2 =>
     DoBind x (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
 | Handle v c' => Handle (v_sub v sub) (c_sub c' sub)
-| CAnnot c' C => CAnnot (c_sub c' sub) C
 end
 with h_sub (h : hcases) (sub : nat * val) :=
 match h with

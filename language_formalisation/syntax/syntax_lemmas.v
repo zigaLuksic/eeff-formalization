@@ -5,17 +5,8 @@ Require Import Le Compare_dec.
 
 Ltac inv H := inversion H; clear H; subst.
 
-Lemma gets_same Γ (id:var_id) (db_i:nat) :
-  id_has_dbi id db_i = true -> get_vtype Γ id = get_vtype_i Γ db_i.
-Proof.
-revert id db_i. induction Γ; intros id db_i matches; destruct id as (name, num).
-+ auto.
-+ simpl in matches. apply beq_nat_true in matches.
-  rewrite matches. auto.
-Qed.
-
 Lemma change_j_get_k Γ j k Aj :
-  j <> k -> get_vtype_i Γ k = get_vtype_i (ctx_change_var Γ j Aj) k.
+  j <> k -> get_vtype Γ k = get_vtype (ctx_change_var Γ j Aj) k.
 Proof.
 revert j k. induction Γ; intros j k neq_jk; auto.
 destruct k; destruct j; auto.
@@ -24,8 +15,8 @@ destruct k; destruct j; auto.
 Qed.
 
 Lemma change_j_get_j Γ j Aj_orig Aj 
-  (p_j : get_vtype_i Γ j = Some Aj_orig) :
-  get_vtype_i (ctx_change_var Γ j Aj) j = Some Aj.
+  (p_j : get_vtype Γ j = Some Aj_orig) :
+  get_vtype (ctx_change_var Γ j Aj) j = Some Aj.
 Proof.
 revert j p_j. induction Γ; intros j p_j; simpl in p_j.
 + discriminate.
@@ -113,9 +104,9 @@ induction h; simpl; f_equal; try auto || apply IHh.
 Qed.
 
 Lemma switch_ij_get_k Γ k i j Ai Aj
-  (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) :
+  (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
   i <> k -> j <> k ->
-  get_vtype_i Γ k = get_vtype_i (ctx_switch_vars Γ i j Ai Aj p_i p_j) k.
+  get_vtype Γ k = get_vtype (ctx_switch_vars Γ i j Ai Aj p_i p_j) k.
 Proof.
 revert k i j p_i p_j. induction Γ;
 intros k i j p_i p_j neq_ik neq_jk. auto.
@@ -131,8 +122,8 @@ intros i j p_i p_j neq_ik neq_jk.
 Qed.
       
 Lemma switch_ij_get_j Γ i j Ai Aj
-  (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) :
-  get_vtype_i Γ i = get_vtype_i (ctx_switch_vars Γ i j Ai Aj p_i p_j) j.
+  (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
+  get_vtype Γ i = get_vtype (ctx_switch_vars Γ i j Ai Aj p_i p_j) j.
 Proof.
 revert i j p_i p_j. induction Γ; intros i j p_i p_j.
 auto.
@@ -143,8 +134,8 @@ destruct i; destruct j; auto; simpl.
 Qed.
 
 Lemma switch_ij_get_i Γ i j Ai Aj
-  (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) :
-  get_vtype_i Γ j = get_vtype_i (ctx_switch_vars Γ i j Ai Aj p_i p_j) i.
+  (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
+  get_vtype Γ j = get_vtype (ctx_switch_vars Γ i j Ai Aj p_i p_j) i.
 Proof.
 revert i j p_i p_j. induction Γ; intros i j p_i p_j.
 auto.
@@ -155,9 +146,9 @@ destruct i; destruct j; auto; simpl.
 Qed.
 
 Lemma ctx_switch_extend1 Γ A i j Ai Aj
-    (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) 
-    (pp_i : get_vtype_i (CtxU Γ A) (i+1) = Some Ai)
-    (pp_j : get_vtype_i (CtxU Γ A) (j+1) = Some Aj) :
+    (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) 
+    (pp_i : get_vtype (CtxU Γ A) (i+1) = Some Ai)
+    (pp_j : get_vtype (CtxU Γ A) (j+1) = Some Aj) :
   CtxU (ctx_switch_vars Γ i j Ai Aj p_i p_j) A
     = 
   (ctx_switch_vars (CtxU Γ A) (i+1) (j+1) Ai Aj pp_i pp_j).
@@ -178,9 +169,9 @@ revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
 Qed.
 
 Lemma ctx_switch_extend2 Γ B A i j Ai Aj
-    (p_i : get_vtype_i Γ i = Some Ai) (p_j : get_vtype_i Γ j = Some Aj) 
-    (pp_i : get_vtype_i (CtxU (CtxU Γ B) A) (i+2) = Some Ai)
-    (pp_j : get_vtype_i (CtxU (CtxU Γ B) A) (j+2) = Some Aj) :
+    (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) 
+    (pp_i : get_vtype (CtxU (CtxU Γ B) A) (i+2) = Some Ai)
+    (pp_j : get_vtype (CtxU (CtxU Γ B) A) (j+2) = Some Aj) :
   CtxU (CtxU (ctx_switch_vars Γ i j Ai Aj p_i p_j) B) A
     = 
   (ctx_switch_vars (CtxU (CtxU Γ B) A) (i+2) (j+2) Ai Aj pp_i pp_j).
@@ -198,6 +189,21 @@ revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
     rewrite H. f_equal.
     destruct i; auto; simpl.
     assert (i+2 = S (S i)) by omega; rewrite H0; auto.
+Qed.
+
+Definition case_remove_annot (case : option (var_name * var_name * ann_comp)) :=
+  match case with
+  | None => None
+  | Some (x, k, c_op) => Some (x, k, c_remove_annot c_op)
+  end.
+
+Lemma find_op_remove_annot h op:
+  case_remove_annot (find_op_ann_case h op) 
+    = find_op_case (h_remove_annot h) op.
+Proof.
+induction h; simpl. reflexivity.
+destruct (op==o); simpl. reflexivity.
+apply IHh.
 Qed.
 
 Lemma find_op_None_switch h i j op:
@@ -254,7 +260,7 @@ try constructor; try destruct orig; simpl; auto.
 Qed.
 
 Lemma get_ctx_remove_unchanged Γ i j :
-  i > j -> get_vtype_i Γ j = get_vtype_i (ctx_remove_var Γ i) j.
+  i > j -> get_vtype Γ j = get_vtype (ctx_remove_var Γ i) j.
 Proof.
 revert i j; induction Γ; intros i j lt; auto.
 destruct i; destruct j; simpl.
@@ -265,7 +271,7 @@ destruct i; destruct j; simpl.
 Qed.
 
 Lemma get_ctx_remove_changed Γ i j :
-  i <= j -> get_vtype_i Γ (S j) = get_vtype_i (ctx_remove_var Γ i) j.
+  i <= j -> get_vtype Γ (S j) = get_vtype (ctx_remove_var Γ i) j.
 Proof.
 revert i j; induction Γ; intros i j lt; auto.
 destruct i; destruct j; simpl; auto.
@@ -282,7 +288,7 @@ revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H.
 Qed.
 
 Lemma get_ctx_insert_unchanged Γ A i j:
-  i < j -> get_vtype_i Γ i = get_vtype_i (ctx_insert_var Γ A j) i.
+  i < j -> get_vtype Γ i = get_vtype (ctx_insert_var Γ A j) i.
 Proof.
 revert i j. induction Γ; intros i j cmp; simpl.
 destruct i; destruct j; simpl; try reflexivity.
@@ -293,7 +299,7 @@ destruct i; destruct j; simpl; try reflexivity.
 Qed.
 
 Lemma get_ctx_insert_changed Γ A i j:
-  i >= j -> get_vtype_i Γ i = get_vtype_i (ctx_insert_var Γ A j) (i+1).
+  i >= j -> get_vtype Γ i = get_vtype (ctx_insert_var Γ A j) (i+1).
 Proof.
 revert i j. induction Γ; intros i j cmp; simpl.
 destruct i; destruct j; simpl; try reflexivity.

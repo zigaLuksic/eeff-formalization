@@ -12,7 +12,7 @@ Ltac inv H := inversion H; clear H; subst.
 
 
 Lemma extend_get_proof Γ A i Ai:
-  get_vtype_i Γ i = Some Ai-> get_vtype_i (CtxU Γ A) (i + 1) = Some Ai.
+  get_vtype Γ i = Some Ai-> get_vtype (CtxU Γ A) (i + 1) = Some Ai.
 Proof.
 assert (i + 1 = S i) by omega.
 induction Γ; rewrite H; auto.
@@ -32,20 +32,18 @@ Proof.
 {
 clear v_insert_typesafe.
 revert A i. induction v; intros A i orig; simpl; inv orig.
-+ apply TypeVar. simpl. destruct v as (name, num).
++ simpl. assert (
+    (if i <=? num then (name, num + 1) else (name, num))
+      = (name, if i <=? num then num + 1 else num) ) 
+  as same by (destruct (i<=?num); reflexivity).
+  rewrite same. apply TypeVar. simpl. 
   simpl. destruct (i<=?num) eqn:cmp.
-  - erewrite gets_same. instantiate (1:=num+1).
-    erewrite <-get_ctx_insert_changed.
-    * erewrite gets_same in H1. 2:instantiate (1:=num). assumption.
-      simpl. apply Nat.eqb_eq. reflexivity.
+  - erewrite <-get_ctx_insert_changed.
+    * assumption.
     * apply leb_complete in cmp. omega.
-    * simpl. apply Nat.eqb_eq. reflexivity.
-  - erewrite gets_same. instantiate (1:=num).
-    erewrite <-get_ctx_insert_unchanged.
-    * erewrite gets_same in H1. 2:instantiate (1:=num). assumption.
-      simpl. apply Nat.eqb_eq. reflexivity.
+  - erewrite <-get_ctx_insert_unchanged.
+    * assumption.
     * apply leb_iff_conv in cmp. omega.
-    * simpl. apply Nat.eqb_eq. reflexivity.
 + apply TypeUnit.
 + apply TypeInt.
 + apply TypeInl. apply IHv. assumption.
@@ -53,7 +51,6 @@ revert A i. induction v; intros A i orig; simpl; inv orig.
 + apply TypePair; try apply IHv1 || apply IHv2; assumption.
 + apply TypeFun. rewrite ctx_insert_extend. auto.
 + apply TypeHandler; auto. rewrite ctx_insert_extend. auto.
-+ apply TypeVAnnot. apply IHv. assumption.
 }{
 clear c_insert_typesafe.
 revert Γ C i. induction c; intros Γ C i orig; simpl; inv orig.
@@ -73,12 +70,11 @@ revert Γ C i. induction c; intros Γ C i orig; simpl; inv orig.
   rewrite ctx_insert_extend. auto.
 + eapply TypeLetRec.
   - rewrite ctx_insert_extend. rewrite ctx_insert_extend.
-    assert (i+1+1=i+2) by omega. rewrite H. auto.
+    assert (i+1+1=i+2) by omega. rewrite H. apply IHc1. exact H5.
   - rewrite ctx_insert_extend. auto.
 + eapply TypeHandle.
   - apply v_insert_typesafe. exact H2.
   - auto.
-+ eapply TypeCAnnot. auto.
 }{
 clear h_insert_typesafe.
 revert Γ Σ D i. induction h; intros Γ Σ D i orig; simpl; inv orig.
@@ -141,18 +137,17 @@ Proof.
 clear v_negshift_typesafe.
 revert Γ A i. induction v; intros Γ A i orig no_var; simpl; inv orig;
 simpl in no_var.
-+ destruct v as (name, num). simpl in *.
-  apply TypeVar. destruct (i<=?num) eqn:cmp.
-  - erewrite gets_same. instantiate (1:=(num - 1)).
-    erewrite <-get_ctx_remove_changed; apply leb_complete in cmp.
++ simpl. assert (
+    (if i <=? num then (name, num - 1) else (name, num))
+      = (name, if i <=? num then num - 1 else num) ) 
+  as same by (destruct (i<=?num); reflexivity).
+  rewrite same. apply TypeVar. destruct (i<=?num) eqn:cmp.
+  - erewrite <-get_ctx_remove_changed; apply leb_complete in cmp.
     * destruct num. destruct no_var. omega.
       simpl. assert (num-0=num) by omega. rewrite H. assumption.
     * omega.
-    * simpl. apply Nat.eqb_eq. omega.
-  - erewrite gets_same. instantiate (1:=num).
-    erewrite <-get_ctx_remove_unchanged. assumption.
-    * apply leb_iff_conv in cmp. omega.
-    * simpl. apply Nat.eqb_eq. omega.
+  - erewrite <-get_ctx_remove_unchanged. assumption.
+    apply leb_iff_conv in cmp. omega.
 + apply TypeUnit.
 + apply TypeInt.
 + apply TypeInl. eapply IHv. exact H1. assumption.
@@ -165,7 +160,6 @@ simpl in no_var.
 + apply TypeHandler; destruct no_var.
   - rewrite ctx_remove_extend. apply c_negshift_typesafe; assumption.
   - apply h_negshift_typesafe; assumption.
-+ apply TypeVAnnot. apply IHv; assumption.
 }{
 clear c_negshift_typesafe.
 revert Γ C i. induction c; intros Γ C i orig no_var; simpl; inv orig;
@@ -186,12 +180,11 @@ simpl in no_var; try destruct no_var.
   - rewrite ctx_remove_extend. apply IHc; assumption.
 + eapply TypeLetRec.
   - rewrite ctx_remove_extend. rewrite ctx_remove_extend.
-    assert (i+1+1=i+2) by omega. rewrite H1. apply IHc1; assumption.
+    assert (i+1+1=i+2) by omega. rewrite H1. apply IHc1. exact H5. assumption.
   - rewrite ctx_remove_extend. apply IHc2; assumption.
 + eapply TypeHandle.
   - apply v_negshift_typesafe. exact H2. assumption.
   - apply IHc; assumption.
-+ eapply TypeCAnnot. apply IHc; assumption.
 }{
 clear h_negshift_typesafe.
 revert Γ Σ i. induction h; intros Γ Σ i orig no_var; simpl; inv orig;
