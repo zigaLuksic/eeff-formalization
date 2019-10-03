@@ -50,17 +50,21 @@ with vcheck : ctx -> ann_val -> vtype -> Prop :=
 | CheckFun Γ x c A C :
     ccheck (CtxU Γ A) c C ->
     vcheck Γ (Ann_Fun x c) (TyFun A C)
-| CheckHandler Γ x c_ret h A sig eqs D :
+| CheckHandler Γ x c_ret h A Σ eqs D :
     ccheck (CtxU Γ A) c_ret D ->
-    hcheck Γ h sig D ->
-    vcheck Γ (Ann_Handler x c_ret h) (TyHandler (CTy A sig eqs) D)
+    hcheck Γ h Σ D ->
+    vcheck Γ (Ann_Handler x c_ret h) (TyHandler (CTy A Σ eqs) D)
 with ccheck : ctx -> ann_comp -> ctype -> Prop :=
-| CheckCBySynth Γ c C C' : csynth Γ c C' -> C = C' -> ccheck Γ c C
+| CheckCBySynth Γ c C : csynth Γ c C -> ccheck Γ c C
 | CheckΣMatch Γ v A B xl cl xr cr C :
     vsynth Γ v (TyΣ A B) ->
     ccheck (CtxU Γ A) cl C ->
     ccheck (CtxU Γ B) cr C ->
     ccheck Γ (Ann_ΣMatch v xl cl xr cr) C
+| CheckDoBind Γ x c1 c2 A B Σ eqs :
+    csynth Γ c1 (CTy A Σ eqs) ->
+    ccheck (CtxU Γ A) c2 (CTy B Σ eqs) ->
+    ccheck Γ (Ann_DoBind x c1 c2) (CTy B Σ eqs)
 | CheckOp Γ op_id v y c A_op B_op A Σ eqs :
     get_op_type Σ op_id = Some (A_op, B_op) ->
     vcheck Γ v A_op ->

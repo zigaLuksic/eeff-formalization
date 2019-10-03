@@ -31,7 +31,7 @@ Inductive step : comp -> comp -> Prop :=
 | Step_DoBind_Op x op_id v_arg y c1 c2:
     step
       (DoBind x (Op op_id v_arg y c1) c2)
-      (Op op_id v_arg y (DoBind x c1 c2))
+      (Op op_id v_arg y (DoBind x c1 (Sub.c_shift c2 1 1)))
 | Step_Handle_Step v c c' :
     step c c' ->
     step (Handle v c) (Handle v c')

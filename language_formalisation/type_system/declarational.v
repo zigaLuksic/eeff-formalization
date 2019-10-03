@@ -2,7 +2,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\sy
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-Require Import syntax syntax_lemmas bidirectional.
+Require Import syntax syntax_lemmas.
 
 Inductive has_vtype : ctx -> val -> vtype -> Prop :=
 | TypeUnit Γ : has_vtype Γ Unit TyUnit 
@@ -35,6 +35,15 @@ with has_ctype : ctx -> comp -> ctype -> Prop :=
     has_vtype Γ v (TyΠ A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
     has_ctype Γ (ΠMatch v (x, y) c) C
+| TypeΣMatch Γ v A B xl cl xr cr C :
+    has_vtype Γ v (TyΣ A B) ->
+    has_ctype (CtxU Γ A) cl C ->
+    has_ctype (CtxU Γ B) cr C ->
+    has_ctype Γ (ΣMatch v xl cl xr cr) C
+| TypeDoBind Γ x c1 c2 A B Σ eqs :
+    has_ctype Γ c1 (CTy A Σ eqs) ->
+    has_ctype (CtxU Γ A) c2 (CTy B Σ eqs) ->
+    has_ctype Γ (DoBind x c1 c2) (CTy B Σ eqs)
 | TypeApp Γ v1 v2 A C :
     has_vtype Γ v1 (TyFun A C) ->
     has_vtype Γ v2 A ->
@@ -47,11 +56,6 @@ with has_ctype : ctx -> comp -> ctype -> Prop :=
     has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     has_ctype (CtxU Γ (TyFun A C)) c2 D ->
     has_ctype Γ (LetRec f x c1 c2) D
-| TypeΣMatch Γ v A B xl cl xr cr C :
-    has_vtype Γ v (TyΣ A B) ->
-    has_ctype (CtxU Γ A) cl C ->
-    has_ctype (CtxU Γ B) cr C ->
-    has_ctype Γ (ΣMatch v xl cl xr cr) C
 | TypeOp Γ op_id v y c A_op B_op A Σ eqs :
     get_op_type Σ op_id = Some (A_op, B_op) ->
     has_vtype Γ v A_op ->

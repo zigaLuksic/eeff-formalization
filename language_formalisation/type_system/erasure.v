@@ -1,3 +1,9 @@
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+Require Import syntax syntax_lemmas bidirectional declarational.
+
 
 Ltac inv H := inversion H; clear H; subst.
 
@@ -43,6 +49,9 @@ revert Γ C. induction c; intros Γ C orig; inv orig; try inv H; simpl.
 + eapply TypeApp. apply vsynth_has_vtype. exact H3. auto.
 + eapply TypeOp; try exact H5 || auto.
 + eapply TypeLetRec. apply IHc1. exact H7. auto.
++ eapply TypeDoBind.
+  - apply csynth_has_ctype in H4. exact H4.
+  - apply IHc2. assumption.
 + eapply TypeHandle. apply vsynth_has_vtype. exact H3. auto.
 + auto. 
 }{
@@ -110,7 +119,7 @@ revert Γ A. induction v; intros Γ A orig.
 - inv orig. (* Annotate functions. *)
   apply cLemma in H3. destruct H3 as [c' [cty' same]].
   exists (Ann_Val (Ann_Fun v c') (TyFun A0 C)). constructor.
-  + apply SynthVAnnot. apply CheckFun. eapply CheckCBySynth. exact cty'. auto.
+  + apply SynthVAnnot. apply CheckFun. eapply CheckCBySynth. exact cty'.
   + simpl. f_equal. assumption.
 - inv orig. (* Annotate functions. *)
   apply cLemma in H4. destruct H4 as [c_r' [cty' samec]].
@@ -118,7 +127,7 @@ revert Γ A. induction v; intros Γ A orig.
   exists (Ann_Val (Ann_Handler v c_r' h') (TyHandler (CTy A0 sig eqs) D)).
   constructor.
   + apply SynthVAnnot. apply CheckHandler;
-    try eapply CheckCBySynth; auto. auto.
+    try eapply CheckCBySynth; auto.
   + simpl. f_equal; assumption.
 }{
 clear cLemma.
@@ -141,8 +150,8 @@ revert Γ C. induction c; intros Γ C orig.
   apply IHc2 in H8. destruct H8 as [c2' [c2ty' c2same]].
   exists (Ann_Comp (Ann_ΣMatch v' x c1' y c2') C). constructor.
   + apply SynthCAnnot. eapply CheckΣMatch. exact vty'. 
-    eapply CheckCBySynth. exact c1ty'. reflexivity.
-    eapply CheckCBySynth. exact c2ty'. reflexivity.
+    eapply CheckCBySynth. exact c1ty'.
+    eapply CheckCBySynth. exact c2ty'.
   + simpl. f_equal; assumption.
 - inv orig.
   apply vLemma in H2. destruct H2 as [v1' [v1ty' v1same]]. 
@@ -155,20 +164,27 @@ revert Γ C. induction c; intros Γ C orig.
   apply IHc in H7. destruct H7 as [c' [cty' csame]].
   exists (Ann_Comp (Ann_Op o v' v0 c') (CTy A Σ eqs)). constructor.
   + eapply SynthCAnnot. eapply CheckOp. exact H5.
-    apply CheckVBySynth. assumption. eapply CheckCBySynth. exact cty'. auto.
+    apply CheckVBySynth. assumption. eapply CheckCBySynth. exact cty'.
   + simpl. f_equal; assumption.
 - inv orig. rename v into f. rename v0 into x.
   apply IHc1 in H5. destruct H5 as [c1' [c1ty' c1same]].
   apply IHc2 in H6. destruct H6 as [c2' [c2ty' c2same]].
   exists (Ann_LetRec f x (TyFun A C0) c1' c2'). constructor.
-  + apply SynthLetRec. eapply CheckCBySynth. exact c1ty'. auto. assumption.
+  + apply SynthLetRec. eapply CheckCBySynth. exact c1ty'. assumption.
   + simpl. f_equal; assumption.
-- inv orig.
+- inv orig. (* Annotate binds! *)
+  apply IHc1 in H4. destruct H4 as [c1' [c1ty' c1same]].
+  apply IHc2 in H5. destruct H5 as [c2' [c2ty' c2same]].
+  exists (Ann_Comp (Ann_DoBind v c1' c2') (CTy B Σ eqs)). constructor.
+  apply SynthCAnnot. eapply CheckDoBind.
+  + exact c1ty'.
+  + apply CheckCBySynth. assumption.
+  + simpl. f_equal; assumption.
 - inv orig.
   apply vLemma in H2. destruct H2 as [v' [vty' vsame]].
   apply IHc in H4. destruct H4 as [c' [cty' csame]].
   exists (Ann_Handle v' c'). constructor.
-  + eapply SynthHandle. exact vty'. eapply CheckCBySynth. exact cty'. auto.
+  + eapply SynthHandle. exact vty'. eapply CheckCBySynth. exact cty'.
   + simpl. f_equal; assumption.
 }{
 clear hLemma.
@@ -191,7 +207,7 @@ revert Γ Σ D. induction h; intros Γ Σ D orig.
          apply IHhcases. reflexivity. assumption.
       ++ eapply H. exact hsame. assumption.
     * assumption.
-    * eapply CheckCBySynth. exact cty'. auto.
+    * eapply CheckCBySynth. exact cty'.
   + simpl. f_equal; assumption.
 }
 Qed.

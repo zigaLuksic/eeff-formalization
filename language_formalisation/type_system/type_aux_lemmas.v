@@ -72,6 +72,9 @@ revert Γ C i. induction c; intros Γ C i orig; simpl; inv orig.
   - rewrite ctx_insert_extend. rewrite ctx_insert_extend.
     assert (i+1+1=i+2) by omega. rewrite H. apply IHc1. exact H5.
   - rewrite ctx_insert_extend. auto.
++ eapply TypeDoBind.
+  - apply IHc1. exact H4.
+  - rewrite ctx_insert_extend. auto.
 + eapply TypeHandle.
   - apply v_insert_typesafe. exact H2.
   - auto.
@@ -182,6 +185,9 @@ simpl in no_var; try destruct no_var.
   - rewrite ctx_remove_extend. rewrite ctx_remove_extend.
     assert (i+1+1=i+2) by omega. rewrite H1. apply IHc1. exact H5. assumption.
   - rewrite ctx_remove_extend. apply IHc2; assumption.
++ eapply TypeDoBind.
+  - apply IHc1. exact H4. assumption.
+  - rewrite ctx_remove_extend. auto.
 + eapply TypeHandle.
   - apply v_negshift_typesafe. exact H2. assumption.
   - apply IHc; assumption.
@@ -203,3 +209,125 @@ simpl in no_var; try destruct no_var.
 }
 Qed.
 
+
+Fixpoint v_subs_typesafe
+  (Γ:ctx) (v:val) (A:vtype) (i:nat) (v_s:val) (A_s:vtype) {struct v}:
+  has_vtype Γ v A -> get_vtype Γ i = Some A_s ->
+  has_vtype Γ v_s A_s ->
+  has_vtype Γ (Sub.v_sub v (i, v_s)) A
+with c_subs_typesafe
+  (Γ:ctx) (c:comp) (C:ctype) (i:nat) (v_s:val) (A_s:vtype) {struct c}:
+  has_ctype Γ c C -> get_vtype Γ i = Some A_s ->
+  has_vtype Γ v_s A_s ->
+  has_ctype Γ (Sub.c_sub c (i, v_s)) C
+with h_subs_typesafe
+  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (i:nat) (v_s:val) (A_s:vtype) {struct h}:
+  has_htype Γ h Σ D -> get_vtype Γ i = Some A_s ->
+  has_vtype Γ v_s A_s ->
+  has_htype Γ (Sub.h_sub h (i, v_s)) Σ D.
+Proof.
+{
+clear v_subs_typesafe.
+revert Γ A i. induction v; intros Γ A i orig in_ctx vstyped;
+simpl; inv orig.
++ simpl in *. destruct (num=?i) eqn:cmp.
+  * apply Nat.eqb_eq in cmp. rewrite <-cmp in in_ctx.
+    rewrite H1 in in_ctx. injection in_ctx. intro samety.
+    rewrite samety. assumption.
+  * apply TypeVar. assumption.
++ apply TypeUnit.
++ apply TypeInt.
++ apply TypeInl. apply IHv; auto.
++ apply TypeInr. apply IHv; auto.
++ apply TypePair; try apply IHv1 || apply IHv2; auto.
++ apply TypeFun. eapply c_subs_typesafe.
+  - assumption.
+  - assert (i+1=S i) by omega. rewrite H. simpl.
+    exact in_ctx.
+  - apply v_shift_typesafe. assumption.
++ apply TypeHandler.
+  - eapply c_subs_typesafe.
+    * assumption.
+    * assert (i+1=S i) by omega. rewrite H. simpl. exact in_ctx.
+    * apply v_shift_typesafe. assumption.
+  - eapply h_subs_typesafe.
+    * assumption.
+    * exact in_ctx.
+    * assumption.
+}{
+clear c_subs_typesafe.
+assert (forall i, i+1=S i) as Si by (intro; omega).
+assert (forall i, i+2=S(S i)) as SSi by (intro; omega).
+revert Γ C i v_s. induction c; intros Γ C i v_s orig in_ctx vstyped;
+simpl; inv orig.
++ apply TypeRet. eapply v_subs_typesafe. 2 : exact in_ctx. all: assumption.
++ eapply TypeΠMatch.
+  - eapply v_subs_typesafe. exact H4. exact in_ctx. assumption.
+  - apply IHc. assumption.
+    * rewrite SSi. assumption.
+    * rewrite <-(v_shift_shift 1 1 0).
+      apply v_shift_typesafe. apply v_shift_typesafe. assumption.
++ eapply TypeΣMatch.
+  { eapply v_subs_typesafe. exact H6. exact in_ctx. assumption. }
+  all: try apply IHc1 || apply IHc2; try apply v_shift_typesafe; auto.
+  all: rewrite Si; assumption.
++ eapply TypeApp.
+  - eapply v_subs_typesafe. exact H2. exact in_ctx. assumption.
+  - eapply v_subs_typesafe. auto. exact in_ctx. assumption.
++ eapply TypeOp. exact H5.
+  - eapply v_subs_typesafe. 2: exact in_ctx. assumption. assumption.
+  - apply IHc; auto.
+    * rewrite Si. assumption.
+    * apply v_shift_typesafe. assumption.
++ eapply TypeLetRec.
+  - apply IHc1. exact H5.
+    * rewrite SSi. assumption.
+    * rewrite <-(v_shift_shift 1 1 0).
+      apply v_shift_typesafe. apply v_shift_typesafe. assumption.
+  - apply IHc2. assumption.
+    * rewrite Si. assumption.
+    * apply v_shift_typesafe. assumption.
++ eapply TypeDoBind.
+  - apply IHc1. exact H4. assumption. assumption.
+  - apply IHc2.
+    * assumption.
+    * rewrite Si. assumption.
+    * apply v_shift_typesafe. assumption.
++ eapply TypeHandle.
+  - eapply v_subs_typesafe. exact H2. exact in_ctx. assumption.
+  - apply IHc; auto.
+}{
+clear h_subs_typesafe.
+assert (forall i, i+1=S i) as Si by (intro; omega).
+assert (forall i, i+2=S(S i)) as SSi by (intro; omega).
+revert Γ Σ D i v_s. induction h; intros Γ Σ D i v_s orig in_ctx vstyped;
+simpl; inv orig.
++ apply TypeCasesØ.
++ apply TypeCasesU.
+  assert (forall h,
+    find_op_case h o = None ->
+    find_op_case (Sub.h_sub h (i, v_s)) o = None).
+  * intros h' cantfind. induction h'. auto.
+    simpl. simpl in cantfind. destruct (o==o0). discriminate.
+    apply IHh'. exact cantfind.
+  * apply H. assumption.
+  * auto.
+  * rewrite SSi. eapply c_subs_typesafe; auto.
+    - simpl. exact in_ctx.
+    - rewrite <-(v_shift_shift 1 1 0).
+      apply v_shift_typesafe. apply v_shift_typesafe. assumption.
+}
+Qed.
+
+Lemma h_has_case Γ h Σ D op A_op B_op:
+  has_htype Γ h Σ D ->
+  get_op_type Σ op = Some (A_op, B_op) ->
+  exists x k c_op, find_op_case h op = Some (x, k, c_op).
+Proof.
+revert Γ Σ. induction h; intros Γ Σ typed gets.
++ inv typed. simpl in gets. discriminate.
++ inv typed. simpl in *. destruct (op==o).
+  - injection gets. intros. subst.
+    exists v. exists v0. exists c. reflexivity.
+  - apply IHh in H8; assumption.
+Qed.
