@@ -85,7 +85,8 @@
 \newcommand{\apply}[2]{{#1}\;{#2}}
 % Let
 \newcommand{\letbind}[2]{\keylet~{#1} = {#2}~\keyin~}
-\newcommand{\letrec}[4]{\keylet~\keyrec~{#1}~{#2}~\oftype{#3} = {#4}~\keyin~}
+\newcommand{\letrecann}[4]{\keylet~\keyrec~{#1}~{#2}~\oftype{#3} = {#4}~\keyin~}
+\newcommand{\letrec}[3]{\keylet~\keyrec~{#1}~{#2} = {#3}~\keyin~}
 % Return
 \newcommand{\return}[1]{\keyreturn~{#1}}
 % Bind
@@ -160,7 +161,7 @@
 \newcommand{\wfequations}[2]{\vdash #1 \oftype #2}
 \newcommand{\welltyped}[3][\ctx]{#1 \vdash #2 \oftype #3}
 
-\newcommand{\judgement}[3]{{#1} \vdash {#2} \oftype {#3}}
+\newcommand{\judgement}[3][\ctx]{{#1} \vdash {#2} \oftype {#3}}
 \newcommand{\typesynth}[3][\ctx]{{#1} \vdash {#2} \Mapsto {#3}}
 \newcommand{\typecheck}[3][\ctx]{{#1} \vdash {#2} \Mapsfrom {#3}}
 

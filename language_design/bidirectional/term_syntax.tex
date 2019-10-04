@@ -1,4 +1,4 @@
-% !TeX root = ./main.tex
+% !TeX root = ../main.tex
 % chktex-file 1
 % chktex-file 46
 
@@ -12,6 +12,7 @@
 		 & \vsep & \pair{v_1}{v_2}							&	\text{pair}						 	 \\
 		 & \vsep & \fun{x}{c}             			& \text{function}          \\
 		 & \vsep & \handler{h}      						& \text{handler}           \\
+		 & \vsep & (v \oftype A)                & \text{type annotation}   \\
 		 \\
 		 \text{computations}~c
 		 & ::=   & \return{v}             		& \text{returned value}    				\\
@@ -19,10 +20,12 @@
 		 & \vsep & \match{v} \sumcases{x}{c_1}{x}{c_2} 	& \text{sum match} 			\\
 		 & \vsep & \apply{v_1}{v_2}       		& \text{application}       				\\
 		 & \vsep & \operation{v}{y.c}     		& \text{operation call}    				\\
-		 & \vsep & \letrec{f}{x}{\tyA \to \ctyC}{c_1} {c_2}		& \text{recursive function} 			\\
+     & \vsep & \letrecann{f}{x}{\tyA \to \ctyC}{c_1} {c_2}
+                                          & \text{recursive function} 			\\
 		 & \vsep & \dobind{x}{c_1}{c_2}   		& \text{sequencing}        				\\
 		 & \vsep & \withhandle{v}{c}      		& \text{handling}					 				\\
-		 \\
+		 & \vsep & (c \oftype \ctyC)          & \text{type annotation}          \\     
+     \\
 		 \text{operation clauses}~h
 			& ::=   & \emptyhcases 
 			\vsep 		h \union \set{\operation{x}{k} \mapsto c_{\op}} 	\\

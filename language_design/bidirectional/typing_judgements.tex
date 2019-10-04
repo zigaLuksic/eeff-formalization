@@ -1,4 +1,4 @@
-% !TeX root = ./main.tex
+% !TeX root = ../main.tex
 % chktex-file 1
 % chktex-file 46
 
@@ -10,7 +10,7 @@
 	{ \typesynth{(v \oftype \tyA)}{\tyA} }
 
 	\inferrule*[]
-	{ \typesynth{v}{\tyA'} \\ \tyA = \tyA'}
+	{ \typesynth{v}{\tyA} }
 	{ \typecheck{v}{\tyA} }
 
 	% Term Variable
@@ -87,7 +87,7 @@
 	{ \typesynth{(c \oftype \ctyC)}{\ctyC} }
 
 	\inferrule*[]
-	{ \typesynth{c}{\ctyC'} \\ \ctyC = \ctyC' \\ \text{\todo{effect subtyping?}} }
+	{ \typesynth{c}{\ctyC} \\ \text{\todo{effect subtyping?}} }
 	{ \typecheck{c}{\ctyC} }
 
 	% Match statements
@@ -113,7 +113,7 @@
 	\inferrule*[]
 	{ \typecheck[\ctx, f \oftype \tyA \to \ctyC, x \oftype \tyA]{c_1}{\ctyC} \\
 	\typesynth[\ctx, f \oftype \tyA \to \ctyC]{c_2}{\ctyD}	}
-	{ \typesynth{\letrec{f}{x}{\tyA \to \ctyC}{c_1} c_2}{\ctyD} }
+	{ \typesynth{\letrecann{f}{x}{\tyA \to \ctyC}{c_1} c_2}{\ctyD} }
 
 	% Return
 	\inferrule*[]
