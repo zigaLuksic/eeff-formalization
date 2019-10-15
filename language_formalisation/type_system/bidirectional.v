@@ -1,6 +1,47 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Import syntax.
+
+Inductive ann_val : Type :=
+| Ann_Var : var_id -> ann_val
+| Ann_Unit : ann_val
+| Ann_Int : Z.t -> ann_val
+| Ann_Inl : ann_val -> ann_val
+| Ann_Inr : ann_val -> ann_val
+| Ann_Pair : ann_val -> ann_val -> ann_val
+| Ann_Fun : var_name -> ann_comp -> ann_val
+| Ann_Handler : var_name -> ann_comp -> ann_hcases -> ann_val
+| Ann_Val : ann_val -> vtype -> ann_val
+
+with ann_comp : Type :=
+| Ann_Ret : ann_val -> ann_comp
+| Ann_ΠMatch :
+    ann_val -> var_name * var_name -> ann_comp -> ann_comp (* x~1 y~0 *)
+| Ann_ΣMatch :
+    ann_val -> var_name -> ann_comp -> var_name -> ann_comp -> ann_comp
+| Ann_App : ann_val -> ann_val -> ann_comp
+| Ann_Op : op_id -> ann_val -> var_name -> ann_comp -> ann_comp (* x~1 k~0 *)
+| Ann_LetRec :
+    var_name -> var_name -> vtype
+    -> ann_comp -> ann_comp -> ann_comp (* f~0 x~1 *)
+| Ann_DoBind : var_name -> ann_comp -> ann_comp -> ann_comp
+| Ann_Handle : ann_val -> ann_comp -> ann_comp
+| Ann_Comp : ann_comp -> ctype -> ann_comp
+
+with ann_hcases : Type :=
+| Ann_CasesØ : ann_hcases
+| Ann_CasesU :
+    ann_hcases -> op_id -> var_name -> var_name -> ann_comp -> ann_hcases
+.
+
+Fixpoint find_op_ann_case (h : ann_hcases) (op : op_id) 
+  : option (var_name * var_name * ann_comp) :=
+  match h with
+  | Ann_CasesØ => None
+  | Ann_CasesU h_others op' x_op k_op c_op =>
+      if op == op' then Some (x_op, k_op, c_op)
+      else find_op_ann_case h_others op
+  end.
 
 Inductive vsynth : ctx -> ann_val -> vtype -> Prop :=
 | SynthUnit Γ : vsynth Γ Ann_Unit TyUnit 
@@ -15,6 +56,7 @@ Inductive vsynth : ctx -> ann_val -> vtype -> Prop :=
 | SynthVAnnot Γ v A :
     vcheck Γ v A ->
     vsynth Γ (Ann_Val v A) A
+
 with csynth : ctx -> ann_comp -> ctype -> Prop :=
 | SynthRet Γ v A : 
     vsynth Γ v A ->
@@ -38,7 +80,7 @@ with csynth : ctx -> ann_comp -> ctype -> Prop :=
     ccheck (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     csynth (CtxU Γ (TyFun A C)) c2 D ->
     csynth Γ (Ann_LetRec f x (TyFun A C) c1 c2) D
-(* with hsynth : ctx -> hcases -> sig -> ctype -> Type := *)
+
 with vcheck : ctx -> ann_val -> vtype -> Prop :=
 | CheckVBySynth Γ v A : vsynth Γ v A -> vcheck Γ v A
 | CheckInl Γ v A B :
@@ -54,6 +96,7 @@ with vcheck : ctx -> ann_val -> vtype -> Prop :=
     ccheck (CtxU Γ A) c_ret D ->
     hcheck Γ h Σ D ->
     vcheck Γ (Ann_Handler x c_ret h) (TyHandler (CTy A Σ eqs) D)
+
 with ccheck : ctx -> ann_comp -> ctype -> Prop :=
 | CheckCBySynth Γ c C : csynth Γ c C -> ccheck Γ c C
 | CheckΣMatch Γ v A B xl cl xr cr C :
@@ -70,6 +113,7 @@ with ccheck : ctx -> ann_comp -> ctype -> Prop :=
     vcheck Γ v A_op ->
     ccheck (CtxU Γ B_op) c (CTy A Σ eqs) ->
     ccheck Γ (Ann_Op op_id v y c) (CTy A Σ eqs)
+
 with hcheck : ctx -> ann_hcases -> sig -> ctype -> Prop :=
 | CheckCasesØ Γ D : hcheck Γ Ann_CasesØ SigØ D
 | CheckCasesU Γ h op_id x k c_op A_op B_op Σ D :

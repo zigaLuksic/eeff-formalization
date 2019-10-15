@@ -47,7 +47,7 @@ eapply h_subs_typesafe. assumption. simpl. reflexivity.
 apply v_shift_typesafe. assumption.
 apply h_no_var_sub. apply v_shift_makes_no_var.
 }
-Qed.
+Defined.
 
 Lemma preservation Γ c c' C:
   has_ctype Γ c C -> step c c' -> has_ctype Γ c' C.
@@ -105,7 +105,7 @@ intros orig step. revert C orig. induction step; intros C orig; inv orig.
       ++ eapply IHh'; simpl in gets; rewrite name in gets.
          assumption. exact gets. assumption. 
   - eapply H0. exact H. exact H8. assumption. 
-Qed.
+Defined.
 
 Lemma progress c C:
   has_ctype CtxØ c C ->
@@ -144,7 +144,7 @@ revert C. induction c; intros C orig.
     eexists. eapply Step_Handle_Op. exact H.
   - destruct h3 as [c' h3].
     eexists. eapply Step_Handle_Step. exact h3.
-Qed.
+Defined.
 
 
 

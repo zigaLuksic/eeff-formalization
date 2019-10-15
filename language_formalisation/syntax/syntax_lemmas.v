@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export Arith syntax.
 Require Import Le Compare_dec.
 
@@ -12,7 +12,7 @@ revert j k. induction Γ; intros j k neq_jk; auto.
 destruct k; destruct j; auto.
 + omega.
 + simpl. apply IHΓ. omega.
-Qed.
+Defined.
 
 Lemma change_j_get_j Γ j Aj_orig Aj 
   (p_j : get_vtype Γ j = Some Aj_orig) :
@@ -21,7 +21,7 @@ Proof.
 revert j p_j. induction Γ; intros j p_j; simpl in p_j.
 + discriminate.
 + destruct j; auto. simpl. apply IHΓ. assumption.
-Qed.
+Defined.
 
 
 Lemma v_switch_ii v i : v_switch_vars v i i = v
@@ -43,7 +43,7 @@ try f_equal; try apply v_switch_ii; try apply IHc || apply IHc1 || apply IHc2.
 revert i. induction h; intros i; simpl; try reflexivity.
 f_equal. apply IHh. apply c_switch_ii.
 }
-Qed.
+Defined.
 
 Lemma v_switchswitch v i j:
   v_switch_vars (v_switch_vars v i j) i j = v
@@ -77,7 +77,7 @@ try apply v_switchswitch || apply IHc || apply IHc1 || apply IHc2.
 induction h; intros i j; simpl.
 reflexivity. f_equal. apply IHh. apply c_switchswitch.
 }
-Qed.
+Defined.
 
 Lemma v_switch_sym v i j :
   v_switch_vars v i j = v_switch_vars v j i
@@ -101,7 +101,7 @@ apply v_switch_sym.
 }{
 induction h; simpl; f_equal; try auto || apply IHh.
 }
-Qed.
+Defined.
 
 Lemma switch_ij_get_k Γ k i j Ai Aj
   (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
@@ -119,7 +119,7 @@ intros i j p_i p_j neq_ik neq_jk.
   - apply change_j_get_k. omega.
   - apply change_j_get_k. omega.
   - unfold ctx_switch_vars in IHΓ. apply IHΓ; auto; omega.
-Qed.
+Defined.
       
 Lemma switch_ij_get_j Γ i j Ai Aj
   (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
@@ -131,7 +131,7 @@ destruct i; destruct j; auto; simpl.
 + apply eq_sym. simpl in p_i. rewrite p_i.
   apply (change_j_get_j Γ j Aj). auto.
 + unfold ctx_switch_vars in IHΓ. apply IHΓ. auto. auto.
-Qed.
+Defined.
 
 Lemma switch_ij_get_i Γ i j Ai Aj
   (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
@@ -143,7 +143,7 @@ destruct i; destruct j; auto; simpl.
 + apply eq_sym. simpl in p_j. rewrite p_j.
   apply (change_j_get_j Γ i Ai). auto.
 + unfold ctx_switch_vars in IHΓ. apply IHΓ. auto. auto.
-Qed.
+Defined.
 
 Lemma ctx_switch_extend1 Γ A i j Ai Aj
     (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) 
@@ -166,7 +166,7 @@ revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
     rewrite H. f_equal.
     destruct i; auto; simpl.
     assert (i+1 = S i) by omega; rewrite H0; auto.
-Qed.
+Defined.
 
 Lemma ctx_switch_extend2 Γ B A i j Ai Aj
     (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) 
@@ -189,22 +189,8 @@ revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
     rewrite H. f_equal.
     destruct i; auto; simpl.
     assert (i+2 = S (S i)) by omega; rewrite H0; auto.
-Qed.
+Defined.
 
-Definition case_remove_annot (case : option (var_name * var_name * ann_comp)) :=
-  match case with
-  | None => None
-  | Some (x, k, c_op) => Some (x, k, c_remove_annot c_op)
-  end.
-
-Lemma find_op_remove_annot h op:
-  case_remove_annot (find_op_ann_case h op) 
-    = find_op_case (h_remove_annot h) op.
-Proof.
-induction h; simpl. reflexivity.
-destruct (op==o); simpl. reflexivity.
-apply IHh.
-Qed.
 
 Lemma find_op_None_switch h i j op:
   find_op_case h op = None -> find_op_case (h_switch_vars h i j) op = None.
@@ -214,7 +200,7 @@ simpl. simpl in *.
 destruct (op==o).
 + discriminate.
 + apply IHh. assumption.
-Qed.
+Defined.
 
 Lemma find_op_Some_switch h i j op x_op k_op c_op:
   find_op_case h op = Some (x_op, k_op, c_op) ->
@@ -228,7 +214,7 @@ induction h; auto; simpl; simpl in *.
 + destruct (op==o).
   - f_equal. inv orig. auto.
   - apply IHh. auto.
-Qed.
+Defined.
 
 Lemma v_no_var_j_switch_i_j v i j:
   v_no_var_j v j -> v_no_var_j (v_switch_vars v j i) i
@@ -257,7 +243,7 @@ clear h_no_var_j_switch_i_j.
 revert i j; induction h; intros i j orig; simpl; auto;
 try constructor; try destruct orig; simpl; auto.
 }
-Qed.
+Defined.
 
 Lemma get_ctx_remove_unchanged Γ i j :
   i > j -> get_vtype Γ j = get_vtype (ctx_remove_var Γ i) j.
@@ -268,7 +254,7 @@ destruct i; destruct j; simpl.
 + omega.
 + reflexivity.
 + apply IHΓ. omega.
-Qed.
+Defined.
 
 Lemma get_ctx_remove_changed Γ i j :
   i <= j -> get_vtype Γ (S j) = get_vtype (ctx_remove_var Γ i) j.
@@ -277,7 +263,7 @@ revert i j; induction Γ; intros i j lt; auto.
 destruct i; destruct j; simpl; auto.
 + omega.
 + apply IHΓ. omega.
-Qed.
+Defined.
 
 Lemma ctx_remove_extend Γ i A :
   CtxU (ctx_remove_var Γ i) A = ctx_remove_var (CtxU Γ A) (i+1).
@@ -285,7 +271,7 @@ Proof.
 revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H.
 + reflexivity.
 + simpl. reflexivity.
-Qed.
+Defined.
 
 Lemma get_ctx_insert_unchanged Γ A i j:
   i < j -> get_vtype Γ i = get_vtype (ctx_insert_var Γ A j) i.
@@ -296,7 +282,7 @@ destruct i; destruct j; simpl; try reflexivity.
 + destruct j.
   - omega.
   - simpl. destruct i; auto. apply IHΓ. omega.
-Qed.
+Defined.
 
 Lemma get_ctx_insert_changed Γ A i j:
   i >= j -> get_vtype Γ i = get_vtype (ctx_insert_var Γ A j) (i+1).
@@ -308,7 +294,7 @@ destruct j; destruct i.
 + assert (S i + 1 = S (S i)) by omega. rewrite H. auto.
 + omega.
 + simpl. apply IHΓ. omega.
-Qed.
+Defined.
 
 Lemma ctx_insert_extend Γ i A_ins A :
   CtxU (ctx_insert_var Γ A_ins i) A = ctx_insert_var (CtxU Γ A) A_ins (i+1).
@@ -316,4 +302,4 @@ Proof.
 revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H.
 + reflexivity.
 + simpl. reflexivity.
-Qed.
+Defined.

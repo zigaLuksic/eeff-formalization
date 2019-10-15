@@ -7,7 +7,7 @@ Lemma c_switch210_shift_1_0 c :
   c_switch210_vars (Sub.c_shift c 1 0) = Sub.c_shift c 1 2.
 Proof.
   apply c_switch_SSi_Si_i_shift_1.
-Qed.
+Defined.
 
 
 
@@ -137,7 +137,7 @@ apply TypeCasesU.
   rewrite (ctx_switch_extend2 _ _ _ _ _ _ _ p_i p_j pp_i pp_j).
   apply c_switch_typesafe. assumption.
 }
-Qed.
+Defined.
 
 (* Switch lemmas *)
 Fixpoint v_switch10_typesafe
@@ -169,7 +169,7 @@ all: rewrite <-H.
 + apply v_switch_typesafe. assumption.
 + apply c_switch_typesafe. assumption.
 + apply h_switch_typesafe. assumption.
-Qed.
+Defined.
 
 (* Switch lemmas *)
 Fixpoint v_switch210_typesafe
@@ -212,4 +212,4 @@ all: rewrite <-H0.
   apply c_switch_typesafe. assumption.
 + apply h_switch_typesafe. rewrite <-H.
   apply h_switch_typesafe. assumption.
-Qed. 
+Defined. 

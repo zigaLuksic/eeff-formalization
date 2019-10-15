@@ -70,7 +70,7 @@ revert Γ Σ D. induction h; intros Γ Σ D orig; inv orig; simpl.
 + apply TypeCasesU; auto. rewrite <-find_op_remove_annot.
   rewrite H7. simpl. reflexivity.
 }
-Qed.
+Defined.
 
 
 Fixpoint has_vtype_vsynths_with_annot Γ v A {struct v}:
@@ -210,5 +210,5 @@ revert Γ Σ D. induction h; intros Γ Σ D orig.
     * eapply CheckCBySynth. exact cty'.
   + simpl. f_equal; assumption.
 }
-Qed.
+Defined.
 
