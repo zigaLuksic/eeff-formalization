@@ -1,7 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 Require Export substitution Arith syntax_lemmas.
 Require Import Le Compare_dec PeanoNat.
 
@@ -33,7 +33,7 @@ clear h_shift_0.
 revert cut. induction h; intros cut; simpl; f_equal.
 reflexivity. apply IHh. apply c_shift_0.
 }
-Defined.
+Qed.
 
 
 Lemma v_negshift_0 (cut:nat) (v:val) :
@@ -58,7 +58,7 @@ clear h_negshift_0.
 revert cut. induction h; intros cut; simpl; f_equal. 
 reflexivity. apply IHh. apply c_negshift_0.
 }
-Defined.
+Qed.
 
 
 Lemma v_negshift_shift (n:nat) (m:nat) (cut:nat) (v:val) :
@@ -96,7 +96,7 @@ clear h_negshift_shift.
 revert cut. induction h; intros cut m_le_n; simpl; f_equal.
 reflexivity. apply IHh. assumption. apply c_negshift_shift. assumption.
 }
-Defined.
+Qed.
 
 Lemma v_shift_shift (n:nat) (m:nat) (cut:nat) (v:val) :
   Sub.v_shift (Sub.v_shift v n cut) m cut = (Sub.v_shift v (n + m) cut)
@@ -129,7 +129,7 @@ clear h_shift_shift.
 revert cut. induction h; intros cut; simpl; f_equal.
 reflexivity. apply IHh. apply c_shift_shift.
 }
-Defined.
+Qed.
 
 Lemma v_shift_makes_no_var v (j:nat):
   v_no_var_j (Sub.v_shift v 1 j) j
@@ -150,7 +150,7 @@ revert j; induction c; intros j; try destruct p; simpl; auto.
 }{
 revert j; induction h; intros j; simpl; auto.
 }
-Defined.
+Qed.
 
 Lemma v_no_var_shift (v:val) (j:nat) (cut:nat):
   v_no_var_j v j -> (cut <= j) -> 
@@ -191,7 +191,7 @@ destruct orig_clean; auto. constructor.
 + assert (j+1+2=j+2+1) by omega. rewrite H1.
   apply c_no_var_shift. assumption. omega.
 }
-Defined.
+Qed.
 
 
 Lemma v_no_var_sub (v:val) (j:nat) (v_s:val) :
@@ -239,7 +239,7 @@ constructor.
   rewrite (v_shift_shift _ _ _) in H.
   assert (j+1+1=j+2) by omega. rewrite H0 in H. auto. omega.
 }
-Defined.
+Qed.
 
 Lemma v_switch_shift v i j d cut:
   cut <= i -> cut <= j ->
@@ -326,7 +326,7 @@ f_equal.
   assert (j+d+2=j+2+d) as jd2 by omega.
   rewrite id2, jd2. apply c_switch_shift; omega.
 }
-Defined.
+Qed.
 
 Lemma v_sub_switch v v_s i j:
   Sub.v_sub (v_switch_vars v i j) (i, v_s)
@@ -375,7 +375,7 @@ induction h; intros i j; simpl; f_equal; try auto.
 rewrite c_sub_switch. f_equal. f_equal. f_equal.
 apply v_switch_shift; omega.
 }
-Defined.
+Qed.
 
 Lemma v_switch_Si_i_shift_1 v i:
   v_switch_vars (Sub.v_shift v 1 (S i)) (S i) i = Sub.v_shift v 1 i
@@ -419,7 +419,7 @@ revert i. induction c; intros i; try destruct p; simpl; f_equal; auto.
 clear h_switch_Si_i_shift_1.
 revert i. induction h; intros i; simpl; f_equal; auto.
 }
-Defined.
+Qed.
 
  
 Lemma v_switch_SSi_Si_i_shift_1 v i:
@@ -481,14 +481,14 @@ revert i. induction c; intros i; try destruct p; simpl; f_equal; auto.
 clear h_switch_SSi_Si_i_shift_1.
 revert i. induction h; intros i; simpl; f_equal; auto.
 }
-Defined.
+Qed.
 
 Lemma c_switch10_shift_1_0 c :
   c_switch_vars (Sub.c_shift c 1 0) 1 0 = Sub.c_shift c 1 1.
 Proof.
   rewrite <-(c_switchswitch (Sub.c_shift c 1 1) 1 0).
   rewrite (c_switch_Si_i_shift_1 c 0). auto.
-Defined.
+Qed.
 
 
 Lemma v_negshift_1_switch_Si_i v i:
@@ -544,7 +544,7 @@ clear h_negshift_1_switch_Si_i.
 revert i. induction h; intros i no_var; simpl; simpl in no_var; auto.
 f_equal; destruct no_var; auto.
 }
-Defined.
+Qed.
 
 
 Lemma c_negshift_1_0_switch10 c :
@@ -555,4 +555,4 @@ Proof.
   rewrite <-(c_negshift_1_switch_Si_i).
   rewrite c_switchswitch. reflexivity.
   apply c_no_var_j_switch_i_j. assumption.
-Defined.
+Qed.
