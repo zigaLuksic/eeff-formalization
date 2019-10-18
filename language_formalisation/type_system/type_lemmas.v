@@ -58,8 +58,8 @@ induction step; intros C orig; inv orig; inv H1.
   eapply c_sub_out_typesafe.
   eapply c_sub_out_typesafe. exact H9.
   apply v_shift_typesafe.
-  - inv H8. inv H3. assumption. induction H5.
-    * 
+  - inv H8. inv H3. assumption. 
+    
 + inv H9. inv H3.
   eapply c_sub_out_typesafe. exact H10. assumption.
 + inv H9. inv H3.
