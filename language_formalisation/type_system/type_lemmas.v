@@ -7,7 +7,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\op
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
 Require Export syntax declarational substitution
-  subs_lemmas Omega Logic type_aux_lemmas operational_semantics.
+  subs_lemmas type_aux_lemmas operational_semantics.
 
 
 Ltac inv H := inversion H; clear H; subst.
@@ -54,11 +54,12 @@ Lemma preservation Γ c c' C:
 Proof.
 intros orig step. revert C orig. 
 induction step; intros C orig; inv orig; inv H1.
-+ inv H8. inv H3.
-  unfold c_sub2_out.
-  eapply c_sub_out_typesafe. 2: exact H8.
++ unfold c_sub2_out.
+  eapply c_sub_out_typesafe.
   eapply c_sub_out_typesafe. exact H9.
-  apply v_shift_typesafe. assumption. inv H8. assumption.
+  apply v_shift_typesafe.
+  - inv H8. inv H3. assumption. induction H5.
+    * 
 + inv H9. inv H3.
   eapply c_sub_out_typesafe. exact H10. assumption.
 + inv H9. inv H3.

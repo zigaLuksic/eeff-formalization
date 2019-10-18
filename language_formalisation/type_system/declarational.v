@@ -2,7 +2,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\sy
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-Require Import syntax syntax_lemmas.
+Require Export syntax syntax_lemmas subtyping.
 
 Inductive wf_vtype : vtype -> Prop :=
 | WfUnit : wf_vtype TyUnit 
@@ -74,7 +74,8 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
     has_ctype (CtxU Γ A) c_ret D ->
     has_htype Γ h Σ D ->
     has_vtype' Γ (Handler x c_ret h) (TyHandler (CTy A Σ E) D)
-
+| TypeVSubtype Γ v A A' :
+    has_vtype Γ v A -> vsubtype A A' -> has_vtype' Γ v A'
 with has_ctype : ctx -> comp -> ctype -> Prop :=
 | TypeC Γ c C : wf_ctx Γ -> wf_ctype C -> has_ctype' Γ c C -> has_ctype Γ c C
 
@@ -112,7 +113,9 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_vtype Γ v A_op ->
     has_ctype (CtxU Γ B_op) c (CTy A Σ eqs) ->
     has_ctype' Γ (Op op_id v y c) (CTy A Σ eqs)
-    
+| TypeCSubtype Γ c C C' :
+    has_ctype Γ c C -> csubtype C C' -> has_ctype' Γ c C'
+
 with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeH Γ h Σ D : 
     wf_ctx Γ -> wf_sig Σ -> wf_ctype D -> has_htype' Γ h Σ D -> 
