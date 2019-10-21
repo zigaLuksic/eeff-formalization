@@ -6,7 +6,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\op
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
-Require Export syntax declarational substitution
+Require Export syntax declarational substitution subtyping_lemmas
   subs_lemmas type_aux_lemmas operational_semantics.
 
 
@@ -53,15 +53,23 @@ Lemma preservation Γ c c' C:
   has_ctype Γ c C -> step c c' -> has_ctype Γ c' C.
 Proof.
 intros orig step. revert C orig. 
-induction step; intros C orig; inv orig; inv H1.
-+ unfold c_sub2_out.
+induction step; intros C orig.
++ unfold c_sub2_out. apply shape_prodmatch in orig.
+  destruct orig as [A [B [pair]]].
   eapply c_sub_out_typesafe.
-  eapply c_sub_out_typesafe. exact H9.
+  eapply c_sub_out_typesafe. exact H.
   apply v_shift_typesafe.
-  - inv H8. inv H3. assumption. 
-    
-+ inv H9. inv H3.
-  eapply c_sub_out_typesafe. exact H10. assumption.
+  - apply shape_pair in pair. destruct pair. assumption. 
+  - inv pair. inv H1. assumption.
+  - apply shape_pair in pair. destruct pair. assumption.
++ unfold c_sub2_out. apply shape_summatch in orig.
+  destruct orig as [A [B [vtyped [inl]]]].
+  eapply c_sub_out_typesafe. exact inl.
+  apply shape_sum_inl in vtyped. assumption.
++ unfold c_sub2_out. apply shape_summatch in orig.
+  destruct orig as [A [B [vtyped [inl]]]].
+  eapply c_sub_out_typesafe. exact H.
+  apply shape_sum_inr in vtyped. assumption.
 + inv H9. inv H3.
   eapply c_sub_out_typesafe. exact H11. assumption.
 + inv H5. inv H3.
