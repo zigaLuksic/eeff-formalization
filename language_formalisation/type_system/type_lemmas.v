@@ -1,11 +1,11 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics".
 Require Export syntax declarational substitution subtyping_lemmas
   subs_lemmas type_aux_lemmas operational_semantics.
 
@@ -70,8 +70,11 @@ induction step; intros C orig.
   destruct orig as [A [B [vtyped [inl]]]].
   eapply c_sub_out_typesafe. exact H.
   apply shape_sum_inr in vtyped. assumption.
-+ inv H9. inv H3.
-  eapply c_sub_out_typesafe. exact H11. assumption.
++ eapply c_sub_out_typesafe.
+
+
+
+
 + inv H5. inv H3.
   eapply c_sub_out_typesafe. exact H6. assumption.
 + eapply c_sub_out_typesafe. exact H9.

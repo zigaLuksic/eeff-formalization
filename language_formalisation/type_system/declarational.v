@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
 Require Export syntax syntax_lemmas subtyping.
 
 Inductive wf_vtype : vtype -> Prop :=
@@ -131,3 +131,14 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
       Γ (CasesU h op_id x k c_op)
       (SigU Σ op_id A_op B_op) D
 .
+
+
+Lemma ctx_gets_wf Γ num A : 
+    wf_ctx Γ -> get_vtype Γ num = Some A -> wf_vtype A.
+Proof.
+intros wf. revert num. induction wf; intros num gets.
++ simpl in gets. discriminate.
++ simpl in gets. destruct num.
+  - injection gets. intros. subst. assumption.
+  - eapply IHwf. exact gets.
+Qed.
