@@ -107,6 +107,14 @@ Fixpoint find_op_case (h : hcases) (op : op_id)
   end.
 
 
+Fixpoint eqs_contain_eq E Γ Z T1 T2 :=
+  match E with
+  | EqsØ => False
+  | EqsU E' Γ' Z' T1' T2' =>
+      (Γ = Γ' /\ Z = Z' /\ T1 = T1' /\ T2 = T2') \/ eqs_contain_eq E' Γ Z T1 T2
+  end.
+
+
 Fixpoint v_no_var_j (v:val) (j:nat) :=
 match v with
 | Var (name, num) => not (j = num)

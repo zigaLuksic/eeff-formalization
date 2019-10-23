@@ -7,6 +7,7 @@ Require Export syntax syntax_lemmas subtyping.
 Inductive wf_vtype : vtype -> Prop :=
 | WfUnit : wf_vtype TyUnit 
 | WfInt : wf_vtype TyInt
+| WfEmpty : wf_vtype TyØ
 | WfΣ A B: wf_vtype A -> wf_vtype B -> wf_vtype (TyΣ A B)
 | WfΠ A B : wf_vtype A -> wf_vtype B -> wf_vtype (TyΠ A B)
 | WfFun A C : wf_vtype A -> wf_ctype C -> wf_vtype (TyFun A C)
@@ -18,7 +19,8 @@ with wf_ctype : ctype -> Prop :=
 with wf_sig : sig -> Prop :=
 | WfSigØ : wf_sig SigØ
 | WfSigU Σ op Aop Bop: 
-    wf_sig Σ -> wf_vtype Aop -> wf_vtype Bop -> wf_sig (SigU Σ op Aop Bop)
+    wf_sig Σ -> get_op_type Σ op = None ->
+    wf_vtype Aop -> wf_vtype Bop -> wf_sig (SigU Σ op Aop Bop)
 
 with wf_ctx : ctx -> Prop :=
 | WfCtxØ : wf_ctx CtxØ
@@ -45,7 +47,7 @@ with wf_tmpl : ctx -> tctx -> tmpl -> sig -> Prop :=
 with wf_eqs : eqs -> sig -> Prop :=
 | WfEqsØ Σ : wf_eqs EqsØ Σ
 | WfEqsU E Γ Z T1 T2 Σ: 
-    wf_eqs E Σ -> wf_tmpl Γ Z T1 Σ -> wf_tmpl Γ Z T1 Σ -> 
+    wf_eqs E Σ -> wf_tmpl Γ Z T1 Σ -> wf_tmpl Γ Z T2 Σ -> 
     wf_eqs (EqsU E Γ Z T1 T2) Σ
 
 with has_vtype : ctx -> val -> vtype -> Prop :=
