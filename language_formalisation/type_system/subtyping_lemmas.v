@@ -79,12 +79,7 @@ intros sty gets. induction sty.
   - apply IHsty. assumption.
 Qed.
 
-Lemma eqs_subtype_eqsempty E : eqs_subtype E EqsØ -> E = EqsØ.
-Proof.
-intro subty.
-inv subty. reflexivity.
-simpl in H0. destruct H0.
-Qed.
+
 
 (* ========================== Basic Properties ========================== *)
 
@@ -127,135 +122,17 @@ intros; induction Σ.
 }
 Qed.
 
-(* More stupid auxiliary stuff *)
 
-Lemma sig_subtype_reduce_if_None Σ Σ' op A B :
-  sig_subtype Σ (SigU Σ' op A B) -> get_op_type Σ op = None ->
-  sig_subtype Σ Σ'.
+
+Fixpoint eqs_subtype_trans E1 E2 E3  
+  (E12 : eqs_subtype E1 E2) {struct E12} : 
+  eqs_subtype E2 E3 -> eqs_subtype E1 E3.
 Proof.
-intros orig gets. induction Σ.
-+ apply SigØsubty.
-+ inv orig. simpl in *. destruct (op==o). discriminate.
-  destruct (o==op). rewrite e in n. destruct n. reflexivity.
-  eapply SigUsubty. 3: exact H6. all: try assumption.
-  apply IHΣ; assumption. 
-Qed.
-
-Lemma sig_subtype_both_reduce Σ Σ' op A A' B B' :
-  sig_subtype (SigU Σ op A B) (SigU Σ' op A' B') -> sig_subtype Σ Σ'.
-Proof.
-intro orig. induction Σ.
-+ apply SigØsubty.
-+ inv orig. simpl in *. destruct (op==op). 2: (destruct n; reflexivity).
-  injection H6. intros. subst. clear e H6.
-  inv H3. simpl in *. destruct (op==o). discriminate. destruct (o==op).
-  rewrite e in n. destruct n. reflexivity.
-  eapply SigUsubty.
-  - apply IHΣ. eapply SigUsubty. assumption. assumption.
-    simpl. destruct (op==op). reflexivity. destruct n1. reflexivity.
-    assumption. assumption.
-  - assumption.
-  - exact H10.
-  - assumption.
-  - assumption.
-Qed.
-
-(* 
-Lemma sig_subtype_trans_skip Σ1 Σ2 Σ3 op A B A' B':
-  sig_subtype Σ1 (SigU Σ2 op A B) -> sig_subtype Σ2 Σ3 ->
-  get_op_type Σ3 op = Some (A', B') ->
-  vsubtype A' A -> vsubtype B B' ->
-  (forall A1 A2 A3, vsubtype A3 A2 -> vsubtype A2 A1 -> vsubtype A3 A1) ->
-  (forall B'', vsubtype B'' B -> vsubtype B'' B') ->
-  sig_subtype Σ1 Σ3.
-Proof.
-intros orig S23 gets3 transA transB styA styB.
-induction Σ1.
-+ apply SigØsubty.
-+ destruct (op == o).
-  - subst. destruct (o==o). 2: (destruct n; reflexivity). inv orig.
-    eapply SigUsubty.
-    * apply IHΣ1. assumption.
-    * assumption.
-    * exact gets3.
-    * simpl in H6. destruct (o==o). 2:(destruct n; reflexivity). apply styA.
-      injection H6. intros. subst. assumption.
-    * simpl in H6. destruct (o==o). 2:(destruct n; reflexivity). apply styB.
-      injection H6. intros. subst. assumption.
-  - inv orig. simpl in H6. destruct (o==op). 
-    rewrite e in n. destruct n. reflexivity.
-    eapply sig_subtype_gets_Some in H6. 2: exact S23.
-    destruct H6 as [A'' [B'' [gets [styA']]]].
-    eapply SigUsubty. 3: exact gets.
-    * apply IHΣ1. assumption.
-    * assumption.
-    * 
-Qed. *)
-
-(* stupid auxiliary definition for reverse sigma transitivity *)
-Fixpoint remove_op_from_sig Σ op :=
-  match Σ with
-  | SigØ => SigØ
-  | SigU Σ' op' A B => 
-      if (op == op') then Σ' 
-      else SigU (remove_op_from_sig Σ' op) op' A B
-end.
-
-Lemma remove_op_get_op Σ op op' :
-  op <> op' -> get_op_type (remove_op_from_sig Σ op) op' = get_op_type Σ op'.
-Proof.
-intros. induction Σ.
-+ auto.
-+ simpl. destruct (op'==o); destruct (op==o).
-  - subst. destruct H. reflexivity.
-  - simpl. destruct (op'==o). reflexivity. subst. destruct n0. auto.
-  - reflexivity.
-  - simpl. destruct (op'==o). subst. destruct n. auto. assumption.
-Qed.
-
-Lemma remove_op_wf Σ op : wf_sig Σ -> wf_sig (remove_op_from_sig Σ op).
-Proof.
-intros. induction H.
-+ simpl. apply WfSigØ.
-+ simpl in *. destruct (op == op0). assumption. apply WfSigU.
-  all: try assumption. rewrite remove_op_get_op; assumption.
-Qed.
-
-Lemma sig_remove_op_intro Σ Σ' op A B :
-  wf_sig Σ' -> sig_subtype Σ (SigU Σ' op A B) -> 
-  sig_subtype (remove_op_from_sig Σ op) Σ'.
-Proof.
-intros wf' orig.
-induction Σ.
-+ simpl. apply SigØsubty.
-+ simpl. destruct (op==o).
-  assert (forall Σ op, get_op_type Σ op = None -> remove_op_from_sig Σ op = Σ).
-  { intros. induction Σ0. simpl. reflexivity. simpl in *.
-    destruct (op0==o0). discriminate. f_equal. apply IHΣ0. assumption. }
-  - inv orig. rewrite H in IHΣ. apply IHΣ. all: assumption.
-  - inv orig. eapply SigUsubty. apply IHΣ. assumption.
-    * rewrite remove_op_get_op. assumption. assumption.
-    * simpl in H6. destruct (o==op). subst. destruct n. reflexivity.
-      exact H6.
-    * assumption.
-    * assumption.
-Qed.
-
-Lemma sig_remove_op_elim Σ Σ' op A B A' B':
-  wf_sig Σ ->
-  get_op_type Σ op = Some (A, B) ->
-  get_op_type Σ' op = Some (A', B') ->
-  vsubtype A' A -> vsubtype B B' ->
-  sig_subtype (remove_op_from_sig Σ op) Σ' ->
-  sig_subtype Σ Σ'.
-Proof.
-intros. induction Σ.
-+ apply SigØsubty.
-+ simpl in *. destruct (op==o).
-  - injection H0. intros. subst. inv H. 
-    eapply SigUsubty. 3: exact H1. all: try assumption.
-  - inv H. inv H4. eapply SigUsubty. 3: exact H15. all: try assumption.
-    apply IHΣ; assumption.
+intros E23. destruct E12.
+apply EqsØsubty.
+eapply EqsUsubty.
++ eapply eqs_subtype_trans. exact E12. all : assumption.
++ eapply eqs_subtype_contains. exact E23. assumption.
 Qed.
 
 
@@ -284,18 +161,15 @@ with sig_subtype_trans_rev Σ1 Σ2 Σ3
   (S21 : sig_subtype Σ2 Σ1) {struct S21} :
   sig_subtype Σ3 Σ2 -> 
   sig_subtype Σ3 Σ1
-with eqs_subtype_trans E1 E2 E3  
-  (E12 : eqs_subtype E1 E2) {struct E12} : 
-  eqs_subtype E2 E3 -> 
-  eqs_subtype E1 E3
-with eqs_subtype_trans_rev E1 E2 E3
-  (E21 : eqs_subtype E2 E1) {struct E21} : 
-  eqs_subtype E3 E2 -> 
-  eqs_subtype E3 E1.
+with nema_problema_lemma op A' A B B' Σ1 Σ2
+  (S12 : sig_subtype Σ1 Σ2) {struct S12} :
+  get_op_type Σ1 op = Some (A', B') ->
+  vsubtype A' A -> vsubtype B B' ->
+  exists A'' B'', get_op_type Σ2 op = Some (A'', B'') /\
+  vsubtype A'' A /\ vsubtype B B''.
 Proof.
 {
 clear sig_subtype_trans sig_subtype_trans_rev.
-clear eqs_subtype_trans eqs_subtype_trans_rev.
 intros A23; destruct A12; try assumption; 
 inv A23. 
 + apply VsubtyTyΣ.
@@ -312,7 +186,6 @@ inv A23.
   - eapply csubtype_trans. exact H0. all: assumption.
 }{
 clear sig_subtype_trans sig_subtype_trans_rev.
-clear eqs_subtype_trans eqs_subtype_trans_rev.
 intros A32; destruct A21; try assumption;
 inv A32. 
 + apply VsubtyTyΣ.
@@ -329,7 +202,7 @@ inv A32.
   - eapply csubtype_trans_rev. exact H0. all: assumption.
 }{
 clear vsubtype_trans_rev csubtype_trans csubtype_trans_rev.
-clear sig_subtype_trans_rev eqs_subtype_trans_rev.
+clear sig_subtype_trans_rev.
 intros C23; destruct C12. 
 inv C23. 
 apply Csubty.
@@ -338,15 +211,15 @@ apply Csubty.
 - eapply eqs_subtype_trans. all: eauto.
 }{
 clear vsubtype_trans csubtype_trans csubtype_trans.
-clear sig_subtype_trans eqs_subtype_trans.
+clear sig_subtype_trans.
 intros C32; destruct C21. 
 inv C32. 
 apply Csubty.
 - eapply vsubtype_trans_rev. exact H. all: assumption.
 - eapply sig_subtype_trans_rev. exact H0. all: assumption.
-- eapply eqs_subtype_trans_rev. all: eauto.
+- eapply eqs_subtype_trans. all: eauto.
 }{
-clear csubtype_trans csubtype_trans_rev eqs_subtype_trans eqs_subtype_trans_rev.
+clear csubtype_trans csubtype_trans_rev.
 intros S23. destruct S12.
 apply SigØsubty.
 apply (sig_subtype_gets_Some Σ' Σ3) in H0 as H0'. destruct H0' as [A'' [B'' [g]]].
@@ -362,218 +235,42 @@ eapply SigUsubty.
   - assumption.
 + assumption.
 }{
-clear csubtype_trans csubtype_trans_rev eqs_subtype_trans eqs_subtype_trans_rev.
+clear csubtype_trans csubtype_trans_rev.
 clear sig_subtype_trans.
 intros S32. destruct S21.
 apply sig_subtype_sigempty in S32. subst. apply SigØsubty.
 induction Σ3.
 apply SigØsubty.
+
 inv S32. simpl in H10. destruct (o==op).
 + injection H10. intros. subst. eapply SigUsubty.
   - apply IHΣ3. assumption.
   - assumption.
   - exact H0.
-  - eapply vsubtype_trans_rev. exact H11. assumption.
-  - eapply vsubtype_trans. exact H12. assumption.
-+ eapply sig_subtype_gets_Some in H10 as gets'. 2:exact S21.
+  - eapply vsubtype_trans. exact H1. assumption.
+  - eapply vsubtype_trans_rev. exact H2. assumption.
++ eapply nema_problema_lemma in H10 as gets'. 
+  2:exact S21. 2:exact H11. 2:exact H12.
   destruct gets' as [A'' [B'' [gets']]]. eapply SigUsubty.
   - apply IHΣ3. assumption.
   - assumption.
   - exact gets'.
-  - destruct H3. eapply vsubtype_trans_rev. exact H11. assumption.
-  - destruct H3. eapply vsubtype_trans. exact H12. assumption.
+  - destruct H3. assumption.
+  - destruct H3. assumption.
 }{
 clear csubtype_trans csubtype_trans_rev.
-intros E23. destruct E12.
-apply EqsØsubty.
-eapply EqsUsubty.
-+ eapply eqs_subtype_trans. exact E12. all : assumption.
-+ eapply eqs_subtype_contains. exact E23. assumption.
-}{
-admit.
+clear sig_subtype_trans sig_subtype_trans_rev.
+clear nema_problema_lemma.
+intros. revert H. induction S12; intros gets.
+simpl in gets. discriminate.
+simpl in *. destruct (op==op0).
++ injection gets. intros. subst.
+  exists A'0. exists B'0. constructor. assumption. constructor.
+  eapply vsubtype_trans. exact H3. assumption.
+  eapply vsubtype_trans_rev. exact H4. assumption.
++ apply IHS12. assumption.
 }
-Admitted.
-
-(* 
-(* Weird notation for SPEED! *)
-Fixpoint vsubtype_trans A1 A2 A3 
-  (A12 : vsubtype A1 A2) {struct A12} : 
-  wf_vtype A1 -> wf_vtype A2 -> wf_vtype A3 -> 
-  vsubtype A2 A3 -> 
-  vsubtype A1 A3
-with vsubtype_trans_rev A1 A2 A3
-  (A21 : vsubtype A2 A1) {struct A21} : 
-  wf_vtype A1 -> wf_vtype A2 -> wf_vtype A3 -> 
-  vsubtype A3 A2 ->
-  vsubtype A3 A1
-with csubtype_trans C1 C2 C3
-  (C12 : csubtype C1 C2) {struct C12} : 
-  wf_ctype C1 -> wf_ctype C2 -> wf_ctype C3 -> 
-  csubtype C2 C3 -> 
-  csubtype C1 C3
-with csubtype_trans_rev C1 C2 C3 
-  (C21 : csubtype C2 C1) {struct C21} : 
-  wf_ctype C1 -> wf_ctype C2 -> wf_ctype C3 -> 
-  csubtype C3 C2 -> 
-  csubtype C3 C1
-with sig_subtype_trans Σ1 Σ2 Σ3 
-  (S12 : sig_subtype Σ1 Σ2) {struct S12} : 
-  wf_sig Σ1 -> wf_sig Σ2 -> wf_sig Σ3 ->  
-  sig_subtype Σ2 Σ3 -> 
-  sig_subtype Σ1 Σ3
-with sig_subtype_trans_rev Σ1 Σ2 Σ3
-  (S21 : sig_subtype Σ2 Σ1) {struct S21} : 
-  wf_sig Σ1 -> wf_sig Σ2 -> wf_sig Σ3 ->  sig_subtype Σ3 Σ2 ->
-  sig_subtype Σ3 Σ1
-with eqs_subtype_trans E1 E2 E3 Σ1 Σ2 Σ3 
-  (E12 : eqs_subtype E1 E2) {struct E12} : 
-  wf_eqs E1 Σ1 -> wf_eqs E2 Σ2 -> wf_eqs E3 Σ3 ->  
-  eqs_subtype E2 E3 -> 
-  eqs_subtype E1 E3
-with eqs_subtype_trans_rev E1 E2 E3 Σ1 Σ2 Σ3
-  (E21 : eqs_subtype E2 E1) {struct E21} : 
-  wf_eqs E1 Σ1 -> wf_eqs E2 Σ2 -> wf_eqs E3 Σ3 ->  eqs_subtype E3 E2 ->
-  eqs_subtype E3 E1.
-Proof.
-{
-clear sig_subtype_trans sig_subtype_trans_rev.
-clear eqs_subtype_trans eqs_subtype_trans_rev.
-intros wf1 wf2 wf3 A23; destruct A12; try assumption; 
-inv A23; inv wf1; inv wf2; inv wf3. 
-+ apply VsubtyTyΣ.
-  - eapply vsubtype_trans. exact A12_1. all: assumption.
-  - eapply vsubtype_trans. exact A12_2. all: assumption.
-+ apply VsubtyTyΠ.
-  - eapply vsubtype_trans. exact A12_1. all: assumption.
-  - eapply vsubtype_trans. exact A12_2. all: assumption.
-+ apply VsubtyFun.
-  - eapply vsubtype_trans_rev. exact A12. all: assumption. 
-  - eapply csubtype_trans. exact H. all: assumption.
-+ apply VsubtyHandler.
-  - eapply csubtype_trans_rev. exact H. all: assumption. 
-  - eapply csubtype_trans. exact H0. all: assumption.
-}{
-clear sig_subtype_trans sig_subtype_trans_rev.
-clear eqs_subtype_trans eqs_subtype_trans_rev.
-intros wf1 wf2 wf3 A32; destruct A21; try assumption;
-inv A32; inv wf1; inv wf2; inv wf3. 
-+ apply VsubtyTyΣ.
-  - eapply vsubtype_trans_rev. exact A21_1. all: assumption.
-  - eapply vsubtype_trans_rev. exact A21_2. all: assumption.
-+ apply VsubtyTyΠ.
-  - eapply vsubtype_trans_rev. exact A21_1. all: assumption.
-  - eapply vsubtype_trans_rev. exact A21_2. all: assumption.
-+ apply VsubtyFun.
-  - eapply vsubtype_trans. exact A21. all: assumption. 
-  - eapply csubtype_trans_rev. exact H. all: assumption.
-+ apply VsubtyHandler.
-  - eapply csubtype_trans. exact H. all: assumption. 
-  - eapply csubtype_trans_rev. exact H0. all: assumption.
-}{
-clear vsubtype_trans_rev csubtype_trans csubtype_trans_rev.
-clear sig_subtype_trans_rev eqs_subtype_trans_rev.
-intros wf1 wf2 wf3 C23; destruct C12. 
-inv C23; inv wf1; inv wf2; inv wf3. 
-apply Csubty.
-- eapply vsubtype_trans. exact H. all: assumption.
-- eapply sig_subtype_trans. exact H0. all: assumption.
-- eapply eqs_subtype_trans. all: eauto.
-}{
-clear vsubtype_trans csubtype_trans csubtype_trans.
-clear sig_subtype_trans eqs_subtype_trans.
-intros wf1 wf2 wf3 C32; destruct C21. 
-inv C32; inv wf1; inv wf2; inv wf3. 
-apply Csubty.
-- eapply vsubtype_trans_rev. exact H. all: assumption.
-- eapply sig_subtype_trans_rev. exact H0. all: assumption.
-- eapply eqs_subtype_trans_rev. all: eauto.
-}{
-clear csubtype_trans csubtype_trans_rev eqs_subtype_trans eqs_subtype_trans_rev.
-intros wf1 wf2 wf3 S23. destruct S12.
-apply SigØsubty.
-apply (sig_subtype_gets_Some Σ' Σ3) in H0 as H0'. destruct H0' as [A'' [B'' [g]]].
-eapply SigUsubty.
-+ eapply sig_subtype_trans. exact S12. inv wf1. all : assumption.
-+ assumption.
-+ exact g.
-+ clear sig_subtype_trans vsubtype_trans.
-  destruct H3. eapply vsubtype_trans_rev. exact H1.
-  - inv wf1. assumption.
-  - apply get_op_type_wf in H0. destruct H0. assumption. assumption.
-  - apply get_op_type_wf in g. destruct g. assumption. assumption.
-  - assumption.
-+ clear sig_subtype_trans vsubtype_trans_rev.
-  destruct H3. eapply vsubtype_trans. exact H2.
-  - inv wf1. assumption.
-  - apply get_op_type_wf in H0. destruct H0. assumption. assumption.
-  - apply get_op_type_wf in g. destruct g. assumption. assumption.
-  - assumption.
-+ assumption.
-}{
-clear csubtype_trans csubtype_trans_rev eqs_subtype_trans eqs_subtype_trans_rev.
-clear sig_subtype_trans.
-intros wf1 wf2 wf3 S32. destruct S21.
-apply sig_subtype_sigempty in S32. subst. apply SigØsubty.
-induction Σ3.
-apply SigØsubty.
-inv S32. simpl in H10. destruct (o==op).
-+ injection H10. intros. subst. eapply SigUsubty.
-  - apply IHΣ3. inv wf3. assumption. assumption.
-  - assumption.
-  - exact H0.
-  - eapply vsubtype_trans_rev. exact H11. inv wf3. assumption.
-    inv wf2. assumption. apply get_op_type_wf in H0. destruct H0. assumption.
-    assumption. assumption.
-  - eapply vsubtype_trans. exact H12. inv wf3. assumption.
-    inv wf2. assumption. apply get_op_type_wf in H0. destruct H0. assumption.
-    assumption. assumption.
-+ eapply sig_subtype_gets_Some in H10 as gets'. 2:exact S21.
-  destruct gets' as [A'' [B'' [gets']]]. eapply SigUsubty.
-  - apply IHΣ3. inv wf3. assumption. assumption.
-  - assumption.
-  - exact gets'.
-  - destruct H3. eapply vsubtype_trans_rev. exact H11. assumption.
-
-destruct (get_op_type Σ3 op) eqn:gets.
-+ destruct p as (a, b).
-  apply sig_remove_op_intro in S32 as S32'. 2: (inv wf2; assumption).
-  specialize (remove_op_wf Σ3 op wf3) as wfr. inv wf2.
-  specialize (sig_subtype_trans_rev _ _ _ S21 wf1 H7 wfr S32') as rec.
-  eapply sig_remove_op_elim in rec.
-  - assumption.
-  - assumption.
-  - exact gets.
-  - exact H0.
-  - apply (sig_subtype_gets_Some _ _ op _ _ S32) in gets.
-    destruct gets as [A'' [B'' [same [sty]]]].
-    simpl in same. destruct (op==op). 2: (destruct n; reflexivity).
-    injection same. intros. subst.
-    eapply vsubtype_trans_rev. exact sty. all: try assumption.
-
-+ apply sig_subtype_reduce_if_None in S32. eapply sig_subtype_trans_rev.
-  exact S21. all: try assumption. inv wf2. assumption.
-
-
-
-
-
-
-
-apply (sig_subtype_gets_Some Σ' Σ3) in H0 as H0'. destruct H0' as [A'' [B'' [g]]].
-eapply SigUsubty. *)
-
-(* clear csubtype_trans csubtype_trans_rev eqs_subtype_trans eqs_subtype_trans_rev.
-clear sig_subtype_trans.
-intros wf1 wf2 wf3 S32. destruct S21.
-apply sig_subtype_sigempty in S32. subst. apply SigØsubty.
-apply sig_remove_op_intro in S32 as S32'. 2: (inv wf2; assumption).
-specialize (remove_op_wf Σ3 op wf3) as wfr. inv wf2.
-specialize (sig_subtype_trans_rev _ _ _ S21 wf1 H7 wfr S32') as rec.
-clear sig_subtype_trans_rev.
-destruct (get_op_type Σ3 op) eqn: gets.
-- destruct p. eapply sig_remove_op_elim. exact gets.
-  inv S32. simpl. *)
-
+Qed.
 
 
 Fixpoint ctx_subtype_get Γ Γ' A num
