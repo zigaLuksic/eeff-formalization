@@ -1,11 +1,11 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\operational_semantics".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
 Require Export syntax declarational substitution subtyping_lemmas
   subs_lemmas type_aux_lemmas operational_semantics.
 
@@ -70,29 +70,34 @@ induction step; intros C orig.
   destruct orig as [A [B [vtyped [inl]]]].
   eapply c_sub_out_typesafe. exact H.
   apply shape_sum_inr in vtyped. assumption.
-+ eapply c_sub_out_typesafe.
-
-
-
-
-+ inv H5. inv H3.
-  eapply c_sub_out_typesafe. exact H6. assumption.
-+ eapply c_sub_out_typesafe. exact H9.
-  apply TypeV. assumption. inv H9. inv H1. assumption. 
-  apply TypeFun. apply TypeC.
-  - inv H8. inv H1. assumption.
-  - inv H8. assumption.
-  - eapply TypeLetRec. 2: exact H8.
-    assert (CtxU (CtxU (CtxU Γ A) A) (TyFun A C0) 
-      = ctx_insert_var (CtxU (CtxU Γ A) (TyFun A C0)) A 2)
++ apply shape_app in orig. destruct orig as [A [f]].
+  eapply c_sub_out_typesafe. exact f. assumption.
++ apply shape_letrec in orig. destruct orig as [A [C' [c1ty]]].
+  eapply c_sub_out_typesafe. exact H.
+  apply TypeV. inv c1ty.
+  inv H. inv H3. assumption. inv H. inv H0. assumption.  
+  apply TypeFun. apply TypeC. 
+  - inv c1ty. inv H0. assumption.
+  - inv c1ty. assumption.
+  - eapply TypeLetRec. 2: exact c1ty.
+    assert (CtxU (CtxU (CtxU Γ A) A) (TyFun A C') 
+      = ctx_insert_var (CtxU (CtxU Γ A) (TyFun A C')) A 2)
     as insertion.
     { simpl. destruct Γ; auto. }
     rewrite insertion.
     apply c_insert_typesafe. assumption.
-    inv H8. inv H1. inv H6. assumption.
-+ apply TypeC. assumption. assumption.
-  eapply TypeDoBind. 2: exact H8. auto.
-+ eapply c_sub_out_typesafe. exact H8. inv H7. inv H3. assumption.
+    inv H. inv H0. inv H5. assumption.
++ destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
+  destruct orig as [A' [c1ty]].
+  apply TypeC. inv c1ty. assumption. inv H. assumption.
+  eapply TypeDoBind. 2: exact H. auto.
++ destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
+  destruct orig as [A' [c1ty]].
+  eapply c_sub_out_typesafe. exact H.
+  apply shape_ret in c1ty. assumption.
++ destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
+  destruct orig as [A' [c1ty]].
+
 + inv H7. inv H3. apply TypeC. assumption. assumption.
   eapply TypeOp. exact H9. assumption.
   apply TypeC. inv H15. assumption. assumption.
