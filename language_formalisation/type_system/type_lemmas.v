@@ -96,18 +96,23 @@ induction step; intros C orig.
   eapply c_sub_out_typesafe. exact H.
   apply shape_ret in c1ty. assumption.
 + destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
-  destruct orig as [A' [c1ty]].
-
-+ inv H7. inv H3. apply TypeC. assumption. assumption.
-  eapply TypeOp. exact H9. assumption.
-  apply TypeC. inv H15. assumption. assumption.
-  eapply TypeDoBind. exact H15. 
-  assert (CtxU (CtxU Γ B_op) A = ctx_insert_var (CtxU Γ A) B_op 1).
-  { simpl. destruct Γ; auto. }
-  rewrite H3. apply c_insert_typesafe. assumption.
-  inv H15. inv H4. assumption.
-+ apply TypeC. assumption. assumption.
-  eapply TypeHandle. exact H5. apply IHstep. assumption.
+  destruct orig as [A' [c1ty]]. eapply shape_op in c1ty.
+  destruct c1ty as [Aop [Bop [gets [vty]]]].
+  apply TypeC.
+  - inv H. inv H1. assumption.
+  - inv H. assumption.
+  - eapply TypeOp. exact gets. assumption.
+    eapply TypeC. inv H0. assumption. inv H. assumption.
+    eapply TypeDoBind. exact H0.
+    assert (CtxU (CtxU Γ Bop) A' = ctx_insert_var (CtxU Γ A') Bop 1).
+    { simpl. destruct Γ; auto. }
+    rewrite H1. apply c_insert_typesafe. assumption. inv H0. inv H2. assumption.
++ eapply shape_handle in orig. destruct orig as [C' [hty]]. 
+  apply TypeC. inv hty. assumption. inv hty. inv H1. assumption.
+  eapply TypeHandle. exact hty.  apply IHstep. assumption.
++ admit.
++ admit.
+(*
 + inv H5. inv H3. eapply c_sub_out_typesafe. 
   - exact H8.
   - inv H7. inv H5. assumption.
@@ -140,7 +145,8 @@ induction step; intros C orig.
       { apply TypeV. assumption. exact H7. assumption. }
       { inv H16. inv H8. assumption. }
       assumption.
-Qed.
+*)
+Admitted.
 
 Lemma progress c C:
   has_ctype CtxØ c C ->
@@ -149,9 +155,21 @@ Lemma progress c C:
 Proof.
 revert C. induction c; intros C orig.
 + left. exists v. reflexivity.
-+ right. right. inv orig. inv H1. inv H7. inv H3.
-  - simpl in H1. discriminate.
-  - eexists. apply Step_ΠMatch.
++ right. right. destruct p as (x, y).
+  eapply shape_prodmatch in orig. destruct orig as [A [B [vty]]].
+  eapply shape_pair_full in vty as shape. 2: reflexivity.
+  destruct shape.
+  - destruct H0 as [name [db_i]]. rewrite H0 in *.
+    apply shape_var_empty_ctx in vty. destruct vty.
+  - destruct H0 as [v1[v2[same[ty1]]]]. subst.
+    eexists. apply Step_ΠMatch.
+
+
+
+
+
+
+    
 + right. right. rename v0 into x. rename v1 into y.
   inv orig. inv H1. inv H9; inv H3.
   - simpl in H1. discriminate.

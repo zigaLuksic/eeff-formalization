@@ -16,7 +16,7 @@ Ltac inv H := inversion H; clear H; subst.
 
 Lemma sig_subtype_gets_Some Σ Σ' op A B :
   sig_subtype Σ Σ' -> get_op_type Σ op = Some (A, B) -> exists A' B', 
-  get_op_type Σ' op = Some (A', B') /\ vsubtype A' A /\ vsubtype B B'.
+  get_op_type Σ' op = Some (A', B') /\ vsubtype A A' /\ vsubtype B' B.
 Proof.
 intros sty gets. induction sty; simpl in gets. discriminate.
 destruct (op == op0).
@@ -158,9 +158,9 @@ with sig_subtype_trans_rev Σ1 Σ2 Σ3
   sig_subtype Σ3 Σ1
 
 with get_op_trans op A' A B B' Σ1 Σ2 (S12 : sig_subtype Σ1 Σ2) {struct S12} :
-  get_op_type Σ1 op = Some (A', B') -> vsubtype A' A -> vsubtype B B' ->
+  get_op_type Σ1 op = Some (A', B') -> vsubtype A A' -> vsubtype B' B ->
   exists A'' B'', 
-  get_op_type Σ2 op = Some (A'', B'') /\ vsubtype A'' A /\ vsubtype B B''.
+  get_op_type Σ2 op = Some (A'', B'') /\ vsubtype A A'' /\ vsubtype B'' B.
 Proof.
 {
 clear sig_subtype_trans sig_subtype_trans_rev get_op_trans.
@@ -214,10 +214,10 @@ apply (sig_subtype_gets_Some Σ' Σ3) in H as H'.
 destruct H' as [A'' [B'' [g]]]. eapply SigUsubty.
 2 : exact g. all: try assumption.
 + eapply sig_subtype_trans. exact S12. assumption.
-+ clear sig_subtype_trans vsubtype_trans.
-  destruct H2. eapply vsubtype_trans_rev. exact H0. assumption.
 + clear sig_subtype_trans vsubtype_trans_rev.
-  destruct H2. eapply vsubtype_trans. exact H1. assumption.
+  destruct H2. eapply vsubtype_trans. exact H0. assumption.
++ clear sig_subtype_trans vsubtype_trans.
+  destruct H2. eapply vsubtype_trans_rev. exact H1. assumption.
 }{
 clear csubtype_trans csubtype_trans_rev sig_subtype_trans.
 intros S32. destruct S21.
@@ -228,8 +228,8 @@ inv S32. simpl in H8. destruct (o==op).
 + injection H8. intros. subst. eapply SigUsubty.
   - apply IHΣ3. assumption.
   - exact H.
-  - eapply vsubtype_trans. exact H0. assumption.
-  - eapply vsubtype_trans_rev. exact H1. assumption.
+  - eapply vsubtype_trans_rev. exact H0. assumption.
+  - eapply vsubtype_trans. exact H1. assumption.
 + eapply get_op_trans in H8 as gets'.
   2:exact S21. 2:exact H9. 2:exact H10.
   destruct gets' as [A'' [B'' [gets' [styA'']]]]. eapply SigUsubty.
@@ -243,8 +243,8 @@ simpl in gets. discriminate.
 simpl in *. destruct (op==op0).
 + injection gets. intros. subst.
   exists A'0. exists B'0. constructor. assumption. constructor.
-  eapply vsubtype_trans. exact H2. assumption.
-  eapply vsubtype_trans_rev. exact H3. assumption.
+  eapply vsubtype_trans_rev. exact H2. assumption.
+  eapply vsubtype_trans. exact H3. assumption.
 + apply IHS12. assumption.
 }
 Qed.
@@ -409,6 +409,40 @@ Qed.
 
 
 (* ========================== Value Shapes ========================== *)
+
+
+(* Var *)
+Fixpoint shape_var_full Γ v x num A (orig : has_vtype Γ v A) {struct orig} :
+  v = Var (x, num) -> 
+  (exists A', get_vtype Γ num = Some A' /\ vsubtype A' A).
+Proof.
+intros same.
+destruct orig. destruct H1; try discriminate.
++ clear shape_var_full. exists A. injection same. intros. subst.
+  constructor. assumption. apply vsubtype_refl. assumption.
++ subst. eapply shape_var_full in H1. 2: reflexivity.
+  destruct H1 as [A'' [gets]]. exists A''. constructor. assumption.
+  eapply vsubtype_trans. exact H1. assumption.
+Qed.
+
+
+Lemma shape_var Γ name num A:
+  has_vtype Γ (Var (name, num)) A -> 
+  (exists A', get_vtype Γ num = Some A' /\ vsubtype A' A).
+Proof.
+intro orig.
+apply (shape_var_full _ _ name num A) in orig as shape. 2: reflexivity.
+assumption.
+Qed.
+
+
+Lemma shape_var_empty_ctx var_id A:
+  has_vtype CtxØ (Var var_id) A -> False.
+Proof.
+intro orig. destruct var_id as (name, num).
+apply (shape_var_full _ _ name num A) in orig as shape. 
+2: reflexivity. destruct shape as [A'[gets]]. simpl in gets. discriminate.
+Qed.
 
 
 (* Pair *)
@@ -632,6 +666,32 @@ intro orig. eapply (shape_app_full _ _ x c v C) in orig.
 2: reflexivity. assumption.
 Qed.
 
+(* Handle *)
+Fixpoint shape_handle_full Γ c v c' C (orig : has_ctype Γ c C) {struct orig} :
+  c = (Handle v c') ->
+  (exists C', has_vtype Γ v (TyHandler C' C) /\ has_ctype Γ c' C').
+Proof.  
+intros same. destruct orig. destruct H1; try discriminate.
++ clear shape_handle_full. 
+  inv same. exists C. constructor; assumption.
++ apply (shape_handle_full _ _ v c') in H1;
+  clear shape_handle_full. 2: assumption.
+  destruct H1 as [D [vty]].
+  exists D. constructor. 2: assumption.
+  apply TypeV. assumption. apply WfHandler. inv H1. assumption. assumption.
+  eapply TypeVSubtype. exact vty.
+  apply VsubtyHandler. apply csubtype_refl. inv H1. assumption. assumption.
+Qed.
+
+
+Fixpoint shape_handle Γ v c D :
+  has_ctype Γ (Handle v c) D ->
+  (exists C, has_vtype Γ v (TyHandler C D) /\ has_ctype Γ c C).
+Proof.
+intro orig. eapply (shape_handle_full _ _ v c D) in orig.
+2: reflexivity. assumption.
+Qed.
+
 
 (* LetRec *)
 Fixpoint shape_letrec_full Γ c f x c1 c2 D
@@ -717,33 +777,42 @@ intro orig. eapply (shape_ret_full _ _ _ v A Σ E) in orig.
 2: reflexivity. assumption. reflexivity.
 Qed.
 
-(* Op
+(* Op *)
 Fixpoint shape_op_full Γ c C op v y c' A Σ E
   (orig : has_ctype Γ c C) {struct orig} :
   c = (Op op v y c') -> C = (CTy A Σ E) ->
-  (exists Aop Bop Aarg, get_op_type Σ op = Some (Aop, Bop) /\
-  has_vtype Γ v Aarg /\ vsubtype Aop Aarg /\ has_ctype (CtxU Γ Bop) c' C).
+  (exists Aop Bop, get_op_type Σ op = Some (Aop, Bop) /\
+  has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c' C).
 Proof.  
 intros same samety. destruct orig. destruct H1; try discriminate; inv same.
 + inv samety. clear shape_op_full. 
-  exists A_op. exists B_op. exists A_op.
-  constructor. assumption. constructor. assumption.
-  constructor. apply vsubtype_refl. inv H2. assumption. assumption.
+  exists A_op. exists B_op.
+  constructor. assumption. constructor; assumption.
 + destruct C as (A', Σ', E').
   apply (shape_op_full _ _ (CTy A' Σ' E') op v y c' A' Σ' E') in H1;
   clear shape_op_full. 2: reflexivity. 2: reflexivity.
-  destruct H1 as [A'' [B'' [Aarg [g [vty]]]]]. 
+  destruct H1 as [A'' [B'' [g [vty]]]]. 
   inv H2. eapply sig_subtype_gets_Some in g. 2: exact H10.
   destruct g as [A''' [B''' [g' [sty']]]].
-  exists A'''. exists B'''. exists Aarg. 
-  constructor. assumption. constructor. assumption.
-  constructor. eapply vsubtype_trans. exact sty'. destruct H1. assumption.
-  destruct H1. apply (ctx_subtype_ctype (CtxU Γ B'') (CtxU Γ B''')).
-  - apply TypeC. inv H3. assumption. assumption.
-    eapply TypeCSubtype. exact H3. apply Csubty; assumption.
-  - apply WfCtxU. assumption. apply get_op_type_wf in g'. destruct g'.
-    assumption. inv H0. assumption.
-  - apply CtxUsubty. apply ctx_subty_refl. assumption. assumption.
+  exists A'''. exists B'''.
+  constructor. assumption. constructor.
+  - apply TypeV. assumption. apply get_op_type_wf in g'. destruct g'.
+    assumption. inv H0. assumption. eapply TypeVSubtype.
+    exact vty. assumption.
+  - eapply (ctx_subtype_ctype (CtxU Γ B'') (CtxU Γ B''')).
+    * apply TypeC. inv H1. assumption. assumption.
+      eapply TypeCSubtype. exact H1. apply Csubty; assumption.
+    * apply WfCtxU. assumption. apply get_op_type_wf in g'. destruct g'.
+      assumption. inv H0. assumption.
+    * apply CtxUsubty. apply ctx_subty_refl. assumption. assumption.
+Qed.
 
-Qed. *)
 
+Fixpoint shape_op Γ op v y c A Σ E :
+  has_ctype Γ (Op op v y c) (CTy A Σ E) -> 
+  (exists Aop Bop, get_op_type Σ op = Some (Aop, Bop) /\
+    has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E)).
+Proof.  
+intro orig. eapply (shape_op_full _ _ _ op v y c A Σ E) in orig.
+2: reflexivity. assumption. reflexivity.
+Qed.

@@ -25,7 +25,7 @@ with sig_subtype : sig -> sig -> Prop :=
 | SigØsubty Σ: sig_subtype SigØ Σ
 | SigUsubty Σ Σ' op A B A' B' : 
     sig_subtype Σ Σ' -> get_op_type Σ' op = Some (A', B') -> 
-    vsubtype A' A -> vsubtype B B' ->
+    vsubtype A A' -> vsubtype B' B ->
     sig_subtype (SigU Σ op A B) Σ'
 
 with eqs_subtype : eqs -> eqs -> Prop :=
