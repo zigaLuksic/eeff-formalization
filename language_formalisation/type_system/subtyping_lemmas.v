@@ -368,7 +368,9 @@ destruct types. induction H2; apply TypeH; try assumption.
   all: inv H4; inv H5; inv H9.
   - apply WfCtxU. apply WfCtxU. all: assumption.
   - apply CtxUsubty. apply CtxUsubty. assumption.
-    all: apply vsubtype_refl; assumption. 
+    all: apply vsubtype_refl; assumption.
++ eapply TypeHSubtype. eapply ctx_subtype_htype. exact H2.
+  all: assumption.
 }
 Qed.
 
@@ -575,6 +577,49 @@ destruct shape.
 + do 3 (destruct H). inv H. inv H0. apply TypeC; assumption.
 Qed.
 
+(* Handler *)
+Fixpoint shape_handler_full Γ v A Σ E D ty
+  (orig : has_vtype Γ v ty) {struct orig} :
+  ty = TyHandler (CTy A Σ E) D ->
+  (exists name num, v = Var (name, num)) \/
+  (exists x c_r h, v = Handler x c_r h /\ 
+    has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ D).
+Proof.
+intros same.
+destruct orig. destruct H1; try discriminate.
++ clear shape_handler_full. left. exists name. exists num. reflexivity.
++ clear shape_handler_full. right. exists x. exists c_ret. exists h.      
+  constructor. reflexivity. inv same. constructor; assumption.
++ rewrite same in *. apply subty_shape_handler in H2. 
+  destruct H2 as [C' [D' [hty]]]. destruct H2. subst.
+  destruct C' as [A' Σ' E'].
+  apply (shape_handler_full _ _ A' Σ' E' D') in H1.
+  clear shape_handler_full. 2: reflexivity. destruct H1.
+  left. assumption.
+  right. destruct H1 as [x [cr [h [same]]]]. exists x. exists cr. exists h.
+  destruct H1. constructor. assumption. constructor.
+  - apply TypeC; inv H0.
+    * apply WfCtxU. assumption. inv H7. assumption.
+    * assumption.
+    * eapply TypeCSubtype. 2: exact H3.
+      eapply ctx_subtype_ctype. exact H1.
+      apply WfCtxU. assumption. inv H7. assumption.
+      apply CtxUsubty. apply ctx_subty_refl. assumption. 
+      inv H2. assumption.
+  - apply TypeH; inv H0; try assumption. inv H7. assumption.
+    eapply TypeHSubtype. exact H4. inv H2. assumption. assumption. 
+Qed.
+
+Lemma shape_handler Γ x c_r h A Σ E D:
+  has_vtype Γ (Handler x c_r h) (TyHandler (CTy A Σ E) D) ->
+    has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ D.
+Proof.
+intro orig.
+apply (shape_handler_full _ _ A Σ E D) in orig as shape. 2: reflexivity.
+destruct shape.
++ destruct H as [name [num]]. discriminate.
++ do 3 (destruct H). inv H. inv H0. assumption.
+Qed.
 
 (* ========================== Computation Shapes ========================== *)
 
@@ -641,20 +686,21 @@ Qed.
 
 
 (* App *)
-Fixpoint shape_app_full Γ c x c' v C (orig : has_ctype Γ c C) {struct orig} :
-  c = (App (Fun x c') v) ->
-  (exists A, has_ctype (CtxU Γ A) c' C /\ has_vtype Γ v A).
+Fixpoint shape_app_full Γ c v1 v2 C (orig : has_ctype Γ c C) {struct orig} :
+  c = (App v1 v2) ->
+  (exists A, has_vtype Γ v1 (TyFun A C) /\ has_vtype Γ v2 A).
 Proof.  
 intros same. destruct orig. destruct H1; try discriminate.
-+ clear shape_app_full. 
-  inv same. exists A. apply shape_fun in H1. constructor; assumption.
-+ apply (shape_app_full _ _ x c' v) in H1;
++ clear shape_app_full. inv same. exists A. constructor; assumption.
++ apply (shape_app_full _ _ v1 v2) in H1;
   clear shape_app_full. 2: assumption.
-  destruct H1 as [A' [cty]].
+  destruct H1 as [A' [fty]].
   exists A'. constructor. 2: assumption.
-  inv cty. apply TypeC; auto.
-  eapply TypeCSubtype. apply TypeC.
-  assumption. exact H4. exact H5. assumption.
+  apply TypeV. 
+  - assumption.
+  - inv fty. inv H4. apply WfFun; assumption.
+  - eapply TypeVSubtype. exact fty. apply VsubtyFun.
+    apply vsubtype_refl. inv fty. inv H4. assumption. assumption.
 Qed.
 
 
@@ -662,8 +708,9 @@ Fixpoint shape_app Γ x c v C :
   has_ctype Γ (App (Fun x c) v) C ->
   (exists A, has_ctype (CtxU Γ A) c C /\ has_vtype Γ v A).
 Proof.
-intro orig. eapply (shape_app_full _ _ x c v C) in orig.
-2: reflexivity. assumption.
+intro orig. eapply (shape_app_full _ _ (Fun x c) v C) in orig.
+2: reflexivity. destruct orig as [A [fty]]. 
+exists A. constructor. apply shape_fun in fty. all: assumption.
 Qed.
 
 (* Handle *)

@@ -6,7 +6,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\su
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 
 Require Export syntax syntax_lemmas declarational substitution Omega Logic.
-Require Export subs_lemmas subtyping wellfounded_lemmas.
+Require Export subs_lemmas subtyping subtyping_lemmas wellfounded_lemmas.
 
 Ltac inv H := inversion H; clear H; subst.
 
@@ -65,9 +65,7 @@ inv orig. destruct H1.
   - apply IHh; assumption.
 + specialize (v_insert_typesafe _ _ _ H1) as IHv.
   clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
-  eapply TypeVSubtype.
-  - apply IHv. assumption.
-  - assumption.
+  eapply TypeVSubtype. apply IHv. all: assumption.
 }{
 intros wfins. apply TypeC.
 { clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
@@ -127,9 +125,7 @@ inv orig. destruct H1.
   - rewrite ctx_insert_extend. apply IHc; assumption.
 + specialize (c_insert_typesafe _ _ _ H1) as IHc.
   clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
-  eapply TypeCSubtype.
-  - apply IHc. assumption.
-  - assumption.
+  eapply TypeCSubtype. apply IHc. all: assumption.
 }{
 intros wfins. apply TypeH.
 { clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
@@ -155,6 +151,9 @@ inv orig. destruct H2.
   - apply IHh; assumption.
   - rewrite ctx_insert_extend. rewrite ctx_insert_extend.
     assert (i+1+1=i+2) by omega. rewrite H5. apply IHc; assumption.
++ specialize (h_insert_typesafe _ _ _ _ H2) as IHh.
+  clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
+  eapply TypeHSubtype. apply IHh. all: assumption.
 }
 Qed.
 
@@ -328,6 +327,9 @@ destruct H2.
   - rewrite ctx_remove_extend. rewrite ctx_remove_extend.
     assert (i+1+1=i+2) by omega. rewrite H5.
     apply IHc. destruct no_var. assumption.
++ specialize (h_negshift_typesafe _ _ _ _ H2) as IHh.
+  clear v_negshift_typesafe c_negshift_typesafe h_negshift_typesafe.
+  eapply TypeHSubtype. apply IHh. all: assumption.
 }
 Qed.
 
@@ -480,10 +482,13 @@ destruct H2.
     rewrite <-(v_shift_shift 1 1 0).
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
     all: inv H0. 2: assumption. apply WfFun; assumption.
++ specialize (h_subs_typesafe _ _ _ _ H2) as IHh.
+  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
+  eapply TypeHSubtype. eapply IHh. exact gets. all: assumption.
 }
 Qed.
 
-
+(* 
 Lemma h_has_case Γ h Σ D op A_op B_op:
   has_htype Γ h Σ D ->
   get_op_type Σ op = Some (A_op, B_op) ->
@@ -492,8 +497,10 @@ Proof.
 revert Γ Σ. induction h; intros Γ Σ typed gets;
 inv typed; inv H1; inv H2.
 + simpl in gets. discriminate.
++ eapply sig_subtype_gets_Some in gets. 2: exact H6.
+  destruct gets as [A' [B' [gets']]]. rewrite gets in 
 + simpl in *. destruct (op==o).
   - injection gets. intros. subst.
     exists v. exists v0. exists c. reflexivity.
   - apply IHh in H14; assumption.
-Qed.
+Qed. *)

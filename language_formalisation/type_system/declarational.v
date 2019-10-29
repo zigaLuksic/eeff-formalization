@@ -132,6 +132,9 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
     has_htype' 
       Γ (CasesU h op_id x k c_op)
       (SigU Σ op_id A_op B_op) D
+| TypeHSubtype Γ h Σ Σ' D D' :
+    has_htype Γ h Σ D -> sig_subtype Σ' Σ -> csubtype D D' -> 
+    has_htype' Γ h Σ' D'
 .
 
 

@@ -112,10 +112,15 @@ induction step; intros C orig.
   eapply TypeHandle. exact hty.  apply IHstep. assumption.
 + admit.
 + admit.
+
 (*
-+ inv H5. inv H3. eapply c_sub_out_typesafe. 
+  + eapply shape_handle in orig. destruct orig as [C' [tyh]].
+   inv H5. inv H3. eapply c_sub_out_typesafe. 
   - exact H8.
   - inv H7. inv H5. assumption.
+
+
+
 + unfold c_sub2_out. inv H2. inv H10. inv H6.
   eapply c_sub_out_typesafe.
   instantiate (1 := TyFun B_op (CTy A Σ E)).
@@ -145,7 +150,8 @@ induction step; intros C orig.
       { apply TypeV. assumption. exact H7. assumption. }
       { inv H16. inv H8. assumption. }
       assumption.
-*)
+
+      *)
 Admitted.
 
 Lemma progress c C:
@@ -155,7 +161,7 @@ Lemma progress c C:
 Proof.
 revert C. induction c; intros C orig.
 + left. exists v. reflexivity.
-+ right. right. destruct p as (x, y).
++ right. right. destruct p as (x, y). clear IHc.
   eapply shape_prodmatch in orig. destruct orig as [A [B [vty]]].
   eapply shape_pair_full in vty as shape. 2: reflexivity.
   destruct shape.
@@ -163,30 +169,33 @@ revert C. induction c; intros C orig.
     apply shape_var_empty_ctx in vty. destruct vty.
   - destruct H0 as [v1[v2[same[ty1]]]]. subst.
     eexists. apply Step_ΠMatch.
-
-
-
-
-
-
-    
-+ right. right. rename v0 into x. rename v1 into y.
-  inv orig. inv H1. inv H9; inv H3.
-  - simpl in H1. discriminate.
-  - eexists. apply Step_ΣMatch_Inl.
-  - eexists. apply Step_ΣMatch_Inr.
-+ right. right. inv orig. inv H1. inv H5; inv H3.
-  - simpl in H1. discriminate.
-  - eexists. apply Step_App.
++ right. right. rename v0 into x. rename v1 into y. clear IHc1 IHc2.
+  eapply shape_summatch in orig. destruct orig as [A [B [vty]]].
+  eapply shape_sum_full in vty as shape. 2: reflexivity.
+  destruct shape. 2: destruct H0.
+  - destruct H0 as [name [db_i]]. rewrite H0 in *.
+    apply shape_var_empty_ctx in vty. destruct vty.
+  - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inl.
+  - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inr.
++ right. right.
+  eapply shape_app_full in orig. 2: reflexivity.
+  destruct orig as [A [fty]]. eapply shape_fun_full in fty as ffty.
+  2: reflexivity. destruct ffty.
+  - destruct H0 as [name [db_i]]. rewrite H0 in *.
+    apply shape_var_empty_ctx in fty. destruct fty.
+  - destruct H0 as [x [c [same]]]. subst. eexists. apply Step_App.
 + right. left. exists o. exists v. exists v0. exists c. reflexivity.
-+ right. right. rename v into f. rename v0 into x.
++ right. right. rename v into f. rename v0 into x. clear IHc1 IHc2.
   eexists. apply Step_LetRec.
-+ right. right. rename v into x. inv orig. inv H1.
-  apply IHc1 in H7. destruct H7 as [h1 | [h2 | h3]].
-  - destruct h1. rewrite H1 in *. eexists. apply Step_DoBind_Ret.
-  - destruct h2. destruct H1. destruct H1. destruct H1. rewrite H1 in *.
++ right. right. rename v into x. clear IHc2. destruct C as (A, Σ, E). 
+  eapply shape_dobind in orig. destruct orig as [A' [c1ty]].
+  apply IHc1 in c1ty as IH. clear IHc1. destruct IH as [h1 | [h2 | h3]].
+  - destruct h1. rewrite H0 in *. eexists. apply Step_DoBind_Ret.
+  - destruct h2. destruct H0. destruct H0 as [y [c']]. rewrite H0 in *.
     eexists. apply Step_DoBind_Op.
-  - destruct h3. eexists. apply Step_DoBind_step. exact H1.
+  - destruct h3. eexists. apply Step_DoBind_step. exact H0.
+
+
 + right. right. inv orig. inv H1. inv H5. inv H3. { simpl in H4. discriminate. }
   apply IHc in H7 as IH. destruct IH as [h1 | [h2 | h3]].
   - destruct h1. rewrite H3 in *. eexists. apply Step_Handle_Ret.
