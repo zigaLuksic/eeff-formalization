@@ -161,6 +161,9 @@ Lemma progress c C:
 Proof.
 revert C. induction c; intros C orig.
 + left. exists v. reflexivity.
++ apply shape_absurd in orig. apply shape_empty in orig as shape. 
+  destruct shape as [x [i]]. subst. apply shape_var_empty_ctx in orig.
+  destruct orig.
 + right. right. destruct p as (x, y). clear IHc.
   eapply shape_prodmatch in orig. destruct orig as [A [B [vty]]].
   eapply shape_pair_full in vty as shape. 2: reflexivity.

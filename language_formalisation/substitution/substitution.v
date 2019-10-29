@@ -31,6 +31,7 @@ end
 with c_shift (c : comp) d (cut : nat) :=
 match c with
 | Ret v => Ret (v_shift v d cut)
+| Absurd v => Absurd (v_shift v d cut)
 | ΠMatch v (x, y) c =>
     ΠMatch (v_shift v d cut) (x, y) (c_shift c d (cut+2))
 | ΣMatch v xl cl xr cr =>
@@ -72,6 +73,7 @@ end
 with c_negshift (c : comp) d (cut : nat) :=
 match c with
 | Ret v => Ret (v_negshift v d cut)
+| Absurd v => Absurd (v_negshift v d cut)
 | ΠMatch v (x, y) c =>
     ΠMatch (v_negshift v d cut) (x, y) (c_negshift c d (cut+2))
 | ΣMatch v xl cl xr cr =>
@@ -112,6 +114,7 @@ end
 with c_sub (c : comp) (sub : nat * val) :=
 match c with
 | Ret v => Ret (v_sub v sub)
+| Absurd v => Absurd (v_sub v sub)
 | ΠMatch v (x, y) c =>
     ΠMatch (v_sub v sub) (x, y)
       (c_sub c (sub_shift sub 2))

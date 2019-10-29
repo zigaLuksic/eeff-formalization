@@ -23,6 +23,7 @@ Inductive val : Type :=
 
 with comp : Type :=
 | Ret : val -> comp
+| Absurd : val -> comp
 | ΠMatch : val -> var_name * var_name -> comp -> comp (* x~1 y~0 *)
 | ΣMatch : val -> var_name -> comp -> var_name -> comp -> comp
 | App : val -> val -> comp
@@ -61,6 +62,7 @@ with tctx : Type :=
 
 with tmpl : Type :=
 | TApp : var_id -> val -> tmpl
+| TAbsurd : val -> tmpl
 | TΠMatch : val -> var_name -> var_name -> tmpl -> tmpl
 | TΣMatch : val -> var_name -> tmpl -> var_name -> tmpl -> tmpl
 | TOp : op_id -> val -> var_name -> tmpl -> tmpl
@@ -129,6 +131,7 @@ end
 with c_no_var_j (c:comp) (j:nat) :=
 match c with
 | Ret v => v_no_var_j v j
+| Absurd v => v_no_var_j v j 
 | ΠMatch v (x, y) c => 
     (v_no_var_j v j) /\ c_no_var_j c (j+2)
 | ΣMatch v xl cl xr cr =>
@@ -164,6 +167,7 @@ end
 with c_switch_vars (c:comp) (i:nat) (j:nat) :=
 match c with
 | Ret v => Ret (v_switch_vars v i j)
+| Absurd v => Absurd (v_switch_vars v i j)
 | ΠMatch v (x, y) c =>
     ΠMatch (v_switch_vars v i j) (x,y) (c_switch_vars c (i+2) (j+2))
 | ΣMatch v xl cl xr cr =>

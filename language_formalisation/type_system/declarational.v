@@ -34,6 +34,8 @@ with wf_tmpl : ctx -> tctx -> tmpl -> sig -> Prop :=
 | WfTApp Γ Z name num v A Σ : 
     has_vtype Γ v A -> get_ttype Z num = Some A ->
     wf_tmpl Γ Z (TApp (name, num) v) Σ
+| WfTAbsurd Γ Z v Σ :
+    has_vtype Γ v TyØ -> wf_tmpl Γ Z (TAbsurd v) Σ 
 | WfΠTMatch Γ Z v A B x y T Σ :
     has_vtype Γ v (TyΠ A B) -> wf_tmpl (CtxU (CtxU Γ A) B) Z T Σ -> 
     wf_tmpl Γ Z (TΠMatch v x y T) Σ
@@ -78,6 +80,8 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
     has_vtype' Γ (Handler x c_ret h) (TyHandler (CTy A Σ E) D)
 | TypeVSubtype Γ v A A' :
     has_vtype Γ v A -> vsubtype A A' -> has_vtype' Γ v A'
+
+
 with has_ctype : ctx -> comp -> ctype -> Prop :=
 | TypeC Γ c C : wf_ctx Γ -> wf_ctype C -> has_ctype' Γ c C -> has_ctype Γ c C
 
@@ -85,6 +89,8 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
 | TypeRet Γ v A : 
     has_vtype Γ v A ->
     has_ctype' Γ (Ret v) (CTy A SigØ EqsØ)
+| TypeAbsurd Γ v C :
+    has_vtype Γ v TyØ -> has_ctype' Γ (Absurd v) C
 | TypeΠMatch Γ v A B x y c C :
     has_vtype Γ v (TyΠ A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
@@ -94,10 +100,10 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype (CtxU Γ A) cl C ->
     has_ctype (CtxU Γ B) cr C ->
     has_ctype' Γ (ΣMatch v xl cl xr cr) C
-| TypeDoBind Γ x c1 c2 A B Σ eqs :
-    has_ctype Γ c1 (CTy A Σ eqs) ->
-    has_ctype (CtxU Γ A) c2 (CTy B Σ eqs) ->
-    has_ctype' Γ (DoBind x c1 c2) (CTy B Σ eqs)
+| TypeDoBind Γ x c1 c2 A B Σ E :
+    has_ctype Γ c1 (CTy A Σ E) ->
+    has_ctype (CtxU Γ A) c2 (CTy B Σ E) ->
+    has_ctype' Γ (DoBind x c1 c2) (CTy B Σ E)
 | TypeApp Γ v1 v2 A C :
     has_vtype Γ v1 (TyFun A C) ->
     has_vtype Γ v2 A ->
@@ -110,11 +116,11 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     has_ctype (CtxU Γ (TyFun A C)) c2 D ->
     has_ctype' Γ (LetRec f x c1 c2) D
-| TypeOp Γ op_id v y c A_op B_op A Σ eqs :
+| TypeOp Γ op_id v y c A_op B_op A Σ E :
     get_op_type Σ op_id = Some (A_op, B_op) ->
     has_vtype Γ v A_op ->
-    has_ctype (CtxU Γ B_op) c (CTy A Σ eqs) ->
-    has_ctype' Γ (Op op_id v y c) (CTy A Σ eqs)
+    has_ctype (CtxU Γ B_op) c (CTy A Σ E) ->
+    has_ctype' Γ (Op op_id v y c) (CTy A Σ E)
 | TypeCSubtype Γ c C C' :
     has_ctype Γ c C -> csubtype C C' -> has_ctype' Γ c C'
 
@@ -130,8 +136,7 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ (TyFun B_op D)) A_op) c_op D ->
     has_htype' 
-      Γ (CasesU h op_id x k c_op)
-      (SigU Σ op_id A_op B_op) D
+      Γ (CasesU h op_id x k c_op) (SigU Σ op_id A_op B_op) D
 | TypeHSubtype Γ h Σ Σ' D D' :
     has_htype Γ h Σ D -> sig_subtype Σ' Σ -> csubtype D D' -> 
     has_htype' Γ h Σ' D'

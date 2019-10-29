@@ -77,6 +77,9 @@ inv orig. destruct H1.
   clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
   simpl. apply TypeRet. apply IHv; assumption.
 + specialize (v_insert_typesafe _ _ _ H1) as IHv.
+  clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
+  simpl. apply TypeAbsurd. apply IHv; assumption.
++ specialize (v_insert_typesafe _ _ _ H1) as IHv.
   specialize (c_insert_typesafe _ _ _ H2) as IHc.
   clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
   eapply TypeΠMatch.
@@ -254,6 +257,9 @@ destruct H1.
   clear v_negshift_typesafe c_negshift_typesafe h_negshift_typesafe.
   simpl. apply TypeRet. apply IHv; assumption.
 + specialize (v_negshift_typesafe _ _ _ H1) as IHv.
+  clear v_negshift_typesafe c_negshift_typesafe h_negshift_typesafe.
+  simpl. apply TypeAbsurd. apply IHv; assumption.
++ specialize (v_negshift_typesafe _ _ _ H1) as IHv.
   specialize (c_negshift_typesafe _ _ _ H2) as IHc.
   clear v_negshift_typesafe c_negshift_typesafe h_negshift_typesafe.
   simpl. destruct no_var. eapply TypeΠMatch.
@@ -397,6 +403,9 @@ assumption. assumption. destruct H1.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. apply TypeRet. eapply IHv. exact gets. assumption.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
+  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
+  simpl. apply TypeAbsurd. eapply IHv. exact gets. assumption.
++ specialize (v_subs_typesafe _ _ _ H1) as IHv.
   specialize (c_subs_typesafe _ _ _ H2) as IHc.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeΠMatch.
@@ -488,14 +497,16 @@ destruct H2.
 }
 Qed.
 
-(* 
+(*
 Lemma h_has_case Γ h Σ D op A_op B_op:
   has_htype Γ h Σ D ->
   get_op_type Σ op = Some (A_op, B_op) ->
   exists x k c_op, find_op_case h op = Some (x, k, c_op).
 Proof.
 revert Γ Σ. induction h; intros Γ Σ typed gets;
-inv typed; inv H1; inv H2.
+inv typed.
++ 
+; inv H1; inv H2.
 + simpl in gets. discriminate.
 + eapply sig_subtype_gets_Some in gets. 2: exact H6.
   destruct gets as [A' [B' [gets']]]. rewrite gets in 
