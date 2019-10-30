@@ -156,7 +156,8 @@ Admitted.
 
 Lemma progress c C:
   has_ctype CtxØ c C ->
-  (exists v, c = Ret v) \/ (exists o v y c', c = Op o v y c') \/
+  (exists v, c = Ret v) \/
+  (exists o v y c', c = Op o v y c') \/
   (exists c', step c c'). 
 Proof.
 revert C. induction c; intros C orig.
@@ -197,17 +198,21 @@ revert C. induction c; intros C orig.
   - destruct h2. destruct H0. destruct H0 as [y [c']]. rewrite H0 in *.
     eexists. apply Step_DoBind_Op.
   - destruct h3. eexists. apply Step_DoBind_step. exact H0.
-
-
-+ right. right. inv orig. inv H1. inv H5. inv H3. { simpl in H4. discriminate. }
-  apply IHc in H7 as IH. destruct IH as [h1 | [h2 | h3]].
-  - destruct h1. rewrite H3 in *. eexists. apply Step_Handle_Ret.
-  - destruct h2. destruct H3. destruct H3. destruct H3. rewrite H3 in *.
-    rename x0 into o. rename x1 into v_arg. rename x2 into y. rename x3 into k. 
-    inv H7. inv H6. 
-    specialize (h_has_case CtxØ h Σ C o A_op B_op H10 H12) as gets.
-    destruct gets. destruct H3. destruct H3.
-    eexists. eapply Step_Handle_Op. exact H3.
-  - destruct h3 as [c' h3].
-    eexists. eapply Step_Handle_Step. exact h3.
++ right. right. eapply shape_handle in orig. rename C into D.
+  destruct orig as [C [hty]]. apply IHc in H as H'. clear IHc.
+  destruct C as (A, Σ, E). eapply shape_handler_full in hty as shape.
+  2: reflexivity. destruct shape.
+  { destruct H0 as [x [i]]. subst.
+    apply shape_var_empty_ctx in hty. contradiction. }
+  destruct H0 as [x[c_r[h[Σ'[D'[same[crty]]]]]]]. subst.
+  destruct H'. 2: destruct H1.
+  - destruct H1 as [v]. subst. eexists. apply Step_Handle_Ret.   
+  - destruct H1 as [op[v[y[c']]]]. subst. destruct H0 as [hcsty[sigsty]].
+    apply shape_op in H. destruct H as [A_op[B_op[gets]]].
+    eapply sig_subtype_gets_Some in gets. 2: exact sigsty.
+    destruct gets as [A'[B'[gets']]].
+    eapply h_has_case in hcsty. 2: exact gets'.
+    destruct hcsty as [x'[k'[c_op]]].
+    eexists. eapply Step_Handle_Op. exact H2.    
+  - destruct H1 as [c']. eexists. apply Step_Handle_Step. exact H1.
 Qed.

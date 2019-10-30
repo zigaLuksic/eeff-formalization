@@ -77,9 +77,9 @@ Qed.
 
 Lemma vsubtype_refl v : wf_vtype v -> vsubtype v v
 with csubtype_refl c : wf_ctype c -> csubtype c c
-with sig_subty_refl Σ : wf_sig Σ -> sig_subtype Σ Σ
-with eqs_subty_refl E Σ : wf_eqs E Σ -> eqs_subtype E E
-with ctx_subty_refl Γ : wf_ctx Γ -> ctx_subtype Γ Γ.
+with sig_subtype_refl Σ : wf_sig Σ -> sig_subtype Σ Σ
+with eqs_subtype_refl E Σ : wf_eqs E Σ -> eqs_subtype E E
+with ctx_subtype_refl Γ : wf_ctx Γ -> ctx_subtype Γ Γ.
 Proof.
 {intros; induction v; inv H.
 + apply VsubtyUnit.
@@ -91,8 +91,8 @@ Proof.
 + apply VsubtyHandler; apply csubtype_refl; assumption.
 }{ destruct c. intros. inv H. apply Csubty.
 apply vsubtype_refl. assumption. 
-apply sig_subty_refl. assumption.
-eapply eqs_subty_refl. exact H5.
+apply sig_subtype_refl. assumption.
+eapply eqs_subtype_refl. exact H5.
 }{ 
 intros; induction Σ.
 + apply SigØsubty.
@@ -108,7 +108,7 @@ intros; induction Σ.
   - apply WfEqsU. exact H6. assumption. assumption.
   - simpl. left. auto.
 }
-{clear csubtype_refl sig_subty_refl eqs_subty_refl ctx_subty_refl.
+{clear csubtype_refl sig_subtype_refl eqs_subtype_refl ctx_subtype_refl.
 induction Γ; intros.
 apply CtxØsubty.
 apply CtxUsubty; inv H. apply IHΓ. assumption. 
@@ -358,8 +358,6 @@ destruct types. induction H2; apply TypeH; try assumption.
   - apply WfCtxU. apply WfCtxU. all: assumption.
   - apply CtxUsubty. apply CtxUsubty. assumption.
     all: apply vsubtype_refl; assumption.
-+ eapply TypeHSubtype. eapply ctx_subtype_htype. exact H2.
-  all: assumption.
 }
 Qed.
 
@@ -565,7 +563,7 @@ destruct orig. destruct H1; try discriminate.
   * destruct H2. eapply TypeCSubtype. 2: exact H1.
     eapply ctx_subtype_ctype. exact H3.
     apply WfCtxU; assumption.
-    apply CtxUsubty. apply ctx_subty_refl. assumption. assumption.
+    apply CtxUsubty. apply ctx_subtype_refl. assumption. assumption.
 Qed.
 
 Lemma shape_fun Γ x c A C :
@@ -583,54 +581,61 @@ Fixpoint shape_handler_full Γ v A Σ E D ty
   (orig : has_vtype Γ v ty) {struct orig} :
   ty = TyHandler (CTy A Σ E) D ->
   (exists name num, v = Var (name, num)) \/
-  (exists x c_r h, v = Handler x c_r h /\ 
-    has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ D).
+  (exists x c_r h Σ' D', v = Handler x c_r h /\ 
+    has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ' D'
+    /\ sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intros same.
 destruct orig. destruct H1; try discriminate.
 + clear shape_handler_full. left. exists name. exists num. reflexivity.
-+ clear shape_handler_full. right. exists x. exists c_ret. exists h.      
-  constructor. reflexivity. inv same. constructor; assumption.
++ clear shape_handler_full. right.
+  exists x. exists c_ret. exists h. exists Σ. exists D.      
+  constructor. reflexivity. inv same. constructor. assumption.
+  constructor. assumption. constructor; inv H2.
+  apply sig_subtype_refl. assumption. apply csubtype_refl. assumption.
 + rewrite same in *. apply subty_shape_handler in H2. 
   destruct H2 as [C' [D' [hty]]]. destruct H2. subst.
   destruct C' as [A' Σ' E'].
   apply (shape_handler_full _ _ A' Σ' E' D') in H1.
   clear shape_handler_full. 2: reflexivity. destruct H1. auto.
-  right. destruct H1 as [x [cr [h [same]]]]. exists x. exists cr. exists h.
-  destruct H1. constructor. assumption. constructor.
+  right. destruct H1 as [x[cr[h[Σ''[D''[same]]]]]].
+  exists x. exists cr. exists h. exists Σ''. exists D''.
+  constructor. assumption. destruct H1. constructor.
   - apply TypeC; inv H0.
     * inv H7. apply WfCtxU; auto.
     * assumption.
     * eapply TypeCSubtype. 2: exact H3.
       eapply ctx_subtype_ctype. exact H1.
       inv H7. apply WfCtxU; auto.
-      inv H2. apply CtxUsubty. apply ctx_subty_refl. all: assumption. 
-  - apply TypeH; inv H0; try assumption. inv H7. assumption.
-    inv H2. eapply TypeHSubtype; eauto.
+      inv H2. apply CtxUsubty. apply ctx_subtype_refl. all: assumption. 
+  - destruct H4 as [tys[sty]]. inv H2. constructor. assumption. constructor.
+    eapply sig_subtype_trans; eauto. eapply csubtype_trans; eauto.
 Qed.
 
 Lemma shape_handler Γ x c_r h A Σ E D:
   has_vtype Γ (Handler x c_r h) (TyHandler (CTy A Σ E) D) ->
-    has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ D.
+    (exists Σ' D', has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ' D'
+      /\ sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intro orig.
 apply (shape_handler_full _ _ A Σ E D) in orig as shape. 2: reflexivity.
 destruct shape.
 + destruct H as [name [num]]. discriminate.
-+ do 3 (destruct H). inv H. inv H0. assumption.
++ do 6 (destruct H). exists x3. exists x4. injection H. intros. subst. auto.
 Qed.
 
 (* ========================= Handler Cases Shapes ========================= *)
 
-Fixpoint shape_casesempty_full Γ h Σ D
-  (orig : has_htype Γ h Σ D) {struct orig} :
-  h = CasesØ -> Σ = SigØ.
+Lemma h_has_case Γ h Σ D op A_op B_op:
+  has_htype Γ h Σ D ->
+  get_op_type Σ op = Some (A_op, B_op) ->
+  exists x k c_op, find_op_case h op = Some (x, k, c_op).
 Proof.
-intros same.
-destruct orig. destruct H2; try discriminate.
-+ reflexivity.
-+ apply shape_casesempty_full in H2. 2: assumption.
-  subst. apply sig_subtype_sigempty. assumption.
+revert Γ Σ. induction h; intros Γ Σ typed gets; inv typed; inv H2.
++ simpl in gets. discriminate.
++ simpl in *. destruct (op==o).
+  - exists v. exists v0. exists c. reflexivity.
+  - eapply IHh; eauto.
 Qed.
 
 (* ========================== Computation Shapes ========================== *)
@@ -865,7 +870,7 @@ intros same samety. destruct orig. destruct H1; try discriminate; inv same.
       eapply TypeCSubtype. exact H1. apply Csubty; assumption.
     * apply WfCtxU. assumption. apply get_op_type_wf in g'. destruct g'.
       all: inv H0; assumption.
-    * apply CtxUsubty. apply ctx_subty_refl. all: assumption.
+    * apply CtxUsubty. apply ctx_subtype_refl. all: assumption.
 Qed.
 
 
