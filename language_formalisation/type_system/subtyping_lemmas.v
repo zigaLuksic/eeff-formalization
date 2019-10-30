@@ -72,7 +72,6 @@ intros sty gets. induction sty; simpl in gets; destruct gets.
 - auto.
 Qed.
 
-
 (* ========================== Basic Properties ========================== *)
 
 Lemma vsubtype_refl v : wf_vtype v -> vsubtype v v
@@ -105,7 +104,7 @@ intros; induction Σ.
 + apply EqsØsubty.
 + apply EqsUsubty. inv H. eapply eqs_subtype_extend. 
   - apply IHE. assumption.
-  - apply WfEqsU. exact H6. assumption. assumption.
+  - apply WfEqsU; eauto.
   - simpl. left. auto.
 }
 {clear csubtype_refl sig_subtype_refl eqs_subtype_refl ctx_subtype_refl.
@@ -582,7 +581,7 @@ Fixpoint shape_handler_full Γ v A Σ E D ty
   ty = TyHandler (CTy A Σ E) D ->
   (exists name num, v = Var (name, num)) \/
   (exists x c_r h Σ' D', v = Handler x c_r h /\ 
-    has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ' D'
+    has_ctype (CtxU Γ A) c_r D' /\ has_htype Γ h Σ' D'
     /\ sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intros same.
@@ -601,20 +600,17 @@ destruct orig. destruct H1; try discriminate.
   right. destruct H1 as [x[cr[h[Σ''[D''[same]]]]]].
   exists x. exists cr. exists h. exists Σ''. exists D''.
   constructor. assumption. destruct H1. constructor.
-  - apply TypeC; inv H0.
-    * inv H7. apply WfCtxU; auto.
-    * assumption.
-    * eapply TypeCSubtype. 2: exact H3.
-      eapply ctx_subtype_ctype. exact H1.
-      inv H7. apply WfCtxU; auto.
-      inv H2. apply CtxUsubty. apply ctx_subtype_refl. all: assumption. 
+  - eapply ctx_subtype_ctype. eauto.
+    inv H0. inv H7. apply WfCtxU; assumption.
+    apply CtxUsubty. apply ctx_subtype_refl. assumption.
+    inv H2. assumption.
   - destruct H4 as [tys[sty]]. inv H2. constructor. assumption. constructor.
     eapply sig_subtype_trans; eauto. eapply csubtype_trans; eauto.
 Qed.
 
 Lemma shape_handler Γ x c_r h A Σ E D:
   has_vtype Γ (Handler x c_r h) (TyHandler (CTy A Σ E) D) ->
-    (exists Σ' D', has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ' D'
+    (exists Σ' D', has_ctype (CtxU Γ A) c_r D' /\ has_htype Γ h Σ' D'
       /\ sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intro orig.
@@ -637,6 +633,22 @@ revert Γ Σ. induction h; intros Γ Σ typed gets; inv typed; inv H2.
   - exists v. exists v0. exists c. reflexivity.
   - eapply IHh; eauto.
 Qed.
+
+Lemma case_has_type Γ h Σ D op Aop Bop x k c_op:
+  has_htype Γ h Σ D -> get_op_type Σ op = Some (Aop, Bop)
+  -> find_op_case h op = Some (x, k, c_op) ->
+  has_ctype (CtxU (CtxU Γ (TyFun Bop D)) Aop) c_op D.
+Proof.
+revert Σ. induction h; intros Σ tys gets finds.
+simpl in finds. discriminate.
+simpl in *. destruct (op==o).
+- inv tys. inv H2. simpl in *. destruct (o==o). 2: (destruct n; reflexivity).
+  injection finds. injection gets. intros. subst. assumption.
+- inv tys. inv H2. eapply IHh; eauto.
+  clear IHh. simpl in gets. destruct (op==o).
+  * rewrite e in n. destruct n. reflexivity.
+  * assumption.
+Qed. 
 
 (* ========================== Computation Shapes ========================== *)
 
@@ -880,4 +892,45 @@ Fixpoint shape_op Γ op v y c A Σ E :
     has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E)).
 Proof.  
 intro orig. eapply (shape_op_full _ _ _ op v y c A Σ E) in orig; auto.
+Qed.
+
+
+(* Extra wellformed stuff *)
+
+
+Lemma tmpl_wf_subtype_sig Γ Γ' Z T Σ Σ':
+  wf_tmpl Γ Z T Σ -> sig_subtype Σ Σ' -> ctx_subtype Γ' Γ 
+  -> wf_sig Σ' -> wf_ctx Γ'
+  -> wf_tmpl Γ' Z T Σ'.
+Proof.
+intros orig. revert Γ'. induction orig; intros Γ' sty cty wfs wfc.
++ eapply WfTApp. eapply ctx_subtype_vtype; eauto. assumption.
++ eapply WfTAbsurd. eapply ctx_subtype_vtype; eauto.
++ eapply WfTΠMatch. eapply ctx_subtype_vtype; eauto. inv H. inv H1.
+  apply IHorig; auto. apply CtxUsubty. 
+  apply CtxUsubty. 4: apply WfCtxU. 4: apply WfCtxU. all: auto.
+  all: apply vsubtype_refl; auto.
++ eapply WfTΣMatch. eapply ctx_subtype_vtype; eauto.  all: inv H; inv H1.
+  apply IHorig1; auto. 3: apply IHorig2; auto.
+  1: apply CtxUsubty. 4: apply CtxUsubty.
+  3: apply WfCtxU. 7: apply WfCtxU. all: auto.
+  all: apply vsubtype_refl; auto.
++ eapply sig_subtype_gets_Some in H. 2: exact sty.
+  destruct H as [A'[B'[gets'[Asty]]]].
+  eapply WfTOp. eauto.
+  - eapply ctx_subtype_vtype; eauto. apply TypeV.
+    * inv H0. assumption.
+    * apply get_op_type_wf in gets'. inv gets'. all: assumption.
+    * eapply TypeVSubtype; eauto.
+  - apply IHorig; auto.
+    * apply CtxUsubty; auto.
+    * apply get_op_type_wf in gets'. inv gets'. apply WfCtxU. all: assumption.
+Qed.
+
+Lemma wf_eqs_sig_subtype E Σ Σ':
+  wf_eqs E Σ -> sig_subtype Σ Σ' -> wf_sig Σ' -> wf_eqs E Σ'.
+Proof.
+intros. induction H. apply WfEqsØ.
+apply WfEqsU; auto. all: eapply tmpl_wf_subtype_sig; eauto.
+all: apply ctx_subtype_refl; auto.
 Qed.

@@ -36,10 +36,10 @@ with wf_tmpl : ctx -> tctx -> tmpl -> sig -> Prop :=
     wf_tmpl Γ Z (TApp (name, num) v) Σ
 | WfTAbsurd Γ Z v Σ :
     has_vtype Γ v TyØ -> wf_tmpl Γ Z (TAbsurd v) Σ 
-| WfΠTMatch Γ Z v A B x y T Σ :
+| WfTΠMatch Γ Z v A B x y T Σ :
     has_vtype Γ v (TyΠ A B) -> wf_tmpl (CtxU (CtxU Γ A) B) Z T Σ -> 
     wf_tmpl Γ Z (TΠMatch v x y T) Σ
-| WfΣTMatch Γ Z v x A Tl y B Tr Σ :
+| WfTΣMatch Γ Z v x A Tl y B Tr Σ :
     has_vtype Γ v (TyΣ A B) -> wf_tmpl (CtxU Γ A) Z Tl Σ -> 
     wf_tmpl (CtxU Γ B) Z Tr Σ -> wf_tmpl Γ Z (TΣMatch v x Tl y Tr) Σ
 | WfTOp Γ Z op A_op B_op v y T Σ :
@@ -49,7 +49,8 @@ with wf_tmpl : ctx -> tctx -> tmpl -> sig -> Prop :=
 with wf_eqs : eqs -> sig -> Prop :=
 | WfEqsØ Σ : wf_eqs EqsØ Σ
 | WfEqsU E Γ Z T1 T2 Σ: 
-    wf_eqs E Σ -> wf_tmpl Γ Z T1 Σ -> wf_tmpl Γ Z T2 Σ -> 
+    wf_eqs E Σ -> wf_ctx Γ -> wf_tctx Z -> wf_sig Σ ->
+    wf_tmpl Γ Z T1 Σ -> wf_tmpl Γ Z T2 Σ -> 
     wf_eqs (EqsU E Γ Z T1 T2) Σ
 
 with has_vtype : ctx -> val -> vtype -> Prop :=

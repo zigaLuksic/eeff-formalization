@@ -106,53 +106,63 @@ induction step; intros C orig.
     eapply TypeDoBind. exact H0.
     assert (CtxU (CtxU Γ Bop) A' = ctx_insert_var (CtxU Γ A') Bop 1).
     { simpl. destruct Γ; auto. }
-    rewrite H1. apply c_insert_typesafe. assumption. inv H0. inv H2. assumption.
+    rewrite H1. apply c_insert_typesafe. assumption.
+    inv H0. inv H2. assumption.
 + eapply shape_handle in orig. destruct orig as [C' [hty]]. 
   apply TypeC. inv hty. assumption. inv hty. inv H1. assumption.
   eapply TypeHandle. exact hty.  apply IHstep. assumption.
-+ admit.
-+ admit.
++ eapply shape_handle in orig. rename C into D. destruct orig as [C[hty]].
+  destruct C as (A, Σ, E). eapply shape_handler in hty as hty'. 
+  destruct hty' as [Σ'[D'[retty]]]. eapply shape_ret in H.
+  eapply c_sub_out_typesafe. 2:exact H. apply TypeC. 
+  - inv H. apply WfCtxU; assumption.
+  - inv retty. inv hty. inv H5. assumption.
+  - eapply TypeCSubtype. eauto. inv H0. inv H2. assumption.
 
-(*
-  + eapply shape_handle in orig. destruct orig as [C' [tyh]].
-   inv H5. inv H3. eapply c_sub_out_typesafe. 
-  - exact H8.
-  - inv H7. inv H5. assumption.
++ eapply shape_handle in orig. rename C into D. 
+  destruct orig as [C[hty]]. destruct C as (A, Σ, E).
+  eapply shape_handler in hty as hty'. destruct hty' as [Σ'[D'[retty]]].
+  eapply shape_op in H0 as opt. destruct opt as [Aop[Bop[gets]]].
+  assert (wf_ctx Γ) by (inv hty; assumption). 
+  apply TypeC. inv retty. assumption. inv hty. inv H5. assumption.
+  destruct H1 as [hcty[ssty]]. eapply TypeCSubtype. 2: exact H1. inv H2.
+  assert (wf_vtype Aop) by (inv H4; assumption).
+  assert (wf_vtype Bop) by (inv H5; inv H6; assumption).
+  assert (wf_ctype D') by (inv hcty; assumption).
+  unfold c_sub2_out. eapply c_sub_out_typesafe.
+  instantiate (1:= TyFun Bop D').
+  unfold c_sub2_out. eapply c_sub_out_typesafe.
+  instantiate (1:= Aop).
+  - eapply sig_subtype_gets_Some in gets. 2: exact ssty.
+    destruct gets as [A'[B'[gets']]]. inv H8.
+    eapply ctx_subtype_ctype. eapply case_has_type; eauto.
+    * apply WfCtxU. apply WfCtxU. 2: apply WfFun. all: auto.
+    * apply CtxUsubty. apply CtxUsubty.
+      apply ctx_subtype_refl. assumption. apply VsubtyFun. assumption.
+      apply csubtype_refl. inv hcty. assumption. assumption.
+  - assert (CtxU Γ (TyFun Bop D') = ctx_insert_var Γ (TyFun Bop D') 0).
+    { destruct Γ; simpl; reflexivity. }
+    rewrite H8. eapply v_insert_typesafe. assumption.
+    apply WfFun; assumption.
+  - apply TypeV. assumption. apply WfFun; assumption.
+    eapply TypeFun. apply TypeC. apply WfCtxU. all: try assumption.
+    eapply TypeHandle. 2: exact H5.
+    assert (CtxU Γ Bop = ctx_insert_var Γ Bop 0).
+    { destruct Γ; simpl; reflexivity. }
+    rewrite H8. eapply v_insert_typesafe. 2: assumption.
+    apply TypeV. assumption. apply WfHandler. inv H0. assumption. assumption.
+    eapply TypeVSubtype. instantiate (1:=(TyHandler (CTy A Σ' E) D'));
+    inv H5; inv H10; inv H0.
+    * apply TypeV. assumption. apply WfHandler. apply WfCty; auto.
+      inv hcty. assumption. eapply wf_eqs_sig_subtype; eauto.
+      inv hcty. assumption. inv hcty. assumption.
+      apply TypeHandler; auto.
+    * apply VsubtyHandler. apply Csubty. 2: assumption.
+      apply vsubtype_refl. inv H5. inv H10. assumption.
+      eapply eqs_subtype_refl. inv H5. inv H10. eauto.
+      apply csubtype_refl. assumption.
+Qed.
 
-
-
-+ unfold c_sub2_out. inv H2. inv H10. inv H6.
-  eapply c_sub_out_typesafe.
-  instantiate (1 := TyFun B_op (CTy A Σ E)).
-  - assert (forall h C Σ,
-      find_op_case h op_id = Some (x_op, k_op, c_op) ->
-      get_op_type Σ op_id = Some (A_op, B_op) ->
-      has_htype Γ h Σ C ->
-      has_ctype (CtxU Γ (TyFun B_op C))
-        (c_sub_out c_op (Sub.v_shift v_arg 1 0)) C).
-    -- intros h' C. induction h'; intros Σ' finds gets types.
-      * simpl in finds. discriminate.
-      * simpl in finds. inv types. inv H10. simpl in gets.
-        destruct (op_id==o).
-        ++ injection finds. injection gets. intros. subst. 
-          eapply c_sub_out_typesafe. exact H24.
-          apply v_shift_typesafe. assumption.
-          inv H24. inv H10. inv H18. assumption.
-        ++ eapply IHh'. assumption. exact gets. assumption.
-    -- eapply H6. exact H. exact H14. inv H8. inv H10. assumption.
-  - apply TypeV. assumption. 
-    * apply WfFun. inv H16. inv H6. assumption. apply WfCty; assumption.
-    * apply TypeFun. apply TypeC.
-      { inv H16. assumption. }
-      { apply WfCty; assumption. }
-      inv H8. eapply TypeHandle.
-      apply v_shift_typesafe.
-      { apply TypeV. assumption. exact H7. assumption. }
-      { inv H16. inv H8. assumption. }
-      assumption.
-
-      *)
-Admitted.
 
 Lemma progress c C:
   has_ctype CtxØ c C ->
