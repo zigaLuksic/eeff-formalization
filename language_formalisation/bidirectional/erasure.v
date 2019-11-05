@@ -1,11 +1,101 @@
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\bidirectional".
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\bidirectional". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
 Require Import syntax syntax_lemmas bidirectional declarational.
 
 
 Ltac inv H := inversion H; clear H; subst.
+
+Fixpoint v_erase v :=
+  match v with
+  | τVar id => Var id
+  | τUnit => Unit
+  | τInt n => Int n
+  | τInl v => Inl (v_erase v)
+  | τInr v => Inr (v_erase v)
+  | τPair v1 v2 => Pair (v_erase v1) (v_erase v2)
+  | τFun x c => Fun x (c_erase c)
+  | τHandler x c_r h => Handler x (c_erase c_r) (h_erase h)
+  | τAnnV v ty => v_erase v
+  end
+
+with c_erase c :=
+  match c with
+  | τRet v => Ret (v_erase v)
+  | τAbsurd v => Absurd (v_erase v)
+  | τΠMatch v x y c => ΠMatch (v_erase v) x y (c_erase c)
+  | τΣMatch v x c1 y c2 => ΣMatch (v_erase v) x (c_erase c1) y (c_erase c2)
+  | τApp v1 v2 => App (v_erase v1) (v_erase v2)
+  | τOp op v y c => Op op (v_erase v) y (c_erase c)
+  | τLetRec f x ty c1 c2 => LetRec f x (c_erase c1) (c_erase c2)
+  | τDoBind x c1 c2 => DoBind x (c_erase c1) (c_erase c2)
+  | τHandle v c => Handle (v_erase v) (c_erase c)
+  | τAnnC c ty => c_erase c
+  end
+
+with h_erase h :=
+  match h with
+  | τCasesØ => CasesØ
+  | τCasesU h op x k c => CasesU (h_erase h) op x k (c_erase c) 
+  end
+
+with vtype_erase vty :=
+  match vty with
+  | τTyUnit => TyUnit
+  | τTyInt => TyInt
+  | τTyØ => TyØ
+  | τTyΣ A B => TyΣ (vtype_erase A) (vtype_erase B)
+  | τTyΠ A B => TyΠ (vtype_erase A) (vtype_erase B)
+  | τTyFun A C => TyFun (vtype_erase A) (ctype_erase C)
+  | τTyHandler C D => TyHandler (ctype_erase C) (ctype_erase D)
+  end
+
+with ctype_erase cty :=
+  match cty with
+  | τCTy A Σ E => CTy (vtype_erase A) (sig_erase Σ) (eqs_erase E)
+  end
+
+with sig_erase Σ :=
+  match Σ with
+  | τSigØ => SigØ
+  | τSigU Σ op A B => SigU (sig_erase Σ) op (vtype_erase A) (vtype_erase B)
+  end
+
+with ctx_erase Γ :=
+  match Γ with
+  | τCtxØ => CtxØ
+  | τCtxU Γ A => CtxU (ctx_erase Γ) (vtype_erase A)
+  end
+
+with tctx_erase Z :=
+  match Z with
+  | τTCtxØ => TCtxØ
+  | τTCtxU Z A => TCtxU (tctx_erase Z) (vtype_erase A)
+  end
+
+with tmpl_erase T :=
+  match T with
+  | τTApp z v => TApp z (v_erase v)
+  | τTAbsurd v => TAbsurd (v_erase v)
+  | τTΠMatch v x y T => TΠMatch (v_erase v) x y (tmpl_erase T)
+  | τTΣMatch v x T1 y T2 => 
+      TΣMatch (v_erase v) x (tmpl_erase T1) y (tmpl_erase T2)
+  | τTOp op v y T => TOp op (v_erase v) y (tmpl_erase T)
+  end
+
+with eqs_erase E :=
+  match E with
+  | τEqsØ => EqsØ
+  | τEqsU E Γ Z T1 T2 =>
+      EqsU (eqs_erase E) (ctx_erase Γ) (tctx_erase Z) 
+        (tmpl_erase T1) (tmpl_erase T2)
+  end.
+
 
 
 Fixpoint vcheck_has_vtype Γ v A {struct v}:
