@@ -5,8 +5,17 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\su
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 
-Require Export syntax syntax_lemmas declarational substitution Omega Logic.
-Require Export subs_lemmas.
+Require Export syntax_lemmas declarational substitution_lemmas.
+
+Lemma ctx_gets_wf Γ num A : 
+    wf_ctx Γ -> get_vtype Γ num = Some A -> wf_vtype A.
+Proof.
+intros wf. revert num. induction wf; intros num gets.
++ simpl in gets. discriminate.
++ simpl in gets. destruct num.
+  - inv gets. assumption.
+  - eapply IHwf. exact gets.
+Qed.
 
 Lemma ctx_insert_wf Γ A i:
   wf_ctx Γ -> wf_vtype A -> wf_ctx (ctx_insert_var Γ A i).
@@ -38,9 +47,9 @@ induction Σ; intros orig gets; constructor.
 + simpl in gets. discriminate.
 + simpl in gets. discriminate.
 + simpl in *. destruct (op == o).
-  - injection gets. intros. subst. inv orig. assumption.
+  - inv gets. inv orig. assumption.
   - inv orig. apply IHΣ; assumption.
 + simpl in *. destruct (op == o).
-  - injection gets. intros. subst. inv orig. assumption.
+  - inv gets. inv orig. assumption.
   - inv orig. apply IHΣ; assumption.
 Qed.

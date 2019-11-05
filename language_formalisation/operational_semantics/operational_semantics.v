@@ -7,7 +7,7 @@ Require Export syntax substitution.
 Inductive step : comp -> comp -> Prop :=
 | Step_ΠMatch v1 v2 x y c: 
     step 
-      (ΠMatch (Pair v1 v2) (x, y) c)
+      (ΠMatch (Pair v1 v2) x y c)
       (c_sub2_out c v1 v2)
 | Step_ΣMatch_Inl v xl cl xr cr:
     step 

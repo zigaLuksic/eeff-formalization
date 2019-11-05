@@ -5,6 +5,307 @@ Definition h_switch210_vars h := (h_switch_vars (h_switch_vars h 1 0) 2 1).
 
 
 
+
+Fixpoint v_switch_vars (v:val) (i:nat) (j:nat) :=
+match v with
+| Var (name, num) =>
+    if num =? i then Var (name, j)
+    else if num =? j then Var (name, i)
+    else Var (name, num)
+| Unit => Unit
+| Int n => Int n
+| Inl v' => Inl (v_switch_vars v' i j)
+| Inr v' => Inr (v_switch_vars v' i j)
+| Pair v1 v2 => Pair (v_switch_vars v1 i j) (v_switch_vars v2 i j)
+| Fun x c => Fun x (c_switch_vars c (i+1) (j+1))
+| Handler x c_ret h =>
+    Handler x (c_switch_vars c_ret (i+1) (j+1)) (h_switch_vars h i j)
+end
+with c_switch_vars (c:comp) (i:nat) (j:nat) :=
+match c with
+| Ret v => Ret (v_switch_vars v i j)
+| Absurd v => Absurd (v_switch_vars v i j)
+| ΠMatch v (x, y) c =>
+    ΠMatch (v_switch_vars v i j) (x,y) (c_switch_vars c (i+2) (j+2))
+| ΣMatch v xl cl xr cr =>
+    ΣMatch (v_switch_vars v i j) xl (c_switch_vars cl (i+1) (j+1)) 
+      xr (c_switch_vars cr (i+1) (j+1))
+| App v1 v2 => App (v_switch_vars v1 i j) (v_switch_vars v2 i j)
+| Op op v_arg y c => 
+    Op op (v_switch_vars v_arg i j) y (c_switch_vars c (i+1) (j+1))
+| LetRec f x c1 c2 =>
+    LetRec f x (c_switch_vars c1 (i+2) (j+2)) (c_switch_vars c2 (i+1) (j+1))
+| DoBind x c1 c2 => 
+    DoBind x (c_switch_vars c1 i j) (c_switch_vars c2 (i+1) (j+1))
+| Handle v c' => Handle (v_switch_vars v i j) (c_switch_vars c' i j)
+end
+with h_switch_vars (h:hcases) (i:nat) (j:nat) :=
+match h with
+| CasesØ => CasesØ
+| CasesU h op x k c =>
+    CasesU (h_switch_vars h i j) op x k (c_switch_vars c (i+2) (j+2))
+end.
+
+
+
+Lemma change_j_get_k Γ j k Aj :
+  j <> k -> get_vtype Γ k = get_vtype (ctx_change_var Γ j Aj) k.
+Proof.
+revert j k. induction Γ; intros j k neq_jk; auto.
+destruct k; destruct j; auto.
++ omega.
++ simpl. apply IHΓ. omega.
+Qed.
+
+Lemma change_j_get_j Γ j Aj_orig Aj 
+  (p_j : get_vtype Γ j = Some Aj_orig) :
+  get_vtype (ctx_change_var Γ j Aj) j = Some Aj.
+Proof.
+revert j p_j. induction Γ; intros j p_j; simpl in p_j.
++ discriminate.
++ destruct j; auto. simpl. apply IHΓ. assumption.
+Qed.
+
+
+Lemma v_switch_ii v i : v_switch_vars v i i = v
+with c_switch_ii c i : c_switch_vars c i i = c
+with h_switch_ii h i : h_switch_vars h i i = h.
+Proof.
+{
+revert i. induction v; intros i; simpl; try reflexivity;
+try f_equal; try apply IHv || apply IHv1 || apply IHv2.
++ destruct v as (name, num). destruct (num=?i) eqn:cmp.
+  apply Nat.eqb_eq in cmp. rewrite cmp. reflexivity. reflexivity.
++ apply c_switch_ii.
++ apply c_switch_ii.
++ apply h_switch_ii.
+}{
+revert i. induction c; intros i; simpl; try reflexivity; try destruct p;
+try f_equal; try apply v_switch_ii; try apply IHc || apply IHc1 || apply IHc2.
+}{
+revert i. induction h; intros i; simpl; try reflexivity.
+f_equal. apply IHh. apply c_switch_ii.
+}
+Qed.
+
+Lemma v_switchswitch v i j:
+  v_switch_vars (v_switch_vars v i j) i j = v
+with c_switchswitch c i j:
+  c_switch_vars (c_switch_vars c i j) i j = c
+with h_switchswitch h i j:
+  h_switch_vars (h_switch_vars h i j) i j = h.
+Proof.
+all: revert i j.
+{
+induction v; intros i j; simpl; try reflexivity; try f_equal;
+try apply IHv || apply IHv1 || apply IHv2;
+try apply c_switchswitch || apply h_switchswitch.
+
+destruct v as (name, num).
+destruct (num=?i) eqn:cmpi;
+destruct (num=?j) eqn:cmpj; simpl.
++ apply Nat.eqb_eq in cmpi. apply Nat.eqb_eq in cmpj. rewrite cmpi in *.
+  rewrite cmpj. rewrite <-beq_nat_refl. auto.
++ apply Nat.eqb_eq in cmpi. rewrite cmpi in *. rewrite Nat.eqb_neq in cmpj.
+  apply not_eq_sym in cmpj. rewrite <-Nat.eqb_neq in cmpj.
+  rewrite cmpj. rewrite <-beq_nat_refl. reflexivity.
++ apply Nat.eqb_eq in cmpj. rewrite cmpj in *. rewrite Nat.eqb_neq in cmpi.
+  apply not_eq_sym in cmpi. rewrite <-Nat.eqb_neq in cmpi.
+  rewrite cmpi. rewrite <-beq_nat_refl. reflexivity.
++ rewrite cmpi. rewrite cmpj. reflexivity.
+}{
+induction c; intros i j; try destruct p; simpl; f_equal;
+try apply v_switchswitch || apply IHc || apply IHc1 || apply IHc2.
+}{
+induction h; intros i j; simpl.
+reflexivity. f_equal. apply IHh. apply c_switchswitch.
+}
+Qed.
+
+Lemma v_switch_sym v i j :
+  v_switch_vars v i j = v_switch_vars v j i
+with c_switch_sym c i j :
+  c_switch_vars c i j = c_switch_vars c j i
+with h_switch_sym h i j :
+  h_switch_vars h i j = h_switch_vars h j i.
+Proof.
+{
+induction v; simpl;
+try f_equal; try apply IHv || apply IHv1 || apply IHv2;
+try apply h_switch_sym || apply c_switch_sym; try reflexivity.
+destruct v as (name, num).
+destruct (num=?i) eqn:cmpi. destruct (num=?j) eqn:cmpj.
+apply Nat.eqb_eq in cmpi. apply Nat.eqb_eq in cmpj.
+rewrite cmpj, cmpi in *. all: auto.
+}{
+revert i j. induction c; intros i j; try destruct p; simpl;
+try f_equal; try apply IHc || apply IHc1 || apply IHc2;
+apply v_switch_sym.
+}{
+induction h; simpl; f_equal; try auto || apply IHh.
+}
+Qed.
+
+Lemma switch_ij_get_k Γ k i j Ai Aj
+  (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
+  i <> k -> j <> k ->
+  get_vtype Γ k = get_vtype (ctx_switch_vars Γ i j Ai Aj p_i p_j) k.
+Proof.
+revert k i j p_i p_j. induction Γ;
+intros k i j p_i p_j neq_ik neq_jk. auto.
+revert i j p_i p_j neq_ik neq_jk. destruct k;
+intros i j p_i p_j neq_ik neq_jk.
++ destruct i.
+  - omega.
+  - simpl. destruct j; auto. omega.
++ destruct i; destruct j; simpl; auto.
+  - apply change_j_get_k. omega.
+  - apply change_j_get_k. omega.
+  - unfold ctx_switch_vars in IHΓ. apply IHΓ; auto; omega.
+Qed.
+      
+Lemma switch_ij_get_j Γ i j Ai Aj
+  (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
+  get_vtype Γ i = get_vtype (ctx_switch_vars Γ i j Ai Aj p_i p_j) j.
+Proof.
+revert i j p_i p_j. induction Γ; intros i j p_i p_j.
+auto.
+destruct i; destruct j; auto; simpl.
++ apply eq_sym. simpl in p_i. rewrite p_i.
+  apply (change_j_get_j Γ j Aj). auto.
++ unfold ctx_switch_vars in IHΓ. apply IHΓ. auto. auto.
+Qed.
+
+Lemma switch_ij_get_i Γ i j Ai Aj
+  (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) :
+  get_vtype Γ j = get_vtype (ctx_switch_vars Γ i j Ai Aj p_i p_j) i.
+Proof.
+revert i j p_i p_j. induction Γ; intros i j p_i p_j.
+auto.
+destruct i; destruct j; auto; simpl.
++ apply eq_sym. simpl in p_j. rewrite p_j.
+  apply (change_j_get_j Γ i Ai). auto.
++ unfold ctx_switch_vars in IHΓ. apply IHΓ. auto. auto.
+Qed.
+
+Lemma ctx_switch_extend1 Γ A i j Ai Aj
+    (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) 
+    (pp_i : get_vtype (CtxU Γ A) (i+1) = Some Ai)
+    (pp_j : get_vtype (CtxU Γ A) (j+1) = Some Aj) :
+  CtxU (ctx_switch_vars Γ i j Ai Aj p_i p_j) A
+    = 
+  (ctx_switch_vars (CtxU Γ A) (i+1) (j+1) Ai Aj pp_i pp_j).
+Proof.
+revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
++ destruct i; destruct j; auto.
++ rename v into G. unfold ctx_switch_vars.
+  assert (forall Γ',
+    CtxU (ctx_change_var Γ' j Ai) A
+      =
+    ctx_change_var (CtxU Γ' A) (j + 1) Ai).
+  * intro. simpl. destruct i; auto; simpl;
+    assert (j+1 = S j) by omega; rewrite H; auto.
+  * specialize (H (ctx_change_var (CtxU Γ G) i Aj)).
+    rewrite H. f_equal.
+    destruct i; auto; simpl.
+    assert (i+1 = S i) by omega; rewrite H0; auto.
+Qed.
+
+Lemma ctx_switch_extend2 Γ B A i j Ai Aj
+    (p_i : get_vtype Γ i = Some Ai) (p_j : get_vtype Γ j = Some Aj) 
+    (pp_i : get_vtype (CtxU (CtxU Γ B) A) (i+2) = Some Ai)
+    (pp_j : get_vtype (CtxU (CtxU Γ B) A) (j+2) = Some Aj) :
+  CtxU (CtxU (ctx_switch_vars Γ i j Ai Aj p_i p_j) B) A
+    = 
+  (ctx_switch_vars (CtxU (CtxU Γ B) A) (i+2) (j+2) Ai Aj pp_i pp_j).
+Proof.
+revert i j p_i p_j pp_i pp_j. induction Γ; intros i j p_i p_j pp_i pp_j.
++ destruct i; destruct j; simpl in *; discriminate.
++ rename v into G. unfold ctx_switch_vars.
+  assert (forall Γ',
+    CtxU (CtxU (ctx_change_var Γ' j Ai) B) A
+      =
+    ctx_change_var (CtxU (CtxU Γ' B) A) (j + 2) Ai).
+  * intro. simpl. destruct i; auto; simpl;
+    assert (j+2 = S (S j)) by omega; rewrite H; auto.
+  * specialize (H (ctx_change_var (CtxU Γ G) i Aj)).
+    rewrite H. f_equal.
+    destruct i; auto; simpl.
+    assert (i+2 = S (S i)) by omega; rewrite H0; auto.
+Qed.
+
+
+Lemma find_op_None_switch h i j op:
+  find_op_case h op = None -> find_op_case (h_switch_vars h i j) op = None.
+Proof.
+intro orig. induction h; auto.
+simpl. simpl in *.
+destruct (op==o).
++ discriminate.
++ apply IHh. assumption.
+Qed.
+
+Lemma find_op_Some_switch h i j op x_op k_op c_op:
+  find_op_case h op = Some (x_op, k_op, c_op) ->
+  find_op_case (h_switch_vars h i j) op
+    =
+  Some (x_op, k_op, c_switch_vars c_op (i+2) (j+2)).
+Proof.
+intro orig.
+induction h; auto; simpl; simpl in *.
++ discriminate.
++ destruct (op==o).
+  - f_equal. inv orig. auto.
+  - apply IHh. auto.
+Qed.
+
+Lemma v_no_var_j_switch_i_j v i j:
+  v_no_var_j v j -> v_no_var_j (v_switch_vars v j i) i
+with c_no_var_j_switch_i_j c i j:
+  c_no_var_j c j -> c_no_var_j (c_switch_vars c j i) i
+with h_no_var_j_switch_i_j h i j:
+  h_no_var_j h j -> h_no_var_j (h_switch_vars h j i) i.
+Proof.
+{
+clear v_no_var_j_switch_i_j.
+revert i j; induction v; intros i j orig; simpl; auto;
+try constructor; try destruct orig; simpl; auto.
+destruct v as (name, num).
+destruct (num=?j) eqn:cmpj.
++ simpl in orig. destruct orig. apply Nat.eqb_eq in cmpj. auto.
++ destruct (num=?i) eqn:cmpi; simpl.
+  * apply Nat.eqb_eq in cmpi. rewrite cmpi in *. simpl in orig. auto.
+  * apply Nat.eqb_neq in cmpi. auto.
+}{
+clear c_no_var_j_switch_i_j.
+revert i j; induction c; intros i j orig; try destruct p; simpl; auto;
+try constructor; try destruct orig; simpl; auto.
+constructor; destruct H0; auto.
+}{
+clear h_no_var_j_switch_i_j.
+revert i j; induction h; intros i j orig; simpl; auto;
+try constructor; try destruct orig; simpl; auto.
+}
+Qed.
+
+
+
+Fixpoint ctx_change_var (Γ:ctx) (i:nat) (A:vtype) :=
+  match Γ, i with
+  | CtxØ, _ => CtxØ
+  | CtxU Γ' A', 0 => CtxU Γ' A
+  | CtxU Γ' A', S i' => CtxU (ctx_change_var Γ' i' A) A'
+  end.
+
+
+Definition ctx_switch_vars (Γ : ctx) (i:nat) (j:nat) (A:vtype) (B:vtype)
+  (proof_i : get_vtype Γ i = Some A) (proof_j: get_vtype Γ j = Some B) : ctx
+:=
+  ctx_change_var (ctx_change_var Γ i B) j A.
+
+
+
+
 Lemma extend_get_proof Γ A i Ai:
   get_vtype Γ i = Some Ai-> get_vtype (CtxU Γ A) (i + 1) = Some Ai.
 Proof.
@@ -537,3 +838,94 @@ all: rewrite <-H0.
 + apply h_switch_typesafe. rewrite <-H.
   apply h_switch_typesafe. assumption.
 Qed. 
+
+
+
+Lemma v_shift_0 cut v : Sub.v_shift v 0 cut = v
+with c_shift_0 cut c : Sub.c_shift c 0 cut = c
+with h_shift_0 cut h : Sub.h_shift h 0 cut = h.
+Proof.
+{
+clear v_shift_0.
+revert cut. induction v; intros cut;
+simpl; try (specialize (IHv cut)); try rewrite IHv; try reflexivity.
++ destruct v. simpl. destruct (cut <=? v0); try reflexivity.
+  assert (v0 + 0 = v0) by omega.
+  rewrite H; reflexivity.
++ rewrite IHv1, IHv2. reflexivity.
++ rewrite c_shift_0. reflexivity.
++ f_equal; try apply c_shift_0 || apply h_shift_0.
+}{
+clear c_shift_0.
+revert cut. induction c; intros cut; simpl;
+try destruct p; f_equal;
+try apply v_shift_0 || apply IHc || apply IHc1 || apply IHc2.
+}{
+clear h_shift_0.
+revert cut. induction h; intros cut; simpl; f_equal.
+reflexivity. apply IHh. apply c_shift_0.
+}
+Qed.
+
+
+Lemma v_negshift_0 (cut:nat) (v:val) :
+  Sub.v_negshift v 0 cut = v
+with c_negshift_0 (cut:nat) (c:comp) :
+  Sub.c_negshift c 0 cut = c
+with h_negshift_0 (cut:nat) (h:hcases) :
+  Sub.h_negshift h 0 cut = h.
+Proof.
+{
+clear v_negshift_0.
+revert cut. induction v; intros cut; simpl; f_equal; auto.
+unfold Sub.id_down. destruct v. destruct (cut<=?v0).
++ assert (v0 - 0 = v0) by omega. rewrite H. reflexivity.
++ reflexivity.
+}{
+clear c_negshift_0.
+revert cut. induction c; intros cut; simpl; try destruct p; f_equal;
+try apply v_negshift_0 || apply IHc || apply IHc1 || apply IHc2.
+}{
+clear h_negshift_0.
+revert cut. induction h; intros cut; simpl; f_equal. 
+reflexivity. apply IHh. apply c_negshift_0.
+}
+Qed.
+
+
+Lemma v_negshift_shift (n:nat) (m:nat) (cut:nat) (v:val) :
+  (m <= n) ->
+  Sub.v_negshift (Sub.v_shift v n cut) m cut = (Sub.v_shift v (n - m) cut)
+
+with c_negshift_shift (n:nat) (m:nat) (cut:nat) (c:comp) :
+  (m <= n) ->
+  Sub.c_negshift (Sub.c_shift c n cut) m cut = (Sub.c_shift c (n - m) cut)
+
+with h_negshift_shift (n:nat) (m:nat) (cut:nat) (h:hcases) :
+  (m <= n) ->  
+  Sub.h_negshift (Sub.h_shift h n cut) m cut = (Sub.h_shift h (n - m) cut).
+Proof.
+{
+clear v_negshift_shift.  
+revert cut. induction v; intros cut m_le_n; simpl; f_equal.
+{ (* The only relevant case. *)
+  destruct v as (name, db_i). simpl.
+  induction (cut <=? db_i) eqn:cmp; simpl.
+  - apply (leb_complete _ _) in cmp.
+    assert (cut <= db_i + 1) by omega.
+    assert (cut <= db_i + n) by omega.
+    apply (leb_correct _ _) in H0. rewrite H0.
+    f_equal. omega.
+  - rewrite cmp. reflexivity. }
+all : try reflexivity || apply IHv || apply IHv1 || apply IHv2.
+all : try apply c_negshift_shift || apply h_negshift_shift; assumption.
+}{
+clear c_negshift_shift.
+revert cut. induction c; intros cut m_le_n; try destruct p; simpl; f_equal;
+try apply v_negshift_shift || apply IHc || apply IHc1 || apply IHc2; assumption.
+}{
+clear h_negshift_shift.
+revert cut. induction h; intros cut m_le_n; simpl; f_equal.
+reflexivity. apply IHh. assumption. apply c_negshift_shift. assumption.
+}
+Qed.

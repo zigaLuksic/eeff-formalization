@@ -5,20 +5,10 @@ Require Import Le Compare_dec.
 
 Module Sub.
 
-Definition id_up (id : var_id) d (cut : nat) :=
-  let (id_name, id_n) := id in
-  if Nat.leb cut id_n then (id_name, id_n + d) else id.
-
-Definition id_down (id : var_id) d (cut : nat) :=
-  let (id_name, id_n) := id in
-  if Nat.leb cut id_n then (id_name, id_n - d) else id.
-
-Definition fits_sub (id : var_id) (db_i : nat) :=
-  let (id_name, id_n) := id in Nat.eqb id_n db_i.
-
 Fixpoint v_shift (v : val) d (cut : nat) :=
 match v with
-| Var id => Var (id_up id d cut)
+| Var (x, n) => 
+    if cut <=? n then Var (x, n + d) else Var (x, n)
 | Unit => Unit
 | Int n => Int n
 | Inl v' => Inl (v_shift v' d cut)
@@ -32,8 +22,8 @@ with c_shift (c : comp) d (cut : nat) :=
 match c with
 | Ret v => Ret (v_shift v d cut)
 | Absurd v => Absurd (v_shift v d cut)
-| ΠMatch v (x, y) c =>
-    ΠMatch (v_shift v d cut) (x, y) (c_shift c d (cut+2))
+| ΠMatch v x y c =>
+    ΠMatch (v_shift v d cut) x y (c_shift c d (cut+2))
 | ΣMatch v xl cl xr cr =>
     ΣMatch (v_shift v d cut)
       xl (c_shift cl d (cut+1))
@@ -54,13 +44,13 @@ match h with
     CasesU (h_shift h d cut) op x k (c_shift c d (cut+2))
 end.
 
-Fixpoint sub_shift (sub : nat * val) (d : nat) :=
-  let (db_i, v_s) := sub in
-  (db_i + d, v_shift v_s d 0).
+Fixpoint sub_shift (sub : nat * val) d :=
+  let (db_i, v_s) := sub in (db_i + d, v_shift v_s d 0).
 
 Fixpoint v_negshift (v : val) d (cut : nat) :=
 match v with
-| Var id => Var (id_down id d cut)
+| Var (x, n) => 
+    if Nat.leb cut n then Var (x, n - d) else Var (x, n)   
 | Unit => Unit
 | Int n => Int n
 | Inl v' => Inl (v_negshift v' d cut)
@@ -74,8 +64,8 @@ with c_negshift (c : comp) d (cut : nat) :=
 match c with
 | Ret v => Ret (v_negshift v d cut)
 | Absurd v => Absurd (v_negshift v d cut)
-| ΠMatch v (x, y) c =>
-    ΠMatch (v_negshift v d cut) (x, y) (c_negshift c d (cut+2))
+| ΠMatch v x y c =>
+    ΠMatch (v_negshift v d cut) x y (c_negshift c d (cut+2))
 | ΣMatch v xl cl xr cr =>
     ΣMatch (v_negshift v d cut)
       xl (c_negshift cl d (cut+1))
@@ -99,7 +89,7 @@ end.
 Fixpoint v_sub (v : val) (sub : nat * val) :=
 let (db_i, v_s) := sub in
 match v with
-| Var id => if fits_sub id db_i then v_s else Var id 
+| Var (x, n) => if n =? db_i then v_s else Var (x, n) 
 | Unit => Unit
 | Int n => Int n
 | Inl v' => Inl (v_sub v' sub)
@@ -115,9 +105,8 @@ with c_sub (c : comp) (sub : nat * val) :=
 match c with
 | Ret v => Ret (v_sub v sub)
 | Absurd v => Absurd (v_sub v sub)
-| ΠMatch v (x, y) c =>
-    ΠMatch (v_sub v sub) (x, y)
-      (c_sub c (sub_shift sub 2))
+| ΠMatch v x y c =>
+    ΠMatch (v_sub v sub) x y (c_sub c (sub_shift sub 2))
 | ΣMatch v xl cl xr cr =>
     ΣMatch (v_sub v sub)
       xl (c_sub cl (sub_shift sub 1))
@@ -138,11 +127,8 @@ match h with
 | CasesØ => CasesØ
 | CasesU h op x k c => 
     CasesU
-      (h_sub h sub)
-      op x k
-      (c_sub c (sub_shift sub 2))
-end
-.
+      (h_sub h sub) op x k (c_sub c (sub_shift sub 2))
+end.
 
 End Sub.
 

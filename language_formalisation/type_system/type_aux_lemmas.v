@@ -6,7 +6,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\su
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 
 Require Export syntax syntax_lemmas declarational substitution Omega Logic.
-Require Export subs_lemmas subtyping subtyping_lemmas wellfounded_lemmas.
+Require Export substitution_lemmas subtyping subtyping_lemmas wf_lemmas.
 
 Ltac inv H := inversion H; clear H; subst.
 
@@ -36,7 +36,7 @@ inv orig. destruct H1.
 + clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
   simpl. apply TypeInt.
 + clear v_insert_typesafe c_insert_typesafe h_insert_typesafe.
-  simpl. destruct (i <=? num) eqn:cmp.
+  simpl. destruct (i <=? n) eqn:cmp.
   - apply TypeVar. rewrite <-get_ctx_insert_changed.
     assumption. apply leb_complete in cmp. omega.
   - apply TypeVar. rewrite <-get_ctx_insert_unchanged.
@@ -205,15 +205,10 @@ destruct H1.
 + clear v_negshift_typesafe c_negshift_typesafe h_negshift_typesafe.
   simpl. apply TypeInt.
 + clear v_negshift_typesafe c_negshift_typesafe h_negshift_typesafe.
-  simpl.
-  assert (
-    (if i <=? num then (name, num - 1) else (name, num))
-      = (name, if i <=? num then num - 1 else num) ) 
-    as same by (destruct (i<=?num); reflexivity).
-  rewrite same. destruct (i <=? num) eqn:cmp.
+  simpl. destruct (i <=? n) eqn:cmp.
   - apply TypeVar. rewrite <-get_ctx_remove_changed; apply leb_complete in cmp.
-    * destruct num. destruct no_var. omega.
-      simpl. assert (num-0=num) by omega. rewrite H2. assumption.
+    * destruct n. destruct no_var. omega.
+      simpl. assert (n-0=n) by omega. rewrite H2. assumption.
     * destruct cmp.
       ++ destruct no_var. reflexivity.
       ++ omega.
@@ -356,7 +351,7 @@ assumption. assumption. destruct H1.
 + clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. apply TypeInt.
 + clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. destruct (num =? i) eqn:cmp.
+  simpl. destruct (n =? i) eqn:cmp.
   - apply Nat.eqb_eq in cmp. rewrite cmp in *. rewrite H1 in gets.
     injection gets. intro. subst. inv vs_types. assumption.
   - apply TypeVar. assumption.
@@ -364,14 +359,14 @@ assumption. assumption. destruct H1.
   specialize (v_subs_typesafe _ _ _ H2) as IHv2.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. apply TypePair.
-  eapply IHv1. exact gets. assumption.
-  eapply IHv2. exact gets. assumption.
+  eapply IHv1; eauto.
+  eapply IHv2; eauto.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. apply TypeInl. eapply IHv. exact gets. assumption.
+  simpl. apply TypeInl. eapply IHv; eauto.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. apply TypeInr. eapply IHv. exact gets. assumption.
+  simpl. apply TypeInr. eapply IHv; eauto.
 + specialize (c_subs_typesafe _ _ _ H1) as IHc.
   specialize (v_subs_typesafe _ _ _ vs_types) as IHvs.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
@@ -384,26 +379,26 @@ assumption. assumption. destruct H1.
   simpl. apply TypeHandler.
   - eapply IHc. rewrite Si. exact gets.
     apply v_shift_typesafe. assumption. inv H0. inv H5. assumption.
-  - eapply IHh. exact gets. assumption.
+  - eapply IHh; eauto.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   eapply TypeVSubtype.
-  - eapply IHv. exact gets. assumption.
+  - eapply IHv; eauto.
   - assumption. 
 }{
 intros gets vs_types. apply TypeC; inv orig.
 assumption. assumption. destruct H1.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. apply TypeRet. eapply IHv. exact gets. assumption.
+  simpl. apply TypeRet. eapply IHv; eauto.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. apply TypeAbsurd. eapply IHv. exact gets. assumption.
+  simpl. apply TypeAbsurd. eapply IHv; eauto.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   specialize (c_subs_typesafe _ _ _ H2) as IHc.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeΠMatch.
-  - eapply IHv. exact gets. assumption.
+  - eapply IHv; eauto.
   - eapply IHc. rewrite SSi. exact gets. 
     rewrite <-(v_shift_shift 1 1 0).
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
@@ -413,7 +408,7 @@ assumption. assumption. destruct H1.
   specialize (c_subs_typesafe _ _ _ H3) as IHc2.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeΣMatch.
-  - eapply IHv. exact gets. assumption.
+  - eapply IHv; eauto.
   - eapply IHc1. rewrite Si. exact gets.
     apply v_shift_typesafe. assumption.
     inv H1. inv H5. assumption. 
@@ -424,7 +419,7 @@ assumption. assumption. destruct H1.
   specialize (c_subs_typesafe _ _ _ H2) as IHc2.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeDoBind.
-  - eapply IHc1. exact gets. assumption.
+  - eapply IHc1; eauto.
   - eapply IHc2. rewrite Si. exact gets.
     apply v_shift_typesafe. assumption.
     inv H1. inv H4. assumption.
@@ -432,14 +427,14 @@ assumption. assumption. destruct H1.
   specialize (v_subs_typesafe _ _ _ H2) as IHv0.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeApp.
-  - eapply IHv. exact gets. assumption.
-  - eapply IHv0. exact gets. assumption.
+  - eapply IHv; eauto.
+  - eapply IHv0; eauto.
 + specialize (v_subs_typesafe _ _ _ H1) as IHv.
   specialize (c_subs_typesafe _ _ _ H2) as IHc.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeHandle.
-  - eapply IHv. exact gets. assumption.
-  - eapply IHc. exact gets. assumption.
+  - eapply IHv; eauto.
+  - eapply IHc; eauto.
 + specialize (c_subs_typesafe _ _ _ H1) as IHc1.
   specialize (c_subs_typesafe _ _ _ H2) as IHc2.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
@@ -455,14 +450,14 @@ assumption. assumption. destruct H1.
   specialize (c_subs_typesafe _ _ _ H3) as IHc.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   simpl. eapply TypeOp. exact H1.
-  - eapply IHv. exact gets. assumption.
+  - eapply IHv; eauto.
   - eapply IHc. rewrite Si. exact gets. 
     apply v_shift_typesafe. assumption.
     inv H3. inv H4. assumption.
 + specialize (c_subs_typesafe _ _ _ H1) as IHc.
   clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
   eapply TypeCSubtype.
-  - eapply IHc. exact gets. assumption.
+  - eapply IHc; eauto.
   - assumption.
 }{
 intros gets vs_types; simpl; apply TypeH; inv orig.
@@ -480,10 +475,10 @@ destruct H2.
       simpl in *. destruct (o==o0). discriminate.
       apply IHh'. assumption.
     * apply no_find. assumption.
-  - eapply IHh. exact gets. assumption.
+  - eapply IHh; eauto.
   - rewrite SSi. eapply IHc. exact gets.
     rewrite <-(v_shift_shift 1 1 0).
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
-    all: inv H0. 2: assumption. apply WfFun; assumption.
+    all: inv H0. 2: assumption. apply WfTyFun; assumption.
 }
 Qed.

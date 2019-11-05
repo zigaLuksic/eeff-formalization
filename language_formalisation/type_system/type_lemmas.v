@@ -6,22 +6,21 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\op
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\operational_semantics". *)
-Require Export syntax declarational substitution subtyping_lemmas
-  subs_lemmas type_aux_lemmas operational_semantics.
+Require Export declarational subtyping_lemmas substitution_lemmas 
+  type_aux_lemmas operational_semantics.
 
 
 Ltac inv H := inversion H; clear H; subst.
 
-Fixpoint v_sub_out_typesafe
-  (Γ:ctx) (v:val) (A:vtype) (v_s:val) (A_s:vtype) {struct v}:
+Fixpoint v_sub_out_typesafe Γ v A v_s A_s {struct v}:
   has_vtype (CtxU Γ A_s) v A -> has_vtype Γ v_s A_s ->
   has_vtype Γ (v_sub_out v v_s) A
-with c_sub_out_typesafe
-  (Γ:ctx) (c:comp) (C:ctype) (v_s:val) (A_s:vtype) {struct c}:
+
+with c_sub_out_typesafe Γ c C v_s A_s {struct c}:
   has_ctype (CtxU Γ A_s) c C -> has_vtype Γ v_s A_s ->
   has_ctype Γ (c_sub_out c v_s) C
-with h_sub_out_typesafe
-  (Γ:ctx) (h:hcases) (Σ:sig) (D:ctype) (v_s:val) (A_s:vtype) {struct h}:
+
+with h_sub_out_typesafe Γ h Σ D v_s A_s {struct h}:
   has_htype (CtxU Γ A_s) h Σ D -> has_vtype Γ v_s A_s ->
   has_htype Γ (h_sub_out h v_s) Σ D.
 Proof.
@@ -29,25 +28,26 @@ Proof.
 intros orig sub. unfold v_sub_out.
 assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
 rewrite H. apply v_negshift_typesafe.
-eapply v_subs_typesafe. assumption. simpl. reflexivity.
-apply v_shift_typesafe. assumption. inv sub. assumption.
-apply v_no_var_sub. apply v_shift_makes_no_var.
+- eapply v_subs_typesafe. assumption. simpl. reflexivity.
+  apply v_shift_typesafe. assumption. inv sub. assumption.
+- apply v_no_var_sub. apply v_shift_makes_no_var.
 }{
 intros orig sub. unfold c_sub_out.
 assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
 rewrite H. apply c_negshift_typesafe.
-eapply c_subs_typesafe. assumption. simpl. reflexivity.
-apply v_shift_typesafe. assumption. inv sub. assumption.
-apply c_no_var_sub. apply v_shift_makes_no_var.
+- eapply c_subs_typesafe. assumption. simpl. reflexivity.
+  apply v_shift_typesafe. assumption. inv sub. assumption.
+- apply c_no_var_sub. apply v_shift_makes_no_var.
 }{
 intros orig sub. unfold h_sub_out.
 assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
 rewrite H. apply h_negshift_typesafe.
-eapply h_subs_typesafe. assumption. simpl. reflexivity.
-apply v_shift_typesafe. assumption. inv sub. assumption.
-apply h_no_var_sub. apply v_shift_makes_no_var.
+- eapply h_subs_typesafe. assumption. simpl. reflexivity.
+  apply v_shift_typesafe. assumption. inv sub. assumption.
+- apply h_no_var_sub. apply v_shift_makes_no_var.
 }
 Qed.
+
 
 Lemma preservation Γ c c' C:
   has_ctype Γ c C -> step c c' -> has_ctype Γ c' C.
@@ -118,7 +118,6 @@ induction step; intros C orig.
   - inv H. apply WfCtxU; assumption.
   - inv retty. inv hty. inv H5. assumption.
   - eapply TypeCSubtype. eauto. inv H0. inv H2. assumption.
-
 + eapply shape_handle in orig. rename C into D. 
   destruct orig as [C[hty]]. destruct C as (A, Σ, E).
   eapply shape_handler in hty as hty'. destruct hty' as [Σ'[D'[retty]]].
@@ -136,28 +135,28 @@ induction step; intros C orig.
   - eapply sig_subtype_gets_Some in gets. 2: exact ssty.
     destruct gets as [A'[B'[gets']]]. inv H8.
     eapply ctx_subtype_ctype. eapply case_has_type; eauto.
-    * apply WfCtxU. apply WfCtxU. 2: apply WfFun. all: auto.
-    * apply CtxUsubty. apply CtxUsubty.
-      apply ctx_subtype_refl. assumption. apply VsubtyFun. assumption.
+    * apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
+    * apply SubtypeCtxU. apply SubtypeCtxU.
+      apply ctx_subtype_refl. assumption. apply SubtypeTyFun. assumption.
       apply csubtype_refl. inv hcty. assumption. assumption.
   - assert (CtxU Γ (TyFun Bop D') = ctx_insert_var Γ (TyFun Bop D') 0).
     { destruct Γ; simpl; reflexivity. }
     rewrite H8. eapply v_insert_typesafe. assumption.
-    apply WfFun; assumption.
-  - apply TypeV. assumption. apply WfFun; assumption.
+    apply WfTyFun; assumption.
+  - apply TypeV. assumption. apply WfTyFun; assumption.
     eapply TypeFun. apply TypeC. apply WfCtxU. all: try assumption.
     eapply TypeHandle. 2: exact H5.
     assert (CtxU Γ Bop = ctx_insert_var Γ Bop 0).
     { destruct Γ; simpl; reflexivity. }
     rewrite H8. eapply v_insert_typesafe. 2: assumption.
-    apply TypeV. assumption. apply WfHandler. inv H0. assumption. assumption.
+    apply TypeV. assumption. apply WfTyHandler. inv H0. assumption. assumption.
     eapply TypeVSubtype. instantiate (1:=(TyHandler (CTy A Σ' E) D'));
     inv H5; inv H10; inv H0.
-    * apply TypeV. assumption. apply WfHandler. apply WfCty; auto.
+    * apply TypeV. assumption. apply WfTyHandler. apply WfCTy; auto.
       inv hcty. assumption. eapply wf_eqs_sig_subtype; eauto.
       inv hcty. assumption. inv hcty. assumption.
       apply TypeHandler; auto.
-    * apply VsubtyHandler. apply Csubty. 2: assumption.
+    * apply SubtypeTyHandler. apply SubtypeCTy. 2: assumption.
       apply vsubtype_refl. inv H5. inv H10. assumption.
       eapply eqs_subtype_refl. inv H5. inv H10. eauto.
       apply csubtype_refl. assumption.
@@ -175,7 +174,7 @@ revert C. induction c; intros C orig.
 + apply shape_absurd in orig. apply shape_empty in orig as shape. 
   destruct shape as [x [i]]. subst. apply shape_var_empty_ctx in orig.
   destruct orig.
-+ right. right. destruct p as (x, y). clear IHc.
++ rename v0 into x. rename v1 into y. right. right. clear IHc.
   eapply shape_prodmatch in orig. destruct orig as [A [B [vty]]].
   eapply shape_pair_full in vty as shape. 2: reflexivity.
   destruct shape.

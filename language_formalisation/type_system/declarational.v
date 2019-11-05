@@ -8,13 +8,13 @@ Inductive wf_vtype : vtype -> Prop :=
 | WfUnit : wf_vtype TyUnit 
 | WfInt : wf_vtype TyInt
 | WfEmpty : wf_vtype TyØ
-| WfΣ A B: wf_vtype A -> wf_vtype B -> wf_vtype (TyΣ A B)
-| WfΠ A B : wf_vtype A -> wf_vtype B -> wf_vtype (TyΠ A B)
-| WfFun A C : wf_vtype A -> wf_ctype C -> wf_vtype (TyFun A C)
-| WfHandler C D : wf_ctype C -> wf_ctype D -> wf_vtype (TyHandler C D)
+| WfTyΣ A B: wf_vtype A -> wf_vtype B -> wf_vtype (TyΣ A B)
+| WfTyΠ A B : wf_vtype A -> wf_vtype B -> wf_vtype (TyΠ A B)
+| WfTyFun A C : wf_vtype A -> wf_ctype C -> wf_vtype (TyFun A C)
+| WfTyHandler C D : wf_ctype C -> wf_ctype D -> wf_vtype (TyHandler C D)
 
 with wf_ctype : ctype -> Prop :=
-| WfCty A Σ E : wf_vtype A -> wf_sig Σ -> wf_eqs E Σ -> wf_ctype (CTy A Σ E)
+| WfCTy A Σ E : wf_vtype A -> wf_sig Σ -> wf_eqs E Σ -> wf_ctype (CTy A Σ E)
     
 with wf_sig : sig -> Prop :=
 | WfSigØ : wf_sig SigØ
@@ -59,9 +59,9 @@ with has_vtype : ctx -> val -> vtype -> Prop :=
 with has_vtype' : ctx -> val -> vtype -> Prop :=
 | TypeUnit Γ : has_vtype' Γ Unit TyUnit 
 | TypeInt Γ n : has_vtype' Γ (Int n) TyInt
-| TypeVar Γ name num A :
-    get_vtype Γ num = Some A ->
-    has_vtype' Γ (Var (name, num)) A
+| TypeVar Γ x n A :
+    get_vtype Γ n = Some A ->
+    has_vtype' Γ (Var (x, n)) A
 | TypePair Γ v1 v2 A B :
     has_vtype Γ v1 A ->
     has_vtype Γ v2 B ->
@@ -95,7 +95,7 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
 | TypeΠMatch Γ v A B x y c C :
     has_vtype Γ v (TyΠ A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
-    has_ctype' Γ (ΠMatch v (x, y) c) C
+    has_ctype' Γ (ΠMatch v x y c) C
 | TypeΣMatch Γ v A B xl cl xr cr C :
     has_vtype Γ v (TyΣ A B) ->
     has_ctype (CtxU Γ A) cl C ->
@@ -136,17 +136,5 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
     find_op_case h op_id = None ->
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ (TyFun B_op D)) A_op) c_op D ->
-    has_htype' 
-      Γ (CasesU h op_id x k c_op) (SigU Σ op_id A_op B_op) D
+    has_htype' Γ (CasesU h op_id x k c_op) (SigU Σ op_id A_op B_op) D
 .
-
-
-Lemma ctx_gets_wf Γ num A : 
-    wf_ctx Γ -> get_vtype Γ num = Some A -> wf_vtype A.
-Proof.
-intros wf. revert num. induction wf; intros num gets.
-+ simpl in gets. discriminate.
-+ simpl in gets. destruct num.
-  - injection gets. intros. subst. assumption.
-  - eapply IHwf. exact gets.
-Qed.
