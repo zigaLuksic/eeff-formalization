@@ -61,3 +61,65 @@ Lemma ctx_insert_extend Γ i A_ins A :
 Proof.
 revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H; auto.
 Qed.
+
+Lemma join_ctxs_insert_var Γ1 Γ2 i A :
+  join_ctxs (ctx_insert_var Γ1 A i) Γ2= 
+    ctx_insert_var (join_ctxs Γ1 Γ2) A (i + ctx_len Γ2). 
+Proof.
+induction Γ2; simpl. auto.
+assert (i + S (ctx_len Γ2) = S (i + ctx_len Γ2)) by omega.
+rewrite H. f_equal. auto.
+Qed.
+
+Lemma join_ctx_tctx_insert_var  Γ Z D i A :
+  join_ctx_tctx (ctx_insert_var Γ A i) Z D = 
+    ctx_insert_var (join_ctx_tctx Γ Z D) A (i + tctx_len Z). 
+Proof.
+induction Z; simpl. auto.
+assert (i + S (tctx_len Z) = S (i + tctx_len Z)) by omega.
+rewrite H. f_equal. auto.
+Qed.
+
+Lemma ctx_len_get_vtype Γ n :
+  (exists A, get_vtype Γ n = Some A) <-> ctx_len Γ > n.
+Proof.
+constructor.
++ revert n. induction Γ; intros n gets.
+  - simpl in gets. destruct gets. discriminate.
+  - simpl in *. destruct n.
+    * omega.
+    * apply IHΓ in gets. omega.
++ revert n. induction Γ; intros n gets.
+  - simpl in gets. omega.
+  - simpl in *. destruct n.
+    * eauto.
+    * apply IHΓ. omega.
+Qed.
+
+Lemma ctx_len_gets Γ n A:
+  get_vtype Γ n = Some A -> ctx_len Γ > n.
+Proof.
+intro. apply ctx_len_get_vtype. eauto.
+Qed.
+
+Lemma tctx_len_get_ttype Z n :
+  (exists A, get_ttype Z n = Some A) <-> tctx_len Z > n.
+Proof.
+constructor.
++ revert n. induction Z; intros n gets.
+  - simpl in gets. destruct gets. discriminate.
+  - simpl in *. destruct n.
+    * omega.
+    * apply IHZ in gets. omega.
++ revert n. induction Z; intros n gets.
+  - simpl in gets. omega.
+  - simpl in *. destruct n.
+    * eauto.
+    * apply IHZ. omega.
+Qed.
+
+Lemma tctx_len_gets Z n A:
+  get_ttype Z n = Some A -> tctx_len Z > n.
+Proof.
+intro. apply tctx_len_get_ttype. eauto.
+Qed.

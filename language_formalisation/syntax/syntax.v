@@ -162,3 +162,31 @@ Fixpoint ctx_insert_var (Γ:ctx) A (i:nat) :=
   | CtxØ, _ => CtxØ
   | CtxU Γ' A', S i' => CtxU (ctx_insert_var Γ' A i') A'
   end.
+
+
+Fixpoint ctx_len Γ :=
+  match Γ with
+  | CtxØ => 0
+  | CtxU Γ _ => S (ctx_len Γ)
+  end.
+
+
+Fixpoint tctx_len Z :=
+  match Z with
+  | TCtxØ => 0
+  | TCtxU Z _ => S (tctx_len Z)
+  end.
+
+
+Fixpoint join_ctxs Γ1 Γ2 :=
+  match Γ2 with
+  | CtxØ => Γ1
+  | CtxU Γ2' A => CtxU (join_ctxs Γ1 Γ2') A
+  end.
+
+
+Fixpoint join_ctx_tctx Γ Z D :=
+  match Z with
+  | TCtxØ => Γ
+  | TCtxU Z A => CtxU (join_ctx_tctx Γ Z D) (TyFun A D)
+  end.

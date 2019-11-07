@@ -53,3 +53,17 @@ induction Σ; intros orig gets; constructor.
   - inv gets. inv orig. assumption.
   - inv orig. apply IHΣ; assumption.
 Qed.
+
+Lemma join_ctxs_wf Γ Γ' :
+  wf_ctx Γ -> wf_ctx Γ' -> wf_ctx (join_ctxs Γ Γ').
+Proof.
+intros wf wf'. induction wf'; simpl; auto.
+apply WfCtxU; auto.
+Qed.
+
+Lemma join_ctx_tctx_wf Γ Z D:
+  wf_ctx Γ -> wf_tctx Z -> wf_ctype D -> wf_ctx (join_ctx_tctx Γ Z D).
+Proof.
+intros wfctx wfZ wfD. induction wfZ; simpl. auto.
+apply WfCtxU. auto. apply WfTyFun; auto.
+Qed.
