@@ -1,41 +1,9 @@
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
-Require Export syntax syntax_lemmas subtyping substitution.
+Require Export syntax syntax_lemmas subtyping.
 
-
-
-Fixpoint handle_tmpl h T :=
-  match T with
-  | TApp x v => App (Var x) v
-  | TAbsurd v => Absurd v
-  | TΠMatch v x y T => 
-      ΠMatch v x y (handle_tmpl h T)
-  | TΣMatch v x T1 y T2 => 
-      ΣMatch v x (handle_tmpl h T1) y (handle_tmpl h T2)
-  | TOp op v y T =>
-      match find_op_case h op with 
-      | Some (x, k, c_op) => (c_sub2_out c_op (Fun y (handle_tmpl h T)) v)
-      | None => Op op v y (handle_tmpl h T)
-      end
-  end.
-
-Fixpoint tctx_len Z :=
-  match Z with
-  | TCtxØ => 0
-  | TCtxU Z _ => S (tctx_len Z)
-  end.
-
-Fixpoint join_ctxs Γ Z D :=
-  match Z with
-  | TCtxØ => Γ
-  | TCtxU Z A => CtxU (join_ctxs Γ Z D) (TyFun A D)
-  end.
-
-(* ========================================================================== *)
 Inductive wf_vtype : vtype -> Prop :=
 | WfUnit : wf_vtype TyUnit 
 | WfInt : wf_vtype TyInt
@@ -85,9 +53,6 @@ with wf_eqs : eqs -> sig -> Prop :=
     wf_tmpl Γ Z T1 Σ -> wf_tmpl Γ Z T2 Σ -> 
     wf_eqs (EqsU E Γ Z T1 T2) Σ
 
-
-(* ========================================================================== *)
-
 with has_vtype : ctx -> val -> vtype -> Prop :=
 | TypeV Γ v A : wf_ctx Γ ->  wf_vtype A -> has_vtype' Γ v A -> has_vtype Γ v A
 
@@ -112,10 +77,11 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
     has_vtype' Γ (Fun x c) (TyFun A C)
 | TypeHandler Γ x c_ret h A Σ E D :
     has_ctype (CtxU Γ A) c_ret D ->
-    has_htype Γ h Σ D -> respects h Σ D E ->
+    has_htype Γ h Σ D ->
     has_vtype' Γ (Handler x c_ret h) (TyHandler (CTy A Σ E) D)
 | TypeVSubtype Γ v A A' :
     has_vtype Γ v A -> vsubtype A A' -> has_vtype' Γ v A'
+
 
 with has_ctype : ctx -> comp -> ctype -> Prop :=
 | TypeC Γ c C : wf_ctx Γ -> wf_ctype C -> has_ctype' Γ c C -> has_ctype Γ c C
@@ -171,21 +137,4 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ (TyFun B_op D)) A_op) c_op D ->
     has_htype' Γ (CasesU h op_id x k c_op) (SigU Σ op_id A_op B_op) D
-
-(* ========================================================================== *)
-
-with respects : hcases -> sig -> ctype -> eqs -> Prop :=
-| RespectEqsØ h Σ D : respects h Σ D EqsØ
-| RespectEqsU h Σ D E Γ Z T1 T2 :
-    respects h Σ D E -> 
-    ceq D (join_ctxs Γ Z D)
-      (handle_tmpl (Sub.h_shift h (tctx_len Z) 0) T1)
-      (handle_tmpl (Sub.h_shift h (tctx_len Z) 0) T2)
-    -> respects h Σ D (EqsU E Γ Z T1 T2)
-
-with veq : vtype -> ctx -> val -> val -> Prop :=
-| Veq A Γ v1 v2 : veq A Γ v1 v2 (* Accepts everything! *)
-
-with ceq : ctype -> ctx -> comp -> comp -> Prop :=
-| Ceq C Γ c1 c2 : ceq C Γ c1 c2 (* Accepts everything! *)
 .
