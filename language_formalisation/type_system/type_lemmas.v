@@ -192,7 +192,7 @@ revert C. induction c; intros C orig.
   - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inr.
 + right. right.
   eapply shape_app_full in orig. 2: reflexivity.
-  destruct orig as [A [fty]]. eapply shape_fun_full in fty as ffty.
+  destruct orig as [A [fty]]. eapply shape_tyfun_full in fty as ffty.
   2: reflexivity. destruct ffty.
   - destruct H0 as [name [db_i]]. rewrite H0 in *.
     apply shape_var_empty_ctx in fty. destruct fty.

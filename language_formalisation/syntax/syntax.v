@@ -131,8 +131,7 @@ with c_no_var_j (c:comp) (j:nat) :=
 match c with
 | Ret v => v_no_var_j v j
 | Absurd v => v_no_var_j v j 
-| ΠMatch v x y c => 
-    (v_no_var_j v j) /\ c_no_var_j c (j+2)
+| ΠMatch v x y c => (v_no_var_j v j) /\ c_no_var_j c (j+2)
 | ΣMatch v xl cl xr cr =>
     (v_no_var_j v j) /\ (c_no_var_j cl (j+1)) /\ (c_no_var_j cr (j+1))
 | App v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)

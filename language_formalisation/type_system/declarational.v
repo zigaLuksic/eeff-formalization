@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
 Require Export syntax syntax_lemmas subtyping substitution.
 
 
@@ -11,13 +11,15 @@ Fixpoint handle_tmpl h T :=
   match T with
   | TApp x v => App (Var x) v
   | TAbsurd v => Absurd v
-  | TΠMatch v x y T => 
-      ΠMatch v x y (handle_tmpl h T)
+  | TΠMatch v x y T => ΠMatch v x y (handle_tmpl (Sub.h_shift h 2 0) T)
   | TΣMatch v x T1 y T2 => 
-      ΣMatch v x (handle_tmpl h T1) y (handle_tmpl h T2)
+        ΣMatch v 
+          x (handle_tmpl (Sub.h_shift h 1 0) T1) 
+          y (handle_tmpl (Sub.h_shift h 1 0) T2)
   | TOp op v y T =>
       match find_op_case h op with 
-      | Some (x, k, c_op) => (c_sub2_out c_op (Fun y (handle_tmpl h T)) v)
+      | Some (x, k, c_op) => 
+          (c_sub2_out c_op (Fun y (handle_tmpl (Sub.h_shift h 1 0) T)) v)
       | None => Op op v y (handle_tmpl h T)
       end
   end.
@@ -165,7 +167,8 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 with respects : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | Respects Γ h Σ D E :
     wf_ctx Γ -> wf_sig Σ -> wf_ctype D -> wf_eqs E Σ ->
-    respects' Γ h Σ D E -> respects Γ h Σ D E 
+    respects' Γ h Σ D E -> 
+    respects Γ h Σ D E 
 
 with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | RespectEqsØ Γ h Σ D : respects' Γ h Σ D EqsØ
@@ -173,8 +176,8 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
     respects Γ h Σ D E -> 
     ceq D (join_ctx_tctx (join_ctxs Γ Γ') Z D)
       (handle_tmpl (Sub.h_shift h (ctx_len Γ' + tctx_len Z) 0) T1)
-      (handle_tmpl (Sub.h_shift h (ctx_len Γ' + tctx_len Z) 0) T2)
-    -> respects' Γ h Σ D (EqsU E Γ' Z T1 T2)
+      (handle_tmpl (Sub.h_shift h (ctx_len Γ' + tctx_len Z) 0) T2) ->
+    respects' Γ h Σ D (EqsU E Γ' Z T1 T2)
 
 with veq : vtype -> ctx -> val -> val -> Prop := 
 | Veq A Γ v1 v2 : wf_vtype A -> wf_ctx Γ -> veq' A Γ v1 v2 -> veq A Γ v1 v2

@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
 
 Require Export syntax syntax_lemmas declarational substitution Omega Logic.
 Require Export substitution_lemmas subtyping subtyping_lemmas wf_lemmas.
@@ -12,36 +12,113 @@ Ltac inv H := inversion H; clear H; subst.
 
 
 Fixpoint v_shift_too_high Γ v A n cut :
-  has_vtype Γ v A -> cut > ctx_len Γ -> Sub.v_shift v n cut = v
+  has_vtype Γ v A -> cut >= ctx_len Γ -> Sub.v_shift v n cut = v
 with c_shift_too_high Γ c C n cut :
-  has_ctype Γ c C -> cut > ctx_len Γ -> Sub.c_shift c n cut = c
+  has_ctype Γ c C -> cut >= ctx_len Γ -> Sub.c_shift c n cut = c
 with h_shift_too_high Γ h Σ D n cut :
-  has_htype Γ h Σ D -> cut > ctx_len Γ -> Sub.h_shift h n cut = h.
+  has_htype Γ h Σ D -> cut >= ctx_len Γ -> Sub.h_shift h n cut = h.
 Proof.
 {
-intros types high. destruct v; simpl; try f_equal.
+intros types high. destruct v; simpl.
 + destruct v. eapply shape_var in types. destruct types as [A'[gets]].
   apply ctx_len_gets in gets. destruct (cut <=? v0) eqn:cmp. 
   apply leb_complete in cmp. omega. reflexivity.
 + reflexivity.
++ reflexivity.
 + eapply shape_inl_full in types. 2: reflexivity. destruct types as [A'[B']].
-  eapply v_shift_too_high. 2: eauto. destruct H. eauto.
+  f_equal. eapply v_shift_too_high. 2: eauto. destruct H. eauto.
 + eapply shape_inr_full in types. 2: reflexivity. destruct types as [A'[B']].
-  eapply v_shift_too_high. 2: eauto. destruct H. eauto.
+  f_equal. eapply v_shift_too_high. 2: eauto. destruct H. eauto.
++ eapply shape_pair_full in types. 2: reflexivity. destruct types as [A'[B']].
+  destruct H as [s[ty1]]. f_equal; eapply v_shift_too_high; eauto.
++ eapply shape_fun_full in types. 2: reflexivity. destruct types as [A'[C']].
+  f_equal. eapply c_shift_too_high. destruct H. eauto. simpl. omega.
++ eapply shape_handler_full in types. 2: reflexivity.
+  destruct types as [A'[Σ[E[D[Σ'[D'[_[cty[hty]]]]]]]]].
+  f_equal. eapply c_shift_too_high. eauto. simpl. omega.
+  eapply h_shift_too_high. eauto. omega.
+}{
+intros types high. destruct c; simpl.
++ destruct C as (A, Σ, E). eapply shape_ret_full in types; eauto.
+  f_equal. eapply v_shift_too_high; eauto.
++ eapply shape_absurd in types. f_equal. eapply v_shift_too_high; eauto.
++ eapply shape_prodmatch in types. destruct types as [A[B[vty]]].
+  f_equal. eapply v_shift_too_high; eauto. eapply c_shift_too_high. eauto.
+  simpl. omega.
++ eapply shape_summatch in types. destruct types as [A[B[vty[c1ty]]]].
+  f_equal. eapply v_shift_too_high; eauto. all: eapply c_shift_too_high; eauto;
+  simpl; omega.
++ eapply shape_app_full in types. 2: reflexivity. destruct types as [A[vty]].
+  f_equal; eapply v_shift_too_high; eauto.
++ destruct C as (A, Σ, E). eapply shape_op in types.
+  destruct types as [Aop[Bop[gets[arg]]]]. f_equal.
+  eapply v_shift_too_high; eauto. eapply c_shift_too_high; eauto. simpl. omega.
++ eapply shape_letrec in types. destruct types as [A'[C'[cty]]].
+  f_equal; eapply c_shift_too_high; eauto; simpl; omega.
++ destruct C as (A,Σ,E). eapply shape_dobind in types.
+  destruct types as [A'[cty]]. f_equal; eapply c_shift_too_high; eauto.
+  simpl. omega.
++ eapply shape_handle in types. destruct types as [C'[vty]].
+  f_equal. eapply v_shift_too_high; eauto. eapply c_shift_too_high; eauto.
+}{
+intros types high. destruct h; simpl. reflexivity.
+inv types. inv H2. f_equal.
++ eapply h_shift_too_high; eauto.
++ eapply c_shift_too_high. eauto. simpl. omega.
+}
+Qed.
 
 
-Lemma handle_tmpl_shift Γ Z h i T Σ :
+Lemma handle_tmpl_shift Γ Z h i T Σ:
   wf_tmpl Γ Z T Σ ->
   handle_tmpl (Sub.h_shift (Sub.h_shift h 1 i) (ctx_len Γ + tctx_len Z) 0) T
   = Sub.c_shift 
       (handle_tmpl (Sub.h_shift h (ctx_len Γ + tctx_len Z) 0) T)
       1 (i + (ctx_len Γ + tctx_len Z)).
 Proof.
-intros wf. induction T; simpl.
-+ inv wf. apply tctx_len_gets in H5 as zlen.
+revert Γ i. induction T; intros Γ i wf; simpl; inv wf.
++ apply tctx_len_gets in H5 as zlen.
   destruct (i + (ctx_len Γ + tctx_len Z) <=? num) eqn:cmp.
   - apply leb_complete in cmp. omega.
-  - 
+  - f_equal. apply eq_sym. eapply v_shift_too_high. eauto. omega.
++ f_equal. apply eq_sym. eapply v_shift_too_high. eauto. omega.
++ f_equal.
+  - apply eq_sym. eapply v_shift_too_high. eauto. omega.
+  - eapply (IHT _ i) in H7. simpl in H7. 
+    assert (S(S(ctx_len Γ+tctx_len Z))=ctx_len Γ+tctx_len Z+2) by omega.
+    rewrite H in H7. do 2 rewrite h_shift_shift in *. rewrite H7.
+    f_equal. omega.
++ f_equal.
+  - apply eq_sym. eapply v_shift_too_high. eauto. omega.
+  - eapply (IHT1 _ i) in H8. simpl in H8.
+    assert (S(ctx_len Γ+tctx_len Z)=ctx_len Γ+tctx_len Z+1) by omega.
+    rewrite H in H8. do 2 rewrite h_shift_shift in *. rewrite H8.
+    f_equal. omega.
+  - eapply (IHT2 _ i) in H9. simpl in H9.
+    assert (S(ctx_len Γ+tctx_len Z)=ctx_len Γ+tctx_len Z+1) by omega.
+    rewrite H in H9. do 2 rewrite h_shift_shift in *. rewrite H9.
+    f_equal. omega.
++ destruct (find_op_case h o) eqn:find.
+  - remember (ctx_len Γ + tctx_len Z) as len.
+    destruct p as (p', cop). destruct p' as (x, k).
+    assert (find_op_case (Sub.h_shift (Sub.h_shift h 1 i) len 0) o 
+      = Some (x, k, Sub.c_shift (Sub.c_shift cop 1 (i + 2)) len 2) ).
+    { eapply (h_shift_find_op_Some _ _ 1 i) in find.
+      eapply (h_shift_find_op_Some _ _ len 0) in find.
+      rewrite find. f_equal. }
+    assert (find_op_case (Sub.h_shift h len 0) o 
+      = Some (x, k, Sub.c_shift cop len 2) ).
+    { eapply (h_shift_find_op_Some _ _ len 0) in find.
+      rewrite find. f_equal. }
+    rewrite H. rewrite H0. simpl. rewrite Heqlen.
+    rewrite IHT.
+    * unfold c_sub2_out. unfold c_sub_out.
+      rewrite c_shift_sub. f_equal.
+      { rewrite c_shift_sub. f_equal. rewrite c_shift_comm_aux.
+        f_equal. omega. omega. 
+        erewrite (v_shift_too_high _ (Sub.v_shift v 1 0)). reflexivity.
+        eauto. admit. admit. omega. }
+      { simpl. f_equal.
 
 
 
