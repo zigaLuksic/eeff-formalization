@@ -124,28 +124,68 @@ match v with
 | Inl v' => v_no_var_j v' j
 | Inr v' => v_no_var_j v' j
 | Pair v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
-| Fun x c => c_no_var_j c (j+1)
-| Handler x c_ret h => (c_no_var_j c_ret (j+1)) /\ (h_no_var_j h j)
+| Fun x c => c_no_var_j c (1+j)
+| Handler x c_ret h => (c_no_var_j c_ret (1+j)) /\ (h_no_var_j h j)
 end
 with c_no_var_j (c:comp) (j:nat) :=
 match c with
 | Ret v => v_no_var_j v j
 | Absurd v => v_no_var_j v j 
-| ΠMatch v x y c => (v_no_var_j v j) /\ c_no_var_j c (j+2)
+| ΠMatch v x y c => (v_no_var_j v j) /\ c_no_var_j c (2+j)
 | ΣMatch v xl cl xr cr =>
-    (v_no_var_j v j) /\ (c_no_var_j cl (j+1)) /\ (c_no_var_j cr (j+1))
+    (v_no_var_j v j) /\ (c_no_var_j cl (1+j)) /\ (c_no_var_j cr (1+j))
 | App v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
-| Op op v_arg y c => (v_no_var_j v_arg j) /\ (c_no_var_j c (j+1))
-| LetRec f x c1 c2 => (c_no_var_j c1 (j+2)) /\ (c_no_var_j c2 (j+1))
-| DoBind x c1 c2 => (c_no_var_j c1 j) /\ (c_no_var_j c2 (j+1))
+| Op op v_arg y c => (v_no_var_j v_arg j) /\ (c_no_var_j c (1+j))
+| LetRec f x c1 c2 => (c_no_var_j c1 (2+j)) /\ (c_no_var_j c2 (1+j))
+| DoBind x c1 c2 => (c_no_var_j c1 j) /\ (c_no_var_j c2 (1+j))
 | Handle v c' => (v_no_var_j v j) /\ (c_no_var_j c' j)
 end
 with h_no_var_j (h:hcases) (j:nat) :=
 match h with
 | CasesØ => True
-| CasesU h op x k c => (h_no_var_j h j) /\ (c_no_var_j c (j+2))
+| CasesU h op x k c => (h_no_var_j h j) /\ (c_no_var_j c (2+j))
 end.
 
+Fixpoint v_under_var_j (v:val) (j:nat) :=
+match v with
+| Var (name, num) => num < j
+| Unit => True
+| Int j => True
+| Inl v' => v_under_var_j v' j
+| Inr v' => v_under_var_j v' j
+| Pair v1 v2 => (v_under_var_j v1 j) /\ (v_under_var_j v2 j)
+| Fun x c => c_under_var_j c (1+j)
+| Handler x c_ret h => (c_under_var_j c_ret (1+j)) /\ (h_under_var_j h j)
+end
+with c_under_var_j (c:comp) (j:nat) :=
+match c with
+| Ret v => v_under_var_j v j
+| Absurd v => v_under_var_j v j 
+| ΠMatch v x y c => (v_under_var_j v j) /\ c_under_var_j c (2+j)
+| ΣMatch v xl cl xr cr =>
+    (v_under_var_j v j) /\ (c_under_var_j cl (1+j)) /\ (c_under_var_j cr (1+j))
+| App v1 v2 => (v_under_var_j v1 j) /\ (v_under_var_j v2 j)
+| Op op v_arg y c => (v_under_var_j v_arg j) /\ (c_under_var_j c (1+j))
+| LetRec f x c1 c2 => (c_under_var_j c1 (2+j)) /\ (c_under_var_j c2 (1+j))
+| DoBind x c1 c2 => (c_under_var_j c1 j) /\ (c_under_var_j c2 (1+j))
+| Handle v c' => (v_under_var_j v j) /\ (c_under_var_j c' j)
+end
+with h_under_var_j (h:hcases) (j:nat) :=
+match h with
+| CasesØ => True
+| CasesU h op x k c => (h_under_var_j h j) /\ (c_under_var_j c (2+j))
+end.
+
+Fixpoint tmpl_under_var_j (T:tmpl) (j:nat) :=
+match T with
+| TApp (name, num) v => num < j /\ v_under_var_j v j
+| TAbsurd v => v_under_var_j v j
+| TΠMatch v x y T => v_under_var_j v j /\ tmpl_under_var_j T (2+j)
+| TΣMatch v xl Tl xr Tr =>
+    (v_under_var_j v j) /\ (tmpl_under_var_j Tl (1+j)) 
+    /\ (tmpl_under_var_j Tr (1+j))
+| TOp op v_arg y T => (v_under_var_j v_arg j) /\ (tmpl_under_var_j T (1+j))
+end.
 
 Fixpoint ctx_remove_var (Γ:ctx) (i:nat) :=
   match Γ, i with
@@ -166,14 +206,14 @@ Fixpoint ctx_insert_var (Γ:ctx) A (i:nat) :=
 Fixpoint ctx_len Γ :=
   match Γ with
   | CtxØ => 0
-  | CtxU Γ _ => S (ctx_len Γ)
+  | CtxU Γ _ => 1 + (ctx_len Γ)
   end.
 
 
 Fixpoint tctx_len Z :=
   match Z with
   | TCtxØ => 0
-  | TCtxU Z _ => S (tctx_len Z)
+  | TCtxU Z _ => 1 + (tctx_len Z)
   end.
 
 

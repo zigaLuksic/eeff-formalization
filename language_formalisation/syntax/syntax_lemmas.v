@@ -27,9 +27,9 @@ Qed.
 
 
 Lemma ctx_remove_extend Γ i A :
-  CtxU (ctx_remove_var Γ i) A = ctx_remove_var (CtxU Γ A) (i+1).
+  CtxU (ctx_remove_var Γ i) A = ctx_remove_var (CtxU Γ A) (1+i).
 Proof.
-revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H; auto.
+revert i; induction Γ; intros i; auto.
 Qed.
 
 
@@ -46,42 +46,38 @@ Qed.
 
 
 Lemma get_ctx_insert_changed Γ A i j:
-  i >= j -> get_vtype Γ i = get_vtype (ctx_insert_var Γ A j) (i+1).
+  i >= j -> get_vtype Γ i = get_vtype (ctx_insert_var Γ A j) (1+i).
 Proof.
 revert i j. induction Γ; intros i j cmp; simpl.
 destruct i; destruct j; simpl; try reflexivity.
 destruct j; destruct i.
 + auto.
-+ assert (S i + 1 = S (S i)) by omega. rewrite H. auto.
++ auto.
 + omega.
 + simpl. apply IHΓ. omega.
 Qed.
 
 
 Lemma ctx_insert_extend Γ i A_ins A :
-  CtxU (ctx_insert_var Γ A_ins i) A = ctx_insert_var (CtxU Γ A) A_ins (i+1).
+  CtxU (ctx_insert_var Γ A_ins i) A = ctx_insert_var (CtxU Γ A) A_ins (1+i).
 Proof.
-revert i; induction Γ; intros i; assert (i+1 = S i) by omega; rewrite H; auto.
+revert i; induction Γ; intros i; auto.
 Qed.
 
 
 Lemma join_ctxs_insert_var Γ1 Γ2 i A :
   join_ctxs (ctx_insert_var Γ1 A i) Γ2= 
-    ctx_insert_var (join_ctxs Γ1 Γ2) A (i + ctx_len Γ2). 
+    ctx_insert_var (join_ctxs Γ1 Γ2) A (ctx_len Γ2 + i). 
 Proof.
-induction Γ2; simpl. auto.
-assert (i + S (ctx_len Γ2) = S (i + ctx_len Γ2)) by omega.
-rewrite H. f_equal. auto.
+induction Γ2; simpl. auto. f_equal. auto.
 Qed.
 
 
 Lemma join_ctx_tctx_insert_var  Γ Z D i A :
   join_ctx_tctx (ctx_insert_var Γ A i) Z D = 
-    ctx_insert_var (join_ctx_tctx Γ Z D) A (i + tctx_len Z). 
+    ctx_insert_var (join_ctx_tctx Γ Z D) A (tctx_len Z + i). 
 Proof.
-induction Z; simpl. auto.
-assert (i + S (tctx_len Z) = S (i + tctx_len Z)) by omega.
-rewrite H. f_equal. auto.
+induction Z; simpl. auto. f_equal. auto.
 Qed.
 
 
