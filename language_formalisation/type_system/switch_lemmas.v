@@ -259,15 +259,15 @@ induction h; auto; simpl; simpl in *.
   - apply IHh. auto.
 Qed.
 
-Lemma v_no_var_j_switch_i_j v i j:
-  v_no_var_j v j -> v_no_var_j (v_switch_vars v j i) i
-with c_no_var_j_switch_i_j c i j:
-  c_no_var_j c j -> c_no_var_j (c_switch_vars c j i) i
-with h_no_var_j_switch_i_j h i j:
-  h_no_var_j h j -> h_no_var_j (h_switch_vars h j i) i.
+Lemma v_no_var_switch_i_j v i j:
+  v_no_var v j -> v_no_var (v_switch_vars v j i) i
+with c_no_var_switch_i_j c i j:
+  c_no_var c j -> c_no_var (c_switch_vars c j i) i
+with h_no_var_switch_i_j h i j:
+  h_no_var h j -> h_no_var (h_switch_vars h j i) i.
 Proof.
 {
-clear v_no_var_j_switch_i_j.
+clear v_no_var_switch_i_j.
 revert i j; induction v; intros i j orig; simpl; auto;
 try constructor; try destruct orig; simpl; auto.
 destruct v as (name, num).
@@ -277,12 +277,12 @@ destruct (num=?j) eqn:cmpj.
   * apply Nat.eqb_eq in cmpi. rewrite cmpi in *. simpl in orig. auto.
   * apply Nat.eqb_neq in cmpi. auto.
 }{
-clear c_no_var_j_switch_i_j.
+clear c_no_var_switch_i_j.
 revert i j; induction c; intros i j orig; try destruct p; simpl; auto;
 try constructor; try destruct orig; simpl; auto.
 constructor; destruct H0; auto.
 }{
-clear h_no_var_j_switch_i_j.
+clear h_no_var_switch_i_j.
 revert i j; induction h; intros i j orig; simpl; auto;
 try constructor; try destruct orig; simpl; auto.
 }
@@ -571,15 +571,15 @@ Qed.
 
 
 Lemma v_negshift_1_switch_Si_i v i:
-  v_no_var_j v i ->
+  v_no_var v i ->
   Sub.v_negshift (v_switch_vars v (S i) i) 1 (S i) 
     = Sub.v_negshift v 1 i
 with c_negshift_1_switch_Si_i c i:
-  c_no_var_j c i ->
+  c_no_var c i ->
   Sub.c_negshift (c_switch_vars c (S i) i) 1 (S i) 
     = Sub.c_negshift c 1 i
 with h_negshift_1_switch_Si_i h i:
-  h_no_var_j h i ->
+  h_no_var h i ->
   Sub.h_negshift (h_switch_vars h (S i) i) 1 (S i) 
     = Sub.h_negshift h 1 i.
 Proof.
@@ -627,13 +627,13 @@ Qed.
 
 
 Lemma c_negshift_1_0_switch10 c :
-  c_no_var_j c 1 ->
+  c_no_var c 1 ->
   Sub.c_negshift (c_switch_vars c 1 0) 1 0 = Sub.c_negshift c 1 1.
 Proof.
   intro novar.
   rewrite <-(c_negshift_1_switch_Si_i).
   rewrite c_switchswitch. reflexivity.
-  apply c_no_var_j_switch_i_j. assumption.
+  apply c_no_var_switch_i_j. assumption.
 Qed.
 
 (* Switch lemmas *)

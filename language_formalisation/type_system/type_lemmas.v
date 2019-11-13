@@ -27,21 +27,21 @@ Proof.
 {
 intros orig sub. unfold v_sub_out.
 assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
-rewrite H. apply v_negshift_typesafe.
+rewrite H. apply v_remove_typesafe.
 - eapply v_subs_typesafe. assumption. simpl. reflexivity.
   apply v_shift_typesafe. assumption. inv sub. assumption.
 - apply v_no_var_sub. apply v_shift_makes_no_var.
 }{
 intros orig sub. unfold c_sub_out.
 assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
-rewrite H. apply c_negshift_typesafe.
+rewrite H. apply c_remove_typesafe.
 - eapply c_subs_typesafe. assumption. simpl. reflexivity.
   apply v_shift_typesafe. assumption. inv sub. assumption.
 - apply c_no_var_sub. apply v_shift_makes_no_var.
 }{
 intros orig sub. unfold h_sub_out.
 assert (Γ = ctx_remove_var (CtxU Γ A_s) 0) by auto.
-rewrite H. apply h_negshift_typesafe.
+rewrite H. apply h_remove_typesafe.
 - eapply h_subs_typesafe. assumption. simpl. reflexivity.
   apply v_shift_typesafe. assumption. inv sub. assumption.
 - apply h_no_var_sub. apply v_shift_makes_no_var.

@@ -116,34 +116,34 @@ Fixpoint eqs_contain_eq E Γ Z T1 T2 :=
   end.
 
 
-Fixpoint v_no_var_j (v:val) (j:nat) :=
+Fixpoint v_no_var (v:val) (j:nat) :=
 match v with
 | Var (name, num) => not (j = num)
 | Unit => True
 | Int j => True
-| Inl v' => v_no_var_j v' j
-| Inr v' => v_no_var_j v' j
-| Pair v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
-| Fun x c => c_no_var_j c (1+j)
-| Handler x c_ret h => (c_no_var_j c_ret (1+j)) /\ (h_no_var_j h j)
+| Inl v' => v_no_var v' j
+| Inr v' => v_no_var v' j
+| Pair v1 v2 => (v_no_var v1 j) /\ (v_no_var v2 j)
+| Fun x c => c_no_var c (1+j)
+| Handler x c_ret h => (c_no_var c_ret (1+j)) /\ (h_no_var h j)
 end
-with c_no_var_j (c:comp) (j:nat) :=
+with c_no_var (c:comp) (j:nat) :=
 match c with
-| Ret v => v_no_var_j v j
-| Absurd v => v_no_var_j v j 
-| ΠMatch v x y c => (v_no_var_j v j) /\ c_no_var_j c (2+j)
+| Ret v => v_no_var v j
+| Absurd v => v_no_var v j 
+| ΠMatch v x y c => (v_no_var v j) /\ c_no_var c (2+j)
 | ΣMatch v xl cl xr cr =>
-    (v_no_var_j v j) /\ (c_no_var_j cl (1+j)) /\ (c_no_var_j cr (1+j))
-| App v1 v2 => (v_no_var_j v1 j) /\ (v_no_var_j v2 j)
-| Op op v_arg y c => (v_no_var_j v_arg j) /\ (c_no_var_j c (1+j))
-| LetRec f x c1 c2 => (c_no_var_j c1 (2+j)) /\ (c_no_var_j c2 (1+j))
-| DoBind x c1 c2 => (c_no_var_j c1 j) /\ (c_no_var_j c2 (1+j))
-| Handle v c' => (v_no_var_j v j) /\ (c_no_var_j c' j)
+    (v_no_var v j) /\ (c_no_var cl (1+j)) /\ (c_no_var cr (1+j))
+| App v1 v2 => (v_no_var v1 j) /\ (v_no_var v2 j)
+| Op op v_arg y c => (v_no_var v_arg j) /\ (c_no_var c (1+j))
+| LetRec f x c1 c2 => (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
+| DoBind x c1 c2 => (c_no_var c1 j) /\ (c_no_var c2 (1+j))
+| Handle v c' => (v_no_var v j) /\ (c_no_var c' j)
 end
-with h_no_var_j (h:hcases) (j:nat) :=
+with h_no_var (h:hcases) (j:nat) :=
 match h with
 | CasesØ => True
-| CasesU h op x k c => (h_no_var_j h j) /\ (c_no_var_j c (2+j))
+| CasesU h op x k c => (h_no_var h j) /\ (c_no_var c (2+j))
 end.
 
 Fixpoint v_under_var (v:val) (j:nat) :=
