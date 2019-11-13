@@ -1,9 +1,9 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 
 Require Import declarational wf_lemmas.
 
@@ -381,7 +381,7 @@ inv types. eapply Respects; auto. destruct H3.
 + eapply RespectEqsU.
   - eapply ctx_subtype_respects; eauto.
   - clear ctx_subtype_respects.
-    erewrite ctx_subtype_len. 2: eauto. eapply ctx_subtype_ceq. exact H4.
+    eapply ctx_subtype_ceq. eauto.
     apply join_ctx_tctx_wf. apply join_ctxs_wf. all: inv H2; auto. 
     apply ctx_subtype_join_ctx_tctx. apply ctx_subtype_join_ctxs.
     all: try assumption. all: apply ctx_subtype_refl; assumption.

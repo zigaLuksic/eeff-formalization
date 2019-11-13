@@ -1,7 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 Require Export substitution syntax_lemmas.
 Require Import Arith Le.
 
@@ -441,5 +441,58 @@ induction h; unfold h_sub; simpl. auto. f_equal.
   rewrite <-(v_shift_shift 1 1 0). rewrite (v_shift_comm_aux 1 j).
   rewrite (v_shift_comm_aux 1 (1+j)). f_equal. rewrite (v_shift_comm_aux 1 i).
   rewrite (v_shift_comm_aux 1 (1+i)). f_equal. f_equal. all: omega.
+}
+Qed.
+
+Fixpoint v_under_var_shift v j n cut:
+  v_under_var v j -> cut <= j -> v_under_var (Sub.v_shift v n cut) (n+j)
+
+with c_under_var_shift c j n cut:
+  c_under_var c j -> cut <= j -> c_under_var (Sub.c_shift c n cut) (n+j)
+
+with h_under_var_shift h j n cut:
+  h_under_var h j -> cut <= j -> h_under_var (Sub.h_shift h n cut) (n+j).
+Proof.
+{
+intros under cmp. destruct v; simpl; simpl in under; auto.
+{ destruct v. destruct (cut <=? v0) eqn:ccmp; simpl; omega. }
+all: try (destruct under; constructor; auto).
+all: assert (S(n+j)=n+S j) as Snj by omega; rewrite Snj.
+all: eapply c_under_var_shift; eauto; omega.
+}{
+intros under cmp. destruct c; simpl; simpl in under; auto.
+all: try (destruct under; constructor; auto).
+all: assert (S(S(n+j))=n+S(S j)) as SSnj by omega; try rewrite SSnj.
+all: assert (S(n+j)=n+S j) as Snj by omega; try rewrite Snj.
+2: destruct H0; constructor.
+all: eapply c_under_var_shift; eauto; omega.
+}{
+intros under cmp. destruct h; simpl; simpl in under. auto.
+destruct under. constructor. auto.
+assert (S(S(n+j))=n+S(S j)) as SSnj by omega; try rewrite SSnj.
+eapply c_under_var_shift; eauto; omega.
+}
+Qed.
+
+Fixpoint v_shift_too_high v n cut :
+  v_under_var v cut -> Sub.v_shift v n cut = v
+with c_shift_too_high c n cut :
+  c_under_var c cut -> Sub.c_shift c n cut = c
+with h_shift_too_high h n cut :
+  h_under_var h cut -> Sub.h_shift h n cut = h.
+Proof.
+{
+intros under. destruct v; simpl; simpl in under.
+{ destruct v.
+  assert (cut <=? v0 = false) by (apply leb_correct_conv; omega).
+  rewrite H. reflexivity. }
+all: try (destruct under; f_equal; auto) || (f_equal; auto).
+}{
+intros under. destruct c; simpl; simpl in under.
+all: try (destruct under; f_equal; auto) || (f_equal; auto).
+all: destruct H0; auto.
+}{
+intros under. destruct h; simpl; simpl in under.
+all: try (destruct under; f_equal; auto) || (f_equal; auto).
 }
 Qed.

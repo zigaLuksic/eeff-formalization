@@ -1,26 +1,30 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 Require Export syntax syntax_lemmas subtyping substitution.
 
-
-Fixpoint handle_tmpl h T :=
+(* We increase context length so that we don't have to shift h. *)
+Fixpoint handle_tmpl Γ_len Z_len h T :=
   match T with
-  | TApp x v => App (Var x) v
-  | TAbsurd v => Absurd v
-  | TΠMatch v x y T => ΠMatch v x y (handle_tmpl (Sub.h_shift h 2 0) T)
+  | TApp x v => App (Var x) (Sub.v_shift v Z_len 0)
+  | TAbsurd v => Absurd (Sub.v_shift v Z_len 0)
+  | TΠMatch v x y T => 
+      ΠMatch (Sub.v_shift v Z_len 0) x y 
+        (handle_tmpl (2+Γ_len) Z_len h T)
   | TΣMatch v x T1 y T2 => 
-        ΣMatch v 
-          x (handle_tmpl (Sub.h_shift h 1 0) T1) 
-          y (handle_tmpl (Sub.h_shift h 1 0) T2)
+      ΣMatch (Sub.v_shift v Z_len 0)
+        x (handle_tmpl (1+Γ_len) Z_len h T1) 
+        y (handle_tmpl (1+Γ_len) Z_len h T2)
   | TOp op v y T =>
       match find_op_case h op with 
       | Some (x, k, c_op) => 
-          (c_sub2_out c_op (Fun y (handle_tmpl (Sub.h_shift h 1 0) T)) v)
-      | None => Op op v y (handle_tmpl h T)
+          (c_sub2_out (Sub.c_shift c_op (Γ_len + Z_len) 0) 
+            (Fun y (handle_tmpl (1+Γ_len) Z_len h T)) 
+            (Sub.v_shift v Z_len 0))
+      | None => Op op v y (handle_tmpl (1+Γ_len) Z_len h T)
       end
   end.
 
@@ -175,8 +179,8 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | RespectEqsU Γ h Σ D E Γ' Z T1 T2 :
     respects Γ h Σ D E -> 
     ceq D (join_ctx_tctx (join_ctxs Γ Γ') Z D)
-      (handle_tmpl (Sub.h_shift h (ctx_len Γ' + tctx_len Z) 0) T1)
-      (handle_tmpl (Sub.h_shift h (ctx_len Γ' + tctx_len Z) 0) T2) ->
+      (handle_tmpl (ctx_len Γ') (tctx_len Z) h T1) 
+      (handle_tmpl (ctx_len Γ') (tctx_len Z) h T2) ->
     respects' Γ h Σ D (EqsU E Γ' Z T1 T2)
 
 with veq : vtype -> ctx -> val -> val -> Prop := 

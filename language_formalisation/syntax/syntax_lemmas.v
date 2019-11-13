@@ -1,5 +1,5 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 Require Export Arith syntax.
 Require Import Le Compare_dec.
 
@@ -126,4 +126,33 @@ Lemma tctx_len_gets Z n A:
   get_ttype Z n = Some A -> tctx_len Z > n.
 Proof.
 intro. apply tctx_len_get_ttype. eauto.
+Qed.
+
+
+Fixpoint v_under_var_weaken v i j:
+  v_under_var v j -> j <= i -> v_under_var v i
+
+with c_under_var_weaken c i j:
+  c_under_var c j -> j <= i -> c_under_var c i
+
+with h_under_var_weaken h i j:
+  h_under_var h j -> j <= i -> h_under_var h i.
+Proof.
+all: intros orig cmp.
+{
+induction v; simpl in orig; simpl; auto.
++ destruct v. omega.
++ destruct orig. auto.
++ eapply c_under_var_weaken. eauto. omega.
++ destruct orig. constructor. 2: eauto.
+  - eapply c_under_var_weaken. eauto. omega.
+}{
+induction c; simpl in orig; simpl; eauto.
+all: destruct orig; constructor; eauto. 2: (destruct H0; constructor).
+all: try (eapply c_under_var_weaken; eauto; omega).
+}{
+induction h; simpl in orig; simpl; eauto.
+destruct orig; constructor; auto.
+eapply c_under_var_weaken; eauto; omega.
+}
 Qed.
