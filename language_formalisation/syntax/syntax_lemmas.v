@@ -80,6 +80,21 @@ Proof.
 induction Z; simpl. auto. f_equal. auto.
 Qed.
 
+Lemma join_ctxs_remove_var Γ1 Γ2 i:
+  join_ctxs (ctx_remove_var Γ1 i) Γ2= 
+    ctx_remove_var (join_ctxs Γ1 Γ2) (ctx_len Γ2 + i). 
+Proof.
+induction Γ2; simpl. auto. f_equal. auto.
+Qed.
+
+
+Lemma join_ctx_tctx_remove_var  Γ Z D i :
+  join_ctx_tctx (ctx_remove_var Γ i) Z D = 
+    ctx_remove_var (join_ctx_tctx Γ Z D) (tctx_len Z + i). 
+Proof.
+induction Z; simpl. auto. f_equal. auto.
+Qed.
+
 
 Lemma ctx_len_get_vtype Γ n :
   (exists A, get_vtype Γ n = Some A) <-> ctx_len Γ > n.

@@ -758,13 +758,13 @@ Qed.
 
 
 Fixpoint v_no_var_sub v v' i j {struct v}:
-  v_no_var v (1+i) -> v_no_var v' i -> j<i ->
+  v_no_var v (1+i) -> v_no_var v' i -> j<=i ->
   v_no_var (v_sub v v' j) i
 with c_no_var_sub c v' i j {struct c}:
-  c_no_var c (1+i) -> v_no_var v' i -> j<i ->
+  c_no_var c (1+i) -> v_no_var v' i -> j<=i ->
   c_no_var (c_sub c v' j) i
 with h_no_var_sub h v' i j {struct h}:
-  h_no_var h (1+i) -> v_no_var v' i -> j<i ->
+  h_no_var h (1+i) -> v_no_var v' i -> j<=i ->
   h_no_var (h_sub h v' j) i.
 Proof.
 all: revert i j.

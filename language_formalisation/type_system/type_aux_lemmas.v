@@ -69,6 +69,59 @@ revert Γ. induction T; intros Γ wf.
 Qed.
 
 
+Lemma handle_tmpl_no_var h i Γ Z T Σ:
+  h_no_var h i -> wf_tmpl Γ Z T Σ ->
+  c_no_var (handle_tmpl (ctx_len Γ) (tctx_len Z) h T) 
+    (i + ctx_len Γ + tctx_len Z).
+Proof.
+revert h Γ i. induction T; intros; simpl.
+all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega.
++ destruct v as (x, d). constructor; apply wf_under_ctx_tctx in H0;
+  destruct H0; simpl in *. omega.
+  rewrite comm. apply v_no_var_shift. 2:omega.
+  eapply v_under_var_no_var. eauto. omega.
++ rewrite comm. apply v_no_var_shift. 2:omega.
+  apply wf_under_ctx_tctx in H0. destruct H0.
+  eapply v_under_var_no_var. eauto. omega.
++ constructor; inv H0.
+  - rewrite comm. apply v_no_var_shift. eapply v_under_var_no_var.
+    eapply has_vtype_is_under_ctx. eauto. all: omega.
+  - assert (S(S(i+ctx_len Γ+tctx_len Z))=(i+S(S(ctx_len Γ)))+tctx_len Z).
+    omega. assert (S(S(ctx_len Γ))=ctx_len (CtxU (CtxU Γ A) B)).
+    simpl. omega. rewrite H0, H1. apply IHT; auto.
++ inv H0. constructor. 2: constructor.
+  - rewrite comm. apply v_no_var_shift. eapply v_under_var_no_var.
+    eapply has_vtype_is_under_ctx. eauto. all: omega.
+  - assert (S(i+ctx_len Γ+tctx_len Z)=(i+S(ctx_len Γ))+tctx_len Z).
+    omega. assert (S(ctx_len Γ)=ctx_len (CtxU Γ A)).
+    simpl. omega. rewrite H0, H1. apply IHT1; auto.
+  - assert (S(i+ctx_len Γ+tctx_len Z)=(i+S(ctx_len Γ))+tctx_len Z).
+    omega. assert (S(ctx_len Γ)=ctx_len (CtxU Γ B)).
+    simpl. omega. rewrite H0, H1. apply IHT2; auto.
++ destruct (find_op_case h o) eqn:finds; inv H0.
+  - destruct p as ((x, k), c_op). unfold c_sub2_out. unfold c_sub_out.
+    apply c_no_var_sub. apply c_no_var_sub.
+    * eapply find_op_case_no_var in finds. 2: eauto. simpl.
+      assert (S(S(i+ctx_len Γ+tctx_len Z))=ctx_len Γ+tctx_len Z+(2+i)) by omega.
+      rewrite H0. apply c_no_var_shift. eauto. omega.
+    * rewrite v_shift_shift. simpl.
+      assert (S(i+ctx_len Γ+tctx_len Z)=tctx_len Z+1+(ctx_len Γ+i)) by omega.
+      rewrite H0. apply v_no_var_shift.
+      eapply v_under_var_no_var. eapply has_vtype_is_under_ctx.
+      eauto. omega. omega.
+    * omega.
+    * simpl. assert (S(i+ctx_len Γ+tctx_len Z)=i+(S (ctx_len Γ))+tctx_len Z).
+      omega. rewrite H0. assert (S (ctx_len Γ) = ctx_len (CtxU Γ B_op)).
+      simpl. omega. rewrite H1. apply IHT; auto.
+    * omega.
+  - simpl. constructor.
+    * rewrite comm. eapply v_under_var_no_var.
+      eapply has_vtype_is_under_ctx. eauto. all: omega.
+    * simpl. assert (S(i+ctx_len Γ+tctx_len Z)=i+(S (ctx_len Γ))+tctx_len Z).
+      omega. rewrite H0. assert (S (ctx_len Γ) = ctx_len (CtxU Γ B_op)).
+      simpl. omega. rewrite H1. apply IHT; auto.
+Qed.
+
 Lemma handle_tmpl_shift Γ' Γ Z h T Σ D i:
   wf_tmpl Γ Z T Σ -> has_htype Γ' h Σ D 
   -> 
@@ -216,7 +269,10 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
       eapply v_under_var_shift. eapply has_vtype_is_under_ctx. eauto.
       all: omega.
     - omega.
-  * simpl.
+  * simpl. clear IHT.
+    assert (S(ctx_len Γ)=ctx_len (CtxU Γ B_op)) by (simpl;omega).
+    assert (S(i+ctx_len Γ+tctx_len Z)=i+ctx_len (CtxU Γ B_op)+tctx_len Z).
+    simpl. omega. rewrite H0, H. eapply handle_tmpl_no_var; eauto.
 Qed.
 
 
@@ -511,9 +567,9 @@ apply ctx_remove_wf. all: auto. destruct H2.
 + simpl. clear V CI HC R VE CE. apply TypeCasesØ.
 + specialize (HC _ _ _ _ H3) as IHh.
   specialize (CI _ _ _ H4) as IHc.
-  clear V CI HC R VE CE. simpl. apply TypeCasesU.
-  - inv no_var. auto. apply h_negshift_find_op_None. auto.
-  - inv no_var. do 2 rewrite ctx_remove_extend. auto.
+  clear V CI HC R VE CE. simpl. apply TypeCasesU; inv no_var; auto.
+  - apply h_negshift_find_op_None. auto.
+  - do 2 rewrite ctx_remove_extend. auto.
 }{
 intros types no_var wfins. apply Respects.
 { clear V CI HC R VE CE. apply ctx_remove_wf. inv types. assumption. }
@@ -525,11 +581,12 @@ inv orig. destruct H3.
 + specialize (R _ _ _ _ _ H3) as IHres.
   specialize (CE _ _ _ _ H4) as IHeq.
   clear V CI HC R VE CE. apply RespectEqsU. eauto.
-  rewrite join_ctxs_insert_var. rewrite join_ctx_tctx_insert_var.
-  erewrite handle_tmpl_shift. erewrite handle_tmpl_shift.
+  rewrite join_ctxs_remove_var. rewrite join_ctx_tctx_remove_var.
+  erewrite handle_tmpl_negshift. erewrite handle_tmpl_negshift.
+  all: eauto; inv H2; auto.
   assert (tctx_len Z+(ctx_len Γ'+i) = i+ctx_len Γ'+tctx_len Z) by omega.
-  rewrite H5. apply IHeq.
-  all: inv H2. all: try eassumption.
+  rewrite H2. eapply IHeq. eauto.
+  all: eapply handle_tmpl_no_var; eauto.
 }{
   clear V CI HC R VE CE. inv orig. inv H1.
 }{
