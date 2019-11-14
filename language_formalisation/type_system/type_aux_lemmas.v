@@ -182,24 +182,41 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
   destruct find as [x[k[cop]]]. rename H into find.
   erewrite find, h_negshift_find_op_Some. 2: eauto.
   unfold c_sub2_out. unfold c_sub_out.
-  rewrite c_shift_sub. 2: omega. f_equal.
-  * rewrite c_shift_sub. 2: omega. f_equal; simpl.
-    assert (S(S(i+ctx_len Γ+tctx_len Z))=(ctx_len Γ+tctx_len Z)+S(S i))
-    as cext by omega. rewrite cext.
-    apply (c_shift_comm_aux 1 (S(S i)) _ (ctx_len Γ+tctx_len Z)). omega.
-    rewrite v_shift_shift.
-    rewrite (v_shift_too_high (Sub.v_shift v (tctx_len Z + 1) 0)).
-    reflexivity.
-    assert (S(i+ctx_len Γ+tctx_len Z)=(tctx_len Z+1)+(i+ctx_len Γ))
-    as comm' by omega. rewrite comm'.
-    apply v_under_var_shift. 2: omega.
-    apply has_vtype_is_under_ctx in H7.
-    eapply v_under_var_weaken. eauto. omega.
-  * f_equal. simpl. 
+  rewrite c_negshift_sub. 2: omega. f_equal.
+  * rewrite c_negshift_sub. 2: omega. f_equal; simpl.
+    - assert (S(S(i+ctx_len Γ+tctx_len Z))=(ctx_len Γ+tctx_len Z)+S(S i))
+      as cext by omega. rewrite cext.
+      apply c_shift_negshift_1j. eapply find_op_case_no_var; eauto. omega.
+    - rewrite v_shift_shift.
+      rewrite (v_negshift_too_high (Sub.v_shift v (tctx_len Z + 1) 0)).
+      reflexivity.
+      assert (S(i+ctx_len Γ+tctx_len Z)=(tctx_len Z+1)+(i+ctx_len Γ))
+      as comm' by omega. rewrite comm'.
+      apply v_under_var_shift. 2: omega.
+      apply has_vtype_is_under_ctx in H7.
+      eapply v_under_var_weaken. eauto. omega.
+    - assert (S(S(i+ctx_len Γ+tctx_len Z))=(ctx_len Γ+tctx_len Z)+S(S i)).
+      omega. simpl. rewrite H. apply c_no_var_shift.
+      eapply find_op_case_no_var; eauto. omega.
+    - rewrite v_shift_shift. simpl. 
+      assert (S(i+ctx_len Γ+tctx_len Z)=(tctx_len Z+1)+(i+ctx_len Γ)) by omega.
+      rewrite H. apply v_no_var_shift.
+      apply has_vtype_is_under_ctx in H7.
+      eapply v_under_var_no_var. eauto. omega. omega.
+  * simpl. f_equal. 
     assert (S(ctx_len Γ)=ctx_len (CtxU Γ B_op)) by (simpl;omega).
     assert (S(i+ctx_len Γ+tctx_len Z)=i+ctx_len (CtxU Γ B_op)+tctx_len Z).
     { simpl. omega. }
-    rewrite H0, H1, IHT. f_equal. all: assumption.
+    rewrite H, H0, IHT. f_equal. all: assumption.
+  * clear IHT. eapply c_no_var_sub; simpl.
+    - assert (S(S(i+ctx_len Γ+tctx_len Z))=ctx_len Γ + tctx_len Z + (2+i)).
+      omega. rewrite H. apply c_no_var_shift.
+      eapply find_op_case_no_var; eauto. omega.
+    - eapply v_under_var_no_var. rewrite v_shift_shift.
+      eapply v_under_var_shift. eapply has_vtype_is_under_ctx. eauto.
+      all: omega.
+    - omega.
+  * simpl.
 Qed.
 
 

@@ -156,3 +156,38 @@ destruct orig; constructor; auto.
 eapply c_under_var_weaken; eauto; omega.
 }
 Qed.
+
+Lemma v_under_var_no_var v i j:
+  v_under_var v i -> i<=j -> v_no_var v j
+with c_under_var_no_var c i j:
+  c_under_var c i -> i<=j -> c_no_var c j
+with h_under_var_no_var h i j:
+  h_under_var h i -> i<=j -> h_no_var h j.
+Proof.
+{
+induction v; intros under cmp; simpl; auto.
++ destruct v. simpl in under. omega.
++ simpl in under. inv under. constructor; auto.
++ simpl in under. eapply c_under_var_no_var. eauto. omega.
++ simpl in under. inv under. constructor. eapply c_under_var_no_var. eauto.     
+  omega. eapply h_under_var_no_var. eauto. omega.
+}{
+induction c; intros under cmp; simpl; auto.
+all: simpl in under; try inv under; try constructor.
+all: try eapply v_under_var_no_var; eauto.
+all: try eapply c_under_var_no_var; eauto; try omega.
+all: destruct H0. constructor; eapply c_under_var_no_var; eauto; omega.
+}{
+induction h; intros under cmp; simpl; auto.
+inv under. constructor. auto. eapply c_under_var_no_var; eauto; omega.
+}
+Qed.
+
+Lemma find_op_case_no_var h i op x k cop:
+  h_no_var h i -> find_op_case h op = Some (x, k, cop) ->
+  c_no_var cop (2+i).
+Proof.
+intros.
+induction h. simpl in H0. discriminate.
+inv H. simpl in H0. destruct (op==o); try inv H0; auto.
+Qed.
