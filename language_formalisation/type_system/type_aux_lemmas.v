@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
 
 Require Export syntax syntax_lemmas declarational substitution Omega Logic.
 Require Export substitution_lemmas subtyping subtyping_lemmas wf_lemmas.
@@ -99,8 +99,8 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
     omega. assert (S(ctx_len Γ)=ctx_len (CtxU Γ B)).
     simpl. omega. rewrite H0, H1. apply IHT2; auto.
 + destruct (find_op_case h o) eqn:finds; inv H0.
-  - destruct p as ((x, k), c_op). unfold c_sub2_out. unfold c_sub_out.
-    apply c_no_var_sub. apply c_no_var_sub.
+  - destruct p as ((x, k), c_op). unfold c_subs2_out. unfold c_subs_out.
+    apply c_no_var_subs. apply c_no_var_subs.
     * eapply find_op_case_no_var in finds. 2: eauto. simpl.
       assert (S(S(i+ctx_len Γ+tctx_len Z))=ctx_len Γ+tctx_len Z+(2+i)) by omega.
       rewrite H0. apply c_no_var_shift. eauto. omega.
@@ -168,9 +168,9 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
 + eapply h_has_case in H6 as find. 2: exact types.
   destruct find as [x[k[cop]]]. rename H into find.
   erewrite h_shift_find_op_Some, find. 2:eauto.
-  unfold c_sub2_out. unfold c_sub_out.
-  rewrite c_shift_sub. 2: omega. f_equal.
-  * rewrite c_shift_sub. 2: omega. f_equal; simpl.
+  unfold c_subs2_out. unfold c_subs_out.
+  rewrite c_shift_subs. 2: omega. f_equal.
+  * rewrite c_shift_subs. 2: omega. f_equal; simpl.
     assert (S(S(i+ctx_len Γ+tctx_len Z))=(ctx_len Γ+tctx_len Z)+S(S i))
     as cext by omega. rewrite cext.
     apply (c_shift_comm_aux 1 (S(S i)) _ (ctx_len Γ+tctx_len Z)). omega.
@@ -234,9 +234,9 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
 + eapply h_has_case in H6 as find. 2: exact types.
   destruct find as [x[k[cop]]]. rename H into find.
   erewrite find, h_negshift_find_op_Some. 2: eauto.
-  unfold c_sub2_out. unfold c_sub_out.
-  rewrite c_negshift_sub. 2: omega. f_equal.
-  * rewrite c_negshift_sub. 2: omega. f_equal; simpl.
+  unfold c_subs2_out. unfold c_subs_out.
+  rewrite c_negshift_subs. 2: omega. f_equal.
+  * rewrite c_negshift_subs. 2: omega. f_equal; simpl.
     - assert (S(S(i+ctx_len Γ+tctx_len Z))=(ctx_len Γ+tctx_len Z)+S(S i))
       as cext by omega. rewrite cext.
       apply c_shift_negshift_1j. eapply find_op_case_no_var; eauto. omega.
@@ -261,7 +261,7 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
     assert (S(i+ctx_len Γ+tctx_len Z)=i+ctx_len (CtxU Γ B_op)+tctx_len Z).
     { simpl. omega. }
     rewrite H, H0, IHT. f_equal. all: assumption.
-  * clear IHT. eapply c_no_var_sub; simpl.
+  * clear IHT. eapply c_no_var_subs; simpl.
     - assert (S(S(i+ctx_len Γ+tctx_len Z))=ctx_len Γ + tctx_len Z + (2+i)).
       omega. rewrite H. apply c_no_var_shift.
       eapply find_op_case_no_var; eauto. omega.
@@ -275,6 +275,76 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
     simpl. omega. rewrite H0, H. eapply handle_tmpl_no_var; eauto.
 Qed.
 
+Lemma handle_tmpl_sub Γ' Γ Z h T Σ D i v_s:
+  wf_tmpl Γ Z T Σ -> has_htype Γ' h Σ D ->
+  handle_tmpl (ctx_len Γ) (tctx_len Z) (Sub.h_sub h (i, v_s)) T
+  = 
+  Sub.c_sub 
+    (handle_tmpl (ctx_len Γ) (tctx_len Z) h T)
+    (i+ctx_len Γ+tctx_len Z, Sub.v_shift v_s (ctx_len Γ+tctx_len Z) 0).
+Proof.
+revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
+all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega.
++ apply tctx_len_gets in H5 as zlen.
+  destruct ((i + ctx_len Γ + tctx_len Z) <=? num) eqn:cmp.
+  - apply leb_complete in cmp. omega.
+  - f_equal. apply eq_sym. assert (num=?i+ctx_len Γ+tctx_len Z=false).
+    * apply leb_complete_conv in cmp. apply Nat.eqb_neq. omega.
+    * rewrite H. reflexivity.
+    * rewrite comm. rewrite v_sub_too_high.
+      reflexivity. apply v_under_var_shift. 2: omega.
+      eapply v_under_var_weaken. eapply has_vtype_is_under_ctx.
+      eauto. omega.
++ f_equal. apply eq_sym. eapply v_sub_too_high.
+    apply has_vtype_is_under_ctx in H2.
+    rewrite comm. apply v_under_var_shift.
+    eapply v_under_var_weaken. eauto. all: omega.
++ f_equal.
+  - apply eq_sym. eapply v_sub_too_high. 
+    apply has_vtype_is_under_ctx in H6.
+    rewrite comm. apply v_under_var_shift.
+    eapply v_under_var_weaken. eauto. all: omega.
+  - assert 
+      (S(S(i+ctx_len Γ+tctx_len Z))=i+ctx_len(CtxU(CtxU Γ A) B)+tctx_len Z)
+    as clen by (simpl; omega).
+    assert (S(S(ctx_len Γ)) = ctx_len (CtxU(CtxU Γ A) B)) as clen' by omega.
+    rewrite clen, clen', IHT, v_shift_shift; auto.
+    do 3 f_equal. simpl. omega.
++ f_equal.
+  - apply eq_sym. eapply v_sub_too_high.
+    apply has_vtype_is_under_ctx in H7.
+    rewrite comm. apply v_under_var_shift.
+    eapply v_under_var_weaken. eauto. all: omega.
+  - eapply (IHT1 _) in H8. simpl in H8.
+    assert (S(i + ctx_len Γ+tctx_len Z)=i+S (ctx_len Γ)+tctx_len Z) by omega.
+    rewrite H, H8, v_shift_shift. do 3 f_equal. omega. assumption.
+  - eapply (IHT2 _) in H9. simpl in H9.
+    assert (S(i + ctx_len Γ+tctx_len Z)=i+S (ctx_len Γ)+tctx_len Z) by omega.
+    rewrite H, H9, v_shift_shift. do 3 f_equal. omega. assumption.
++ eapply h_has_case in H6 as find. 2: exact types.
+  destruct find as [x[k[cop]]]. rename H into find.
+  erewrite h_sub_find_op_Some, find. 2:eauto.
+  unfold c_subs2_out. unfold c_subs_out.
+  rewrite c_sub_subs. 2:omega. f_equal.
+  * rewrite c_sub_subs. 2: omega. f_equal; simpl.
+    assert (S(S(i+ctx_len Γ+tctx_len Z))=(ctx_len Γ+tctx_len Z)+S(S i))
+    as cext by omega. rewrite cext.
+    rewrite c_shift_sub. do 2 f_equal. do 3 rewrite v_shift_shift.
+    f_equal. omega. omega.
+    rewrite v_shift_shift, (v_sub_too_high (Sub.v_shift v (tctx_len Z + 1) 0)).
+    reflexivity.
+    assert (S(i+ctx_len Γ+tctx_len Z)=(tctx_len Z+1)+(i+ctx_len Γ))
+    as comm' by omega. rewrite comm'.
+    apply v_under_var_shift. 2: omega.
+    apply has_vtype_is_under_ctx in H7.
+    eapply v_under_var_weaken. eauto. omega.
+  * simpl. f_equal. 
+    assert (S(ctx_len Γ)=ctx_len (CtxU Γ B_op)) by (simpl;omega).
+    assert (S(i+ctx_len Γ+tctx_len Z)=i+ctx_len (CtxU Γ B_op)+tctx_len Z).
+    { simpl. omega. }
+    rewrite H, H0, IHT. do 2 f_equal. rewrite v_shift_shift.
+    f_equal. omega. all: assumption.
+Qed.
 
 Fixpoint v_insert_typesafe 
   Γ v A (orig : has_vtype Γ v A) A_ins i {struct orig} :
@@ -453,6 +523,41 @@ apply veq_insert_typesafe. assumption.
 apply ceq_insert_typesafe. assumption.
 Qed.
 
+Lemma v_join_ctx_tctx_typesafe Γ Z D v A :
+  has_vtype Γ v A -> wf_tctx Z -> wf_ctype D ->
+  has_vtype (join_ctx_tctx Γ Z D) (Sub.v_shift v (tctx_len Z) 0) A.
+Proof.
+intros; induction Z; simpl.
++ rewrite v_shift_0. assumption.
++ assert (S(tctx_len Z)=tctx_len Z+1) by omega. rewrite H2.
+  rewrite <-v_shift_shift. apply v_shift_typesafe.
+  all: inv H0; try apply WfTyFun; auto.
+Qed.
+
+Lemma v_join_ctxs_typesafe Γ Γ' v A :
+  has_vtype Γ v A -> wf_ctx Γ' -> 
+  has_vtype (join_ctxs Γ Γ') (Sub.v_shift v (ctx_len Γ') 0) A.
+Proof.
+intros; induction Γ'; simpl.
++ rewrite v_shift_0. assumption.
++ assert (S(ctx_len Γ')=ctx_len Γ'+1) by omega. rewrite H1.
+  rewrite <-v_shift_shift. apply v_shift_typesafe; inv H0; auto.
+Qed.
+
+Lemma v_join_all_ctxs_typesafe Γ Γ' Z D v A :
+  has_vtype Γ v A -> wf_ctx Γ' -> wf_tctx Z -> wf_ctype D ->
+  has_vtype (join_ctx_tctx (join_ctxs Γ Γ') Z D)
+    (Sub.v_shift v (ctx_len Γ'+tctx_len Z) 0) A.
+Proof.
+intros; induction Γ'; simpl.
++ apply v_join_ctx_tctx_typesafe; auto.
++ assert (S(ctx_len Γ'+tctx_len Z)=S(ctx_len Γ')+tctx_len Z) by omega.
+  rewrite H3, <-v_shift_shift. apply v_join_ctx_tctx_typesafe; auto.
+  assert (S(ctx_len Γ')=ctx_len Γ'+1) by omega. rewrite H4.
+  rewrite <-v_shift_shift. apply v_shift_typesafe; inv H0; auto.
+  apply v_join_ctxs_typesafe; auto.
+Qed.
+
 
 Fixpoint v_remove_typesafe 
   Γ v A (orig : has_vtype Γ v A) i {struct orig} :
@@ -594,157 +699,180 @@ inv orig. destruct H3.
 }
 Qed.
 
-Fixpoint v_subs_typesafe 
+Fixpoint v_sub_typesafe 
   Γ v A (orig: has_vtype Γ v A) i v_s A_s {struct orig}:
   get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
   has_vtype Γ (Sub.v_sub v (i, v_s)) A
-with c_subs_typesafe
+
+with c_sub_typesafe
   Γ c C (orig: has_ctype Γ c C) i v_s A_s {struct orig}:
   get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
   has_ctype Γ (Sub.c_sub c (i, v_s)) C
-with h_subs_typesafe
+
+with h_sub_typesafe
   Γ h Σ D (orig: has_htype Γ h Σ D) i v_s A_s {struct orig}:
   get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
-  has_htype Γ (Sub.h_sub h (i, v_s)) Σ D.
+  has_htype Γ (Sub.h_sub h (i, v_s)) Σ D
+
+with respects_sub_typesafe
+  Γ h Σ D E (orig: respects Γ h Σ D E) i v_s A_s {struct orig} :
+  has_htype Γ h Σ D -> get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
+  respects Γ (Sub.h_sub h (i, v_s)) Σ D E
+
+with veq_sub_typesafe
+  Γ A v1 v2 (orig: veq A Γ v1 v2) i v_s A_s {struct orig} :
+  get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
+  veq A Γ (Sub.v_sub v1 (i, v_s)) (Sub.v_sub v2 (i, v_s))
+
+with ceq_sub_typesafe
+  Γ C c1 c2 (orig: ceq C Γ c1 c2) i v_s A_s {struct orig} :
+  get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
+  ceq C Γ (Sub.c_sub c1 (i, v_s)) (Sub.c_sub c2 (i, v_s)).
 Proof.
-all: assert (forall i, i+1=S i) as Si by (intro; omega).
-all: assert (forall i, i+2=S(S i)) as SSi by (intro; omega).
+all: rename v_sub_typesafe into V; rename c_sub_typesafe into CI.
+all: rename h_sub_typesafe into HC; rename respects_sub_typesafe into R.
+all: rename veq_sub_typesafe into VE; rename ceq_sub_typesafe into CE.
 {
-intros gets vs_types. apply TypeV; inv orig.
+intros gets vsty. apply TypeV; inv orig.
 assumption. assumption. destruct H1.
-+ clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ clear V CI HC R VE CE.
   simpl. apply TypeUnit.
-+ clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ clear V CI HC R VE CE.
   simpl. apply TypeInt.
-+ clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ clear V CI HC R VE CE.
   simpl. destruct (n =? i) eqn:cmp.
   - apply Nat.eqb_eq in cmp. rewrite cmp in *. rewrite H1 in gets.
-    injection gets. intro. subst. inv vs_types. assumption.
+    injection gets. intro. subst. inv vsty. assumption.
   - apply TypeVar. assumption.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv1.
-  specialize (v_subs_typesafe _ _ _ H2) as IHv2.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv1.
+  specialize (V _ _ _ H2) as IHv2.
+  clear V CI HC R VE CE.
   simpl. apply TypePair.
   eapply IHv1; eauto.
   eapply IHv2; eauto.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  clear V CI HC R VE CE.
   simpl. apply TypeInl. eapply IHv; eauto.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  clear V CI HC R VE CE.
   simpl. apply TypeInr. eapply IHv; eauto.
-+ specialize (c_subs_typesafe _ _ _ H1) as IHc.
-  specialize (v_subs_typesafe _ _ _ vs_types) as IHvs.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. apply TypeFun. eapply IHc.
-  rewrite Si. exact gets.
++ specialize (CI _ _ _ H1) as IHc.
+  specialize (V _ _ _ vsty) as IHvs.
+  clear V CI HC R VE CE.
+  simpl. apply TypeFun. eapply IHc. eauto.
   apply v_shift_typesafe. assumption. inv H0. assumption.
-+ specialize (h_subs_typesafe _ _ _ _ H2) as IHh.
-  specialize (c_subs_typesafe _ _ _ H1) as IHc.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (HC _ _ _ _ H2) as IHh.
+  specialize (CI _ _ _ H1) as IHc.
+  specialize (R _ _ _ _ _ H3) as IHr.
+  clear V CI HC R VE CE.
   simpl. apply TypeHandler.
-  - eapply IHc. rewrite Si. exact gets.
-    apply v_shift_typesafe. assumption. inv H0. inv H5. assumption.
-  - eapply IHh; eauto.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
+  - eapply IHc. exact gets.
+    apply v_shift_typesafe. assumption. inv H0. inv H6. assumption.
+  - eauto.
+  - eauto.
++ specialize (V _ _ _ H1) as IHv.
+  clear V CI HC R VE CE.
   eapply TypeVSubtype.
   - eapply IHv; eauto.
   - assumption. 
 }{
-intros gets vs_types. apply TypeC; inv orig.
+intros gets vsty. apply TypeC; inv orig.
 assumption. assumption. destruct H1.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  clear V CI HC R VE CE.
   simpl. apply TypeRet. eapply IHv; eauto.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  clear V CI HC R VE CE.
   simpl. apply TypeAbsurd. eapply IHv; eauto.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  specialize (c_subs_typesafe _ _ _ H2) as IHc.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  specialize (CI _ _ _ H2) as IHc.
+  clear V CI HC R VE CE.
   simpl. eapply TypeΠMatch.
-  - eapply IHv; eauto.
-  - eapply IHc. rewrite SSi. exact gets. 
+  - eauto.
+  - eapply IHc. exact gets. 
     rewrite <-(v_shift_shift 1 1 0).
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
     all: inv H1; inv H4; assumption.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  specialize (c_subs_typesafe _ _ _ H2) as IHc1.
-  specialize (c_subs_typesafe _ _ _ H3) as IHc2.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  specialize (CI _ _ _ H2) as IHc1.
+  specialize (CI _ _ _ H3) as IHc2.
+  clear V CI HC R VE CE.
   simpl. eapply TypeΣMatch.
-  - eapply IHv; eauto.
-  - eapply IHc1. rewrite Si. exact gets.
+  - eauto.
+  - eapply IHc1. exact gets.
     apply v_shift_typesafe. assumption.
     inv H1. inv H5. assumption. 
-  - eapply IHc2. rewrite Si. exact gets.
+  - eapply IHc2. exact gets.
     apply v_shift_typesafe. assumption.
     inv H1. inv H5. assumption. 
-+ specialize (c_subs_typesafe _ _ _ H1) as IHc1.
-  specialize (c_subs_typesafe _ _ _ H2) as IHc2.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (CI _ _ _ H1) as IHc1.
+  specialize (CI _ _ _ H2) as IHc2.
+  clear V CI HC R VE CE.
   simpl. eapply TypeDoBind.
-  - eapply IHc1; eauto.
-  - eapply IHc2. rewrite Si. exact gets.
+  - eauto.
+  - eapply IHc2. exact gets.
     apply v_shift_typesafe. assumption.
     inv H1. inv H4. assumption.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  specialize (v_subs_typesafe _ _ _ H2) as IHv0.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. eapply TypeApp.
-  - eapply IHv; eauto.
-  - eapply IHv0; eauto.
-+ specialize (v_subs_typesafe _ _ _ H1) as IHv.
-  specialize (c_subs_typesafe _ _ _ H2) as IHc.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  simpl. eapply TypeHandle.
-  - eapply IHv; eauto.
-  - eapply IHc; eauto.
-+ specialize (c_subs_typesafe _ _ _ H1) as IHc1.
-  specialize (c_subs_typesafe _ _ _ H2) as IHc2.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H1) as IHv.
+  specialize (V _ _ _ H2) as IHv0.
+  clear V CI HC R VE CE.
+  simpl. eapply TypeApp; eauto.
++ specialize (V _ _ _ H1) as IHv.
+  specialize (CI _ _ _ H2) as IHc.
+  clear V CI HC R VE CE.
+  simpl. eapply TypeHandle; eauto.
++ specialize (CI _ _ _ H1) as IHc1.
+  specialize (CI _ _ _ H2) as IHc2.
+  clear V CI HC R VE CE.
   simpl. eapply TypeLetRec.
-  - rewrite SSi. eapply IHc1. exact gets.
+  - eapply IHc1. exact gets.
     rewrite <-(v_shift_shift 1 1 0).
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
     all: inv H1; inv H3. 2: assumption. inv H7. assumption. 
-  - eapply IHc2. rewrite Si. exact gets.
+  - eapply IHc2. exact gets.
     apply v_shift_typesafe. assumption.
     inv H1. inv H3. assumption.
-+ specialize (v_subs_typesafe _ _ _ H2) as IHv.
-  specialize (c_subs_typesafe _ _ _ H3) as IHc.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ specialize (V _ _ _ H2) as IHv.
+  specialize (CI _ _ _ H3) as IHc.
+  clear V CI HC R VE CE.
   simpl. eapply TypeOp. exact H1.
-  - eapply IHv; eauto.
-  - eapply IHc. rewrite Si. exact gets. 
+  - eauto.
+  - eapply IHc. exact gets. 
     apply v_shift_typesafe. assumption.
     inv H3. inv H4. assumption.
-+ specialize (c_subs_typesafe _ _ _ H1) as IHc.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
-  eapply TypeCSubtype.
-  - eapply IHc; eauto.
-  - assumption.
++ specialize (CI _ _ _ H1) as IHc.
+  clear V CI HC R VE CE.
+  eapply TypeCSubtype; eauto.
 }{
-intros gets vs_types; simpl; apply TypeH; inv orig.
+intros gets vsty; simpl; apply TypeH; inv orig.
 assumption. assumption. assumption.
 destruct H2.
-+ clear v_subs_typesafe c_subs_typesafe h_subs_typesafe. apply TypeCasesØ.
-+ specialize (h_subs_typesafe _ _ _ _ H3) as IHh.
-  specialize (c_subs_typesafe _ _ _ H4) as IHc.
-  clear v_subs_typesafe c_subs_typesafe h_subs_typesafe.
++ clear V CI HC R VE CE. apply TypeCasesØ.
++ specialize (HC _ _ _ _ H3) as IHh.
+  specialize (CI _ _ _ H4) as IHc.
+  clear V CI HC R VE CE.
   simpl. apply TypeCasesU.
-  - assert (forall h o,
-      find_op_case h o = None ->
-      find_op_case (Sub.h_sub h (i, v_s)) o = None) as no_find.
-    * intros h' o orig. induction h'; auto.
-      simpl in *. destruct (o==o0). discriminate.
-      apply IHh'. assumption.
-    * apply no_find. assumption.
-  - eapply IHh; eauto.
-  - rewrite SSi. eapply IHc. exact gets.
+  - rewrite h_sub_find_op_None; auto.
+  - eauto.
+  - eapply IHc. exact gets.
     rewrite <-(v_shift_shift 1 1 0).
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
     all: inv H0. 2: assumption. apply WfTyFun; assumption.
+}{
+intros htys gets vsty; simpl. apply Respects; inv orig.
+all: try assumption.
+destruct H3.
++ clear V CI HC R VE CE. apply RespectEqsØ.
++ specialize (CE _ _ _ _ H4) as IHc.
+  specialize (R _ _ _ _ _ H3) as IHr.
+  clear V CI HC R VE CE.
+  apply RespectEqsU. eauto. erewrite handle_tmpl_sub. erewrite handle_tmpl_sub.
+  eapply IHc. all: inv H2; eauto. clear IHc IHr.
+  * erewrite <-get_join_ctx_tctx, <-get_join_ctxs. eauto.
+  * eapply v_join_all_ctxs_typesafe; auto.
+}{
+  clear V CI HC R VE CE. inv orig. inv H1.
+}{
+  clear V CI HC R VE CE. inv orig. inv H1.
 }
 Qed.

@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export Arith syntax.
 Require Import Le Compare_dec.
 
@@ -57,6 +57,20 @@ destruct j; destruct i.
 + simpl. apply IHΓ. omega.
 Qed.
 
+
+Lemma get_join_ctx_tctx Γ Z D i:
+  get_vtype Γ i = get_vtype (join_ctx_tctx Γ Z D) (i+tctx_len Z).
+Proof.
+induction Z; simpl. f_equal. omega.
+assert (i + S (tctx_len Z)=S(i+tctx_len Z)) by omega. rewrite H. auto.
+Qed.
+
+Lemma get_join_ctxs Γ Γ' i:
+  get_vtype Γ' i = get_vtype (join_ctxs Γ' Γ) (i+ctx_len Γ).
+Proof.
+induction Γ; simpl. f_equal. omega.
+assert (i + S (ctx_len Γ)=S(i+ctx_len Γ)) by omega. rewrite H. auto.
+Qed.
 
 Lemma ctx_insert_extend Γ i A_ins A :
   CtxU (ctx_insert_var Γ A_ins i) A = ctx_insert_var (CtxU Γ A) A_ins (1+i).

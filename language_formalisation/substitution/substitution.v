@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
 Require Export syntax Arith.
 Require Import Le Compare_dec.
 
@@ -116,21 +116,21 @@ end.
 End Sub.
 
 (* Instantiates the outer binder, takes care of all the shifting. *)
-Definition v_sub (v:val) (v_s:val) i :=
+Definition v_subs (v:val) (v_s:val) i :=
   Sub.v_negshift (Sub.v_sub v (i, (Sub.v_shift v_s 1 i))) 1 i.
 
-Definition c_sub (c:comp) (v_s:val) i :=
+Definition c_subs (c:comp) (v_s:val) i :=
   Sub.c_negshift (Sub.c_sub c (i, (Sub.v_shift v_s 1 i))) 1 i.
 
-Definition h_sub (h:hcases) (v_s:val) i :=
+Definition h_subs (h:hcases) (v_s:val) i :=
   Sub.h_negshift (Sub.h_sub h (i, (Sub.v_shift v_s 1 i))) 1 i.
 
-Definition v_sub_out (v:val) (v_s:val) := v_sub v v_s 0.
+Definition v_subs_out (v:val) (v_s:val) := v_subs v v_s 0.
 
-Definition c_sub_out (c:comp) (v_s:val) := c_sub c v_s 0.
+Definition c_subs_out (c:comp) (v_s:val) := c_subs c v_s 0.
 
-Definition h_sub_out (h:hcases) (v_s:val) := h_sub h v_s 0.
+Definition h_subs_out (h:hcases) (v_s:val) := h_subs h v_s 0.
 
-Definition c_sub2_out (c:comp) v1 v0 :=
+Definition c_subs2_out (c:comp) v1 v0 :=
   (* 1 -> v1, 0 -> v0 *)
-  c_sub_out (c_sub_out c (Sub.v_shift v0 1 0)) v1.
+  c_subs_out (c_subs_out c (Sub.v_shift v0 1 0)) v1.

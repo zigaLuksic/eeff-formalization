@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
 Require Export syntax syntax_lemmas subtyping substitution.
 
 (* We increase context length so that we don't have to shift h. *)
@@ -21,7 +21,7 @@ Fixpoint handle_tmpl Γ_len Z_len h T :=
   | TOp op v y T =>
       match find_op_case h op with 
       | Some (x, k, c_op) => 
-          (c_sub2_out (Sub.c_shift c_op (Γ_len + Z_len) 0) 
+          (c_subs2_out (Sub.c_shift c_op (Γ_len + Z_len) 0) 
             (Fun y (handle_tmpl (1+Γ_len) Z_len h T)) 
             (Sub.v_shift v Z_len 0))
       | None => Op op v y (handle_tmpl (1+Γ_len) Z_len h T)
