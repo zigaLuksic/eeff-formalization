@@ -1,7 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 Require Export syntax substitution.
 
 Inductive step : comp -> comp -> Prop :=
@@ -40,7 +40,7 @@ Inductive step : comp -> comp -> Prop :=
       (Handle (Handler x c_r h) (Ret v))
       (c_subs_out c_r v)
 | Step_Handle_Op x c_r h op_id v_arg y c_k x_op k_op c_op :
-    find_op_case h op_id = Some (x_op, k_op, c_op) ->
+    find_case h op_id = Some (x_op, k_op, c_op) ->
     step
       (Handle (Handler x c_r h) (Op op_id v_arg y c_k))
       (c_subs2_out c_op

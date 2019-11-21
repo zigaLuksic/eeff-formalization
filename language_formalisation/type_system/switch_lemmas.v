@@ -236,7 +236,7 @@ Qed.
 
 
 Lemma find_op_None_switch h i j op:
-  find_op_case h op = None -> find_op_case (h_switch_vars h i j) op = None.
+  find_case h op = None -> find_case (h_switch_vars h i j) op = None.
 Proof.
 intro orig. induction h; auto.
 simpl. simpl in *.
@@ -246,8 +246,8 @@ destruct (op==o).
 Qed.
 
 Lemma find_op_Some_switch h i j op x_op k_op c_op:
-  find_op_case h op = Some (x_op, k_op, c_op) ->
-  find_op_case (h_switch_vars h i j) op
+  find_case h op = Some (x_op, k_op, c_op) ->
+  find_case (h_switch_vars h i j) op
     =
   Some (x_op, k_op, c_switch_vars c_op (i+2) (j+2)).
 Proof.

@@ -287,7 +287,7 @@ revert Γ Σ D. induction h; intros Γ Σ D orig.
   + apply CheckCasesU.
     * assert (forall h h',
         h = h_remove_annot h' ->
-        find_op_case h o = None -> find_op_ann_case h' o = None ).
+        find_case h o = None -> find_op_ann_case h' o = None ).
       intros H. induction H; intros H' eq nocase; destruct H'.
       ++ simpl. reflexivity.
       ++ simpl in eq. discriminate.

@@ -1,35 +1,37 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 Require Export syntax syntax_lemmas subtyping substitution.
 
+(* ==================== Template Handling ==================== *)
+
 (* We increase context length so that we don't have to shift h. *)
-Fixpoint handle_tmpl Γ_len Z_len h T :=
+Fixpoint handle_t Γ_len Z_len h T :=
   match T with
   | TApp x v => App (Var x) (Sub.v_shift v Z_len 0)
   | TAbsurd v => Absurd (Sub.v_shift v Z_len 0)
   | TΠMatch v x y T => 
       ΠMatch (Sub.v_shift v Z_len 0) x y 
-        (handle_tmpl (2+Γ_len) Z_len h T)
+        (handle_t (2+Γ_len) Z_len h T)
   | TΣMatch v x T1 y T2 => 
       ΣMatch (Sub.v_shift v Z_len 0)
-        x (handle_tmpl (1+Γ_len) Z_len h T1) 
-        y (handle_tmpl (1+Γ_len) Z_len h T2)
+        x (handle_t (1+Γ_len) Z_len h T1) 
+        y (handle_t (1+Γ_len) Z_len h T2)
   | TOp op v y T =>
-      match find_op_case h op with 
+      match find_case h op with 
       | Some (x, k, c_op) => 
           (c_subs2_out (Sub.c_shift c_op (Γ_len + Z_len) 0) 
-            (Fun y (handle_tmpl (1+Γ_len) Z_len h T)) 
+            (Fun y (handle_t (1+Γ_len) Z_len h T)) 
             (Sub.v_shift v Z_len 0))
-      | None => Op op v y (handle_tmpl (1+Γ_len) Z_len h T)
+      | None => Op op v y (handle_t (1+Γ_len) Z_len h T)
       end
   end.
 
+(* ==================== Wellformed Judgements ==================== *)
 
-(* ========================================================================== *)
 Inductive wf_vtype : vtype -> Prop :=
 | WfUnit : wf_vtype TyUnit 
 | WfInt : wf_vtype TyInt
@@ -56,31 +58,30 @@ with wf_tctx : tctx -> Prop :=
 | WfTCtxØ : wf_tctx TCtxØ
 | WfTCtxU Γ A : wf_tctx Γ -> wf_vtype A -> wf_tctx (TCtxU Γ A)
 
-with wf_tmpl : ctx -> tctx -> tmpl -> sig -> Prop :=
+with wf_t : ctx -> tctx -> t -> sig -> Prop :=
 | WfTApp Γ Z name num v A Σ : 
     has_vtype Γ v A -> get_ttype Z num = Some A ->
-    wf_tmpl Γ Z (TApp (name, num) v) Σ
+    wf_t Γ Z (TApp (name, num) v) Σ
 | WfTAbsurd Γ Z v Σ :
-    has_vtype Γ v TyØ -> wf_tmpl Γ Z (TAbsurd v) Σ 
+    has_vtype Γ v TyØ -> wf_t Γ Z (TAbsurd v) Σ 
 | WfTΠMatch Γ Z v A B x y T Σ :
-    has_vtype Γ v (TyΠ A B) -> wf_tmpl (CtxU (CtxU Γ A) B) Z T Σ -> 
-    wf_tmpl Γ Z (TΠMatch v x y T) Σ
+    has_vtype Γ v (TyΠ A B) -> wf_t (CtxU (CtxU Γ A) B) Z T Σ -> 
+    wf_t Γ Z (TΠMatch v x y T) Σ
 | WfTΣMatch Γ Z v x A Tl y B Tr Σ :
-    has_vtype Γ v (TyΣ A B) -> wf_tmpl (CtxU Γ A) Z Tl Σ -> 
-    wf_tmpl (CtxU Γ B) Z Tr Σ -> wf_tmpl Γ Z (TΣMatch v x Tl y Tr) Σ
+    has_vtype Γ v (TyΣ A B) -> wf_t (CtxU Γ A) Z Tl Σ -> 
+    wf_t (CtxU Γ B) Z Tr Σ -> wf_t Γ Z (TΣMatch v x Tl y Tr) Σ
 | WfTOp Γ Z op A_op B_op v y T Σ :
     get_op_type Σ op = Some (A_op, B_op) -> has_vtype Γ v A_op ->
-    wf_tmpl (CtxU Γ B_op) Z T Σ -> wf_tmpl Γ Z (TOp op v y T) Σ
+    wf_t (CtxU Γ B_op) Z T Σ -> wf_t Γ Z (TOp op v y T) Σ
 
 with wf_eqs : eqs -> sig -> Prop :=
 | WfEqsØ Σ : wf_eqs EqsØ Σ
 | WfEqsU E Γ Z T1 T2 Σ: 
     wf_eqs E Σ -> wf_ctx Γ -> wf_tctx Z -> wf_sig Σ ->
-    wf_tmpl Γ Z T1 Σ -> wf_tmpl Γ Z T2 Σ -> 
+    wf_t Γ Z T1 Σ -> wf_t Γ Z T2 Σ -> 
     wf_eqs (EqsU E Γ Z T1 T2) Σ
 
-
-(* ========================================================================== *)
+(* ==================== Type Judgements ==================== *)
 
 with has_vtype : ctx -> val -> vtype -> Prop :=
 | TypeV Γ v A : wf_ctx Γ ->  wf_vtype A -> has_vtype' Γ v A -> has_vtype Γ v A
@@ -161,12 +162,12 @@ with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
 | TypeCasesU Γ h op_id x k c_op A_op B_op Σ D :
-    find_op_case h op_id = None ->
+    find_case h op_id = None ->
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ (TyFun B_op D)) A_op) c_op D ->
     has_htype' Γ (CasesU h op_id x k c_op) (SigU Σ op_id A_op B_op) D
 
-(* ========================================================================== *)
+(* ==================== Logic Judgements ==================== *)
 
 with respects : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | Respects Γ h Σ D E :
@@ -179,8 +180,8 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | RespectEqsU Γ h Σ D E Γ' Z T1 T2 :
     respects Γ h Σ D E -> 
     ceq D (join_ctx_tctx (join_ctxs Γ Γ') Z D)
-      (handle_tmpl (ctx_len Γ') (tctx_len Z) h T1) 
-      (handle_tmpl (ctx_len Γ') (tctx_len Z) h T2) ->
+      (handle_t (ctx_len Γ') (tctx_len Z) h T1) 
+      (handle_t (ctx_len Γ') (tctx_len Z) h T2) ->
     respects' Γ h Σ D (EqsU E Γ' Z T1 T2)
 
 with veq : vtype -> ctx -> val -> val -> Prop := 

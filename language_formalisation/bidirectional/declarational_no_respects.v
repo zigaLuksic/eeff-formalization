@@ -133,7 +133,7 @@ with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
 | TypeCasesU Γ h op_id x k c_op A_op B_op Σ D :
-    find_op_case h op_id = None ->
+    find_case h op_id = None ->
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ (TyFun B_op D)) A_op) c_op D ->
     has_htype' Γ (CasesU h op_id x k c_op) (SigU Σ op_id A_op B_op) D

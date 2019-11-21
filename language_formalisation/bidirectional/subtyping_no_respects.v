@@ -31,7 +31,7 @@ with sig_subtype : sig -> sig -> Prop :=
 with eqs_subtype : eqs -> eqs -> Prop :=
 | SubtypeEqsØ E: eqs_subtype EqsØ E
 | SubtypeEqsU E E' Γ Z T1 T2 : 
-    eqs_subtype E E' -> eqs_contain_eq E' Γ Z T1 T2 ->
+    eqs_subtype E E' -> has_eq E' Γ Z T1 T2 ->
     eqs_subtype (EqsU E Γ Z T1 T2) E'
 .
 

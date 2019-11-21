@@ -103,11 +103,11 @@ Fixpoint find_op_τcase h op : option (var_name * var_name * τcomp) :=
   end.
 
 
-Fixpoint τeqs_contain_eq E Γ Z T1 T2 :=
+Fixpoint τhas_eq E Γ Z T1 T2 :=
   match E with
   | τEqsØ => False
   | τEqsU E' Γ' Z' T1' T2' =>
-      (Γ = Γ' /\ Z = Z' /\ T1 = T1' /\ T2 = T2') \/ τeqs_contain_eq E' Γ Z T1 T2
+      (Γ = Γ' /\ Z = Z' /\ T1 = T1' /\ T2 = T2') \/ τhas_eq E' Γ Z T1 T2
   end.
 
 
@@ -144,7 +144,7 @@ with τsig_subtype : τsig -> τsig -> Prop :=
 with τeqs_subtype : τeqs -> τeqs -> Prop :=
 | τSubtypeEqsØ E: τeqs_subtype τEqsØ E
 | τSubtypeEqsU E E' Γ Z T1 T2 : 
-    τeqs_subtype E E' -> τeqs_contain_eq E' Γ Z T1 T2 ->
+    τeqs_subtype E E' -> τhas_eq E' Γ Z T1 T2 ->
     τeqs_subtype (τEqsU E Γ Z T1 T2) E'
 .
 

@@ -1,121 +1,147 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax".
-Require Export syntax Arith.
-Require Import Le Compare_dec.
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+Require Export syntax.
+Require Import Le.
+
+(* ==================== Shifts and Subs ==================== *)
 
 Module Sub.
 
-Fixpoint v_shift (v : val) d (cut : nat) :=
-match v with
-| Var (x, n) => if cut <=? n then Var (x, d + n) else Var (x, n)
-| Unit => Unit
-| Int n => Int n
-| Inl v' => Inl (v_shift v' d cut)
-| Inr v' => Inr (v_shift v' d cut)
-| Pair v1 v2 => Pair (v_shift v1 d cut) (v_shift v2 d cut)
-| Fun x c => Fun x (c_shift c d (1+cut))
-| Handler x c_ret h => Handler x (c_shift c_ret d (1+cut)) (h_shift h d cut)
-end
-with c_shift (c : comp) d (cut : nat) :=
-match c with
-| Ret v => Ret (v_shift v d cut)
-| Absurd v => Absurd (v_shift v d cut)
-| ΠMatch v x y c => ΠMatch (v_shift v d cut) x y (c_shift c d (2+cut))
-| ΣMatch v xl cl xr cr =>
-    ΣMatch (v_shift v d cut)
-      xl (c_shift cl d (1+cut))
-      xr (c_shift cr d (1+cut))
-| App v1 v2 => App (v_shift v1 d cut) (v_shift v2 d cut)
-| Op op v_arg y c => Op op (v_shift v_arg d cut) y (c_shift c d (1+cut))
-| LetRec f x c1 c2 => LetRec f x (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
-| DoBind x c1 c2 => DoBind x (c_shift c1 d cut) (c_shift c2 d (1+cut))
-| Handle v c' => Handle (v_shift v d cut) (c_shift c' d cut)
-end
-with h_shift (h : hcases) d (cut : nat) :=
-match h with
-| CasesØ => CasesØ
-| CasesU h op x k c => CasesU (h_shift h d cut) op x k (c_shift c d (2+cut))
-end.
+Fixpoint v_shift v d cut :=
+  match v with
+  | Var (x, n) => if cut <=? n then Var (x, d + n) else Var (x, n)
+  | Unit => Unit
+  | Int n => Int n
+  | Inl v' => Inl (v_shift v' d cut)
+  | Inr v' => Inr (v_shift v' d cut)
+  | Pair v1 v2 =>
+      Pair (v_shift v1 d cut) (v_shift v2 d cut)
+  | Fun x c =>
+      Fun x (c_shift c d (1+cut))
+  | Handler x c_ret h =>
+      Handler x (c_shift c_ret d (1+cut)) (h_shift h d cut)
+  end
+with c_shift c d cut :=
+  match c with
+  | Ret v => Ret (v_shift v d cut)
+  | Absurd v => Absurd (v_shift v d cut)
+  | ΠMatch v x y c => 
+      ΠMatch (v_shift v d cut) x y (c_shift c d (2+cut))
+  | ΣMatch v xl cl xr cr =>
+      ΣMatch (v_shift v d cut) 
+        xl (c_shift cl d (1+cut)) xr (c_shift cr d (1+cut))
+  | App v1 v2 => 
+      App (v_shift v1 d cut) (v_shift v2 d cut)
+  | Op op v_arg y c => 
+      Op op (v_shift v_arg d cut) y (c_shift c d (1+cut))
+  | LetRec f x c1 c2 => 
+      LetRec f x (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
+  | DoBind x c1 c2 => 
+      DoBind x (c_shift c1 d cut) (c_shift c2 d (1+cut))
+  | Handle v c' => 
+      Handle (v_shift v d cut) (c_shift c' d cut)
+  end
+with h_shift h d cut :=
+  match h with
+  | CasesØ => CasesØ
+  | CasesU h op x k c => 
+      CasesU (h_shift h d cut) op x k (c_shift c d (2+cut))
+  end.
 
-Fixpoint sub_shift (sub : nat * val) d :=
+
+Definition sub_shift (sub : nat * val) d :=
   let (db_i, v_s) := sub in (d + db_i, v_shift v_s d 0).
 
-Fixpoint v_negshift (v : val) d (cut : nat) :=
-match v with
-| Var (x, n) => 
-    if Nat.leb cut n then Var (x, n - d) else Var (x, n)   
-| Unit => Unit
-| Int n => Int n
-| Inl v' => Inl (v_negshift v' d cut)
-| Inr v' => Inr (v_negshift v' d cut)
-| Pair v1 v2 => Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
-| Fun x c => Fun x (c_negshift c d (1+cut))
-| Handler x c_ret h =>
-    Handler x (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
-end
-with c_negshift (c : comp) d (cut : nat) :=
-match c with
-| Ret v => Ret (v_negshift v d cut)
-| Absurd v => Absurd (v_negshift v d cut)
-| ΠMatch v x y c => ΠMatch (v_negshift v d cut) x y (c_negshift c d (2+cut))
-| ΣMatch v xl cl xr cr =>
-    ΣMatch (v_negshift v d cut)
-      xl (c_negshift cl d (1+cut))
-      xr (c_negshift cr d (1+cut))
-| App v1 v2 => App (v_negshift v1 d cut) (v_negshift v2 d cut)
-| Op op v_arg y c => Op op (v_negshift v_arg d cut) y (c_negshift c d (1+cut))
-| LetRec f x c1 c2 =>
-    LetRec f x (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
-| DoBind x c1 c2 => DoBind x (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
-| Handle v c' => Handle (v_negshift v d cut) (c_negshift c' d cut)
-end
-with h_negshift (h : hcases) d (cut : nat) :=
-match h with
-| CasesØ => CasesØ
-| CasesU h op x k c => 
-    CasesU (h_negshift h d cut) op x k (c_negshift c d (2+cut))
-end.
 
-Fixpoint v_sub (v : val) (sub : nat * val) :=
+Fixpoint v_negshift v d cut :=
+  match v with
+  | Var (x, n) => 
+      if Nat.leb cut n then Var (x, n - d) else Var (x, n)   
+  | Unit => Unit
+  | Int n => Int n
+  | Inl v' => Inl (v_negshift v' d cut)
+  | Inr v' => Inr (v_negshift v' d cut)
+  | Pair v1 v2 => 
+      Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
+  | Fun x c => 
+      Fun x (c_negshift c d (1+cut))
+  | Handler x c_ret h =>
+      Handler x (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
+  end
+with c_negshift c d cut :=
+  match c with
+  | Ret v => Ret (v_negshift v d cut)
+  | Absurd v => Absurd (v_negshift v d cut)
+  | ΠMatch v x y c => 
+      ΠMatch (v_negshift v d cut) x y (c_negshift c d (2+cut))
+  | ΣMatch v xl cl xr cr =>
+      ΣMatch (v_negshift v d cut)
+        xl (c_negshift cl d (1+cut)) xr (c_negshift cr d (1+cut))
+  | App v1 v2 => 
+      App (v_negshift v1 d cut) (v_negshift v2 d cut)
+  | Op op v_arg y c => 
+      Op op (v_negshift v_arg d cut) y (c_negshift c d (1+cut))
+  | LetRec f x c1 c2 =>
+      LetRec f x (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
+  | DoBind x c1 c2 => 
+      DoBind x (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
+  | Handle v c' => 
+      Handle (v_negshift v d cut) (c_negshift c' d cut)
+  end
+with h_negshift h d cut :=
+  match h with
+  | CasesØ => CasesØ
+  | CasesU h op x k c => 
+      CasesU (h_negshift h d cut) op x k (c_negshift c d (2+cut))
+  end.
+
+
+Fixpoint v_sub v (sub : nat * val) :=
 let (db_i, v_s) := sub in
-match v with
-| Var (x, n) => if n =? db_i then v_s else Var (x, n) 
-| Unit => Unit
-| Int n => Int n
-| Inl v' => Inl (v_sub v' sub)
-| Inr v' => Inr (v_sub v' sub)
-| Pair v1 v2 => Pair (v_sub v1 sub) (v_sub v2 sub)
-| Fun x c => Fun x (c_sub c (sub_shift sub 1))
-| Handler x c_ret h =>
-    Handler x
-      (c_sub c_ret (sub_shift sub 1))
-      (h_sub h sub)
-end
-with c_sub (c : comp) (sub : nat * val) :=
-match c with
-| Ret v => Ret (v_sub v sub)
-| Absurd v => Absurd (v_sub v sub)
-| ΠMatch v x y c => ΠMatch (v_sub v sub) x y (c_sub c (sub_shift sub 2))
-| ΣMatch v xl cl xr cr =>
-    ΣMatch (v_sub v sub)
-      xl (c_sub cl (sub_shift sub 1))
-      xr (c_sub cr (sub_shift sub 1))
-| App v1 v2 => App (v_sub v1 sub) (v_sub v2 sub)
-| Op op v_arg y c => Op op (v_sub v_arg sub) y (c_sub c (sub_shift sub 1))
-| LetRec f x c1 c2 =>
-    LetRec f x (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
-| DoBind x c1 c2 => DoBind x (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
-| Handle v c' => Handle (v_sub v sub) (c_sub c' sub)
-end
-with h_sub (h : hcases) (sub : nat * val) :=
-match h with
-| CasesØ => CasesØ
-| CasesU h op x k c => CasesU (h_sub h sub) op x k (c_sub c (sub_shift sub 2))
-end.
+  match v with
+  | Var (x, n) => if n =? db_i then v_s else Var (x, n) 
+  | Unit => Unit
+  | Int n => Int n
+  | Inl v' => Inl (v_sub v' sub)
+  | Inr v' => Inr (v_sub v' sub)
+  | Pair v1 v2 => 
+      Pair (v_sub v1 sub) (v_sub v2 sub)
+  | Fun x c => 
+      Fun x (c_sub c (sub_shift sub 1))
+  | Handler x c_ret h =>
+      Handler x (c_sub c_ret (sub_shift sub 1)) (h_sub h sub)
+  end
+with c_sub c (sub : nat * val) :=
+  match c with
+  | Ret v => Ret (v_sub v sub)
+  | Absurd v => Absurd (v_sub v sub)
+  | ΠMatch v x y c => 
+      ΠMatch (v_sub v sub) x y (c_sub c (sub_shift sub 2))
+  | ΣMatch v xl cl xr cr =>
+      ΣMatch (v_sub v sub)
+        xl (c_sub cl (sub_shift sub 1)) xr (c_sub cr (sub_shift sub 1))
+  | App v1 v2 => 
+      App (v_sub v1 sub) (v_sub v2 sub)
+  | Op op v_arg y c => 
+      Op op (v_sub v_arg sub) y (c_sub c (sub_shift sub 1))
+  | LetRec f x c1 c2 =>
+      LetRec f x (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
+  | DoBind x c1 c2 => 
+      DoBind x (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
+  | Handle v c' => 
+      Handle (v_sub v sub) (c_sub c' sub)
+  end
+with h_sub h (sub : nat * val) :=
+  match h with
+  | CasesØ => CasesØ
+  | CasesU h op x k c => 
+      CasesU (h_sub h sub) op x k (c_sub c (sub_shift sub 2))
+  end.
 
 End Sub.
 
-(* Instantiates the outer binder, takes care of all the shifting. *)
+(* ==================== Complete substitution ==================== *)
+
 Definition v_subs (v:val) (v_s:val) i :=
   Sub.v_negshift (Sub.v_sub v (i, (Sub.v_shift v_s 1 i))) 1 i.
 
