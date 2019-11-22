@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
 (* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 (* Add Rec LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 Require Export syntax substitution.

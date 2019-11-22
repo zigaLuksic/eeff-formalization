@@ -62,16 +62,16 @@ with tctx : Type :=
 | TCtxØ : tctx
 | TCtxU : tctx -> vtype -> tctx
 
-with t : Type :=
-| TApp : var_id -> val -> t
-| TAbsurd : val -> t
-| TΠMatch : val -> var_name -> var_name -> t -> t
-| TΣMatch : val -> var_name -> t -> var_name -> t -> t
-| TOp : op_id -> val -> var_name -> t -> t
+with tmpl : Type :=
+| TApp : var_id -> val -> tmpl
+| TAbsurd : val -> tmpl
+| TΠMatch : val -> var_name -> var_name -> tmpl -> tmpl
+| TΣMatch : val -> var_name -> tmpl -> var_name -> tmpl -> tmpl
+| TOp : op_id -> val -> var_name -> tmpl -> tmpl
 
 with eqs : Type := 
 | EqsØ : eqs
-| EqsU : eqs -> ctx -> tctx -> t -> t -> eqs
+| EqsU : eqs -> ctx -> tctx -> tmpl -> tmpl -> eqs
 .
 
 (* ==================== Getters and Ctx Modification ==================== *)

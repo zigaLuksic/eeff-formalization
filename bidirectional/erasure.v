@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\bidirectional".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\PHD\language_formalisation\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\bidirectional".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\substitution". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\bidirectional". *)
