@@ -1,5 +1,5 @@
 Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\PHD\language_formalisation\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
 Require Export syntax.
 Require Import Le Compare_dec.
 
