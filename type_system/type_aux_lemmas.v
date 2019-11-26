@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
@@ -412,9 +412,30 @@ inv orig. destruct H3.
   rewrite H5. apply IHeq.
   all: inv H2. all: try eassumption.
 }{
-  clear V CI HC R VE CE. inv orig. inv H1.
+intros wfins. apply Veq.
+{ inv orig. assumption. }
+{ apply ctx_insert_wf. inv orig. all: assumption. }
+inv orig. destruct H1.
++ clear V CI HC R VE CE. apply VRefl. f_equal. assumption.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. apply VSym. auto.
++ specialize (VE _ _ _ _ H1) as IH1.
+  specialize (VE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. eapply VTrans; eauto.
++ specialize (VE _ _ _ _ H1) as IH1.
+  specialize (VE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. simpl. apply EqPair; auto.
 }{
-  clear V CI HC R VE CE. inv orig. inv H1.
+intros wfins. apply Ceq.
+{ inv orig. assumption. }
+{ apply ctx_insert_wf. inv orig. all: assumption. }
+inv orig. destruct H1.
++ clear V CI HC R VE CE. apply CRefl. f_equal. assumption.
++ specialize (CE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. apply CSym. auto.
++ specialize (CE _ _ _ _ H1) as IH1.
+  specialize (CE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. eapply CTrans; eauto.
 }
 Qed.
 
@@ -621,9 +642,31 @@ inv orig. destruct H3.
   assert (tctx_len Z+(ctx_len Γ'+i) = i+ctx_len Γ'+tctx_len Z) by omega.
   rewrite H2. eapply IHeq. eauto. all: eapply handle_t_no_var; eauto.
 }{
-  clear V CI HC R VE CE. inv orig. inv H1.
+intros wf_ins no_var1 no_var2. apply Veq.
+{ inv orig. assumption. }
+{ apply ctx_remove_wf. inv orig. assumption. }
+inv orig. destruct H1.
++ clear V CI HC R VE CE. apply VRefl. f_equal. assumption.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. apply VSym. eauto.
++ specialize (VE _ _ _ _ H1) as IH1.
+  specialize (VE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. eapply VTrans; admit.
++ specialize (VE _ _ _ _ H1) as IH1.
+  specialize (VE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. simpl in *. destruct no_var1. destruct no_var2.
+  apply EqPair; eauto.
 }{
-  clear V CI HC R VE CE. inv orig. inv H1.
+intros wfins no_var1 no_var2. apply Ceq.
+{ inv orig. assumption. }
+{ apply ctx_remove_wf. inv orig. all: assumption. }
+inv orig. destruct H1.
++ clear V CI HC R VE CE. apply CRefl. f_equal. assumption.
++ specialize (CE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. apply CSym. eauto.
++ specialize (CE _ _ _ _ H1) as IH1.
+  specialize (CE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. eapply CTrans; admit.
 }
 Qed.
 
@@ -758,8 +801,30 @@ destruct H3.
   * erewrite <-get_join_ctx_tctx, <-get_join_ctxs. eauto.
   * eapply v_join_all_ctxs_typesafe; auto.
 }{
-  clear V CI HC R VE CE. inv orig. inv H1.
+intros gets types. apply Veq.
+{ inv orig. assumption. }
+{ inv orig. assumption. }
+inv orig. destruct H1.
++ clear V CI HC R VE CE. apply VRefl. f_equal. assumption.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. apply VSym. eauto.
++ specialize (VE _ _ _ _ H1) as IH1.
+  specialize (VE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. eapply VTrans; eauto.
++ specialize (VE _ _ _ _ H1) as IH1.
+  specialize (VE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. simpl in *.
+  apply EqPair; eauto.
 }{
-  clear V CI HC R VE CE. inv orig. inv H1.
+intros gets types. apply Ceq.
+{ inv orig. assumption. }
+{ inv orig. assumption. }
+inv orig. destruct H1.
++ clear V CI HC R VE CE. apply CRefl. f_equal. assumption.
++ specialize (CE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. apply CSym. eauto.
++ specialize (CE _ _ _ _ H1) as IH1.
+  specialize (CE _ _ _ _ H2) as IH2.
+  clear V CI HC R VE CE. eapply CTrans; eauto.
 }
 Qed.

@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export declarational wf_lemmas.
 
@@ -363,9 +363,20 @@ inv r. eapply Respects; auto. destruct H3.
   apply ctx_subtype_join_ctx_tctx. apply ctx_subtype_join_ctxs. 
   all: assumption || apply ctx_subtype_refl; assumption.
 }{
-inv equals. inv H1.
+clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
+intros wf ctxsty.
+inv equals. destruct H1; apply Veq; auto.
++ apply VRefl. auto.
++ apply VSym. eauto.
++ eapply VTrans; eauto.
++ eapply EqPair; eauto.
 }{
-inv equals. inv H1.
+clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
+intros wf ctxsty.
+inv equals. destruct H1; apply Ceq; auto.
++ apply CRefl. auto.
++ apply CSym. eauto.
++ eapply CTrans; eauto.
 }
 Qed.
 
@@ -1050,14 +1061,21 @@ Qed.
 
 (* ==================== Logic Subtyping ==================== *)
 
-Lemma veq_subtype A A' Γ v1 v2 :
-  veq A Γ v1 v2 -> wf_vtype A' -> vsubtype A A' -> veq A' Γ v1 v2.
+Fixpoint veq_subtype A A' Γ v1 v2 (orig : veq A Γ v1 v2) {struct orig} :
+  wf_vtype A' -> vsubtype A A' -> veq A' Γ v1 v2.
 Proof. 
-intros. inv H. apply Veq; auto. inv H4.
+intros. inv orig. apply Veq; auto. induction H3.
++ apply VRefl. auto.
++ apply VSym. eauto.
++ eapply VTrans; eauto.
++ inv H0. inv H. eapply EqPair; eapply veq_subtype; eauto.
 Qed.
 
-Lemma ceq_subtype C C' Γ c1 c2 :
-  ceq C Γ c1 c2 -> wf_ctype C' -> csubtype C C' -> ceq C' Γ c1 c2.
+Fixpoint ceq_subtype C C' Γ c1 c2 (orig : ceq C Γ c1 c2) {struct orig} :
+  wf_ctype C' -> csubtype C C' -> ceq C' Γ c1 c2.
 Proof. 
-intros. inv H. apply Ceq; auto. inv H4.
+intros. inv orig. apply Ceq; auto. destruct H3.
++ apply CRefl. auto.
++ apply CSym. eauto.
++ eapply CTrans; eauto.
 Qed.

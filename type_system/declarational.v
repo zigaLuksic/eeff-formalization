@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Require Export syntax syntax_lemmas subtyping substitution.
 
 (* ==================== Template Handling ==================== *)
@@ -188,9 +188,18 @@ with veq : vtype -> ctx -> val -> val -> Prop :=
 | Veq A Γ v1 v2 : wf_vtype A -> wf_ctx Γ -> veq' A Γ v1 v2 -> veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
+| VRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
+| VSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
+| VTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
+| EqPair A B Γ v1 v1' v2 v2' :
+    veq A Γ v1 v1' -> veq A Γ v2 v2' -> 
+    veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 
 | Ceq C Γ c1 c2 : wf_ctype C -> wf_ctx Γ -> ceq' C Γ c1 c2 -> ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
+| CRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
+| CSym A Γ c1 c2 : ceq A Γ c1 c2 -> ceq' A Γ c2 c1
+| CTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
 .
