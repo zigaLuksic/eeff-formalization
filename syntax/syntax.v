@@ -117,18 +117,18 @@ Fixpoint has_eq E Γ Z T1 T2 :=
 
 
 Fixpoint ctx_remove (Γ:ctx) (i:nat) :=
-  match Γ, i with
-  | CtxØ, _ => CtxØ
-  | CtxU Γ' A', 0 => Γ'
-  | CtxU Γ' A', S i' => CtxU (ctx_remove Γ' i') A'
+  match i, Γ with
+  | _, CtxØ => CtxØ
+  | 0, CtxU Γ' A' => Γ'
+  | S i', CtxU Γ' A' => CtxU (ctx_remove Γ' i') A'
   end.
 
 
 Fixpoint ctx_insert (Γ:ctx) A (i:nat) :=
-  match Γ, i with
-  | Γ', 0 => CtxU Γ' A
-  | CtxØ, _ => CtxØ
-  | CtxU Γ' A', S i' => CtxU (ctx_insert Γ' A i') A'
+  match i, Γ with
+  | 0, Γ' => CtxU Γ' A
+  | _, CtxØ => CtxØ
+  | S i', CtxU Γ' A' => CtxU (ctx_insert Γ' A i') A'
   end.
 
 

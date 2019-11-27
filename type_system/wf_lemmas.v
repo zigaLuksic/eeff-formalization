@@ -26,6 +26,12 @@ all: (try inv orig); apply WfCtxU || apply WfCtxØ; auto.
 all: apply WfCtxU || apply WfCtxØ; auto.
 Qed.
 
+Lemma ctx_insert_wf_rev Γ A i:
+  wf_ctx (ctx_insert Γ A i) -> wf_ctx Γ.
+Proof.
+revert i A. induction Γ; intros i A orig. apply WfCtxØ.
+destruct i; simpl in *; inv orig. assumption. apply WfCtxU; eauto.
+Qed.
 
 Lemma ctx_remove_wf Γ i:
   wf_ctx Γ -> wf_ctx (ctx_remove Γ i).

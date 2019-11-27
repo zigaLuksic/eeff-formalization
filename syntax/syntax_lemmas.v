@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 Require Import Le Compare_dec.
 
@@ -10,10 +10,9 @@ Ltac inv H := inversion H; clear H; subst.
 Lemma get_ctx_remove_unchanged Γ i j :
   i > j -> get_vtype Γ j = get_vtype (ctx_remove Γ i) j.
 Proof.
-revert i j; induction Γ; intros i j lt; auto.
-destruct i; destruct j; simpl; try omega.
-+ reflexivity.
-+ apply IHΓ. omega.
+revert i j; induction Γ; intros i j lt; simpl.
+destruct i; auto. destruct j; destruct i; simpl; omega || auto.
+apply IHΓ. omega.
 Qed.
 
 
@@ -21,9 +20,8 @@ Lemma get_ctx_remove_changed Γ i j :
   i <= j -> get_vtype Γ (S j) = get_vtype (ctx_remove Γ i) j.
 Proof.
 revert i j; induction Γ; intros i j lt; auto.
-destruct i; destruct j; simpl; auto.
-+ omega.
-+ apply IHΓ. omega.
+destruct i; destruct j; simpl; auto. simpl.
+destruct i. auto. simpl. destruct j. omega. apply IHΓ. omega.
 Qed.
 
 
@@ -62,6 +60,26 @@ Lemma ctx_insert_extend Γ i A_ins A :
 Proof.
 revert i; induction Γ; intros i; auto.
 Qed.
+
+
+Lemma ctx_insert_remove Γ i j A (cmp : i <= j):
+  ctx_insert (ctx_remove Γ j) A i = ctx_remove (ctx_insert Γ A i) (1+j).
+Proof.
+revert i j cmp. induction Γ; intros i j cpm. 
+destruct i. simpl. destruct j; simpl; reflexivity.
+simpl. destruct j. omega. simpl. reflexivity. simpl. destruct j. 
+assert (i=0) by omega. rewrite H. simpl. destruct Γ; simpl; reflexivity.
+destruct i. simpl. reflexivity. simpl. f_equal. apply IHΓ. omega.
+Qed.
+
+Lemma ctx_insert_remove_alt Γ i j A (cmp : i > j):
+  ctx_insert (ctx_remove Γ j) A i = ctx_remove (ctx_insert Γ A (1+i)) j.
+Proof.
+revert i j cmp. induction Γ; intros i j cpm; simpl. 
+all: destruct j; simpl; auto.
+all: destruct i; simpl; omega || auto. f_equal. apply IHΓ. omega.
+Qed.
+
 
 
 Lemma get_join_ctx_tctx Γ Z D i:

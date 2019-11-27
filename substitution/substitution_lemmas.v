@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export substitution syntax_lemmas.
 Require Import Le.
 
@@ -226,6 +226,57 @@ revert j. induction h; intros j novar cmpij; simpl; f_equal. auto.
 }
 Qed.
 
+Lemma v_shift_negshift_comm_alt v i j :
+  v_no_var v j -> j < i ->
+    Sub.v_shift (Sub.v_negshift v 1 j) 1 i 
+  = Sub.v_negshift (Sub.v_shift v 1 (1+i)) 1 j
+
+with c_shift_negshift_comm_alt c i j :
+  c_no_var c j -> j < i ->
+    Sub.c_shift (Sub.c_negshift c 1 j) 1 i 
+  = Sub.c_negshift (Sub.c_shift c 1 (1+i)) 1 j
+
+with h_shift_negshift_comm_alt h i j :
+  h_no_var h j -> j < i ->
+    Sub.h_shift (Sub.h_negshift h 1 j) 1 i 
+  = Sub.h_negshift (Sub.h_shift h 1 (1+i)) 1 j.
+Proof.
+{
+clear v_shift_negshift_comm_alt.
+revert j; induction v; intros j novar cmpij.
+{ 
+assert (1+i=i+1) as hack by omega. rewrite hack.
+destruct v as (x, d). simpl. destruct (j<=?d) eqn:jd.
++ apply leb_complete in jd. simpl in novar.
+  destruct (i+1<=?d) eqn:sid; simpl.
+  - assert (j<=? S d=true) by (apply leb_correct; omega).
+    rewrite H. destruct d; simpl. omega. apply leb_complete in sid.
+    assert (i<=?d-0=true) by (apply leb_correct; omega).
+    rewrite H0. do 2 f_equal. omega.
+  - apply leb_complete_conv in sid. apply leb_correct in jd as jd'.
+    rewrite jd'. destruct d. omega. 
+    assert (i<=?S d-1=false) by (apply leb_correct_conv; omega). 
+    rewrite H. reflexivity.
++ simpl. apply leb_complete_conv in jd as jd'. 
+  assert (i<=?d=false) by (apply leb_correct_conv; omega). rewrite H.
+  assert (i+1<=?d=false) by (apply leb_correct_conv; omega). rewrite H0.
+  simpl. rewrite jd. reflexivity.
+}
+all : simpl; auto; f_equal; simpl in novar; try destruct novar; auto.
+all : apply c_shift_negshift_comm_alt; omega || auto.
+}{
+clear h_shift_negshift_comm_alt.
+revert j. destruct c; intros j novar cmpij; simpl in *; f_equal; auto.
+all: apply v_shift_negshift_comm_alt || apply c_shift_negshift_comm_alt; auto.
+all: omega || (try destruct novar; auto).
+all: destruct H0; auto.
+}{
+clear v_shift_negshift_comm_alt. 
+revert j. induction h; intros j novar cmpij; simpl in *; f_equal. auto.
+all: destruct novar; auto. apply c_shift_negshift_comm_alt. auto. omega.
+}
+Qed.
+
 (* ==================== novar interactions ==================== *)
 
 Lemma v_shift_makes_no_var v j:
@@ -274,6 +325,34 @@ clear h_no_var_shift.
 revert j cut. induction h; intros j cut orig cmpjc; simpl;
 destruct orig; auto. constructor. auto.
 rewrite ssnj. apply c_no_var_shift. assumption. omega.
+}
+Qed.
+
+
+Lemma v_no_var_shift_alt (v:val) j n cut:
+  v_no_var v j -> (cut > j) -> v_no_var (Sub.v_shift v n cut) j
+with c_no_var_shift_alt (c:comp) j n cut:
+  c_no_var c j -> (cut > j) -> c_no_var (Sub.c_shift c n cut) j
+with h_no_var_shift_alt (h:hcases) j n cut:
+  h_no_var h j -> (cut > j) -> h_no_var (Sub.h_shift h n cut) j.
+Proof.
+{
+clear v_no_var_shift_alt.
+revert j. induction v; intros j orig cmpjc; simpl; simpl in orig;
+try constructor; try inv orig; auto.
+{ destruct v as (x, i). destruct (cut <=? i) eqn:cmp; simpl; omega || auto.
+  rewrite leb_iff in cmp; omega. }
+all: apply c_no_var_shift_alt; omega || assumption.
+}{
+clear c_no_var_shift_alt.
+revert j cut. induction c; intros j cut orig cmpjc; simpl; simpl in *.
+all: try inv orig; try constructor; try constructor; auto.
+all: try apply IHc || apply IHc1 || apply IHc2; omega || auto.
+all: inv H0; assumption.
+}{
+clear h_no_var_shift_alt.
+revert j cut. induction h; intros j cut orig cmpjc; simpl;
+destruct orig; auto. constructor. auto. apply c_no_var_shift_alt; omega || auto.
 }
 Qed.
 

@@ -5,7 +5,7 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
-Require Export declarational wf_lemmas.
+Require Export syntax declarational wf_lemmas.
 
 
 Ltac inv H := inversion H; clear H; subst.
@@ -258,6 +258,50 @@ intro sty. induction sty; simpl; auto.
 Qed. 
 
 
+Lemma ctx_subtype_insert Γ A Γ' i: 
+  wf_ctx Γ' -> wf_ctx Γ -> wf_vtype A -> ctx_subtype Γ' (ctx_insert Γ A i) ->
+  exists Γ'' A', Γ' = ctx_insert Γ'' A' i /\ vsubtype A' A 
+    /\ wf_vtype A' /\ ctx_subtype Γ'' Γ.
+Proof.
+revert Γ A i. induction Γ'; intros Γ A i wfg' wfg wfA sty. 
+* inv sty. exists Γ. exists A. aconstructor. constructor.
+  apply vsubtype_refl. assumption. destruct Γ. aconstructor. apply SubtypeCtxØ.
+  simpl in H. destruct i; discriminate.
+* inv sty. destruct i.
+  + assert (forall Γ A, ctx_insert Γ A 0 = CtxU Γ A).
+    {intros. destruct Γ0; simpl; auto. }
+    rewrite H in H1. inv H1. exists Γ'. exists v. inv wfg'. auto.
+  + destruct Γ. simpl in *. discriminate.
+    assert (forall Γ A A', 
+      ctx_insert (CtxU Γ A') A (S i) = CtxU (ctx_insert Γ A i) A').
+    {intros. destruct Γ0; simpl; auto. }
+    rewrite H in H1. inv H1. inv wfg'. inv wfg. 
+    apply IHΓ' in H2; auto. destruct H2 as [Γ''[A'[ins[sty]]]].
+    exists (CtxU Γ'' v). exists A'. constructor. rewrite H. f_equal. auto.
+    aconstructor. destruct H0. aconstructor. apply SubtypeCtxU; auto.
+Qed.
+
+
+
+Lemma ctx_subtype_remove Γ Γ' i: 
+  wf_ctx Γ' -> wf_ctx Γ ->
+  ctx_subtype Γ' (ctx_remove Γ i) ->
+  exists Γ'', Γ' = ctx_remove Γ'' i /\ ctx_subtype Γ'' Γ /\ wf_ctx Γ''.
+Proof.
+revert Γ' i. induction Γ; intros Γ' i wfg' wfg sty.
++  simpl in sty. destruct i; inv sty; exists CtxØ;
+   aconstructor; constructor; apply SubtypeCtxØ || apply WfCtxØ. 
++ simpl in sty. destruct i.
+  - exists (CtxU Γ' v). aconstructor. constructor. apply SubtypeCtxU. auto.
+    all: inv wfg. apply vsubtype_refl. assumption. apply WfCtxU; auto.
+  - inv sty. apply IHΓ in H2. all: try (inv wfg; inv wfg'; assumption).
+    destruct H2 as [Γ''[eq[wf]]]. subst. exists (CtxU Γ'' A).
+    aconstructor. constructor. apply SubtypeCtxU; auto.
+    apply WfCtxU. assumption. inv wfg'. assumption.
+Qed.
+
+
+
 Fixpoint ctx_subtype_vtype Γ Γ' v A (types : has_vtype Γ v A) {struct types}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ  -> has_vtype Γ' v A
 
@@ -369,6 +413,12 @@ inv equals. destruct H1; apply Veq; auto.
 + apply VRefl. auto.
 + apply VSym. eauto.
 + eapply VTrans; eauto.
++ apply ctx_subtype_insert in ctxsty. destruct ctxsty as [Γ''[A''[is[s[w]]]]].
+  subst. apply VInsert. eapply ctx_subtype_veq. all: eauto.
+  - eapply ctx_insert_wf_rev. eauto.
+  - eapply ctx_insert_wf_rev. eauto.
++ apply ctx_subtype_remove in ctxsty; auto. destruct ctxsty as [Γ''[eq[wfg]]].
+  subst. apply VRemove; auto. eapply ctx_subtype_veq; eauto.
 + eapply EqPair; eauto.
 }{
 clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
@@ -1068,6 +1118,8 @@ intros. inv orig. apply Veq; auto. induction H3.
 + apply VRefl. auto.
 + apply VSym. eauto.
 + eapply VTrans; eauto.
++ eapply VInsert; eauto.
++ eapply VRemove; eauto.
 + inv H0. inv H. eapply EqPair; eapply veq_subtype; eauto.
 Qed.
 

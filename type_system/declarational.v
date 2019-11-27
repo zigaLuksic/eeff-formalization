@@ -191,6 +191,12 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
 | VRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
 | VSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
 | VTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
+| VInsert A Γ v1 v2 A' i :
+    veq A Γ v1 v2 -> wf_vtype A' ->
+    veq' A (ctx_insert Γ A' i) (Sub.v_shift v1 1 i) (Sub.v_shift v2 1 i)
+| VRemove A Γ v1 v2 i :
+    veq A Γ v1 v2 -> wf_ctx Γ -> v_no_var v1 i -> v_no_var v2 i -> 
+    veq' A (ctx_remove Γ i) (Sub.v_negshift v1 1 i) (Sub.v_negshift v2 1 i)
 | EqPair A B Γ v1 v1' v2 v2' :
     veq A Γ v1 v1' -> veq A Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
