@@ -5,7 +5,7 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
-Require Export syntax declarational wf_lemmas.
+Require Export declarational wf_lemmas.
 
 
 Ltac inv H := inversion H; clear H; subst.
@@ -413,12 +413,6 @@ inv equals. destruct H1; apply Veq; auto.
 + apply VRefl. auto.
 + apply VSym. eauto.
 + eapply VTrans; eauto.
-+ apply ctx_subtype_insert in ctxsty. destruct ctxsty as [Γ''[A''[is[s[w]]]]].
-  subst. apply VInsert. eapply ctx_subtype_veq. all: eauto.
-  - eapply ctx_insert_wf_rev. eauto.
-  - eapply ctx_insert_wf_rev. eauto.
-+ apply ctx_subtype_remove in ctxsty; auto. destruct ctxsty as [Γ''[eq[wfg]]].
-  subst. apply VRemove; auto. eapply ctx_subtype_veq; eauto.
 + eapply EqPair; eauto.
 }{
 clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
@@ -1118,8 +1112,6 @@ intros. inv orig. apply Veq; auto. induction H3.
 + apply VRefl. auto.
 + apply VSym. eauto.
 + eapply VTrans; eauto.
-+ eapply VInsert; eauto.
-+ eapply VRemove; eauto.
 + inv H0. inv H. eapply EqPair; eapply veq_subtype; eauto.
 Qed.
 

@@ -423,11 +423,6 @@ inv orig. destruct H1.
   specialize (VE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. eapply VTrans; eauto.
 + specialize (VE _ _ _ _ H1) as IH1.
-  clear V CI HC R VE CE. eapply VInsert; eauto.
-+ specialize (VE _ _ _ _ H1) as IH1.
-  clear V CI HC R VE CE. apply VInsert; auto. apply Veq; auto.
-  apply VRemove; auto.
-+ specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. simpl. apply EqPair; auto.
 }{
@@ -638,7 +633,7 @@ intros types no_var wfins. apply Respects.
 all: try (inv orig; assumption).
 inv orig. destruct H3.
 + clear V CI HC R VE CE. apply RespectEqsØ.
-+ specialize (R _ _ _ _ _ H3) as IHres.
++ specialize (R _ _ _ _ _ H3) as IHres. 
   specialize (CE _ _ _ _ H4) as IHeq.
   clear V CI HC R VE CE. apply RespectEqsU. eauto.
   rewrite join_ctxs_remove. rewrite join_ctx_tctx_remove.
@@ -656,14 +651,7 @@ inv orig. destruct H1.
   clear V CI HC R VE CE. apply VSym. eauto.
 + specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE. eapply VRemove; auto. 
-  apply Veq; auto. eapply VTrans; eauto.
-+ specialize (VE _ _ _ _ H1) as IH1.
-  clear V CI HC R VE CE. eapply VRemove; auto. apply Veq; auto.
-  apply VInsert; eauto. 
-+ specialize (VE _ _ _ _ H1) as IH1.
-  clear V CI HC R VE CE. eapply VRemove; auto. apply Veq; auto.
-  apply VRemove; eauto. 
+  clear V CI HC R VE CE. eapply VTrans; admit.
 + specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. simpl in *. destruct no_var1. destruct no_var2.
