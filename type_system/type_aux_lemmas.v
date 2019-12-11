@@ -1,9 +1,9 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
@@ -515,6 +515,8 @@ intros; induction Γ'; simpl.
 Qed.
 
 
+(* 
+
 Fixpoint v_remove_typesafe 
   Γ v A (orig : has_vtype Γ v A) i {struct orig} :
   v_no_var v i ->
@@ -668,7 +670,9 @@ inv orig. destruct H1.
   specialize (CE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. eapply CTrans; admit.
 }
-Qed.
+Qed. 
+
+*)
 
 
 Fixpoint v_sub_typesafe 
@@ -826,5 +830,91 @@ inv orig. destruct H1.
 + specialize (CE _ _ _ _ H1) as IH1.
   specialize (CE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. eapply CTrans; eauto.
+}
+Qed.
+
+
+Fixpoint v_subs_typesafe 
+  Γ Γ' v A i v_s A_s (orig: has_vtype Γ' v A) {struct orig}:
+  has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ A_s i ->
+  has_vtype Γ (v_subs v v_s i) A
+
+with c_subs_typesafe
+  Γ Γ' c C i v_s A_s (orig: has_ctype Γ' c C) {struct orig}:
+  has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ A_s i ->
+  has_ctype Γ (c_subs c v_s i) C
+
+with h_subs_typesafe
+  Γ Γ' h Σ D i v_s A_s (orig: has_htype Γ' h Σ D) {struct orig}:
+  has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ A_s i ->
+  has_htype Γ (h_subs h v_s i) Σ D
+
+with respects_subs_typesafe
+  Γ Γ' h Σ D E i v_s A_s (orig: respects Γ' h Σ D E) {struct orig} :
+  has_htype Γ h Σ D -> has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ A_s i ->
+  respects Γ (h_subs h v_s i) Σ D E
+
+with veq_subs_typesafe
+  Γ Γ' A v1 v2 i v_s A_s (orig: veq A Γ' v1 v2) {struct orig} :
+  has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ A_s i ->
+  veq A Γ (v_subs v1 v_s i) (v_subs v2 v_s i)
+
+with ceq_subs_typesafe
+  Γ Γ' C c1 c2 i v_s A_s (orig: ceq C Γ' c1 c2) {struct orig} :
+  has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ A_s i ->
+  ceq C Γ (c_subs c1 v_s i) (c_subs c2 v_s i).
+Proof.
+all: rename v_subs_typesafe into V; rename c_subs_typesafe into CI.
+all: rename h_subs_typesafe into HC; rename respects_subs_typesafe into R.
+all: rename veq_subs_typesafe into VE; rename ceq_subs_typesafe into CE.
+{
+intros tyvs geq. 
+assert (wf_ctx Γ) as wfg by (inv tyvs; assumption).
+destruct orig. destruct H1; apply TypeV; auto; unfold v_subs; simpl.
++ apply TypeUnit.
++ apply TypeInt.
++ clear V CI HC R VE CE. destruct (n=?i) eqn:ni.
+  - apply Nat.eqb_eq in ni. apply ctx_len_gets in H1 as len. subst.
+    rewrite v_negshift_shift, v_shift_0. rewrite get_ctx_insert_new in H1.
+    * inv tyvs. inv H1. assumption.
+    * assert (forall Γ A i, ctx_len (ctx_insert Γ A i) > i -> ctx_len Γ >= i).
+      { intros Γ' A'. induction Γ'; intros j orig.
+        + destruct j; simpl in orig; omega.
+        + destruct j; simpl in *. omega. specialize (IHΓ' j). omega. }
+      eauto.
+    * omega.
+  - subst. simpl. destruct (i<=?n) eqn:cmp; apply TypeVar.
+    * erewrite get_ctx_insert_changed.
+      all: apply Nat.eqb_neq in ni; apply leb_complete in cmp.
+      assert (1+(n-1)=n) by omega. rewrite H2. eauto. omega.
+    * erewrite get_ctx_insert_unchanged. eauto.
+      apply leb_complete_conv in cmp. omega.
++ specialize (V Γ Γ0 v1 _ i _ _ H1 tyvs geq) as IH1.
+  specialize (V Γ Γ0 v2 _ i _ _ H2 tyvs geq) as IH2.
+  clear V CI HC R VE CE.
+  apply TypePair; auto.  
++ specialize (V Γ Γ0 v _ i _ _ H1 tyvs geq) as IH.
+  clear V CI HC R VE CE.
+  apply TypeInl; auto.  
++ specialize (V Γ Γ0 v _ i _ _ H1 tyvs geq) as IH.
+  clear V CI HC R VE CE.
+  apply TypeInr; auto.
++ assert (CtxU Γ0 A = ctx_insert (CtxU Γ A) A_s (1+i)).
+  { simpl. f_equal. auto. }
+  inv H0. specialize (v_shift_typesafe _ Γ A _ tyvs H5) as tyvs'.
+  specialize (CI _ _ c _ (1+i) _ _ H1 tyvs') as IH. 
+  clear V CI HC R VE CE.
+  apply TypeFun. rewrite v_shift_comm. apply IH.
+  simpl. f_equal. omega.
+}{
+admit.
+}{
+admit.
+}{
+admit.
+}{
+admit.
+}{
+admit.
 }
 Qed.

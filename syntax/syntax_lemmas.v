@@ -1,5 +1,5 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
 Require Export syntax.
 Require Import Le Compare_dec.
 
@@ -52,6 +52,17 @@ destruct i; destruct j; simpl; try reflexivity.
 destruct j; destruct i; auto.
 + omega.
 + simpl. apply IHΓ. omega.
+Qed.
+
+
+Lemma get_ctx_insert_new Γ A i:
+  ctx_len Γ >= i -> get_vtype (ctx_insert Γ A i) i = Some A.
+Proof.
+revert i. induction Γ; intros i len; simpl; destruct i.
++ simpl. reflexivity.
++ simpl in *. omega.
++ simpl. reflexivity.
++ simpl in *. apply IHΓ. omega.
 Qed.
 
 
