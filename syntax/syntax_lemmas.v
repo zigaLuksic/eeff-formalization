@@ -140,6 +140,21 @@ Proof.
 induction Z; simpl. auto. f_equal. auto.
 Qed.
 
+
+(* ==================== Ctx Length ==================== *)
+
+Lemma join_ctxs_len Γ Γ':
+  ctx_len (join_ctxs Γ Γ') = ctx_len Γ + ctx_len Γ'.
+Proof.
+induction Γ'; simpl; auto. rewrite IHΓ'. omega.
+Qed.
+
+Lemma join_ctx_tctx_len Γ Z D:
+  ctx_len (join_ctx_tctx Γ Z D) = ctx_len Γ + tctx_len Z.
+Proof.
+induction Z; simpl; auto. rewrite IHZ. omega.
+Qed.
+
 (* ==================== Ctx Guarantees ==================== *)
 
 Lemma ctx_len_get_vtype Γ n :
