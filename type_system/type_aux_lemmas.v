@@ -422,9 +422,26 @@ inv orig. destruct H1.
 + specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. eapply VTrans; eauto.
++ clear V CI HC R VE CE. simpl. apply InUnit.
++ clear V CI HC R VE CE. simpl. apply InInt. auto.
 + specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE. simpl. apply EqPair; auto.
+  clear V CI HC R VE CE. simpl. apply InPair; auto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElPairL; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElPairR; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl. eapply InInl; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElInl; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl. eapply InInr; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElInr; eauto.
++ specialize (CE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl. eapply InFun.
+  rewrite ctx_insert_extend. auto.
 }{
 intros wfins. apply Ceq.
 { inv orig. assumption. }
@@ -513,166 +530,6 @@ intros; induction Γ'; simpl.
   rewrite <-v_shift_shift. apply v_shift_typesafe; inv H0; auto.
   apply v_join_ctxs_typesafe; auto.
 Qed.
-
-
-(* 
-
-Fixpoint v_remove_typesafe 
-  Γ v A (orig : has_vtype Γ v A) i {struct orig} :
-  v_no_var v i ->
-  has_vtype (ctx_remove Γ i) (Sub.v_negshift v 1 i) A
-
-with c_remove_typesafe 
-  Γ c C (orig : has_ctype Γ c C) i {struct orig} :
-  c_no_var c i ->
-  has_ctype (ctx_remove Γ i) (Sub.c_negshift c 1 i) C
-
-with h_remove_typesafe 
-  Γ h Σ D (orig : has_htype Γ h Σ D) i {struct orig} :
-  h_no_var h i ->
-  has_htype (ctx_remove Γ i) (Sub.h_negshift h 1 i) Σ D
-
-with respects_remove_typesafe
-  Γ h Σ D E (orig: respects Γ h Σ D E) A_ins i {struct orig} :
-  has_htype Γ h Σ D -> h_no_var h i -> wf_vtype A_ins ->
-  respects (ctx_remove Γ i) (Sub.h_negshift h 1 i) Σ D E
-
-with veq_remove_typesafe
-  Γ A v1 v2 (orig: veq A Γ v1 v2) A_ins i {struct orig} :
-  wf_vtype A_ins -> v_no_var v1 i -> v_no_var v2 i ->
-  veq A (ctx_remove Γ i) (Sub.v_negshift v1 1 i) (Sub.v_negshift v2 1 i)
-
-with ceq_remove_typesafe
-  Γ C c1 c2 (orig: ceq C Γ c1 c2) A_ins i {struct orig} :
-  wf_vtype A_ins -> c_no_var c1 i -> c_no_var c2 i ->
-  ceq C (ctx_remove Γ i) (Sub.c_negshift c1 1 i) (Sub.c_negshift c2 1 i).
-Proof.
-all: rename v_remove_typesafe into V; rename c_remove_typesafe into CI.
-all: rename h_remove_typesafe into HC; rename respects_remove_typesafe into R.
-all: rename veq_remove_typesafe into VE; rename ceq_remove_typesafe into CE.
-{
-intros no_var. simpl in no_var. apply TypeV; inv orig.
-{ apply ctx_remove_wf. assumption. }
-{ assumption. }
-destruct H1.
-+ clear V CI HC R VE CE. simpl. 
-  apply TypeUnit.
-+ clear V CI HC R VE CE. simpl. 
-  apply TypeInt.
-+ clear V CI HC R VE CE. simpl. 
-  destruct (i <=? n) eqn:cmp.
-  - apply TypeVar. rewrite <-get_ctx_remove_changed; apply leb_complete in cmp.
-    * destruct n. destruct no_var. omega.
-      simpl. assert (n-0=n) by omega. rewrite H2. assumption.
-    * destruct cmp. destruct no_var. reflexivity. omega.
-  - apply TypeVar. rewrite <-get_ctx_remove_unchanged.
-    assumption. apply leb_iff_conv in cmp. assumption.
-+ specialize (V _ _ _ H1) as IHv1. specialize (V _ _ _ H2) as IHv2.
-  clear V CI HC R VE CE. simpl. destruct no_var. apply TypePair; auto.
-+ specialize (V _ _ _ H1) as IHv. clear V CI HC R VE CE. apply TypeInl. auto.
-+ specialize (V _ _ _ H1) as IHv. clear V CI HC R VE CE. apply TypeInr. auto.
-+ specialize (CI _ _ _ H1) as IHc.
-  clear V CI HC R VE CE. simpl. 
-  apply TypeFun. rewrite ctx_remove_extend. auto.
-+ specialize (HC _ _ _ _ H2) as IHh. 
-  specialize (CI _ _ _ H1) as IHc.
-  specialize (R _ _ _ _ _ H3) as IHr.
-  clear V CI HC R VE CE. simpl. destruct no_var.
-  apply TypeHandler. rewrite ctx_remove_extend. all: eauto.
-+ specialize (V _ _ _ H1) as IHv.
-  clear V CI HC R VE CE. eapply TypeVSubtype; auto.
-}{
-intros no_var. simpl in no_var. apply TypeC; inv orig.
-{ apply ctx_remove_wf. assumption. }
-{ assumption. }
-destruct H1.
-+ specialize (V _ _ _ H1) as IHv.
-  clear V CI HC R VE CE. simpl. apply TypeRet. apply IHv; assumption.
-+ specialize (V _ _ _ H1) as IHv.
-  clear V CI HC R VE CE. simpl. apply TypeAbsurd. apply IHv; assumption.
-+ specialize (V _ _ _ H1) as IHv.
-  specialize (CI _ _ _ H2) as IHc.
-  clear V CI HC R VE CE. simpl. destruct no_var. eapply TypeΠMatch; auto.
-  do 2 rewrite ctx_remove_extend. auto.
-+ specialize (V _ _ _ H1) as IHv. 
-  specialize (CI _ _ _ H2) as IHc1.
-  specialize (CI _ _ _ H3) as IHc2.
-  clear V CI HC R VE CE. simpl. destruct no_var. destruct H5.
-  eapply TypeΣMatch; try rewrite ctx_remove_extend; auto.
-+ specialize (CI _ _ _ H1) as IHc1. 
-  specialize (CI _ _ _ H2) as IHc2.
-  clear V CI HC R VE CE. simpl. destruct no_var. eapply TypeDoBind; auto.
-  rewrite ctx_remove_extend. auto.
-+ specialize (V _ _ _ H1) as IHv. 
-  specialize (V _ _ _ H2) as IHv0.
-  clear V CI HC R VE CE. simpl. destruct no_var. eapply TypeApp; auto.
-+ specialize (V _ _ _ H1) as IHv. 
-  specialize (CI _ _ _ H2) as IHc.
-  clear V CI HC R VE CE. simpl. destruct no_var. eapply TypeHandle; auto.
-+ specialize (CI _ _ _ H1) as IHc1. 
-  specialize (CI _ _ _ H2) as IHc2.
-  clear V CI HC R VE CE. simpl. destruct no_var. eapply TypeLetRec.
-  - do 2 rewrite ctx_remove_extend. auto.
-  - rewrite ctx_remove_extend. auto.
-+ specialize (V _ _ _ H2) as IHv. 
-  specialize (CI _ _ _ H3) as IHc.
-  clear V CI HC R VE CE. simpl. destruct no_var. eapply TypeOp; eauto.
-  rewrite ctx_remove_extend. auto.
-+ specialize (CI _ _ _ H1) as IHc.
-  clear V CI HC R VE CE. eapply TypeCSubtype; auto.
-}{
-intros no_var; simpl; apply TypeH; inv orig.
-apply ctx_remove_wf. all: auto. destruct H2.
-+ simpl. clear V CI HC R VE CE. apply TypeCasesØ.
-+ specialize (HC _ _ _ _ H3) as IHh. 
-  specialize (CI _ _ _ H4) as IHc.
-  clear V CI HC R VE CE. simpl. apply TypeCasesU; inv no_var; auto.
-  - apply negshift_find_None. auto.
-  - do 2 rewrite ctx_remove_extend. auto.
-}{
-intros types no_var wfins. apply Respects.
-{ clear V CI HC R VE CE. apply ctx_remove_wf. inv types. assumption. }
-all: try (inv orig; assumption).
-inv orig. destruct H3.
-+ clear V CI HC R VE CE. apply RespectEqsØ.
-+ specialize (R _ _ _ _ _ H3) as IHres. 
-  specialize (CE _ _ _ _ H4) as IHeq.
-  clear V CI HC R VE CE. apply RespectEqsU. eauto.
-  rewrite join_ctxs_remove. rewrite join_ctx_tctx_remove.
-  erewrite handle_t_negshift. erewrite handle_t_negshift.
-  all: eauto; inv H2; auto.
-  assert (tctx_len Z+(ctx_len Γ'+i) = i+ctx_len Γ'+tctx_len Z) by omega.
-  rewrite H2. eapply IHeq. eauto. all: eapply handle_t_no_var; eauto.
-}{
-intros wf_ins no_var1 no_var2. apply Veq.
-{ inv orig. assumption. }
-{ apply ctx_remove_wf. inv orig. assumption. }
-inv orig. destruct H1.
-+ clear V CI HC R VE CE. apply VRefl. f_equal. assumption.
-+ specialize (VE _ _ _ _ H1) as IH.
-  clear V CI HC R VE CE. apply VSym. eauto.
-+ specialize (VE _ _ _ _ H1) as IH1.
-  specialize (VE _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE. eapply VTrans; admit.
-+ specialize (VE _ _ _ _ H1) as IH1.
-  specialize (VE _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE. simpl in *. destruct no_var1. destruct no_var2.
-  apply EqPair; eauto.
-}{
-intros wfins no_var1 no_var2. apply Ceq.
-{ inv orig. assumption. }
-{ apply ctx_remove_wf. inv orig. all: assumption. }
-inv orig. destruct H1.
-+ clear V CI HC R VE CE. apply CRefl. f_equal. assumption.
-+ specialize (CE _ _ _ _ H1) as IH.
-  clear V CI HC R VE CE. apply CSym. eauto.
-+ specialize (CE _ _ _ _ H1) as IH1.
-  specialize (CE _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE. eapply CTrans; admit.
-}
-Qed. 
-
-*)
 
 
 Fixpoint v_sub_typesafe 
@@ -815,10 +672,27 @@ inv orig. destruct H1.
 + specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
   clear V CI HC R VE CE. eapply VTrans; eauto.
++ clear V CI HC R VE CE. simpl. apply InUnit.
++ clear V CI HC R VE CE. simpl. apply InInt. auto.
 + specialize (VE _ _ _ _ H1) as IH1.
   specialize (VE _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE. simpl in *.
-  apply EqPair; eauto.
+  clear V CI HC R VE CE. simpl. apply InPair; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElPairL; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElPairR; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl. eapply InInl; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElInl; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl. eapply InInr; eauto.
++ specialize (VE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl in *. eapply ElInr; eauto.
++ specialize (CE _ _ _ _ H1) as IH.
+  clear V CI HC R VE CE. simpl. eapply InFun. eapply IH.
+  - simpl. eauto.
+  - inv H. apply v_shift_typesafe; auto.
 }{
 intros gets types. apply Ceq.
 { inv orig. assumption. }
@@ -1064,10 +938,40 @@ destruct orig. destruct H1.
   specialize (VE _ _ _ v2 v3 i _ _ H2 tyvs) as IHv2.
   clear V CI HC R VE CE.
   apply Veq; auto; unfold v_subs; simpl. eapply VTrans; eauto.
-+ specialize (VE _ _ _ v1 v1' i _ _ H1 tyvs) as IHv1.
-  specialize (VE _ _ _ v2 v2' i _ _ H2 tyvs) as IHv2.
++ clear V CI HC R VE CE.
+  apply Veq; auto; unfold v_subs; simpl. apply InUnit.
++ clear V CI HC R VE CE.
+  apply Veq; auto; unfold v_subs; simpl. apply InInt. auto.
++ specialize (VE _ _ _ v1 v1' i _ _ H1 tyvs) as IH1.
+  specialize (VE _ _ _ v2 v2' i _ _ H2 tyvs) as IH2.
   clear V CI HC R VE CE.
-  apply Veq; auto; unfold v_subs; simpl. eapply EqPair; eauto.
+  apply Veq; auto; unfold v_subs; simpl. apply InPair; eauto.
++ specialize (VE _ _ _ _ _ i _ _ H1 tyvs) as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto. unfold v_subs in *. simpl in *. eapply ElPairL; eauto.
++ specialize (VE _ _ _ _ _ i _ _ H1 tyvs) as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto. unfold v_subs in *. simpl in *. eapply ElPairR; eauto.
++ specialize (VE _ _ _ v v' i _ _ H1 tyvs) as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto; unfold v_subs; simpl. eapply InInl; eauto.
++ specialize (VE _ _ _ _ _ i _ _ H1 tyvs) as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto; unfold v_subs in *; simpl in *. eapply ElInl; eauto.
++ specialize (VE _ _ _ v v' i _ _ H1 tyvs) as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto; unfold v_subs; simpl. eapply InInr; eauto.
++ specialize (VE _ _ _ _ _ i _ _ H1 tyvs) as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto; unfold v_subs in *; simpl in *. eapply ElInr; eauto.
++ assert (CtxU Γ0 A = ctx_insert (CtxU Γ A) A_s (1+i)).
+  { simpl. f_equal. auto. }
+  inv H. specialize (v_shift_typesafe _ _ A _ tyvs H5) as tyvs'.
+  specialize (CE _ _ _ _ _ (1+i) _ _ H1 tyvs') as IH.
+  clear V CI HC R VE CE.
+  apply Veq; auto. apply WfTyFun; auto.
+  unfold v_subs. unfold c_subs in IH. simpl. eapply InFun. 
+  rewrite v_shift_comm. eapply IH. all: simpl; omega || eauto.
 }{
 intros tyvs geq len.
 assert (wf_ctx Γ) as wfg by (inv tyvs; assumption).

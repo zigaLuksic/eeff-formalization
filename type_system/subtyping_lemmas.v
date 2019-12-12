@@ -210,6 +210,7 @@ exists A'0. exists B'0. aconstructor. constructor.
 }
 Qed.
 
+
 (* ==================== Context Properties ==================== *)
 
 Fixpoint ctx_subtype_get Γ Γ' A num (csty : ctx_subtype Γ Γ') {struct csty}:
@@ -412,11 +413,67 @@ inv equals. destruct H1; apply Veq; auto.
 + apply VRefl. auto.
 + apply VSym. eauto.
 + eapply VTrans; eauto.
-+ eapply EqPair; eauto.
+(* + eapply InVar; eauto. admit. *)
++ eapply InUnit.
++ eapply InInt. auto.
++ eapply InPair; eauto.
++ eapply ElPairL; eauto.
++ eapply ElPairR; eauto.
++ eapply InInl; eauto.
++ eapply ElInl; eauto.
++ eapply InInr; eauto.
++ eapply ElInr; eauto.
++ eapply InFun. eapply ctx_subtype_ceq. eauto.
+  - inv H. apply WfCtxU; auto.
+  - apply SubtypeCtxU. assumption. apply vsubtype_refl. inv H. assumption.
 }{
 clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 intros wf ctxsty.
 inv equals. destruct H1; apply Ceq; auto.
++ apply CRefl. auto.
++ apply CSym. eauto.
++ eapply CTrans; eauto.
+}
+Qed.
+
+
+(* ==================== Logic Subtyping ==================== *)
+
+Fixpoint veq_subtype A A' Γ v1 v2 (orig : veq A Γ v1 v2) {struct orig} :
+  wf_vtype A' -> vsubtype A A' -> veq A' Γ v1 v2
+
+with ceq_subtype C C' Γ c1 c2 (orig : ceq C Γ c1 c2) {struct orig} :
+wf_ctype C' -> csubtype C C' -> ceq C' Γ c1 c2.
+
+Proof.
+{ 
+intros. inv orig. apply Veq; auto. induction H3.
++ apply VRefl. auto.
++ apply VSym. eauto.
++ eapply VTrans; eauto.
++ inv H0. apply InUnit; eauto.
++ inv H0. apply InInt; eauto.
++ inv H0. inv H. eapply InPair; eapply veq_subtype; eauto.
++ eapply ElPairL. eapply veq_subtype. eauto.
+  - apply WfTyΠ. auto. inv H3. inv H4. exact H9.
+  - apply SubtypeTyΠ. auto. apply vsubtype_refl. inv H3. inv H4. auto.
++ eapply ElPairR. eapply veq_subtype. eauto.
+  - apply WfTyΠ. auto. inv H3. inv H4. exact H9.
+  - apply SubtypeTyΠ. auto. apply vsubtype_refl. inv H3. inv H4. auto.
++ inv H0. eapply InInl. eapply veq_subtype; eauto. inv H. auto.
++ eapply ElInl. eapply veq_subtype. eauto.
+  - apply WfTyΣ. auto. inv H3. inv H4. exact H9.
+  - apply SubtypeTyΣ. auto. apply vsubtype_refl. inv H3. inv H4. auto.
++ inv H0. eapply InInr. eapply veq_subtype; eauto. inv H. auto.
++ rename A' into B'. eapply ElInr. eapply veq_subtype. eauto.
+  - apply WfTyΣ. inv H3. inv H4. exact H8. auto.
+  - apply SubtypeTyΣ; auto. apply vsubtype_refl. inv H3. inv H4. auto.
++ inv H0. apply InFun. inv H. eapply ceq_subtype in H3; eauto.
+  eapply ctx_subtype_ceq. eauto.
+  - apply WfCtxU; auto.
+  - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
+}{
+intros. inv orig. apply Ceq; auto. destruct H3.
 + apply CRefl. auto.
 + apply CSym. eauto.
 + eapply CTrans; eauto.
@@ -1100,25 +1157,4 @@ Fixpoint shape_op Γ op v y c A Σ E :
     has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E)).
 Proof.  
 intro orig. eapply (shape_op_full _ _ _ op v y c A Σ E) in orig; auto.
-Qed.
-
-(* ==================== Logic Subtyping ==================== *)
-
-Fixpoint veq_subtype A A' Γ v1 v2 (orig : veq A Γ v1 v2) {struct orig} :
-  wf_vtype A' -> vsubtype A A' -> veq A' Γ v1 v2.
-Proof. 
-intros. inv orig. apply Veq; auto. induction H3.
-+ apply VRefl. auto.
-+ apply VSym. eauto.
-+ eapply VTrans; eauto.
-+ inv H0. inv H. eapply EqPair; eapply veq_subtype; eauto.
-Qed.
-
-Fixpoint ceq_subtype C C' Γ c1 c2 (orig : ceq C Γ c1 c2) {struct orig} :
-  wf_ctype C' -> csubtype C C' -> ceq C' Γ c1 c2.
-Proof. 
-intros. inv orig. apply Ceq; auto. destruct H3.
-+ apply CRefl. auto.
-+ apply CSym. eauto.
-+ eapply CTrans; eauto.
 Qed.

@@ -191,9 +191,41 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
 | VRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
 | VSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
 | VTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
-| EqPair A B Γ v1 v1' v2 v2' :
+(* | InVar x i y j A Γ :
+    i = j -> get_vtype Γ i = Some A ->
+    veq' A Γ (Var (x, i)) (Var (y, j)) *)
+| InUnit Γ:
+    veq' (TyUnit) Γ Unit Unit
+| InInt Γ n m:
+    n = m ->
+    veq' (TyInt) Γ (Int n) (Int m)
+| InPair A B Γ v1 v1' v2 v2' :
     veq A Γ v1 v1' -> veq A Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
+| ElPairL A B Γ v1 v1' v2 v2' :
+    veq (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2') ->
+    veq' A Γ v1 v1'
+| ElPairR A B Γ v1 v1' v2 v2' :
+    veq (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2') ->
+    veq' A Γ v2 v2'
+| InInl A B Γ v v' :
+    veq A Γ v v' ->
+    veq' (TyΣ A B) Γ (Inl v) (Inl v')
+| ElInl A B Γ v v' :
+    veq (TyΣ A B) Γ (Inl v) (Inl v') ->
+    veq' A Γ v v'
+| InInr A B Γ v v' :
+    veq B Γ v v' ->
+    veq' (TyΣ A B) Γ (Inr v) (Inr v')
+| ElInr A B Γ v v' :
+    veq (TyΣ A B) Γ (Inr v) (Inr v') ->
+    veq' B Γ v v'
+| InFun A C Γ x y c c':
+    ceq C (CtxU Γ A) c c' ->
+    veq' (TyFun A C) Γ (Fun x c) (Fun y c')
+(* | InHandler C D Γ x y c c' h h': *)
+    (* What do we do? *)
+
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 
 | Ceq C Γ c1 c2 : wf_ctype C -> wf_ctx Γ -> ceq' C Γ c1 c2 -> ceq C Γ c1 c2
@@ -202,4 +234,6 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 | CRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
 | CSym A Γ c1 c2 : ceq A Γ c1 c2 -> ceq' A Γ c2 c1
 | CTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
+(* | OOTB A Σ E Γ Γ' Z T1 T2 : *)
+    (* How do we create arbitrary substitution? *)
 .

@@ -26,25 +26,17 @@ with h_subs_out_typesafe Γ h Σ D v_s A_s {struct h}:
 Proof.
 {
 intros orig sub. unfold v_subs_out.
-assert (Γ = ctx_remove (CtxU Γ A_s) 0) by auto.
-rewrite H. apply v_remove_typesafe.
-- eapply v_sub_typesafe. assumption. simpl. reflexivity.
-  apply v_shift_typesafe. assumption. inv sub. assumption.
-- apply v_sub_makes_no_var. apply v_shift_makes_no_var.
+assert (CtxU Γ A_s = ctx_insert Γ A_s 0) by (destruct Γ; auto).
+eapply v_subs_typesafe; eauto. destruct Γ; omega.
 }{
 intros orig sub. unfold c_subs_out.
-assert (Γ = ctx_remove (CtxU Γ A_s) 0) by auto.
-rewrite H. apply c_remove_typesafe.
-- eapply c_sub_typesafe. assumption. simpl. reflexivity.
-  apply v_shift_typesafe. assumption. inv sub. assumption.
-- apply c_sub_makes_no_var. apply v_shift_makes_no_var.
+assert (CtxU Γ A_s = ctx_insert Γ A_s 0) by (destruct Γ; auto).
+eapply c_subs_typesafe; eauto. destruct Γ; omega.
 }{
 intros orig sub. unfold h_subs_out.
 assert (Γ = ctx_remove (CtxU Γ A_s) 0) by auto.
-rewrite H. apply h_remove_typesafe.
-- eapply h_sub_typesafe. assumption. simpl. reflexivity.
-  apply v_shift_typesafe. assumption. inv sub. assumption.
-- apply h_sub_makes_no_var. apply v_shift_makes_no_var.
+assert (CtxU Γ A_s = ctx_insert Γ A_s 0) by (destruct Γ; auto).
+eapply h_subs_typesafe; eauto. destruct Γ; omega.
 }
 Qed.
 

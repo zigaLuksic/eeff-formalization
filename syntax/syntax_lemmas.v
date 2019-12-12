@@ -83,6 +83,7 @@ assert (i=0) by omega. rewrite H. simpl. destruct Γ; simpl; reflexivity.
 destruct i. simpl. reflexivity. simpl. f_equal. apply IHΓ. omega.
 Qed.
 
+
 Lemma ctx_insert_remove_alt Γ i j A (cmp : i > j):
   ctx_insert (ctx_remove Γ j) A i = ctx_remove (ctx_insert Γ A (1+i)) j.
 Proof.
