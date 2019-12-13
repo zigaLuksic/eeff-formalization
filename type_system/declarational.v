@@ -188,52 +188,59 @@ with veq : vtype -> ctx -> val -> val -> Prop :=
 | Veq A Γ v1 v2 : wf_vtype A -> wf_ctx Γ -> veq' A Γ v1 v2 -> veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
-| VRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
-| VSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
-| VTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
-(* | InVar x i y j A Γ :
-    i = j -> get_vtype Γ i = Some A ->
-    veq' A Γ (Var (x, i)) (Var (y, j)) *)
-| InUnit Γ:
+| VeqRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
+| VeqSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
+| VeqTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
+| VeqVar x i y j A A' Γ :
+    i = j -> get_vtype Γ i = Some A' -> vsubtype A' A ->
+    veq' A Γ (Var (x, i)) (Var (y, j))
+| VeqUnit Γ:
     veq' (TyUnit) Γ Unit Unit
-| InInt Γ n m:
+| VeqInt Γ n m:
     n = m ->
     veq' (TyInt) Γ (Int n) (Int m)
-| InPair A B Γ v1 v1' v2 v2' :
+| VeqPair A B Γ v1 v1' v2 v2' :
     veq A Γ v1 v1' -> veq A Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
-| ElPairL A B Γ v1 v1' v2 v2' :
-    veq (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2') ->
-    veq' A Γ v1 v1'
-| ElPairR A B Γ v1 v1' v2 v2' :
-    veq (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2') ->
-    veq' A Γ v2 v2'
-| InInl A B Γ v v' :
+| VeqInl A B Γ v v' :
     veq A Γ v v' ->
     veq' (TyΣ A B) Γ (Inl v) (Inl v')
-| ElInl A B Γ v v' :
-    veq (TyΣ A B) Γ (Inl v) (Inl v') ->
-    veq' A Γ v v'
-| InInr A B Γ v v' :
+| VeqInr A B Γ v v' :
     veq B Γ v v' ->
     veq' (TyΣ A B) Γ (Inr v) (Inr v')
-| ElInr A B Γ v v' :
-    veq (TyΣ A B) Γ (Inr v) (Inr v') ->
-    veq' B Γ v v'
-| InFun A C Γ x y c c':
+| VeqFun A C Γ x y c c':
     ceq C (CtxU Γ A) c c' ->
     veq' (TyFun A C) Γ (Fun x c) (Fun y c')
-(* | InHandler C D Γ x y c c' h h': *)
-    (* What do we do? *)
+| VeqHandler A Σ E D Γ x x' c c' h h':
+    ceq D (CtxU Γ A) c c' ->
+    heq Σ D Γ h h' ->
+    veq' (TyHandler (CTy A Σ E) D) Γ (Handler x c h) (Handler x' c' h')
 
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 
 | Ceq C Γ c1 c2 : wf_ctype C -> wf_ctx Γ -> ceq' C Γ c1 c2 -> ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
-| CRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
-| CSym A Γ c1 c2 : ceq A Γ c1 c2 -> ceq' A Γ c2 c1
-| CTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
+| CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
+| CeqSym C Γ c1 c2 : ceq C Γ c1 c2 -> ceq' C Γ c2 c1
+| CeqTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
 (* | OOTB A Σ E Γ Γ' Z T1 T2 : *)
     (* How do we create arbitrary substitution? *)
+
+with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
+| Heq Σ D Γ h1 h2 : 
+    wf_sig Σ -> wf_ctype D -> wf_ctx Γ -> heq' Σ D Γ h1 h2 -> heq Σ D Γ h1 h2
+    
+with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
+| HeqRefl Σ D Γ h1 h2 : h1 = h2 -> heq' Σ D Γ h1 h2
+| HeqSym Σ D Γ h1 h2 : heq Σ D Γ h1 h2 -> heq' Σ D Γ h2 h1
+| HeqTrans Σ D Γ h1 h2 h3 : heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> heq' Σ D Γ h1 h3
+| HeqSigØ D Γ h1 h2:
+    heq' SigØ D Γ h1 h2
+| HeqSigU Σ op A B D Γ h1 x1 k1 c1 h2 x2 k2 c2:
+    find_case h1 op = Some (x1, k1, c1) ->
+    find_case h2 op = Some (x2, k2, c2) ->
+    ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
+    heq Σ D Γ h1 h2 ->
+    heq' (SigU Σ op A B) D Γ h1 h2
 .
