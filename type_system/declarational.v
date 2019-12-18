@@ -230,6 +230,42 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 | CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
 | CeqSym C Γ c1 c2 : ceq C Γ c1 c2 -> ceq' C Γ c2 c1
 | CeqTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
+| CeqRet A Σ E Γ v v' : 
+    veq A Γ v v' -> 
+    ceq' (CTy A Σ E) Γ (Ret v) (Ret v')
+| CeqAbsurd C Γ v v' :
+    veq TyØ Γ v v' ->
+    ceq' C Γ (Absurd v) (Absurd v')
+| CeqΠMatch Γ C v v' A B x x' y y' c c':
+    veq (TyΠ A B) Γ v v' ->
+    ceq C (CtxU (CtxU Γ A) B) c c' ->
+    ceq' C Γ (ΠMatch v x y c) (ΠMatch v' x' y' c')
+| CeqΣMatch Γ C v v' A B x x' y y' cl cl' cr cr':
+    veq (TyΣ A B) Γ v v' ->
+    ceq C (CtxU Γ A) cl cl' ->
+    ceq C (CtxU Γ B) cr cr' ->
+    ceq' C Γ (ΣMatch v x cl y cr) (ΣMatch v' x' cl' y' cr')
+| CeqDoBind C B Σ E Γ x x' c1 c1' c2 c2':
+    ceq (CTy B Σ E) Γ c1 c1' ->
+    ceq C (CtxU Γ B) c2 c2' ->
+    ceq' C Γ (DoBind x c1 c2) (DoBind x' c1' c2')
+| CeqApp Γ v1 v1' v2 v2' A C:
+    veq (TyFun A C) Γ v1 v1' ->
+    veq A Γ v2 v2' ->
+    ceq' C Γ (App v1 v2) (App v1 v2)
+| CeqHandle Γ v v' c c' C D:
+    veq (TyHandler C D) Γ v v' ->
+    ceq C Γ c c' ->
+    ceq' D Γ (Handle v c) (Handle v' c')
+| CeqLetRec Γ f f' x x' c1 c1' c2 c2' A C D:
+    ceq C (CtxU (CtxU Γ A) (TyFun A C)) c1 c1' ->
+    ceq D (CtxU Γ (TyFun A C)) c2 c2' ->
+    ceq' D Γ (LetRec f x c1 c2) (LetRec f' x' c1' c2')
+| CeqOp Γ op v v' y y' c c' A_op B_op A Σ E:
+    get_op_type Σ op = Some (A_op, B_op) ->
+    veq A_op Γ v v' ->
+    ceq (CTy A Σ E) (CtxU Γ B_op) c c' ->
+    ceq' (CTy A Σ E) Γ (Op op v y c) (Op op v' y' c')
 (* | OOTB A Σ E Γ Γ' Z T1 T2 : *)
     (* How do we create arbitrary substitution? *)
 
