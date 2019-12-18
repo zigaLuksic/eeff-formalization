@@ -185,7 +185,10 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
     respects' Γ h Σ D (EqsU E Γ' Z T1 T2)
 
 with veq : vtype -> ctx -> val -> val -> Prop := 
-| Veq A Γ v1 v2 : wf_vtype A -> wf_ctx Γ -> veq' A Γ v1 v2 -> veq A Γ v1 v2
+| Veq A Γ v1 v2 : 
+  wf_vtype A -> wf_ctx Γ -> 
+  has_vtype Γ v1 A -> has_vtype Γ v2 A -> veq' A Γ v1 v2 -> 
+  veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
 | VeqRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
@@ -218,7 +221,10 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
 
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 
-| Ceq C Γ c1 c2 : wf_ctype C -> wf_ctx Γ -> ceq' C Γ c1 c2 -> ceq C Γ c1 c2
+| Ceq C Γ c1 c2 : 
+    wf_ctype C -> wf_ctx Γ -> 
+    has_ctype Γ c1 C -> has_ctype Γ c2 C -> ceq' C Γ c1 c2 -> 
+    ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
 | CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
@@ -229,7 +235,9 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 
 with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | Heq Σ D Γ h1 h2 : 
-    wf_sig Σ -> wf_ctype D -> wf_ctx Γ -> heq' Σ D Γ h1 h2 -> heq Σ D Γ h1 h2
+    wf_sig Σ -> wf_ctype D -> wf_ctx Γ -> 
+    has_htype Γ h1 Σ D -> has_htype Γ h2 Σ D -> heq' Σ D Γ h1 h2 -> 
+    heq Σ D Γ h1 h2
     
 with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | HeqRefl Σ D Γ h1 h2 : h1 = h2 -> heq' Σ D Γ h1 h2

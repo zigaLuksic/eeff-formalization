@@ -410,9 +410,9 @@ inv r. eapply Respects; auto. destruct H3.
   apply ctx_subtype_join_ctx_tctx. apply ctx_subtype_join_ctxs. 
   all: assumption || apply ctx_subtype_refl; assumption.
 }{
-clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 intros wf ctxsty.
-inv equals. destruct H1; apply Veq; auto.
+inv equals. destruct H3; apply Veq; eauto.
+all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 + apply VeqRefl. auto.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
@@ -427,21 +427,21 @@ inv equals. destruct H1; apply Veq; auto.
 + eapply VeqFun. eapply ctx_subtype_ceq. eauto.
   - inv H. apply WfCtxU; auto.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. inv H. assumption.
-+ eapply VeqHandler. eapply ctx_subtype_ceq; inv H; inv H5. eauto.
++ eapply VeqHandler. eapply ctx_subtype_ceq; inv H; inv H7. eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
   - eauto.
 }{
-clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
 intros wf ctxsty.
-inv equals. destruct H1; apply Ceq; auto.
+inv equals. destruct H3; apply Ceq; eauto.
+all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
 + apply CeqRefl. auto.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 }{
-clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 intros wf ctxsty.
-inv equals. destruct H2; apply Heq; auto.
+inv equals. destruct H4; apply Heq; eauto.
+all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 + apply HeqRefl. auto.
 + apply HeqSym. eauto.
 + eapply HeqTrans; eauto.
@@ -470,7 +470,12 @@ with heq_subtype Σ Σ' D D' Γ h1 h2 (orig : heq Σ D Γ h1 h2) {struct orig} :
 
 Proof.
 { 
-intros. inv orig. apply Veq; auto. induction H3.
+intros. inv orig.
+assert (has_vtype Γ v1 A') as ty1.
+{ apply TypeV; auto. eapply TypeVSubtype; eauto. }
+assert (has_vtype Γ v2 A') as ty2.
+{ apply TypeV; auto. eapply TypeVSubtype; eauto. }
+induction H5; apply Veq; auto.
 + apply VeqRefl. auto.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
@@ -480,31 +485,42 @@ intros. inv orig. apply Veq; auto. induction H3.
 + inv H0. inv H. eapply VeqPair; eapply veq_subtype; eauto.
 + inv H0. eapply VeqInl. eapply veq_subtype; eauto. inv H. auto.
 + inv H0. eapply VeqInr. eapply veq_subtype; eauto. inv H. auto.
-+ inv H0. apply VeqFun. inv H. eapply ceq_subtype in H3; eauto.
++ inv H0. apply VeqFun. inv H. eapply ceq_subtype in H5; eauto.
   eapply ctx_subtype_ceq. eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
-+ inv H0. inv H7. apply VeqHandler. eapply ceq_subtype in H3; eauto.
++ inv H0. inv H9. apply VeqHandler. eapply ceq_subtype in H5; eauto.
   eapply ctx_subtype_ceq. eauto. all: inv H.
-  - apply WfCtxU; auto. inv H6.  assumption.
+  - apply WfCtxU; auto. inv H8.  assumption.
   - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
   - assumption.
-  - eapply heq_subtype. eauto. inv H6. all: assumption.
+  - eapply heq_subtype. eauto. inv H8. all: assumption.
 }{
-intros. inv orig. apply Ceq; auto. destruct H3.
+intros. inv orig. 
+assert (has_ctype Γ c1 C') as ty1.
+{ apply TypeC; auto. eapply TypeCSubtype; eauto. }
+assert (has_ctype Γ c2 C') as ty2.
+{ apply TypeC; auto. eapply TypeCSubtype; eauto. }
+apply Ceq; auto. destruct H5.
 + apply CeqRefl. auto.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 }{
-intros. inv orig. apply Heq; auto. destruct H6.
+intros. inv orig. admit.
+(* assert (has_ctype Γ h1 Σ' D') as ty1.
+{ apply TypeH; auto. eapply TypeCSubtype; eauto. }
+assert (has_htype Γ h2 Σ' D') as ty2.
+{ apply TypeC; auto. eapply TypeCSubtype; eauto. } 
+apply Heq; auto. destruct H8.
 + apply HeqRefl. auto.
 + apply HeqSym. eauto.
 + eapply HeqTrans; eauto.
 + inv H1. eapply HeqSigØ. simpl in H7. discriminate.
 + inv H1. eapply HeqSigØ. eapply HeqSigU.
-  (* WE NEED 'has_htype' *)
+*)  
+(* WE NEED 'has_htype'? *)
 }
-Qed.
+Admitted.
 
 
 (* ==================== Subtype Shapes ==================== *)
