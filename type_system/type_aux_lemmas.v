@@ -1,9 +1,9 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
@@ -497,9 +497,28 @@ inv orig. destruct H3.
   clear V CI HC R VE CE HE. simpl. eapply CeqOp; eauto.
   rewrite ctx_insert_extend; auto.
 }{
-admit.
+intros wfins. apply Heq.
+{ inv orig. assumption. }
+{ inv orig. assumption. }
+{ apply ctx_insert_wf. inv orig. all: assumption. }
+{ inv orig; eauto. }
+{ inv orig; eauto. }
+inv orig. destruct H4.
++ clear V CI HC R VE CE HE. apply HeqRefl. f_equal. assumption.
++ specialize (HE _ _ _ _ _ H4) as IH.
+  clear V CI HC R VE CE HE. apply HeqSym. auto.
++ specialize (HE _ _ _ _ _ H4) as IH1.
+  specialize (HE _ _ _ _ _ H5) as IH2.
+  clear V CI HC R VE CE HE. eapply HeqTrans; eauto.
++ clear V CI HC R VE CE HE. eapply HeqSigØ.
++ specialize (CE _ _ _ _ H6) as IH1.
+  specialize (HE _ _ _ _ _ H7) as IH2.
+  clear V CI HC R VE CE HE. eapply HeqSigU; eauto.
+  - eapply shift_find_Some in H4. eauto.
+  - eapply shift_find_Some in H5. eauto.
+  - rewrite ctx_insert_extend, ctx_insert_extend. eauto.
 }
-Admitted.
+Qed.
 
 
 Fixpoint v_shift_typesafe v (Γ:ctx) A0 A :
@@ -805,9 +824,31 @@ inv orig. destruct H3.
   eapply IHc. simpl. eauto. apply v_shift_typesafe. assumption.
   apply get_op_type_wf in H3. destruct H3. assumption. inv H. assumption.
 }{
-admit.
+intros gets vtys. apply Heq.
+{ inv orig. assumption. }
+{ inv orig. assumption. }
+{ inv orig. assumption. }
+{ inv orig; eauto. }
+{ inv orig; eauto. }
+inv orig. destruct H4.
++ clear V CI HC R VE CE HE. apply HeqRefl. f_equal. assumption.
++ specialize (HE _ _ _ _ _ H4) as IH.
+  clear V CI HC R VE CE HE. apply HeqSym. eauto.
++ specialize (HE _ _ _ _ _ H4) as IH1.
+  specialize (HE _ _ _ _ _ H5) as IH2.
+  clear V CI HC R VE CE HE. eapply HeqTrans; eauto.
++ clear V CI HC R VE CE HE. eapply HeqSigØ.
++ specialize (CE _ _ _ _ H6) as IH1.
+  specialize (HE _ _ _ _ _ H7) as IH2.
+  clear V CI HC R VE CE HE. eapply HeqSigU.
+  - eapply sub_find_Some in H4. eauto.
+  - eapply sub_find_Some in H5. eauto.
+  - eapply IH1. simpl. eauto. 
+    rewrite <-(v_shift_shift 1 1). eapply v_shift_typesafe. 
+    eapply v_shift_typesafe. all: inv H. 2 : apply WfTyFun. all: auto.
+  - eauto.
 }
-Admitted.
+Qed.
 
 
 Fixpoint v_subs_typesafe 
@@ -1147,6 +1188,31 @@ destruct orig. destruct H3.
   clear V CI HC R VE CE HE. unfold c_subs. simpl. eapply CeqOp; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. auto. simpl. omega. omega.
 }{
-admit.
+intros tyvs geq len. apply Heq.
+{ inv orig. assumption. }
+{ inv orig. assumption. }
+{ inv tyvs. assumption. }
+{ inv orig; eauto. }
+{ inv orig; eauto. }
+destruct orig. destruct H4.
++ clear V CI HC R VE CE HE. apply HeqRefl. f_equal. assumption.
++ specialize (HE _ _ _ _ _ _ i _ _ H4 tyvs) as IH.
+  clear V CI HC R VE CE HE. apply HeqSym. eauto.
++ specialize (HE _ _ _ _ _ _ i _ _ H4 tyvs) as IH1.
+  specialize (HE _ _ _ _ _ _ i _ _ H5 tyvs) as IH2.
+  clear V CI HC R VE CE HE. eapply HeqTrans; eauto.
++ clear V CI HC R VE CE HE. eapply HeqSigØ.
++ assert (wf_vtype A) as wfa by (inv H; auto).
+  assert (wf_vtype (TyFun B D)) as wff by (inv H6; inv H9; inv H14; auto).    
+  specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs wff) as tyvs'.
+  specialize (v_shift_typesafe _ _ A _ tyvs' wfa) as tyvs''.
+  specialize (CE _ _ _ _ _ (2+i) _ _ H6 tyvs'') as IH1.
+  specialize (HE _ _ _ _ _ _ i _ _ H7 tyvs) as IH2.
+  clear V CI HC R VE CE HE. eapply HeqSigU.
+  - unfold h_subs. eapply negshift_find_Some. eapply sub_find_Some. eauto.
+  - unfold h_subs. eapply negshift_find_Some. eapply sub_find_Some. eauto.
+  - rewrite v_shift_comm, <-(v_shift_shift 1 1). apply IH1.
+    simpl. do 2 f_equal. assumption. simpl. omega. omega.
+  - eauto.
 }
-Admitted.
+Qed.

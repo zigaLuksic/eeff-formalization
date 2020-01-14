@@ -438,6 +438,36 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
 + apply CeqRefl. auto.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
++ eapply CeqRet; eauto.
++ eapply CeqAbsurd; eauto.
++ eapply CeqΠMatch; eauto.
+  eapply ctx_subtype_ceq. eauto. all: inv H3; inv H5.
+  - apply WfCtxU. apply WfCtxU. all: assumption.
+  - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
+    all: apply vsubtype_refl; assumption.
++ eapply CeqΣMatch; eauto; 
+  eapply ctx_subtype_ceq; eauto; inv H3; inv H6.
+  - apply WfCtxU; assumption.
+  - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
+  - apply WfCtxU; assumption.
+  - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
++ eapply CeqDoBind; eauto. eapply ctx_subtype_ceq; eauto; inv H3; inv H5.
+  - apply WfCtxU; assumption.
+  - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
++ eapply CeqApp; eauto.
++ eapply CeqHandle; eauto.
++ eapply CeqLetRec.
+  - eapply ctx_subtype_ceq; eauto; inv H4; inv H6.
+    * apply WfCtxU. apply WfCtxU. 2: inv H12. all: eauto.
+    * apply SubtypeCtxU. apply SubtypeCtxU. assumption.
+      all: apply vsubtype_refl. inv H12. assumption. assumption.
+  - eapply ctx_subtype_ceq; eauto; inv H4; inv H6.
+    * apply WfCtxU; assumption.
+    * apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
++ eapply CeqOp; eauto.
+  eapply ctx_subtype_ceq; eauto; inv H5; inv H7.
+  - apply WfCtxU; assumption.
+  - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
 }{
 intros wf ctxsty.
 inv equals. destruct H4; apply Heq; eauto.
@@ -505,20 +535,42 @@ apply Ceq; auto. destruct H5.
 + apply CeqRefl. auto.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
++ inv H0. inv H. eapply CeqRet; eauto.
++ eapply CeqAbsurd; eauto.
++ eapply CeqΠMatch; eauto.
++ eapply CeqΣMatch; eauto.
++ eapply CeqDoBind; eauto.
++ eapply CeqApp; eauto. eapply veq_subtype; eauto; inv H5; inv H7.
+  - apply WfTyFun; assumption.
+  - apply SubtypeTyFun. apply vsubtype_refl. all: auto.
++ eapply CeqHandle; eauto. eapply veq_subtype; eauto; inv H5; inv H7.
+  - apply WfTyHandler; assumption.
+  - apply SubtypeTyHandler. apply csubtype_refl. all: auto.
++ eapply CeqLetRec; eauto.
++ inv H0. eapply sig_subtype_get_Some in H5; eauto.
+  destruct H5 as [A_op'[B_op'[gets[asty bsty]]]].
+  eapply CeqOp; eauto.
+  - eapply veq_subtype; eauto.
+    eapply get_op_type_wf in gets. destruct gets. auto.
+    inv H. auto.
+  - eapply ctx_subtype_ceq; eauto.
+    * eapply ceq_subtype; eauto. apply SubtypeCTy; auto.
+    * apply WfCtxU. auto. 
+      eapply get_op_type_wf in gets. destruct gets. auto.
+      inv H. auto.
+    * eapply SubtypeCtxU. apply ctx_subtype_refl. all: auto.
 }{
-intros. inv orig. admit.
-(* assert (has_ctype Γ h1 Σ' D') as ty1.
-{ apply TypeH; auto. eapply TypeCSubtype; eauto. }
+intros. inv orig.
+assert (has_htype Γ h1 Σ' D') as ty1.
+{ admit. }
 assert (has_htype Γ h2 Σ' D') as ty2.
-{ apply TypeC; auto. eapply TypeCSubtype; eauto. } 
+{ admit. } 
 apply Heq; auto. destruct H8.
 + apply HeqRefl. auto.
 + apply HeqSym. eauto.
 + eapply HeqTrans; eauto.
 + inv H1. eapply HeqSigØ. simpl in H7. discriminate.
-+ inv H1. eapply HeqSigØ. eapply HeqSigU.
-*)  
-(* WE NEED 'has_htype'? *)
++ inv H1. eapply HeqSigØ. eapply HeqSigU. all: admit.  
 }
 Admitted.
 
