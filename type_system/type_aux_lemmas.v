@@ -1255,20 +1255,38 @@ destruct orig. destruct H3.
         x y (c_subs c (Sub.v_shift v_s 2 0) (2+i))).
   { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
     rewrite v_shift_comm. reflexivity. omega. }  
-  rewrite H3. clear H3.
-  specialize (rule (v_subs v1 v_s i) (v_subs v2 v_s i) x y
-    (c_subs c (Sub.v_shift v_s 2 0) (2 + i))).
-  rewrite v_shift_shift.
-  ???
-
-
-
-
-
-
-
-
-  
+  rewrite H3. rewrite v_shift_shift, <-v_shift_subs_alt.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βΣMatch_Inl as rule.
+  unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
+  assert (c_subs (ΣMatch (Inl v) xl cl xr cr) v_s i 
+    = ΣMatch (Inl (v_subs v v_s i)) 
+        xl (c_subs cl (Sub.v_shift v_s 1 0) (1+i))
+        xr (c_subs cr (Sub.v_shift v_s 1 0) (1+i))).
+  { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
+    rewrite v_shift_comm; reflexivity || omega. }  
+  rewrite H3. apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βΣMatch_Inr as rule.
+  unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
+  assert (c_subs (ΣMatch (Inr v) xl cl xr cr) v_s i 
+    = ΣMatch (Inr (v_subs v v_s i)) 
+        xl (c_subs cl (Sub.v_shift v_s 1 0) (1+i))
+        xr (c_subs cr (Sub.v_shift v_s 1 0) (1+i))).
+  { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
+    rewrite v_shift_comm; reflexivity || omega. }  
+  rewrite H3. apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βApp as rule.
+  unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
+  assert (c_subs (App (Fun x c) v) v_s i 
+    = App (Fun x (c_subs c (Sub.v_shift v_s 1 0) (1+i))) (v_subs v v_s i)).
+  { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
+    rewrite v_shift_comm; reflexivity || omega. }  
+  rewrite H3. apply rule. all: omega.
++ admit.
++ admit.
++ admit.
++ admit.
++ admit.
 }{
 intros tyvs geq len. apply Heq.
 { inv orig. assumption. }
