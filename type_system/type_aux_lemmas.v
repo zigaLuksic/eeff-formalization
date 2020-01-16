@@ -496,6 +496,35 @@ inv orig. destruct H3.
   specialize (CE _ _ _ _ H5) as IHc.
   clear V CI HC R VE CE HE. simpl. eapply CeqOp; eauto.
   rewrite ctx_insert_extend; auto.
++ clear V CI HC R VE CE HE. specialize βΠMatch as rule.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
+  rewrite c_shift_subs, c_shift_subs, <-v_shift_comm.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βΣMatch_Inl as rule.
+  unfold c_subs_out in *. simpl. rewrite c_shift_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βΣMatch_Inr as rule.
+  unfold c_subs_out in *. simpl. rewrite c_shift_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βApp as rule.
+  unfold c_subs_out in *. simpl. rewrite c_shift_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βLetRec as rule.
+  unfold c_subs_out in *. simpl. rewrite c_shift_subs.
+  simpl. rewrite <-c_shift_comm. apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βDoBind_Ret as rule.
+  unfold c_subs_out in *. simpl. rewrite c_shift_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. simpl. rewrite <-c_shift_comm. 
+  eapply βDoBind_Op. omega.
++ clear V CI HC R VE CE HE. specialize βHandle_Ret as rule.
+  unfold c_subs_out in *. simpl. rewrite c_shift_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βHandle_Op as rule.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
+  rewrite c_shift_subs, c_shift_subs, <-v_shift_comm.
+  simpl. rewrite <-c_shift_comm, <-h_shift_comm.
+  eapply rule. apply shift_find_Some. eauto. all: omega.
 }{
 intros wfins. apply Heq.
 { inv orig. assumption. }
@@ -823,6 +852,37 @@ inv orig. destruct H3.
   clear V CI HC R VE CE HE. simpl. eapply CeqOp; eauto.
   eapply IHc. simpl. eauto. apply v_shift_typesafe. assumption.
   apply get_op_type_wf in H3. destruct H3. assumption. inv H. assumption.
++ clear V CI HC R VE CE HE. specialize βΠMatch as rule.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
+  rewrite c_sub_subs, c_sub_subs, <-v_shift_sub, v_shift_shift.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βΣMatch_Inl as rule.
+  unfold c_subs_out in *. simpl. rewrite c_sub_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βΣMatch_Inr as rule.
+  unfold c_subs_out in *. simpl. rewrite c_sub_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βApp as rule.
+  unfold c_subs_out in *. simpl. rewrite c_sub_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βLetRec as rule.
+  unfold c_subs_out in *. simpl. rewrite c_sub_subs.
+  simpl. rewrite v_shift_comm, <-c_shift_sub, v_shift_shift. 
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βDoBind_Ret as rule.
+  unfold c_subs_out in *. simpl. rewrite c_sub_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βDoBind_Op as rule.
+  simpl. rewrite v_shift_comm, <-c_shift_sub. 
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βHandle_Ret as rule.
+  unfold c_subs_out in *. simpl. rewrite c_sub_subs.
+  apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βHandle_Op as rule.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
+  rewrite c_sub_subs, c_sub_subs, <-v_shift_sub, v_shift_shift.
+  simpl. rewrite v_shift_comm, <-c_shift_sub, <-h_shift_sub.
+  simpl in rule. eapply rule. apply sub_find_Some. eauto. all: omega.
 }{
 intros gets vtys. apply Heq.
 { inv orig. assumption. }
@@ -1187,6 +1247,28 @@ destruct orig. destruct H3.
   specialize (CE _ _ _ _ _ (S i) _ _ H5 tyvsb) as IHc.
   clear V CI HC R VE CE HE. unfold c_subs. simpl. eapply CeqOp; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. auto. simpl. omega. omega.
++ clear V CI HC R VE CE HE. specialize βΠMatch as rule.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
+  rewrite c_subs_subs, (c_subs_subs _ 0). simpl.
+  assert (c_subs (ΠMatch (Pair v1 v2) x y c) v_s i 
+    = ΠMatch (Pair (v_subs v1 v_s i) (v_subs v2 v_s i)) 
+        x y (c_subs c (Sub.v_shift v_s 2 0) (2+i))).
+  { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
+    rewrite v_shift_comm. reflexivity. omega. }  
+  rewrite H3. clear H3.
+  specialize (rule (v_subs v1 v_s i) (v_subs v2 v_s i) x y
+    (c_subs c (Sub.v_shift v_s 2 0) (2 + i))).
+  rewrite v_shift_shift.
+  ???
+
+
+
+
+
+
+
+
+  
 }{
 intros tyvs geq len. apply Heq.
 { inv orig. assumption. }

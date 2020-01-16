@@ -468,6 +468,15 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
   eapply ctx_subtype_ceq; eauto; inv H5; inv H7.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
++ eapply βΠMatch.
++ eapply βΣMatch_Inl.
++ eapply βΣMatch_Inr.
++ eapply βApp.
++ eapply βLetRec.
++ eapply βDoBind_Ret.
++ eapply βDoBind_Op.
++ eapply βHandle_Ret.
++ eapply βHandle_Op. eauto.
 }{
 intros wf ctxsty.
 inv equals. destruct H4; apply Heq; eauto.
@@ -559,6 +568,15 @@ apply Ceq; auto. destruct H5.
       eapply get_op_type_wf in gets. destruct gets. auto.
       inv H. auto.
     * eapply SubtypeCtxU. apply ctx_subtype_refl. all: auto.
++ eapply βΠMatch.
++ eapply βΣMatch_Inl.
++ eapply βΣMatch_Inr.
++ eapply βApp.
++ eapply βLetRec.
++ eapply βDoBind_Ret.
++ eapply βDoBind_Op.
++ eapply βHandle_Ret.
++ eapply βHandle_Op. eauto.
 }{
 intros. inv orig.
 assert (has_htype Γ h1 Σ' D') as ty1.

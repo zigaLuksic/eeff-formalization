@@ -996,3 +996,43 @@ rewrite v_shift_comm. f_equal. rewrite v_shift_sub. f_equal.
 all: omega.
 }
 Qed.
+
+
+Lemma v_subs_subs v i j vi vj:
+  j >= i ->
+    v_subs (v_subs v vi i) vj j
+  = (v_subs (v_subs v (Sub.v_shift vj 1 i) (1+j)) (v_subs vi vj j) i)
+
+with c_subs_subs c i j vi vj: 
+  j >= i ->
+    c_subs (c_subs c vi i) vj j
+  = (c_subs (c_subs c (Sub.v_shift vj 1 i) (1+j)) (v_subs vi vj j) i)
+
+with h_subs_subs h i j vi vj: 
+  j >= i ->
+    h_subs (h_subs h vi i) vj j
+  = (h_subs (h_subs h (Sub.v_shift vj 1 i) (1+j)) (v_subs vi vj j) i).
+Proof.
+{
+intro cmp.
+assert (v_subs v vi i=Sub.v_negshift(Sub.v_sub v (i, Sub.v_shift vi 1 i)) 1 i). reflexivity. unfold v_subs. rewrite <-H.
+rewrite v_sub_subs, v_negshift_subs, v_shift_comm.
+all: try reflexivity || omega.
+all: apply v_sub_makes_no_var. rewrite v_shift_comm. 2: omega. 
+all: apply v_shift_makes_no_var. 
+}{
+intro cmp.
+assert (c_subs c vi i=Sub.c_negshift(Sub.c_sub c (i, Sub.v_shift vi 1 i)) 1 i). reflexivity. unfold c_subs. rewrite <-H.
+rewrite c_sub_subs, c_negshift_subs, v_shift_comm.
+all: try reflexivity || omega.
+apply c_sub_makes_no_var. rewrite v_shift_comm. 2: omega. 
+2: apply v_sub_makes_no_var. all: apply v_shift_makes_no_var. 
+}{
+intro cmp.
+assert (h_subs h vi i=Sub.h_negshift(Sub.h_sub h (i, Sub.v_shift vi 1 i)) 1 i). reflexivity. unfold h_subs. rewrite <-H.
+rewrite h_sub_subs, h_negshift_subs, v_shift_comm.
+all: try reflexivity || omega.
+apply h_sub_makes_no_var. rewrite v_shift_comm. 2: omega. 
+2: apply v_sub_makes_no_var. all: apply v_shift_makes_no_var. 
+}
+Qed.

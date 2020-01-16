@@ -20,7 +20,8 @@ Lemma get_ctx_remove_changed Γ i j :
   i <= j -> get_vtype Γ (S j) = get_vtype (ctx_remove Γ i) j.
 Proof.
 revert i j; induction Γ; intros i j lt; auto. simpl.
-destruct i; destruct j; simpl; auto. omega. apply IHΓ. omega.
+- destruct i; auto.
+- destruct i; destruct j; simpl; auto. omega. apply IHΓ. omega.
 Qed.
 
 

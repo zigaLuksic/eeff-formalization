@@ -14,8 +14,7 @@ Fixpoint handle_t Γ_len Z_len h T :=
   | TApp x v => App (Var x) (Sub.v_shift v Z_len 0)
   | TAbsurd v => Absurd (Sub.v_shift v Z_len 0)
   | TΠMatch v x y T => 
-      ΠMatch (Sub.v_shift v Z_len 0) x y 
-        (handle_t (2+Γ_len) Z_len h T)
+      ΠMatch (Sub.v_shift v Z_len 0) x y (handle_t (2+Γ_len) Z_len h T)
   | TΣMatch v x T1 y T2 => 
       ΣMatch (Sub.v_shift v Z_len 0)
         x (handle_t (1+Γ_len) Z_len h T1) 
@@ -28,6 +27,21 @@ Fixpoint handle_t Γ_len Z_len h T :=
             (Sub.v_shift v Z_len 0))
       | None => Op op v y (handle_t (1+Γ_len) Z_len h T)
       end
+  end.
+
+
+Fixpoint instantiate_t Z_len T :=
+  match T with
+  | TApp x v => App (Var x) (Sub.v_shift v Z_len 0)
+  | TAbsurd v => Absurd (Sub.v_shift v Z_len 0)
+  | TΠMatch v x y T => 
+      ΠMatch (Sub.v_shift v Z_len 0) x y (instantiate_t Z_len T)
+  | TΣMatch v x T1 y T2 => 
+      ΣMatch (Sub.v_shift v Z_len 0)
+        x (instantiate_t Z_len T1) 
+        y (instantiate_t Z_len T2)
+  | TOp op v y T =>
+      Op op (Sub.v_shift v Z_len 0) y (instantiate_t Z_len T)
   end.
 
 (* ==================== Wellformed Judgements ==================== *)
@@ -266,8 +280,46 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     veq A_op Γ v v' ->
     ceq (CTy A Σ E) (CtxU Γ B_op) c c' ->
     ceq' (CTy A Σ E) Γ (Op op v y c) (Op op v' y' c')
-(* | OOTB A Σ E Γ Γ' Z T1 T2 : *)
-    (* How do we create arbitrary substitution? *)
+(* | OOTB A Σ E Γ Z T1 T2:
+    has_eq E Γ Z T1 T2 ->
+    (* Do we add context subtping here??? *)
+    ceq' (CTy A Σ E) (join_ctx_tctx Γ Z (CTy A Σ E))
+      (instantiate_t (tctx_len Z) T1) (instantiate_t (tctx_len Z) T2)  *)
+| βΠMatch v1 v2 x y c C Γ: 
+    ceq' C Γ
+      (ΠMatch (Pair v1 v2) x y c) 
+      (c_subs2_out c v1 v2)
+| βΣMatch_Inl v xl cl xr cr C Γ:
+    ceq' C Γ
+      (ΣMatch (Inl v) xl cl xr cr)
+      (c_subs_out cl v)
+| βΣMatch_Inr v xl cl xr cr C Γ:
+    ceq' C Γ 
+      (ΣMatch (Inr v) xl cl xr cr)
+      (c_subs_out cr v)
+| βApp x c v C Γ:
+    ceq' C Γ (App (Fun x c) v) (c_subs_out c v)
+| βLetRec f x c1 c2 C Γ:
+    ceq' C Γ
+      (LetRec f x c1 c2)
+      (c_subs_out c2 (Fun x (LetRec f x (Sub.c_shift c1 1 2) c1)))
+| βDoBind_Ret x v c C Γ:
+    ceq' C Γ (DoBind x (Ret v) c) (c_subs_out c v)
+| βDoBind_Op x op_id v_arg y c1 c2 C Γ:
+    ceq' C Γ
+      (DoBind x (Op op_id v_arg y c1) c2)
+      (Op op_id v_arg y (DoBind x c1 (Sub.c_shift c2 1 1)))
+| βHandle_Ret x c_r h v C Γ:
+    ceq' C Γ
+      (Handle (Handler x c_r h) (Ret v))
+      (c_subs_out c_r v)
+| βHandle_Op x c_r h op_id v_arg y c_k x_op k_op c_op C Γ:
+    find_case h op_id = Some (x_op, k_op, c_op) ->
+    ceq' C Γ
+      (Handle (Handler x c_r h) (Op op_id v_arg y c_k))
+      (c_subs2_out c_op
+        (Fun y (Handle (Sub.v_shift (Handler x c_r h) 1 0) c_k))
+        v_arg )
 
 with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | Heq Σ D Γ h1 h2 : 
