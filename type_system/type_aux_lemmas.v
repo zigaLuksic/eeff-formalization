@@ -1282,11 +1282,79 @@ destruct orig. destruct H3.
   { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
     rewrite v_shift_comm; reflexivity || omega. }  
   rewrite H3. apply rule. all: omega.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
++ clear V CI HC R VE CE HE. specialize βLetRec as rule.
+  unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
+  assert (c_subs (LetRec f x c1 c2) v_s i
+    = LetRec f x (c_subs c1 (Sub.v_shift v_s 2 0) (2 + i))
+        (c_subs c2 (Sub.v_shift v_s 1 0) (1 + i))).
+  { unfold c_subs. simpl. do 2 f_equal; rewrite v_shift_comm; auto || omega. }  
+  rewrite H3. clear H3.
+  assert ( v_subs (Fun x (LetRec f x (Sub.c_shift c1 1 2) c1)) v_s i
+    = Fun x (LetRec f x
+       (Sub.c_shift (c_subs c1 (Sub.v_shift v_s 2 0) (2 + i)) 1 2)
+       (c_subs c1 (Sub.v_shift v_s 2 0) (2 + i))) ).
+  { unfold c_subs. unfold v_subs. simpl. do 2 f_equal.
+    rewrite v_shift_comm, <-c_shift_sub, c_shift_negshift_comm.
+    do 2 f_equal. rewrite v_shift_comm. auto. omega.
+    apply c_sub_makes_no_var. apply v_shift_makes_no_var. all: try omega.
+    do 3 f_equal. rewrite v_shift_shift, v_shift_comm; auto || omega. }
+  rewrite H3. clear H3. apply rule. omega.  
++ clear V CI HC R VE CE HE. specialize βDoBind_Ret as rule.
+  unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
+  assert (c_subs (DoBind x (Ret v) c) v_s i 
+    = DoBind x (Ret (v_subs v v_s i)) (c_subs c (Sub.v_shift v_s 1 0) (1+i))).
+  { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
+    rewrite v_shift_comm; reflexivity || omega. }  
+  rewrite H3. apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βDoBind_Op as rule.
+  unfold c_subs_out in *. unfold c_subs. simpl. rewrite v_shift_comm. 
+  specialize (rule x op_id 
+    (Sub.v_negshift (Sub.v_sub v_arg (i, Sub.v_shift v_s 1 i)) 1 i) y
+    (Sub.c_negshift
+      (Sub.c_sub c1 (S i, Sub.v_shift (Sub.v_shift v_s 1 0) 1 (1 + i)))
+      1 (S i))
+    (Sub.c_negshift
+      (Sub.c_sub c2 (S i, Sub.v_shift (Sub.v_shift v_s 1 0) 1 (1 + i))) 1
+      (S i))).
+  rewrite c_shift_negshift_comm, c_shift_sub in rule. simpl.
+  assert (Sub.v_shift (Sub.v_shift (Sub.v_shift v_s 1 0) 1 (S i)) 1 0
+    = Sub.v_shift (Sub.v_shift (Sub.v_shift v_s 1 0) 1 (S i)) 1 1).
+  { rewrite <-v_shift_comm, v_shift_comm. all: omega || auto. }
+  rewrite H3. apply rule. all: try omega. clear rule.
+  apply c_sub_makes_no_var. apply v_shift_makes_no_var.
++ clear V CI HC R VE CE HE. specialize βHandle_Ret as rule.
+  unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
+  assert (c_subs (Handle (Handler x c_r h) (Ret v)) v_s i
+    = Handle (Handler x 
+      (c_subs c_r (Sub.v_shift v_s 1 0) (1+i)) (h_subs h v_s i)) 
+      (Ret (v_subs v v_s i) ) ).
+  { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
+    rewrite v_shift_comm; reflexivity || omega. }  
+  rewrite H3. apply rule. all: omega.
++ clear V CI HC R VE CE HE. specialize βHandle_Op as rule.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
+  rewrite c_subs_subs, (c_subs_subs _ 0). simpl.
+  assert (c_subs (Handle (Handler x c_r h) (Op op_id v_arg y c_k)) v_s i =
+    Handle (Handler x (c_subs c_r (Sub.v_shift v_s 1 0) (1+i)) (h_subs h v_s i))
+    (Op op_id (v_subs v_arg v_s i) y (c_subs c_k (Sub.v_shift v_s 1 0) (1+i)))).
+  { unfold c_subs. unfold v_subs. simpl. do 5 f_equal;
+    apply v_shift_comm; omega. }
+  rewrite H4. clear H4.
+  assert (v_subs (Fun y
+    (Handle (Handler x (Sub.c_shift c_r 1 1) (Sub.h_shift h 1 0)) c_k)) v_s i
+  = Fun y (Handle (Sub.v_shift (Handler x (c_subs c_r (Sub.v_shift v_s 1 0) (1+i)) (h_subs h v_s i)) 1 0) (c_subs c_k (Sub.v_shift v_s 1 0) (1+i)))).
+  { clear rule. unfold v_subs. unfold c_subs. unfold h_subs. 
+    simpl. do 3 f_equal.
+    rewrite c_shift_negshift_comm, c_shift_sub. do 3 f_equal.
+    rewrite v_shift_comm. f_equal. apply v_shift_comm. all: try omega.
+    apply c_sub_makes_no_var. apply v_shift_makes_no_var.
+    rewrite h_shift_negshift_comm, h_shift_sub. f_equal. omega.
+    apply h_sub_makes_no_var. apply v_shift_makes_no_var. omega.
+    rewrite v_shift_comm. reflexivity. omega. }
+  rewrite H4, v_shift_shift, <-v_shift_subs_alt. clear H4. simpl.
+  eapply rule. unfold h_subs. 
+  apply negshift_find_Some. rewrite <-(v_shift_comm 1 i 0). 
+  apply sub_find_Some. eauto. all: omega.
 }{
 intros tyvs geq len. apply Heq.
 { inv orig. assumption. }
