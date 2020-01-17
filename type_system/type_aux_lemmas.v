@@ -451,6 +451,8 @@ inv orig. destruct H3.
   specialize (HE _ _ _ _ _ H4) as IHh.
   clear V CI HC R VE CE HE. simpl. eapply VeqHandler; eauto.
   rewrite ctx_insert_extend. auto.
++ clear V CI HC R VE CE HE. simpl. apply ηUnit.
++ clear V CI HC R VE CE HE. simpl. rewrite <-v_shift_comm. apply ηFun. omega.
 }{
 intros wfins. apply Ceq.
 { inv orig. assumption. }
@@ -801,6 +803,8 @@ inv orig. destruct H3.
   clear V CI HC R VE CE HE. simpl. eapply VeqHandler; eauto. eapply IHc.
   - simpl. eauto.
   - inv H. inv H7. apply v_shift_typesafe; auto.
++ clear V CI HC R VE CE HE. simpl. apply ηUnit.
++ clear V CI HC R VE CE HE. simpl. rewrite <-v_shift_sub. apply ηFun. omega.
 }{
 intros gets vtys. apply Ceq.
 { inv orig. assumption. }
@@ -1179,6 +1183,10 @@ destruct orig. destruct H3.
   clear V CI HC R VE CE HE. unfold v_subs. simpl. eapply VeqHandler; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. assumption.
   all: simpl; omega.
++ clear V CI HC R VE CE HE. unfold v_subs. simpl. apply ηUnit.
++ clear V CI HC R VE CE HE. unfold v_subs. simpl.
+  rewrite <-v_shift_sub, <-v_shift_negshift_comm. apply ηFun.
+  apply v_sub_makes_no_var. apply v_shift_makes_no_var. omega. omega. 
 }{
 intros tyvs geq len. apply Ceq.
 { inv orig. assumption. }

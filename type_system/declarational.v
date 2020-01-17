@@ -212,10 +212,10 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     i = j -> get_vtype Γ i = Some A' -> vsubtype A' A ->
     veq' A Γ (Var (x, i)) (Var (y, j))
 | VeqUnit Γ:
-    veq' (TyUnit) Γ Unit Unit
+    veq' TyUnit Γ Unit Unit
 | VeqInt Γ n m:
     n = m ->
-    veq' (TyInt) Γ (Int n) (Int m)
+    veq' TyInt Γ (Int n) (Int m)
 | VeqPair A B Γ v1 v1' v2 v2' :
     veq A Γ v1 v1' -> veq A Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
@@ -232,6 +232,10 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     ceq D (CtxU Γ A) c c' ->
     heq Σ D Γ h h' ->
     veq' (TyHandler (CTy A Σ E) D) Γ (Handler x c h) (Handler x' c' h')
+| ηUnit Γ v:
+    veq' TyUnit Γ v Unit
+| ηFun A C Γ f x x':
+    veq' (TyFun A C) Γ (Fun x (App (Sub.v_shift f 1 0) (Var (x', 0)))) f
 
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 

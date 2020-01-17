@@ -431,6 +431,8 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
   - eauto.
++ apply ηUnit.
++ apply ηFun.
 }{
 intros wf ctxsty.
 inv equals. destruct H3; apply Ceq; eauto.
@@ -534,6 +536,8 @@ induction H5; apply Veq; auto.
   - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
   - assumption.
   - eapply heq_subtype. eauto. inv H8. all: assumption.
++ inv H0. apply ηUnit.
++ inv H0. apply ηFun.
 }{
 intros. inv orig. 
 assert (has_ctype Γ c1 C') as ty1.
