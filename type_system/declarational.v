@@ -217,7 +217,7 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     n = m ->
     veq' TyInt Γ (Int n) (Int m)
 | VeqPair A B Γ v1 v1' v2 v2' :
-    veq A Γ v1 v1' -> veq A Γ v2 v2' -> 
+    veq A Γ v1 v1' -> veq B Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
 | VeqInl A B Γ v v' :
     veq A Γ v v' ->
