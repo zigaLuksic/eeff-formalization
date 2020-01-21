@@ -424,19 +424,18 @@ intros wfins. apply Veq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 inv orig. destruct H3.
-+ clear V CI HC R VE CE HE. apply VeqRefl. f_equal. assumption.
 + specialize (VE _ _ _ _ H3) as IH.
   clear V CI HC R VE CE HE. apply VeqSym. auto.
 + specialize (VE _ _ _ _ H3) as IH1.
   specialize (VE _ _ _ _ H4) as IH2.
   clear V CI HC R VE CE HE. eapply VeqTrans; eauto.
-+ clear V CI HC R VE CE HE. subst. simpl.
++ clear V CI HC R VE CE HE. subst. simpl. rename i0 into j.
   destruct (i <=? j) eqn:cmp; eapply VeqVar; eauto.
   - erewrite <-get_ctx_insert_changed. auto. apply leb_complete in cmp. auto.
   - erewrite <-get_ctx_insert_unchanged. assumption. 
     apply leb_complete_conv in cmp. assumption.
 + clear V CI HC R VE CE HE. simpl. apply VeqUnit.
-+ clear V CI HC R VE CE HE. simpl. apply VeqInt. auto.
++ clear V CI HC R VE CE HE. simpl. apply VeqInt.
 + specialize (VE _ _ _ _ H3) as IH1.
   specialize (VE _ _ _ _ H4) as IH2.
   clear V CI HC R VE CE HE. simpl. apply VeqPair; auto.
@@ -460,7 +459,6 @@ intros wfins. apply Ceq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 inv orig. destruct H3.
-+ clear V CI HC R VE CE HE. apply CeqRefl. f_equal. assumption.
 + specialize (CE _ _ _ _ H3) as IH.
   clear V CI HC R VE CE HE. apply CeqSym. auto.
 + specialize (CE _ _ _ _ H3) as IH1.
@@ -535,7 +533,6 @@ intros wfins. apply Heq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 inv orig. destruct H4.
-+ clear V CI HC R VE CE HE. apply HeqRefl. f_equal. assumption.
 + specialize (HE _ _ _ _ _ H4) as IH.
   clear V CI HC R VE CE HE. apply HeqSym. auto.
 + specialize (HE _ _ _ _ _ H4) as IH1.
@@ -775,18 +772,17 @@ intros gets vsty. apply Veq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 inv orig. destruct H3.
-+ clear V CI HC R VE CE HE. apply VeqRefl. f_equal. assumption.
 + specialize (VE _ _ _ _ H3) as IH.
   clear V CI HC R VE CE HE. apply VeqSym. eauto.
 + specialize (VE _ _ _ _ H3) as IH1.
   specialize (VE _ _ _ _ H4) as IH2.
   clear V CI HC R VE CE HE. eapply VeqTrans; eauto.
 + clear V CI HC R VE CE HE. subst. simpl.
-  destruct (j =? i) eqn:cmp.
-  - eapply VeqRefl. reflexivity.
+  destruct (i0 =? i) eqn:cmp.
+  - admit.
   - eapply VeqVar; eauto.
 + clear V CI HC R VE CE HE. simpl. apply VeqUnit.
-+ clear V CI HC R VE CE HE. simpl. apply VeqInt. auto.
++ clear V CI HC R VE CE HE. simpl. apply VeqInt.
 + specialize (VE _ _ _ _ H3) as IH1.
   specialize (VE _ _ _ _ H4) as IH2.
   clear V CI HC R VE CE HE. simpl. apply VeqPair; eauto.
@@ -812,7 +808,6 @@ intros gets vtys. apply Ceq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 inv orig. destruct H3.
-+ clear V CI HC R VE CE HE. apply CeqRefl. f_equal. assumption.
 + specialize (CE _ _ _ _ H3) as IH.
   clear V CI HC R VE CE HE. apply CeqSym. eauto.
 + specialize (CE _ _ _ _ H3) as IH1.
@@ -895,7 +890,6 @@ intros gets vtys. apply Heq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 inv orig. destruct H4.
-+ clear V CI HC R VE CE HE. apply HeqRefl. f_equal. assumption.
 + specialize (HE _ _ _ _ _ H4) as IH.
   clear V CI HC R VE CE HE. apply HeqSym. eauto.
 + specialize (HE _ _ _ _ _ H4) as IH1.
@@ -912,7 +906,7 @@ inv orig. destruct H4.
     eapply v_shift_typesafe. all: inv H. 2 : apply WfTyFun. all: auto.
   - eauto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint v_subs_typesafe 
@@ -1146,15 +1140,14 @@ intros tyvs geq len. apply Veq.
 { inv orig; eauto. }
 { inv orig; eauto. }
 destruct orig. destruct H3.
-+ clear V CI HC R VE CE HE. apply VeqRefl. f_equal. assumption.
 + specialize (VE _ _ _ _ _ i _ _ H3 tyvs) as IH.
   clear V CI HC R VE CE HE. apply VeqSym. apply IH; auto.
 + specialize (VE _ _ _ _ _ i _ _ H3 tyvs) as IH1.
   specialize (VE _ _ _ _ _ i _ _ H4 tyvs) as IH2.
   clear V CI HC R VE CE HE. eapply VeqTrans; eauto.
 + clear V CI HC R VE CE HE. subst. unfold v_subs. simpl.
-  destruct (j =? i) eqn:cmp. 
-  - rewrite v_negshift_shift, v_shift_0. eapply VeqRefl; eauto. omega.
+  rename i0 into j. destruct (j =? i) eqn:cmp. 
+  - rewrite v_negshift_shift, v_shift_0. eapply veq_refl; eauto. omega.
   - simpl. destruct (i<=?j) eqn:ilj; eapply VeqVar; omega || eauto.
     * apply Nat.eqb_neq in cmp. apply leb_complete in ilj.
       erewrite get_ctx_insert_changed.

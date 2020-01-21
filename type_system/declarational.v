@@ -205,17 +205,16 @@ with veq : vtype -> ctx -> val -> val -> Prop :=
   veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
-| VeqRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2
+(* | VeqRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2 *)
 | VeqSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
 | VeqTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
-| VeqVar x i y j A A' Γ :
-    i = j -> get_vtype Γ i = Some A' -> vsubtype A' A ->
-    veq' A Γ (Var (x, i)) (Var (y, j))
+| VeqVar x i y A A' Γ :
+    get_vtype Γ i = Some A' -> vsubtype A' A ->
+    veq' A Γ (Var (x, i)) (Var (y, i))
 | VeqUnit Γ:
     veq' TyUnit Γ Unit Unit
-| VeqInt Γ n m:
-    n = m ->
-    veq' TyInt Γ (Int n) (Int m)
+| VeqInt Γ n:
+    veq' TyInt Γ (Int n) (Int n)
 | VeqPair A B Γ v1 v1' v2 v2' :
     veq A Γ v1 v1' -> veq B Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
@@ -245,7 +244,7 @@ with ceq : ctype -> ctx -> comp -> comp -> Prop :=
     ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
-| CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2
+(* | CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2 *)
 | CeqSym C Γ c1 c2 : ceq C Γ c1 c2 -> ceq' C Γ c2 c1
 | CeqTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
 | CeqRet A Σ E Γ v v' : 
@@ -332,7 +331,7 @@ with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
     heq Σ D Γ h1 h2
     
 with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
-| HeqRefl Σ D Γ h1 h2 : h1 = h2 -> heq' Σ D Γ h1 h2
+(* | HeqRefl Σ D Γ h1 h2 : h1 = h2 -> heq' Σ D Γ h1 h2 *)
 | HeqSym Σ D Γ h1 h2 : heq Σ D Γ h1 h2 -> heq' Σ D Γ h2 h1
 | HeqTrans Σ D Γ h1 h2 h3 : heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> heq' Σ D Γ h1 h3
 | HeqSigØ D Γ h1 h2:
