@@ -200,14 +200,17 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 
 with veq : vtype -> ctx -> val -> val -> Prop := 
 | Veq A Γ v1 v2 : 
-  wf_vtype A -> wf_ctx Γ -> 
   has_vtype Γ v1 A -> has_vtype Γ v2 A -> veq' A Γ v1 v2 -> 
   veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
 (* | VeqRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2 *)
-| VeqSym A Γ v1 v2 : veq A Γ v1 v2 -> veq' A Γ v2 v1
-| VeqTrans A Γ v1 v2 v3 : veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq' A Γ v1 v3
+| VeqSym A Γ v1 v2 : 
+    veq A Γ v1 v2 -> 
+    veq' A Γ v2 v1
+| VeqTrans A Γ v1 v2 v3 : 
+    veq A Γ v1 v2 -> veq A Γ v2 v3 -> 
+    veq' A Γ v1 v3
 | VeqVar x i y A A' Γ :
     get_vtype Γ i = Some A' -> vsubtype A' A ->
     veq' A Γ (Var (x, i)) (Var (y, i))
@@ -227,9 +230,9 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
 | VeqFun A C Γ x y c c':
     ceq C (CtxU Γ A) c c' ->
     veq' (TyFun A C) Γ (Fun x c) (Fun y c')
-| VeqHandler A Σ E D Γ x x' c c' h h':
+| VeqHandler A Σ E D D' Γ x x' c c' h h':
     ceq D (CtxU Γ A) c c' ->
-    heq Σ D Γ h h' ->
+    heq Σ D' Γ h h' -> csubtype D' D ->
     veq' (TyHandler (CTy A Σ E) D) Γ (Handler x c h) (Handler x' c' h')
 | ηUnit Γ v:
     veq' TyUnit Γ v Unit
@@ -239,14 +242,17 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 
 | Ceq C Γ c1 c2 : 
-    wf_ctype C -> wf_ctx Γ -> 
     has_ctype Γ c1 C -> has_ctype Γ c2 C -> ceq' C Γ c1 c2 -> 
     ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
 (* | CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2 *)
-| CeqSym C Γ c1 c2 : ceq C Γ c1 c2 -> ceq' C Γ c2 c1
-| CeqTrans C Γ c1 c2 c3 : ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq' C Γ c1 c3
+| CeqSym C Γ c1 c2 : 
+    ceq C Γ c1 c2 -> 
+    ceq' C Γ c2 c1
+| CeqTrans C Γ c1 c2 c3 : 
+    ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> 
+    ceq' C Γ c1 c3
 | CeqRet A Σ E Γ v v' : 
     veq A Γ v v' -> 
     ceq' (CTy A Σ E) Γ (Ret v) (Ret v')
@@ -325,16 +331,20 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
         v_arg )
 
 with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
-| Heq Σ D Γ h1 h2 : 
-    wf_sig Σ -> wf_ctype D -> wf_ctx Γ -> 
-    has_htype Γ h1 Σ D -> has_htype Γ h2 Σ D -> heq' Σ D Γ h1 h2 -> 
+| Heq Σ Σ1 Σ2 D Γ h1 h2 : 
+    sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
+    has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D -> heq' Σ D Γ h1 h2 -> 
     heq Σ D Γ h1 h2
     
 with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 (* | HeqRefl Σ D Γ h1 h2 : h1 = h2 -> heq' Σ D Γ h1 h2 *)
-| HeqSym Σ D Γ h1 h2 : heq Σ D Γ h1 h2 -> heq' Σ D Γ h2 h1
-| HeqTrans Σ D Γ h1 h2 h3 : heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> heq' Σ D Γ h1 h3
-| HeqSigØ D Γ h1 h2:
+(* | HeqSym Σ D Γ h1 h2 : 
+    heq Σ D Γ h1 h2 -> 
+    heq' Σ D Γ h2 h1
+| HeqTrans Σ D Γ h1 h2 h3 : 
+    heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> 
+    heq' Σ D Γ h1 h3 *)
+| HeqSigØ D Γ h1 h2: 
     heq' SigØ D Γ h1 h2
 | HeqSigU Σ op A B D Γ h1 x1 k1 c1 h2 x2 k2 c2:
     find_case h1 op = Some (x1, k1, c1) ->

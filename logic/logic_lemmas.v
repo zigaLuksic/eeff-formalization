@@ -122,3 +122,6 @@ destruct H3.
 + clear VEQ CEQ HEQ.
 + clear VEQ CEQ HEQ.
 }
+
+
+(* h : C => D -> c1 ~C c2 -> with h handle c1 ~D with h handle c2 *)

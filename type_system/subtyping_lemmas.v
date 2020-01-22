@@ -411,7 +411,7 @@ inv r. eapply Respects; auto. destruct H3.
   all: assumption || apply ctx_subtype_refl; assumption.
 }{
 intros wf ctxsty.
-inv equals. destruct H3; apply Veq; eauto.
+inv equals. destruct H1; apply Veq; eauto.
 all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
@@ -423,49 +423,49 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 + eapply VeqPair; eauto.
 + eapply VeqInl; eauto.
 + eapply VeqInr; eauto.
-+ eapply VeqFun. eapply ctx_subtype_ceq. eauto.
-  - inv H. apply WfCtxU; auto.
-  - apply SubtypeCtxU. assumption. apply vsubtype_refl. inv H. assumption.
-+ eapply VeqHandler. eapply ctx_subtype_ceq; inv H; inv H7. eauto.
++ eapply VeqFun. eapply ctx_subtype_ceq. eauto. all: inv H; inv H3.
   - apply WfCtxU; auto.
-  - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
-  - eauto.
+  - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
++ eapply VeqHandler. eapply ctx_subtype_ceq; inv H; inv H5; inv H8. all: eauto.
+  - apply WfCtxU; auto.
+  - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + apply ηUnit.
 + apply ηFun.
 }{
 intros wf ctxsty.
-inv equals. destruct H3; apply Ceq; eauto.
+inv equals. destruct H1; apply Ceq; eauto.
 all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 + eapply CeqRet; eauto.
 + eapply CeqAbsurd; eauto.
 + eapply CeqΠMatch; eauto.
-  eapply ctx_subtype_ceq. eauto. all: inv H3; inv H5.
+  eapply ctx_subtype_ceq. eauto. all: inv H1; inv H3; inv H6.
   - apply WfCtxU. apply WfCtxU. all: assumption.
   - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
     all: apply vsubtype_refl; assumption.
 + eapply CeqΣMatch; eauto; 
-  eapply ctx_subtype_ceq; eauto; inv H3; inv H6.
+  eapply ctx_subtype_ceq; eauto; inv H1; inv H4; inv H7.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
-+ eapply CeqDoBind; eauto. eapply ctx_subtype_ceq; eauto; inv H3; inv H5.
++ eapply CeqDoBind; eauto. eapply ctx_subtype_ceq; eauto.
+  all: inv H1; inv H3; inv H6.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec.
-  - eapply ctx_subtype_ceq; eauto; inv H4; inv H6.
-    * apply WfCtxU. apply WfCtxU. 2: inv H12. all: eauto.
+  - eapply ctx_subtype_ceq; eauto; inv H2; inv H4; inv H2.
+    * apply WfCtxU. apply WfCtxU. 2: inv H10. all: eauto.
     * apply SubtypeCtxU. apply SubtypeCtxU. assumption.
-      all: apply vsubtype_refl. inv H12. assumption. assumption.
-  - eapply ctx_subtype_ceq; eauto; inv H4; inv H6.
+      all: apply vsubtype_refl. inv H10. all: auto.
+  - eapply ctx_subtype_ceq; eauto; inv H2; inv H4; inv H2.
     * apply WfCtxU; assumption.
     * apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
 + eapply CeqOp; eauto.
-  eapply ctx_subtype_ceq; eauto; inv H5; inv H7.
+  eapply ctx_subtype_ceq; eauto; inv H3; inv H5; inv H3.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
 + eapply βΠMatch.
@@ -479,17 +479,15 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
 + eapply βHandle_Op. eauto.
 }{
 intros wf ctxsty.
-inv equals. destruct H4; apply Heq; eauto.
-all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
-+ apply HeqSym. eauto.
-+ eapply HeqTrans; eauto.
-+ eapply HeqSigØ.
-+ eapply HeqSigU; eauto.
-  eapply ctx_subtype_ceq; eauto.
-  - apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: inv H; assumption.
+inv equals. destruct H3.
+all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_veq.
++ eapply Heq. exact H. exact H0. all: eauto. eapply HeqSigØ.
++ eapply Heq. exact H. exact H0. all: eauto.
+  eapply HeqSigU; eauto.
+  eapply ctx_subtype_ceq; eauto; inv H5; inv H7; inv H5; inv H13.
+  - apply WfCtxU. apply WfCtxU. all: assumption.
   - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
-    apply vsubtype_refl. inv H. apply WfTyFun; assumption.
-    apply vsubtype_refl. inv H. assumption.
+    all: apply vsubtype_refl; assumption.
 }
 Qed.
 
