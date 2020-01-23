@@ -8,30 +8,6 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
 
-Lemma heq_sym Σ D Γ h1 h2:
-  heq Σ D Γ h1 h2 -> heq Σ D Γ h1 h2.
-Proof.
-intro orig. destruct orig. induction H3.
-+ eapply Heq. exact H. exact H0. all: eauto. apply HeqSigØ.
-+ eapply Heq. exact H. exact H0. all: eauto.
-  eapply HeqSigU; eauto.
-Qed.
-
-
-Lemma heq_trans Σ D Γ h1 h2 h3:
-  heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> heq Σ D Γ h1 h3.
-Proof.
-intros heq1 heq2. induction Σ. 
-+ inv heq1. inv heq2. eapply Heq. exact H. exact H5. all: eauto. apply HeqSigØ.
-+ inv heq1. inv heq2. eapply Heq. exact H. exact H5. all: eauto.
-  inv H3. inv H8. eapply HeqSigU; eauto.
-  rewrite H12 in H18. inv H18. apply Ceq.
-  - inv H19. assumption.
-  - inv H22. assumption.
-  - eapply CeqTrans; eauto.
-Qed.
-
-
 Lemma heq_cases_ceq Σ D Γ h1 h2 op A B x1 x2 k1 k2 c1 c2 :
   heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
   find_case h1 op = Some (x1, k1, c1) ->
@@ -155,7 +131,7 @@ apply Ceq; auto. destruct H3.
 Qed.
 
 
-Lemma aux_heq_extend Σ D Γ h1 h2 op A1 A2 B1 B2 x1 x2 k1 k2 c1 c2:
+Lemma heq_case_extend_trivial Σ D Γ h1 h2 op A1 A2 B1 B2 x1 x2 k1 k2 c1 c2:
   heq Σ D Γ h1 h2 -> find_case h1 op = None -> find_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
@@ -198,6 +174,47 @@ induction Σ as [ | Σ IH o A B].
 Qed.
 
 
+Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B x1 x2 k1 k2 c1 c2:
+  heq Σ D Γ h1 h2 -> find_case h1 op = None -> find_case h2 op = None ->
+  has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D ->
+  has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D ->
+  ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
+  heq (SigU Σ op A B) D Γ (CasesU h1 op x1 k1 c1) (CasesU h2 op x2 k2 c2).
+Proof.
+intros orig f1 f2 tys1 tys2 ceq12.
+assert (wf_vtype A) as wfa by (inv tys1; inv H; auto).
+assert (wf_vtype B) as wfb by (inv tys1; inv H; inv H4; inv H6; auto).
+assert (wf_ctype D) as wfd by (inv tys1; auto).
+assert (wf_ctx Γ) as wfctx by (inv orig; inv H1; auto).
+destruct orig.
+assert (get_op_type Σ1 op = None) as getn1.
+{ destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
+  eapply h_has_case in H1; eauto. destruct H1 as [x[k[c f]]].
+  rewrite f in f1. discriminate. }
+assert (get_op_type Σ2 op = None) as getn2.
+{ destruct (get_op_type Σ2 op) eqn: g. destruct p. 2: reflexivity.
+  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
+  rewrite f in f2. discriminate. }
+assert (sig_subtype (SigU Σ op A B) (SigU Σ1 op A B)) as ss1.
+{ eapply SubtypeSigU. apply sig_subtype_extend. auto. apply WfSigU; auto. 
+  inv H1. auto. simpl. destruct (op==op). reflexivity. destruct n. auto.
+  all: apply vsubtype_refl; auto. }
+assert (sig_subtype (SigU Σ op A B) (SigU Σ2 op A B)) as ss2.
+{ eapply SubtypeSigU. apply sig_subtype_extend. auto. apply WfSigU; auto. 
+  inv H2. auto. simpl. destruct (op==op). reflexivity. destruct n. auto.
+  all: apply vsubtype_refl; auto. }
+eapply Heq. exact ss1. exact ss2.
+- apply TypeH. 2:apply WfSigU. 2:inv H1. 7:apply TypeCasesU. all: auto.
+- apply TypeH. 2:apply WfSigU. 2:inv H2. 7:apply TypeCasesU. all: auto.
+- eapply HeqSigU.
+  * simpl. destruct (op==op). reflexivity. destruct n. auto.
+  * simpl. destruct (op==op). reflexivity. destruct n. auto.
+  * assumption.
+  * eapply heq_case_extend_trivial; eauto. eapply Heq.
+    exact H. exact H0. all: auto.
+Qed.
+
+
 Lemma veq_refl Γ v A : has_vtype Γ v A -> veq A Γ v v
 with  ceq_refl Γ c C : has_ctype Γ c C -> ceq C Γ c c
 with  heq_refl Γ h Σ D : has_htype Γ h Σ D -> heq Σ D Γ h h.
@@ -236,10 +253,53 @@ destruct orig. destruct H2.
 + assert (find_case (CasesU h op_id x k c_op) op_id = Some (x, k, c_op)).
   { simpl. destruct (op_id==op_id). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
-  eapply aux_heq_extend; eauto; inv H0; assumption.
+  eapply heq_case_extend_trivial; eauto; inv H0; assumption.
 }
 Qed.
 
 
 
+Lemma veq_sym A Γ v1 v2:
+  veq A Γ v1 v2 -> veq A Γ v2 v1
+with ceq_sym C Γ c1 c2:
+  ceq C Γ c1 c2 -> ceq C Γ c2 c1
+with heq_sym Σ D Γ h1 h2:
+  heq Σ D Γ h1 h2 -> heq Σ D Γ h1 h2.
+Proof.
+{
+intro orig. apply Veq. all: try (inv orig; assumption). apply VeqSym. auto.
+}{
+intro orig. apply Ceq. all: try (inv orig; assumption). apply CeqSym. auto.
+}{
+intro orig. destruct orig. induction H3.
++ eapply Heq. exact H. exact H0. all: eauto. apply HeqSigØ.
++ eapply Heq. exact H. exact H0. all: eauto.
+  eapply HeqSigU; eauto.
+}
+Qed.
 
+
+Lemma veq_trans A Γ v1 v2 v3:
+  veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq A Γ v1 v3
+with  ceq_trans C Γ c1 c2 c3:
+  ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq C Γ c1 c3
+with  heq_trans Σ D Γ h1 h2 h3:
+  heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> heq Σ D Γ h1 h3.
+Proof.
+{
+intros veq1 veq2. apply Veq. inv veq1. auto. inv veq2. auto.
+eapply VeqTrans; eauto.
+}{
+intros ceq1 ceq2. apply Ceq. inv ceq1. auto. inv ceq2. auto.
+eapply CeqTrans; eauto.
+}{
+intros heq1 heq2. induction Σ. 
++ inv heq1. inv heq2. eapply Heq. exact H. exact H5. all: eauto. apply HeqSigØ.
++ inv heq1. inv heq2. eapply Heq. exact H. exact H5. all: eauto.
+  inv H3. inv H8. eapply HeqSigU; eauto.
+  rewrite H12 in H18. inv H18. apply Ceq.
+  - inv H19. assumption.
+  - inv H22. assumption.
+  - eapply CeqTrans; eauto.
+}
+Qed.

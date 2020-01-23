@@ -204,7 +204,6 @@ with veq : vtype -> ctx -> val -> val -> Prop :=
   veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
-(* | VeqRefl A Γ v1 v2 : v1 = v2 -> veq' A Γ v1 v2 *)
 | VeqSym A Γ v1 v2 : 
     veq A Γ v1 v2 -> 
     veq' A Γ v2 v1
@@ -246,7 +245,6 @@ with ceq : ctype -> ctx -> comp -> comp -> Prop :=
     ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
-(* | CeqRefl C Γ c1 c2 : c1 = c2 -> ceq' C Γ c1 c2 *)
 | CeqSym C Γ c1 c2 : 
     ceq C Γ c1 c2 -> 
     ceq' C Γ c2 c1
@@ -275,7 +273,7 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 | CeqApp Γ v1 v1' v2 v2' A C:
     veq (TyFun A C) Γ v1 v1' ->
     veq A Γ v2 v2' ->
-    ceq' C Γ (App v1 v2) (App v1 v2)
+    ceq' C Γ (App v1 v2) (App v1' v2')
 | CeqHandle Γ v v' c c' C D:
     veq (TyHandler C D) Γ v v' ->
     ceq C Γ c c' ->
@@ -337,13 +335,6 @@ with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
     heq Σ D Γ h1 h2
     
 with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
-(* | HeqRefl Σ D Γ h1 h2 : h1 = h2 -> heq' Σ D Γ h1 h2 *)
-(* | HeqSym Σ D Γ h1 h2 : 
-    heq Σ D Γ h1 h2 -> 
-    heq' Σ D Γ h2 h1
-| HeqTrans Σ D Γ h1 h2 h3 : 
-    heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> 
-    heq' Σ D Γ h1 h3 *)
 | HeqSigØ D Γ h1 h2: 
     heq' SigØ D Γ h1 h2
 | HeqSigU Σ op A B D Γ h1 x1 k1 c1 h2 x2 k2 c2:
