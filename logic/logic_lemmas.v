@@ -173,46 +173,38 @@ intros vseq ctxs clen. destruct orig. destruct H2.
 Qed.
 
 
-
-
-(* =============== TODO =============== *)
 Fixpoint veq_subs_logicsafe
   Γ Γ' A v1 v2 i v_s v_s' A_s (orig: veq A Γ' v1 v2) {struct orig} :
-  has_vtype Γ v_s A_s -> has_vtype Γ v_s' A_s ->
-  Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
   veq A Γ (v_subs v1 v_s i) (v_subs v2 v_s' i)
 
 with ceq_subs_logicsafe
   Γ Γ' C c1 c2 i v_s v_s' A_s (orig: ceq C Γ' c1 c2) {struct orig} :
-  has_vtype Γ v_s A_s -> has_vtype Γ v_s' A_s -> 
-  Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  ceq C Γ (c_subs c1 v_s i) (c_subs c2 v_s i)
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  ceq C Γ (c_subs c1 v_s i) (c_subs c2 v_s' i)
 
 with heq_subs_logicsafe
   Γ Γ' Σ D h1 h2 i v_s v_s' A_s (orig: heq Σ D Γ' h1 h2) {struct orig} :
-  has_vtype Γ v_s A_s -> has_vtype Γ v_s' A_s -> 
-  Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  heq Σ D Γ (h_subs h1 v_s i) (h_subs h2 v_s i).
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  heq Σ D Γ (h_subs h1 v_s i) (h_subs h2 v_s' i).
 Proof.
-all: intros tys tys' ctxs clen.
-all: rename veq_subs_logicsafe into VEQ.
-all: rename ceq_subs_logicsafe into CEQ.
-all: rename heq_subs_logicsafe into HEQ.
+all: intros vseq ctxs clen.
 {
-destruct orig. apply Veq; auto. inv tys. auto.
-eapply v_subs_typesafe; eauto. eapply v_subs_typesafe; eauto.
-destruct H3.
-+ clear VEQ CEQ HEQ. 
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
-+ clear VEQ CEQ HEQ.
+assert (veq A Γ (v_subs v1 v_s i) (v_subs v1 v_s' i)).
+eapply veq_subs_logicsafe_weak; eauto. inv orig. eauto.
+eapply veq_trans; eauto. eapply veq_subs_typesafe; eauto. inv vseq. auto.
+}{
+assert (ceq C Γ (c_subs c1 v_s i) (c_subs c1 v_s' i)).
+eapply ceq_subs_logicsafe_weak; eauto. inv orig. eauto.
+eapply ceq_trans; eauto. eapply ceq_subs_typesafe; eauto. inv vseq. auto.
+}{
+inv orig.
+assert (heq Σ D Γ (h_subs h1 v_s i) (h_subs h1 v_s' i)).
+eapply heq_subtype. 3:exact H0. eapply heq_subs_logicsafe_weak. all: eauto.
+eapply heq_trans; eauto. eapply heq_subs_typesafe; eauto.
+eapply Heq. 2: exact H0. all:eauto. inv vseq. assumption.
 }
+Qed.
 
 
 (* h : C => D -> c1 ~C c2 -> with h handle c1 ~D with h handle c2 *)

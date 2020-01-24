@@ -525,19 +525,19 @@ inv orig. destruct H1.
   simpl. rewrite <-c_shift_comm, <-h_shift_comm.
   eapply rule. apply shift_find_Some. eauto. all: omega.
 }{
-intros wfins. inv orig. destruct H3. 
-+ specialize (HC _ _ _ _ H1) as IH1.
-  specialize (HC _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE HE. eapply Heq. exact H. exact H0.
-  auto. auto. apply HeqSigØ. 
-+ specialize (HC _ _ _ _ H1) as IH1.
-  specialize (HC _ _ _ _ H2) as IH2.
-  specialize (CE _ _ _ _ H5) as IHc.
-  specialize (HE _ _ _ _ _ H6) as IHh.
-  clear V CI HC R VE CE HE. eapply Heq. exact H. exact H0. 
-  eauto. eauto. eapply HeqSigU.
-  - eapply shift_find_Some in H3. eauto.
+intros wfins. inv orig. destruct H4. 
++ specialize (HC _ _ _ _ H2) as IH1.
+  specialize (HC _ _ _ _ H3) as IH2.
+  clear V CI HC R VE CE HE. eapply Heq. 
+  2: exact H0. all: eauto. apply HeqSigØ. 
++ specialize (HC _ _ _ _ H2) as IH1.
+  specialize (HC _ _ _ _ H3) as IH2.
+  specialize (CE _ _ _ _ H6) as IHc.
+  specialize (HE _ _ _ _ _ H7) as IHh.
+  clear V CI HC R VE CE HE. eapply Heq.
+  2: exact H0. all: eauto. eapply HeqSigU.
   - eapply shift_find_Some in H4. eauto.
+  - eapply shift_find_Some in H5. eauto.
   - rewrite ctx_insert_extend, ctx_insert_extend. eauto.
   - eauto.
 }
@@ -877,22 +877,22 @@ inv orig. destruct H1.
   simpl in rule. eapply rule. apply sub_find_Some. eauto. all: omega.
 }{
 intros gets vtys.
-inv orig. destruct H3.
-+ specialize (HC _ _ _ _ H1) as IH1.
-  specialize (HC _ _ _ _ H2) as IH2.
-  clear V CI HC R VE CE HE. eapply Heq. exact H. exact H0.
-  eauto. eauto. apply HeqSigØ. 
-+ specialize (HC _ _ _ _ H1) as IH1.
-  specialize (HC _ _ _ _ H2) as IH2.
-  specialize (CE _ _ _ _ H5) as IHc.
-  specialize (HE _ _ _ _ _ H6) as IHh.
-  clear V CI HC R VE CE HE. eapply Heq. exact H. exact H0. 
-  eauto. eauto. eapply HeqSigU.
-  - eapply sub_find_Some in H3. eauto.
+inv orig. destruct H4.
++ specialize (HC _ _ _ _ H2) as IH1.
+  specialize (HC _ _ _ _ H3) as IH2.
+  clear V CI HC R VE CE HE. eapply Heq. 
+  2: exact H0. all: eauto. apply HeqSigØ. 
++ specialize (HC _ _ _ _ H2) as IH1.
+  specialize (HC _ _ _ _ H3) as IH2.
+  specialize (CE _ _ _ _ H6) as IHc.
+  specialize (HE _ _ _ _ _ H7) as IHh.
+  clear V CI HC R VE CE HE. eapply Heq.
+  2: exact H0. all: eauto. eapply HeqSigU.
   - eapply sub_find_Some in H4. eauto.
+  - eapply sub_find_Some in H5. eauto.
   - eapply IHc. simpl. eauto. rewrite <-(v_shift_shift 1 1). 
     apply v_shift_typesafe. apply v_shift_typesafe; auto.
-    all: inv H5; inv H7; inv H5. inv H13. assumption. assumption.
+    all: inv H6; inv H8; inv H6. inv H14. assumption. assumption.
   - eauto.
 }
 Qed.
@@ -1345,21 +1345,21 @@ destruct orig. destruct H1.
   apply sub_find_Some. eauto. all: omega.
 }{
 intros tyvs geq len.
-destruct orig. destruct H3.
-+ specialize (HC _ _ h1 _ _ i _ _ H1 tyvs geq) as IHh1.
-  specialize (HC _ _ h2 _ _ i _ _ H2 tyvs geq) as IHh2.
-  clear V CI HC R VE CE HE. eapply Heq. exact H. exact H0.
-  all: eauto. eapply HeqSigØ.
-+ assert (wf_vtype A) as wfa by (inv H5; inv H7; inv H5; auto).
-  assert (wf_vtype(TyFun B D)) as wff by (inv H5;inv H7;inv H5;inv H13;auto).
-  specialize (HC _ _ h1 _ _ i _ _ H1 tyvs geq) as IHh1.
-  specialize (HC _ _ h2 _ _ i _ _ H2 tyvs geq) as IHh2.
+destruct orig. destruct H4.
++ specialize (HC _ _ h1 _ _ i _ _ H2 tyvs geq) as IHh1.
+  specialize (HC _ _ h2 _ _ i _ _ H3 tyvs geq) as IHh2.
+  clear V CI HC R VE CE HE. eapply Heq. 
+  2: exact H0. all: eauto. eapply HeqSigØ.
++ assert (wf_vtype A) as wfa by (inv H6; inv H8; inv H6; auto).
+  assert (wf_vtype(TyFun B D)) as wff by (inv H6;inv H8;inv H6;inv H14;auto).
+  specialize (HC _ _ h1 _ _ i _ _ H2 tyvs geq) as IHh1.
+  specialize (HC _ _ h2 _ _ i _ _ H3 tyvs geq) as IHh2.
   specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs wff) as tyvs'.
   specialize (v_shift_typesafe _ _ A _ tyvs' wfa) as tyvs''.
-  specialize (CE _ _ _ _ _ (2+i) _ _ H5 tyvs'') as IH1.
-  specialize (HE _ _ _ _ _ _ i _ _ H6 tyvs) as IH2.
-  clear V CI HC R VE CE HE. eapply Heq. exact H. exact H0. all: eauto.
-  eapply HeqSigU.
+  specialize (CE _ _ _ _ _ (2+i) _ _ H6 tyvs'') as IH1.
+  specialize (HE _ _ _ _ _ _ i _ _ H7 tyvs) as IH2.
+  clear V CI HC R VE CE HE. eapply Heq.
+  2: exact H0. all: eauto. eapply HeqSigU.
   - unfold h_subs. eapply negshift_find_Some. eapply sub_find_Some. eauto.
   - unfold h_subs. eapply negshift_find_Some. eapply sub_find_Some. eauto.
   - rewrite v_shift_comm, <-(v_shift_shift 1 1). apply IH1.

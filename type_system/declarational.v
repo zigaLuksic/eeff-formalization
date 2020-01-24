@@ -330,7 +330,7 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 
 with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | Heq Σ Σ1 Σ2 D Γ h1 h2 : 
-    sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
+    wf_sig Σ -> sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
     has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D -> heq' Σ D Γ h1 h2 -> 
     heq Σ D Γ h1 h2
     

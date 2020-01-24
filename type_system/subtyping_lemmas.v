@@ -479,12 +479,12 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
 + eapply βHandle_Op. eauto.
 }{
 intros wf ctxsty.
-inv equals. destruct H3.
+inv equals. destruct H4.
 all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_veq.
-+ eapply Heq. exact H. exact H0. all: eauto. eapply HeqSigØ.
++ eapply Heq. auto. exact H0. exact H1. all: eauto. eapply HeqSigØ.
 + eapply Heq. exact H. exact H0. all: eauto.
   eapply HeqSigU; eauto.
-  eapply ctx_subtype_ceq; eauto; inv H5; inv H7; inv H5; inv H13.
+  eapply ctx_subtype_ceq; eauto; inv H6; inv H8; inv H6; inv H14.
   - apply WfCtxU. apply WfCtxU. all: assumption.
   - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
     all: apply vsubtype_refl; assumption.

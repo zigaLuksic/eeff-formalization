@@ -17,9 +17,9 @@ Proof.
 intros eqs gets finds1 finds2.
 induction Σ. simpl in gets. discriminate.
 simpl in *. destruct (op==o).
-+ inv gets. inv eqs. inv H3. 
-  rewrite H8 in finds1. rewrite H13 in finds2. inv finds1. inv finds2. auto.
-+ inv eqs. inv H3. eauto.
++ inv gets. inv eqs. inv H4. 
+  rewrite H9 in finds1. rewrite H14 in finds2. inv finds1. inv finds2. auto.
++ inv eqs. inv H4. eauto.
 Qed.
 
 
@@ -27,29 +27,29 @@ Lemma heq_subtype Σ Σ' D Γ h1 h2 (orig : heq Σ D Γ h1 h2) :
   wf_sig Σ' -> sig_subtype Σ' Σ -> heq Σ' D Γ h1 h2.
 Proof.
 intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
-+ inv orig. eapply Heq. 3: exact H1. 3: exact H2.
++ inv orig. eapply Heq. auto. 3: exact H2. 3: exact H3.
   apply SubtypeSigØ. apply SubtypeSigØ. apply HeqSigØ.
-+ inv orig. eapply Heq. 3: exact H1. 3: exact H2.
++ inv orig. eapply Heq. auto. 3: exact H2. 3: exact H3.
   { eapply sig_subtype_trans; eauto. }
   { eapply sig_subtype_trans; eauto. }
   inv sty. inv wf.
-  eapply sig_subtype_get_Some in H as g1; eauto.
-  eapply sig_subtype_get_Some in H0 as g2; eauto.
+  eapply sig_subtype_get_Some in H0 as g1; eauto.
+  eapply sig_subtype_get_Some in H1 as g2; eauto.
   destruct g1 as [A1[B1[get1[_ _]]]].
   destruct g2 as [A2[B2[get2[_ _]]]].
-  eapply h_has_case in H1 as case1; eauto.
-  eapply h_has_case in H2 as case2; eauto.
+  eapply h_has_case in H2 as case1; eauto.
+  eapply h_has_case in H3 as case2; eauto.
   destruct case1 as [x1[k1[c1 find1]]].
   destruct case2 as [x2[k2[c2 find2]]].
   clear A1 B1 get1 A2 B2 get2.
   eapply HeqSigU; eauto.
   assert (ceq D (CtxU (CtxU Γ (TyFun B'0 D)) A'0) c1 c2).
   - eapply heq_cases_ceq. 2: eauto.
-    eapply Heq. exact H. exact H0. all: eauto.
+    eapply Heq. 2: exact H0. all: eauto.
   - eapply ctx_subtype_ceq; eauto.
-    inv H1. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
+    inv H2. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
     apply SubtypeCtxU. apply SubtypeCtxU. 2: apply SubtypeTyFun. all: auto.
-    all: inv H1. apply ctx_subtype_refl. auto. apply csubtype_refl. auto.
+    all: inv H2. apply ctx_subtype_refl. auto. apply csubtype_refl. auto.
 Qed.
 
 
@@ -143,34 +143,35 @@ assert (wf_vtype A2) as wfa2 by (inv tys2; inv H; auto).
 assert (wf_vtype B1) as wfb1 by (inv tys1; inv H; inv H4; inv H6; auto).
 assert (wf_vtype B2) as wfb2 by (inv tys2; inv H; inv H4; inv H6; auto).
 assert (wf_ctype D) as wfd by (inv tys1; auto).
-assert (wf_ctx Γ) as wfctx by (inv orig; inv H1; auto).
+assert (wf_ctx Γ) as wfctx by (inv orig; inv H2; auto).
 destruct orig.
 assert (get_op_type Σ1 op = None) as getn1.
 { destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H1; eauto. destruct H1 as [x[k[c f]]].
+  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
   rewrite f in f1. discriminate. }
 assert (get_op_type Σ2 op = None) as getn2.
 { destruct (get_op_type Σ2 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
+  eapply h_has_case in H3; eauto. destruct H3 as [x[k[c f]]].
   rewrite f in f2. discriminate. }
 assert (sig_subtype Σ (SigU Σ1 op A1 B1)) as ss1.
-{ apply sig_subtype_extend. auto. apply WfSigU; auto. inv H1. assumption. }
-assert (sig_subtype Σ (SigU Σ2 op A2 B2)) as ss2.
 { apply sig_subtype_extend. auto. apply WfSigU; auto. inv H2. assumption. }
+assert (sig_subtype Σ (SigU Σ2 op A2 B2)) as ss2.
+{ apply sig_subtype_extend. auto. apply WfSigU; auto. inv H3. assumption. }
 induction Σ as [ | Σ IH o A B].
-+ eapply Heq. exact ss1. exact ss2.
-  - apply TypeH. 2:apply WfSigU. 2:inv H1. 7:apply TypeCasesU. all: auto.
++ eapply Heq. auto. exact ss1. exact ss2.
   - apply TypeH. 2:apply WfSigU. 2:inv H2. 7:apply TypeCasesU. all: auto.
+  - apply TypeH. 2:apply WfSigU. 2:inv H3. 7:apply TypeCasesU. all: auto.
   - apply HeqSigØ.
-+ eapply Heq. exact ss1. exact ss2.
-  - apply TypeH. 2:apply WfSigU. 2:inv H1. 7:apply TypeCasesU. all: auto.
++ eapply Heq. auto. exact ss1. exact ss2.
   - apply TypeH. 2:apply WfSigU. 2:inv H2. 7:apply TypeCasesU. all: auto.
-  - inv H3. eapply HeqSigU.
-    * simpl. destruct (o==op). rewrite e, f1 in H8. discriminate. eauto.
-    * simpl. destruct (o==op). rewrite e, f2 in H13. discriminate. eauto.
+  - apply TypeH. 2:apply WfSigU. 2:inv H3. 7:apply TypeCasesU. all: auto.
+  - inv H4. eapply HeqSigU.
+    * simpl. destruct (o==op). rewrite e, f1 in H9. discriminate. eauto.
+    * simpl. destruct (o==op). rewrite e, f2 in H14. discriminate. eauto.
     * assumption.
-    * inv H. inv H0. inv H1. inv H2. inv H15.
-      apply IH; auto; apply sig_subtype_extend; auto; apply WfSigU; auto.
+    * inv H. inv H0. inv H1. inv H16.
+      apply IH; auto; apply sig_subtype_extend; auto.
+      all: inv H2; inv H3; apply WfSigU; auto.
 Qed.
 
 
@@ -185,33 +186,36 @@ intros orig f1 f2 tys1 tys2 ceq12.
 assert (wf_vtype A) as wfa by (inv tys1; inv H; auto).
 assert (wf_vtype B) as wfb by (inv tys1; inv H; inv H4; inv H6; auto).
 assert (wf_ctype D) as wfd by (inv tys1; auto).
-assert (wf_ctx Γ) as wfctx by (inv orig; inv H1; auto).
+assert (wf_ctx Γ) as wfctx by (inv orig; inv H2; auto).
 destruct orig.
 assert (get_op_type Σ1 op = None) as getn1.
 { destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H1; eauto. destruct H1 as [x[k[c f]]].
+  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
   rewrite f in f1. discriminate. }
 assert (get_op_type Σ2 op = None) as getn2.
 { destruct (get_op_type Σ2 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
+  eapply h_has_case in H3; eauto. destruct H3 as [x[k[c f]]].
   rewrite f in f2. discriminate. }
 assert (sig_subtype (SigU Σ op A B) (SigU Σ1 op A B)) as ss1.
 { eapply SubtypeSigU. apply sig_subtype_extend. auto. apply WfSigU; auto. 
-  inv H1. auto. simpl. destruct (op==op). reflexivity. destruct n. auto.
+  inv H2. auto. simpl. destruct (op==op). reflexivity. destruct n. auto.
   all: apply vsubtype_refl; auto. }
 assert (sig_subtype (SigU Σ op A B) (SigU Σ2 op A B)) as ss2.
 { eapply SubtypeSigU. apply sig_subtype_extend. auto. apply WfSigU; auto. 
-  inv H2. auto. simpl. destruct (op==op). reflexivity. destruct n. auto.
+  inv H3. auto. simpl. destruct (op==op). reflexivity. destruct n. auto.
   all: apply vsubtype_refl; auto. }
-eapply Heq. exact ss1. exact ss2.
-- apply TypeH. 2:apply WfSigU. 2:inv H1. 7:apply TypeCasesU. all: auto.
+assert (get_op_type Σ op = None) as sgetnone.
+{ destruct (get_op_type Σ op) eqn: gs; auto. destruct p.
+  eapply sig_subtype_get_Some in H0; eauto. destruct H0 as [a[b[g]]]. 
+  rewrite g in getn1. discriminate. }
+eapply Heq. apply WfSigU; auto. exact ss1. exact ss2.
 - apply TypeH. 2:apply WfSigU. 2:inv H2. 7:apply TypeCasesU. all: auto.
+- apply TypeH. 2:apply WfSigU. 2:inv H3. 7:apply TypeCasesU. all: auto.
 - eapply HeqSigU.
   * simpl. destruct (op==op). reflexivity. destruct n. auto.
   * simpl. destruct (op==op). reflexivity. destruct n. auto.
   * assumption.
-  * eapply heq_case_extend_trivial; eauto. eapply Heq.
-    exact H. exact H0. all: auto.
+  * eapply heq_case_extend_trivial; eauto. eapply Heq. 2:exact H0. all: eauto.
 Qed.
 
 
@@ -244,7 +248,7 @@ apply Ceq; auto. all: destruct orig; auto. destruct H1.
 + eapply CeqOp; eauto.
 + apply ceq_refl in H1. eapply ceq_subtype in H1; eauto. inv H1. assumption.
 }{
-eapply Heq.
+eapply Heq. inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
 assumption. assumption.
@@ -271,9 +275,9 @@ intro orig. apply Veq. all: try (inv orig; assumption). apply VeqSym. auto.
 }{
 intro orig. apply Ceq. all: try (inv orig; assumption). apply CeqSym. auto.
 }{
-intro orig. destruct orig. induction H3.
-+ eapply Heq. exact H. exact H0. all: eauto. apply HeqSigØ.
-+ eapply Heq. exact H. exact H0. all: eauto.
+intro orig. destruct orig. induction H4.
++ eapply Heq. 2: exact H0. all: eauto. apply HeqSigØ.
++ eapply Heq. 2: exact H0. all: eauto.
   eapply HeqSigU; eauto.
 }
 Qed.
@@ -294,12 +298,12 @@ intros ceq1 ceq2. apply Ceq. inv ceq1. auto. inv ceq2. auto.
 eapply CeqTrans; eauto.
 }{
 intros heq1 heq2. induction Σ. 
-+ inv heq1. inv heq2. eapply Heq. exact H. exact H5. all: eauto. apply HeqSigØ.
-+ inv heq1. inv heq2. eapply Heq. exact H. exact H5. all: eauto.
-  inv H3. inv H8. eapply HeqSigU; eauto.
-  rewrite H12 in H18. inv H18. apply Ceq.
-  - inv H19. assumption.
-  - inv H22. assumption.
++ inv heq1. inv heq2. eapply Heq. 2: exact H0. all: eauto. apply HeqSigØ.
++ inv heq1. inv heq2. eapply Heq. 2: exact H0. all: eauto.
+  inv H4. inv H10. eapply HeqSigU; eauto.
+  rewrite H14 in H20. inv H20. apply Ceq.
+  - inv H21. assumption.
+  - inv H24. assumption.
   - eapply CeqTrans; eauto.
 }
 Qed.
