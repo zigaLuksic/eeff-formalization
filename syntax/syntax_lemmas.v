@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 Require Import Le Compare_dec.
 
@@ -207,12 +207,15 @@ all: intros orig cmp.
 induction v; simpl in orig; simpl; auto.
 + destruct v. omega.
 + destruct orig. auto.
++ destruct orig. auto.
 + eapply c_under_var_weaken. eauto. omega.
 + destruct orig. constructor. 2: eauto.
   eapply c_under_var_weaken. eauto. omega.
 }{
 induction c; simpl in orig; simpl; eauto.
-all: destruct orig; constructor; eauto. 2: (destruct H0; constructor).
+all: destruct orig; constructor; eauto. 
+2: (destruct H0; constructor).
+4: (destruct H0; constructor).
 all: try (eapply c_under_var_weaken; eauto; omega).
 }{
 induction h; simpl in orig; simpl; eauto.
@@ -231,7 +234,8 @@ Proof.
 {
 induction v; intros under cmp; simpl; auto; simpl in under.
 + destruct v. omega.
-+ inv under. constructor; auto.
++ inv under. auto.
++ inv under. auto.
 + eapply c_under_var_no_var. eauto. omega.
 + inv under. constructor. eapply c_under_var_no_var. eauto.     
   omega. eapply h_under_var_no_var. eauto. omega.
@@ -240,7 +244,7 @@ induction c; intros under cmp; simpl; auto.
 all: simpl in under; try inv under; try constructor.
 all: try eapply v_under_var_no_var; eauto.
 all: try eapply c_under_var_no_var; eauto; try omega.
-all: destruct H0. constructor; eapply c_under_var_no_var; eauto; omega.
+all: destruct H0; constructor; eapply c_under_var_no_var; eauto; omega.
 }{
 induction h; intros under cmp; simpl; auto.
 inv under. constructor. auto. eapply c_under_var_no_var; eauto; omega.

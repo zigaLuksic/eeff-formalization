@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Require Export syntax substitution.
 
 Inductive step : comp -> comp -> Prop :=
@@ -9,14 +9,22 @@ Inductive step : comp -> comp -> Prop :=
     step 
       (ΠMatch (Pair v1 v2) x y c)
       (c_subs2_out c v1 v2)
-| Step_ΣMatch_Inl v xl cl xr cr:
+| Step_ΣMatch_Inl v x c1 y c2:
     step 
-      (ΣMatch (Inl v) xl cl xr cr)
-      (c_subs_out cl v)
-| Step_ΣMatch_Inr v xl cl xr cr:
+      (ΣMatch (Inl v) x c1 y c2)
+      (c_subs_out c1 v)
+| Step_ΣMatch_Inr v x c1 y c2:
     step 
-      (ΣMatch (Inr v) xl cl xr cr)
-      (c_subs_out cr v)
+      (ΣMatch (Inr v) x c1 y c2)
+      (c_subs_out c2 v)
+| Step_ListMatch_Nil c1 x xs c2:
+    step 
+      (ListMatch ListNil c1 x xs c2)
+      c1
+| Step_ListMatch_Cons v vs c1 x xs c2:
+    step 
+      (ListMatch (ListCons v vs) c1 x xs c2)
+      (c_subs2_out c2 v vs)
 | Step_App x c v:
     step (App (Fun x c) v) (c_subs_out c v)
 | Step_LetRec f x c1 c2:

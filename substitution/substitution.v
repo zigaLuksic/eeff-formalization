@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 Require Import Le.
 
@@ -16,6 +16,9 @@ Fixpoint v_shift v d cut :=
   | Inr v' => Inr (v_shift v' d cut)
   | Pair v1 v2 =>
       Pair (v_shift v1 d cut) (v_shift v2 d cut)
+  | ListNil => ListNil
+  | ListCons v vs => 
+      ListCons (v_shift v d cut) (v_shift vs d cut)
   | Fun x c =>
       Fun x (c_shift c d (1+cut))
   | Handler x c_ret h =>
@@ -27,9 +30,12 @@ with c_shift c d cut :=
   | Absurd v => Absurd (v_shift v d cut)
   | ΠMatch v x y c => 
       ΠMatch (v_shift v d cut) x y (c_shift c d (2+cut))
-  | ΣMatch v xl cl xr cr =>
+  | ΣMatch v x c1 y c2 =>
       ΣMatch (v_shift v d cut) 
-        xl (c_shift cl d (1+cut)) xr (c_shift cr d (1+cut))
+        x (c_shift c1 d (1+cut)) y (c_shift c2 d (1+cut))
+  | ListMatch v c1 x xs c2 =>
+      ListMatch (v_shift v d cut)
+        (c_shift c1 d cut) x xs (c_shift c2 d (2+cut))
   | App v1 v2 => 
       App (v_shift v1 d cut) (v_shift v2 d cut)
   | Op op v_arg y c => 
@@ -63,6 +69,9 @@ Fixpoint v_negshift v d cut :=
   | Inr v' => Inr (v_negshift v' d cut)
   | Pair v1 v2 => 
       Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
+  | ListNil => ListNil
+  | ListCons v vs => 
+      ListCons (v_negshift v d cut) (v_negshift vs d cut)
   | Fun x c => 
       Fun x (c_negshift c d (1+cut))
   | Handler x c_ret h =>
@@ -74,9 +83,12 @@ with c_negshift c d cut :=
   | Absurd v => Absurd (v_negshift v d cut)
   | ΠMatch v x y c => 
       ΠMatch (v_negshift v d cut) x y (c_negshift c d (2+cut))
-  | ΣMatch v xl cl xr cr =>
+  | ΣMatch v x c1 y c2 =>
       ΣMatch (v_negshift v d cut)
-        xl (c_negshift cl d (1+cut)) xr (c_negshift cr d (1+cut))
+        x (c_negshift c1 d (1+cut)) y (c_negshift c2 d (1+cut))
+  | ListMatch v c1 x xs c2 =>
+      ListMatch (v_negshift v d cut)
+        (c_negshift c1 d cut) x xs (c_negshift c2 d (2+cut))
   | App v1 v2 => 
       App (v_negshift v1 d cut) (v_negshift v2 d cut)
   | Op op v_arg y c => 
@@ -106,6 +118,9 @@ let (db_i, v_s) := sub in
   | Inr v' => Inr (v_sub v' sub)
   | Pair v1 v2 => 
       Pair (v_sub v1 sub) (v_sub v2 sub)
+  | ListNil => ListNil
+  | ListCons v vs => 
+      ListCons (v_sub v sub) (v_sub vs sub)
   | Fun x c => 
       Fun x (c_sub c (sub_shift sub 1))
   | Handler x c_ret h =>
@@ -120,6 +135,9 @@ with c_sub c (sub : nat * val) :=
   | ΣMatch v xl cl xr cr =>
       ΣMatch (v_sub v sub)
         xl (c_sub cl (sub_shift sub 1)) xr (c_sub cr (sub_shift sub 1))
+  | ListMatch v c1 x xs c2 =>
+      ListMatch (v_sub v sub)
+        (c_sub c1 sub) x xs (c_sub c2 (sub_shift sub 2))
   | App v1 v2 => 
       App (v_sub v1 sub) (v_sub v2 sub)
   | Op op v_arg y c => 

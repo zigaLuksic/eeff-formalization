@@ -1,13 +1,13 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 
 Require Export syntax_lemmas substitution_lemmas type_lemmas.
 
@@ -22,6 +22,8 @@ all: assumption || (inv tys; assumption) || auto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.
++ eapply βListMatch_Nil.
++ eapply βListMatch_Cons.
 + eapply βApp.
 + eapply βLetRec.
 + destruct C as [A Σ E]. eapply shape_dobind_full in tys.
@@ -86,6 +88,8 @@ destruct orig. destruct H1.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqPair; eapply VEQ; eauto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqInl. eapply VEQ; eauto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqInr. eapply VEQ; eauto.
++ clear CEQ HEQ. unfold v_subs. simpl. apply VeqListNil.
++ clear CEQ HEQ. unfold v_subs. simpl. apply VeqListCons; eapply VEQ; eauto.
 + clear VEQ HEQ. unfold v_subs. unfold c_subs in CEQ. simpl. 
   apply VeqFun. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). 
   eapply CEQ; eauto. apply veq_shift_typesafe; eauto.
@@ -122,6 +126,14 @@ destruct orig. destruct H1.
   inv H1. inv H5. assumption. subst. apply ctx_insert_extend. simpl.
   all: try omega. eapply CEQ; eauto. apply veq_shift_typesafe; eauto.
   inv H1. inv H5. assumption. subst. apply ctx_insert_extend. simpl. omega.
++ clear HEQ. unfold c_subs in *. unfold v_subs in VEQ. simpl.
+  eapply CeqListMatch; eauto.
+  rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
+  rewrite <-(v_shift_shift 1 1), <-(v_shift_shift 1 1).
+  apply veq_shift_typesafe. apply veq_shift_typesafe. eauto.
+  inv H1. inv H5. assumption. inv H1. assumption.
+  subst. rewrite ctx_insert_extend, ctx_insert_extend. reflexivity.
+  simpl. all: omega.
 + clear HEQ VEQ. unfold c_subs in *. simpl.
   eapply CeqDoBind. eauto. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
   eapply CEQ; eauto. apply veq_shift_typesafe; eauto.

@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export declarational wf_lemmas.
 
@@ -80,6 +80,7 @@ Proof.
 + apply SubtypeTyØ.
 + apply SubtypeTyΣ; auto.
 + apply SubtypeTyΠ; auto.
++ apply SubtypeTyList; auto.
 + apply SubtypeTyFun; auto.
 + apply SubtypeTyHandler; auto. }
 {
@@ -142,6 +143,7 @@ clear sig_subtype_trans sig_subtype_trans_rev get_op_trans.
 intros A23; destruct A12; try assumption; inv A23. 
 + apply SubtypeTyΣ; eauto.
 + apply SubtypeTyΠ; eauto.
++ apply SubtypeTyList; eauto.
 + apply SubtypeTyFun.
   - eapply vsubtype_trans_rev; eauto. 
   - eapply csubtype_trans; eauto.
@@ -153,6 +155,7 @@ clear sig_subtype_trans sig_subtype_trans_rev get_op_trans.
 intros A32; destruct A21; try assumption; inv A32. 
 + apply SubtypeTyΣ; eapply vsubtype_trans_rev; eauto.
 + apply SubtypeTyΠ; eapply vsubtype_trans_rev; eauto.
++ apply SubtypeTyList; eapply vsubtype_trans_rev; eauto.
 + apply SubtypeTyFun.
   - eapply vsubtype_trans; eauto.
   - eapply csubtype_trans_rev; eauto.
@@ -337,6 +340,8 @@ destruct types. induction H1; apply TypeV; try assumption.
 + apply TypePair; apply (ctx_subtype_vtype Γ Γ'); assumption.
 + apply TypeInl. apply (ctx_subtype_vtype Γ Γ'); assumption.
 + apply TypeInr. apply (ctx_subtype_vtype Γ Γ'); assumption.
++ apply TypeListNil.
++ apply TypeListCons; apply (ctx_subtype_vtype Γ Γ'); assumption.
 + apply TypeFun. eapply ctx_subtype_ctype; inv H0. eauto.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
@@ -366,6 +371,11 @@ destruct types. induction H1; apply TypeC; try assumption.
   - eapply ctx_subtype_ctype. exact H3. all: inv H3; inv H4. 
     * apply WfCtxU; assumption.
     * apply SubtypeCtxU. exact ctxsty. apply vsubtype_refl. assumption.
++ eapply TypeListMatch; eauto.
+  eapply ctx_subtype_ctype. eauto. all: inv H3; inv H4; inv H8.
+  * apply WfCtxU. apply WfCtxU. all: auto.
+  * apply SubtypeCtxU. apply SubtypeCtxU. auto.
+    all: apply vsubtype_refl; auto. 
 + eapply TypeDoBind.
   - eapply ctx_subtype_ctype; eauto.
   - inv H1. inv H4. eapply ctx_subtype_ctype. eauto.
@@ -423,6 +433,8 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 + eapply VeqPair; eauto.
 + eapply VeqInl; eauto.
 + eapply VeqInr; eauto.
++ eapply VeqListNil.
++ eapply VeqListCons; eauto.
 + eapply VeqFun. eapply ctx_subtype_ceq. eauto. all: inv H; inv H3.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
@@ -450,6 +462,11 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
++ eapply CeqListMatch; eauto. 
+  eapply ctx_subtype_ceq; eauto; inv H1; inv H4.
+  - apply WfCtxU. apply WfCtxU. all: try assumption. inv H7. assumption.
+  - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
+    all: apply vsubtype_refl. inv H7. all: assumption.
 + eapply CeqDoBind; eauto. eapply ctx_subtype_ceq; eauto.
   all: inv H1; inv H3; inv H6.
   - apply WfCtxU; assumption.
@@ -471,6 +488,8 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.
++ eapply βListMatch_Nil.
++ eapply βListMatch_Cons.
 + eapply βApp.
 + eapply βLetRec.
 + eapply βDoBind_Ret.
@@ -529,6 +548,18 @@ Proof.
 intro orig. inv orig. exists A0. exists C0. auto.
 Qed.
 
+Lemma subtype_shape_list A B : vsubtype B (TyList A) -> 
+  exists A', B = (TyList A') /\ vsubtype A' A.
+Proof.
+intro orig. inv orig. exists A0. auto.
+Qed.
+
+Lemma subtype_shape_list_rev A B : vsubtype (TyList A) B -> 
+  exists A', B = (TyList A') /\ vsubtype A A'.
+Proof.
+intro orig. inv orig. exists A'. auto.
+Qed.
+
 Lemma subtype_shape_fun_rev A B C : vsubtype (TyFun A B) C -> 
   exists A' B', C = (TyFun A' B') /\ vsubtype A' A /\ csubtype B B'.
 Proof.
@@ -579,6 +610,10 @@ intros orig. revert Γ'. induction orig; intros Γ' sty cty wfs wfc.
   apply IHorig1; auto. 3: apply IHorig2; auto.
   1: apply SubtypeCtxU. 4: apply SubtypeCtxU. 3: apply WfCtxU. 7: apply WfCtxU.
   all: assumption || apply vsubtype_refl; auto.
++ eapply WfTListMatch. eapply ctx_subtype_vtype; eauto. all: inv H.
+  apply IHorig1; auto. apply IHorig2; auto.
+  apply SubtypeCtxU. apply SubtypeCtxU. 4: apply WfCtxU. 4: apply WfCtxU.
+  all: try apply vsubtype_refl; auto || inv H1; auto.
 + eapply sig_subtype_get_Some in H. 2: exact sty.
   destruct H as [A'[B'[gets'[Asty]]]].
   eapply WfTOp. eauto.
@@ -789,6 +824,53 @@ intro orig. apply (shape_sum_full _ _ A B) in orig as shape. 2: reflexivity.
 destruct shape.
 + destruct H as [x [n]]. discriminate.
 + destruct H; destruct H; destruct H; inv H. auto.
+Qed.
+
+
+(* List *)
+Fixpoint shape_list_full Γ v A ty (orig : has_vtype Γ v ty) {struct orig} :
+  ty = TyList A ->
+  (exists x n, v = Var (x, n)) \/ (v = ListNil) \/
+  (exists w ws, v = 
+    ListCons w ws /\ has_vtype Γ w A /\ has_vtype Γ ws (TyList A)).
+Proof.
+intros same.
+destruct orig. destruct H1; try discriminate.
++ left. eauto.
++ right. left. inv same. eauto.
++ right. right. inv same. eauto.
++ rewrite same in H2. apply subtype_shape_list in H2.
+  destruct H2 as [A'' [sigty]]. subst. 
+  apply (shape_list_full _ _ A'') in H1. clear shape_list_full.
+  2: reflexivity. destruct H1. auto. right. destruct H1. auto.
+  destruct H1 as [w[ws[shape[tys1 tys2]]]].
+  right. exists w, ws. aconstructor. constructor.
+  all: apply TypeV; try assumption. inv H0. auto.
+  all: eapply TypeVSubtype; eauto. apply SubtypeTyList. auto.
+Qed.
+
+
+Fixpoint shape_list_cons_full Γ v A w ws (orig : has_vtype Γ v A) {struct orig} :
+  v = ListCons w ws ->
+  (exists A', A = TyList A' /\ has_vtype Γ w A' /\ has_vtype Γ ws (TyList A')).
+Proof.
+intros same. destruct orig. destruct H1; try discriminate.
++ inv same. eauto.
++ inv same. eapply shape_list_cons_full in H1. 2: reflexivity.
+  destruct H1 as [A''[same[tys1 tys2]]]. subst. 
+  apply subtype_shape_list_rev in H2. destruct H2 as [A'''[tyl]]. subst.
+  exists A'''. aconstructor. constructor.
+  all: apply TypeV; auto. inv H0. auto. 
+  all: eapply TypeVSubtype; eauto. apply SubtypeTyList. auto.
+Qed.
+
+
+Lemma shape_list_cons Γ v vs A :
+  has_vtype Γ (ListCons v vs) (TyList A) -> 
+  has_vtype Γ v A /\ has_vtype Γ vs (TyList A).
+Proof.
+intro orig. eapply (shape_list_cons_full) in orig as shape. 2: reflexivity.
+destruct shape as [A'[same[tys1 tys2]]]. inv same. auto.
 Qed.
 
 
@@ -1007,15 +1089,15 @@ Qed.
 
 
 (* ΣMatch *)
-Fixpoint shape_summatch_full Γ c v xl cl xr cr C
+Fixpoint shape_summatch_full Γ c v x c1 y c2 C
   (orig : has_ctype Γ c C) {struct orig} :
-  c = (ΣMatch v xl cl xr cr) ->
+  c = (ΣMatch v x c1 y c2) ->
   (exists A B, has_vtype Γ v (TyΣ A B) /\
-    has_ctype (CtxU Γ A) cl C /\ has_ctype (CtxU Γ B) cr C).
+    has_ctype (CtxU Γ A) c1 C /\ has_ctype (CtxU Γ B) c2 C).
 Proof.  
 intros same. destruct orig. destruct H1; try discriminate.
 + clear shape_summatch_full. inv same. exists A. exists B. auto.
-+ apply (shape_summatch_full _ _ v xl cl xr cr) in H1;
++ apply (shape_summatch_full _ _ v x c1 y c2) in H1;
   clear shape_summatch_full. 2: assumption.
   destruct H1 as [A' [B' [vty]]].
   exists A'. exists B'. aconstructor.
@@ -1024,14 +1106,39 @@ intros same. destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Fixpoint shape_summatch Γ v xl cl xr cr C :
-  has_ctype Γ (ΣMatch v xl cl xr cr) C ->
+Fixpoint shape_summatch Γ v x c1 y c2 C :
+  has_ctype Γ (ΣMatch v x c1 y c2) C ->
   (exists A B, has_vtype Γ v (TyΣ A B) /\
-    has_ctype (CtxU Γ A) cl C /\ has_ctype (CtxU Γ B) cr C).
+    has_ctype (CtxU Γ A) c1 C /\ has_ctype (CtxU Γ B) c2 C).
 Proof.
-intro orig. apply (shape_summatch_full _ _ v xl cl xr cr) in orig; auto.
+intro orig. apply (shape_summatch_full _ _ v x c1 y c2) in orig; auto.
 Qed.
 
+
+(* ListMatch *)
+Fixpoint shape_listmatch_full Γ c v c1 x xs c2 C
+  (orig : has_ctype Γ c C) {struct orig} :
+  c = (ListMatch v c1 x xs c2) ->
+  (exists A, has_vtype Γ v (TyList A) /\
+    has_ctype Γ c1 C /\ has_ctype (CtxU (CtxU Γ A) (TyList A)) c2 C).
+Proof.
+intros same. destruct orig. destruct H1; try discriminate.
++ clear shape_listmatch_full. inv same. exists A. auto.
++ apply (shape_listmatch_full _ _ v c1 x xs c2) in H1;
+  clear shape_listmatch_full. 2: assumption.
+  destruct H1 as [A' [vty[ty1 ty2]]].
+  exists A'. aconstructor. constructor; apply TypeC; auto.
+  all: (eapply TypeCSubtype || inv ty2); eauto.
+Qed.
+
+
+Fixpoint shape_listmatch Γ v c1 x xs c2 C:
+  has_ctype Γ (ListMatch v c1 x xs c2) C ->
+  (exists A, has_vtype Γ v (TyList A) /\
+    has_ctype Γ c1 C /\ has_ctype (CtxU (CtxU Γ A) (TyList A)) c2 C).
+Proof.
+intro orig. eapply shape_listmatch_full in orig; eauto.
+Qed.
 
 (* App *)
 Fixpoint shape_app_full Γ c v1 v2 C (orig : has_ctype Γ c C) {struct orig} :

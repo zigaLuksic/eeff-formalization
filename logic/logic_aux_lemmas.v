@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
@@ -73,6 +73,9 @@ destruct H3; apply Veq; auto.
 + inv H0. inv H. eapply VeqPair; eapply veq_subtype; eauto.
 + inv H0. eapply VeqInl. eapply veq_subtype; eauto. inv H. auto.
 + inv H0. eapply VeqInr. eapply veq_subtype; eauto. inv H. auto.
++ inv H0. eapply VeqListNil.
++ inv H0. eapply VeqListCons; eapply veq_subtype; eauto. inv H. auto.
+  apply SubtypeTyList. auto.
 + inv H0. apply VeqFun. inv H. eapply ceq_subtype in H3; eauto.
   eapply ctx_subtype_ceq. eauto.
   - apply WfCtxU; auto. inv H1. auto.
@@ -100,6 +103,7 @@ apply Ceq; auto. destruct H3.
 + eapply CeqAbsurd; eauto.
 + eapply CeqΠMatch; eauto.
 + eapply CeqΣMatch; eauto.
++ eapply CeqListMatch; eauto.
 + eapply CeqDoBind; eauto.
 + eapply CeqApp; eauto. eapply veq_subtype; eauto; inv H3; inv H5; inv H8.
   - apply WfTyFun; assumption.
@@ -121,6 +125,8 @@ apply Ceq; auto. destruct H3.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.
++ eapply βListMatch_Nil.
++ eapply βListMatch_Cons.
 + eapply βApp.
 + eapply βLetRec.
 + eapply βDoBind_Ret.
@@ -232,6 +238,8 @@ apply Veq; auto. all: destruct orig; auto. destruct H1.
 + apply VeqPair; eauto.
 + apply VeqInl; eauto.
 + apply VeqInr; eauto.
++ apply VeqListNil; eauto.
++ apply VeqListCons; eauto.
 + apply VeqFun; eauto.
 + eapply VeqHandler; eauto. apply csubtype_refl. inv H2. assumption.
 + apply veq_refl in H1. eapply veq_subtype in H1; eauto. inv H1. assumption.
@@ -241,6 +249,7 @@ apply Ceq; auto. all: destruct orig; auto. destruct H1.
 + apply CeqAbsurd. auto.
 + eapply CeqΠMatch; eauto.
 + eapply CeqΣMatch; eauto.
++ eapply CeqListMatch; eauto.
 + eapply CeqDoBind; eauto. 
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.

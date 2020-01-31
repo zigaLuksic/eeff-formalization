@@ -20,6 +20,8 @@ Inductive val : Type :=
 | Inl : val -> val
 | Inr : val -> val
 | Pair : val -> val -> val
+| ListNil : val
+| ListCons : val -> val -> val
 | Fun : var_name -> comp -> val
 | Handler : var_name -> comp -> hcases -> val
 
@@ -28,6 +30,7 @@ with comp : Type :=
 | Absurd : val -> comp
 | ΠMatch : val -> var_name -> var_name -> comp -> comp (* x~1 y~0 *)
 | ΣMatch : val -> var_name -> comp -> var_name -> comp -> comp
+| ListMatch : val -> comp -> var_name -> var_name -> comp -> comp (* x~1 xs~0 *)
 | App : val -> val -> comp
 | Op : op_id -> val -> var_name -> comp -> comp (* x~1 k~0 *)
 | LetRec : var_name -> var_name -> comp -> comp -> comp (* f~0 x~1 *)
@@ -44,6 +47,7 @@ with vtype : Type :=
 | TyØ : vtype
 | TyΣ : vtype -> vtype -> vtype
 | TyΠ : vtype -> vtype -> vtype
+| TyList : vtype -> vtype
 | TyFun : vtype -> ctype -> vtype
 | TyHandler : ctype -> ctype -> vtype
 
@@ -67,6 +71,7 @@ with tmpl : Type :=
 | TAbsurd : val -> tmpl
 | TΠMatch : val -> var_name -> var_name -> tmpl -> tmpl
 | TΣMatch : val -> var_name -> tmpl -> var_name -> tmpl -> tmpl
+| TListMatch : val -> tmpl -> var_name -> var_name -> tmpl -> tmpl
 | TOp : op_id -> val -> var_name -> tmpl -> tmpl
 
 with eqs : Type := 
@@ -169,6 +174,8 @@ Fixpoint v_no_var (v:val) (j:nat) :=
   | Inl v' => v_no_var v' j
   | Inr v' => v_no_var v' j
   | Pair v1 v2 => (v_no_var v1 j) /\ (v_no_var v2 j)
+  | ListNil => True
+  | ListCons v vs => (v_no_var v j) /\ (v_no_var vs j)
   | Fun x c => c_no_var c (1+j)
   | Handler x c_ret h => (c_no_var c_ret (1+j)) /\ (h_no_var h j)
   end
@@ -178,8 +185,10 @@ with c_no_var (c:comp) (j:nat) :=
   | Ret v => v_no_var v j
   | Absurd v => v_no_var v j 
   | ΠMatch v x y c => (v_no_var v j) /\ c_no_var c (2+j)
-  | ΣMatch v xl cl xr cr =>
-      (v_no_var v j) /\ (c_no_var cl (1+j)) /\ (c_no_var cr (1+j))
+  | ΣMatch v x c1 y c2 =>
+      (v_no_var v j) /\ (c_no_var c1 (1+j)) /\ (c_no_var c2 (1+j))
+  | ListMatch v c1 x xs c2 =>
+      (v_no_var v j) /\ (c_no_var c1 j) /\ (c_no_var c2 (2+j))
   | App v1 v2 => (v_no_var v1 j) /\ (v_no_var v2 j)
   | Op op v_arg y c => (v_no_var v_arg j) /\ (c_no_var c (1+j))
   | LetRec f x c1 c2 => (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
@@ -202,6 +211,8 @@ Fixpoint v_under_var (v:val) (j:nat) :=
   | Inl v' => v_under_var v' j
   | Inr v' => v_under_var v' j
   | Pair v1 v2 => (v_under_var v1 j) /\ (v_under_var v2 j)
+  | ListNil => True
+  | ListCons v vs => (v_under_var v j) /\ (v_under_var vs j)
   | Fun x c => c_under_var c (1+j)
   | Handler x c_ret h => (c_under_var c_ret (1+j)) /\ (h_under_var h j)
   end
@@ -211,8 +222,10 @@ with c_under_var (c:comp) (j:nat) :=
   | Ret v => v_under_var v j
   | Absurd v => v_under_var v j 
   | ΠMatch v x y c => (v_under_var v j) /\ c_under_var c (2+j)
-  | ΣMatch v xl cl xr cr =>
-      (v_under_var v j) /\ (c_under_var cl (1+j)) /\ (c_under_var cr (1+j))
+  | ΣMatch v x c1 y c2 =>
+      (v_under_var v j) /\ (c_under_var c1 (1+j)) /\ (c_under_var c2 (1+j))
+  | ListMatch v c1 x xs c2 =>
+      (v_under_var v j) /\ (c_under_var c1 j) /\ (c_under_var c2 (2+j))
   | App v1 v2 => (v_under_var v1 j) /\ (v_under_var v2 j)
   | Op op v_arg y c => (v_under_var v_arg j) /\ (c_under_var c (1+j))
   | LetRec f x c1 c2 => (c_under_var c1 (2+j)) /\ (c_under_var c2 (1+j))
@@ -232,9 +245,10 @@ Fixpoint t_under_var T j :=
   | TApp (name, num) v => v_under_var v j
   | TAbsurd v => v_under_var v j
   | TΠMatch v x y T => v_under_var v j /\ t_under_var T (2+j)
-  | TΣMatch v xl Tl xr Tr =>
-      (v_under_var v j) /\ (t_under_var Tl (1+j)) 
-      /\ (t_under_var Tr (1+j))
+  | TΣMatch v x T1 y T2 =>
+      (v_under_var v j) /\ (t_under_var T1 (1+j)) /\ (t_under_var T2 (1+j))
+  | TListMatch v T1 x xs T2 =>
+      (v_under_var v j) /\ (t_under_var T1 j) /\ (t_under_var T2 (2+j))
   | TOp op v_arg y T => (v_under_var v_arg j) /\ (t_under_var T (1+j))
   end.
 
@@ -244,7 +258,7 @@ Fixpoint t_under_tvar T j :=
   | TApp (name, num) v => num < j
   | TAbsurd v => True
   | TΠMatch v x y T => t_under_tvar T j
-  | TΣMatch v xl Tl xr Tr => 
-      (t_under_tvar Tl j) /\ (t_under_tvar Tr j)
+  | TΣMatch v x T1 y T2 => (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
+  | TListMatch v T1 x xs T2 => (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
   | TOp op v_arg y T => (t_under_tvar T j)
   end.

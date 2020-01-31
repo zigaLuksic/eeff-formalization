@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Import syntax.
 
 
@@ -13,6 +13,9 @@ Inductive vsubtype : vtype -> vtype -> Prop :=
 | SubtypeTyΠ A A' B B' : 
     vsubtype A A' -> vsubtype B B' -> 
     vsubtype (TyΠ A B) (TyΠ A' B')
+| SubtypeTyList A A' :
+    vsubtype A A' ->
+    vsubtype (TyList A) (TyList A')
 | SubtypeTyFun A A' C C' : 
     vsubtype A' A -> csubtype C C' -> 
     vsubtype (TyFun A C) (TyFun A' C')

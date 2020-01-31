@@ -1,13 +1,13 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 Require Export type_aux_lemmas operational_semantics.
 
 Ltac inv H := inversion H; clear H; subst.
@@ -54,11 +54,18 @@ induction step; intros C orig.
   eapply c_subs_out_typesafe. eapply c_subs_out_typesafe.
   all: eauto. inv H0. apply v_shift_typesafe; auto.
 + unfold c_subs2_out. apply shape_summatch in orig.
-  destruct orig as [A [B [vty [inl]]]].
+  destruct orig as [A [B [vty [inl _]]]].
   eapply c_subs_out_typesafe. exact inl. apply shape_sum_inl in vty. auto.
 + unfold c_subs2_out. apply shape_summatch in orig.
-  destruct orig as [A [B [vty [_]]]].
-  eapply c_subs_out_typesafe. exact H. apply shape_sum_inr in vty. auto.
+  destruct orig as [A [B [vty [_ inr]]]].
+  eapply c_subs_out_typesafe. exact inr. apply shape_sum_inr in vty. auto.
++ apply shape_listmatch in orig.
+  destruct orig as [A[_[ty1 _]]]. auto.
++ unfold c_subs2_out. 
+  apply shape_listmatch in orig. destruct orig as [A[vty[_ ty2]]]. 
+  apply shape_list_cons in vty. destruct vty as [vty vsty].  
+  eapply c_subs_out_typesafe; eauto. eapply c_subs_out_typesafe; eauto.
+  eapply v_shift_typesafe; eauto. inv vty. auto.
 + apply shape_app in orig. destruct orig as [A [f]].
   eapply c_subs_out_typesafe; eauto.
 + apply shape_letrec in orig. destruct orig as [A [C' [c1ty]]].
@@ -170,6 +177,14 @@ revert C. induction c; intros C orig.
     apply shape_var_ctx_empty in vty. destruct vty.
   - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inl.
   - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inr.
++ right. right. rename v0 into x. rename v1 into xs.
+  eapply shape_listmatch in orig. destruct orig as [A[vty[cty1 cty2]]].
+  eapply shape_list_full in vty as shape; eauto. destruct shape. 
+  destruct H as [y[n]]. subst. apply shape_var_ctx_empty in vty. destruct vty. 
+  destruct H.
+  - exists c1. subst. apply Step_ListMatch_Nil.
+  - destruct H as [w[ws[same[wty wsty]]]]. subst. 
+    eexists. apply Step_ListMatch_Cons. 
 + right. right.
   eapply shape_app_full in orig. 2: reflexivity.
   destruct orig as [A [fty]]. eapply shape_tyfun_full in fty as ffty.
