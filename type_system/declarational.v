@@ -378,6 +378,16 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
       (c_subs2_out c_op
         (Fun y (Handle (Sub.v_shift (Handler x c_r h) 1 0) c_k))
         v_arg )
+| ηPair Γ v x x' y y' n c C:
+    ceq' C Γ (c_subs c v n) 
+      (ΠMatch v x y (c_subs c (Pair (Var (x', 1)) (Var (y', 0))) n))
+| ηSum Γ v x x' y y' n c C:
+    ceq' C Γ (c_subs c v n) 
+      (ΣMatch v 
+        x (c_subs c (Inl (Var (x', 0))) n) 
+        y (c_subs c (Inr (Var (y', 0))) n))
+| ηDoBind Γ x c x' C:
+    ceq' C Γ (DoBind x c (Ret (Var (x', 0)))) c
 
 with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | Heq Σ Σ1 Σ2 D Γ h1 h2 : 

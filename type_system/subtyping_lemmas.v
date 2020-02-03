@@ -496,6 +496,9 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
 + eapply βDoBind_Op.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
++ eapply ηPair.
++ eapply ηSum.
++ eapply ηDoBind.
 }{
 intros wf ctxsty.
 inv equals. destruct H4.
