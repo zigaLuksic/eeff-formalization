@@ -380,12 +380,12 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
         v_arg )
 | ηPair Γ v x x' y y' n c C:
     ceq' C Γ (c_subs c v n) 
-      (ΠMatch v x y (c_subs c (Pair (Var (x', 1)) (Var (y', 0))) n))
+      (ΠMatch v x y (c_subs (Sub.c_shift c 2 0) (Pair (Var (x', 1)) (Var (y', 0))) (2+n)))
 | ηSum Γ v x x' y y' n c C:
     ceq' C Γ (c_subs c v n) 
       (ΣMatch v 
-        x (c_subs c (Inl (Var (x', 0))) n) 
-        y (c_subs c (Inr (Var (y', 0))) n))
+        x (c_subs (Sub.c_shift c 1 0) (Inl (Var (x', 0))) (1+n)) 
+        y (c_subs (Sub.c_shift c 1 0) (Inr (Var (y', 0))) (1+n)))
 | ηDoBind Γ x c x' C:
     ceq' C Γ (DoBind x c (Ret (Var (x', 0)))) c
 

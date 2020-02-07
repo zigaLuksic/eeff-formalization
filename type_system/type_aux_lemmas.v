@@ -588,6 +588,31 @@ inv orig. destruct H1.
   rewrite c_shift_subs, c_shift_subs, <-v_shift_comm.
   simpl. rewrite <-c_shift_comm, <-h_shift_comm.
   eapply rule. apply shift_find_Some. eauto. all: omega.
++ clear V CI HC R VE CE HE. simpl.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_shift_subs. rewrite c_shift_subs. simpl.
+    assert (S(S(S i))=2+(S i)) as same by omega.
+    rewrite same, <-c_shift_comm. all: try omega.
+    apply ηPair.
+  - apply leb_complete_conv in ni.
+    rewrite c_shift_subs_alt, c_shift_subs_alt.
+    assert (S(S i)=2+i) as samei by omega.
+    assert (1+S(S n)=2+(S n)) as samen by omega.
+    rewrite samei, samen, <-c_shift_comm. all: try omega.
+    apply ηPair.
++ clear V CI HC R VE CE HE. simpl.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_shift_subs, c_shift_subs, c_shift_subs. simpl.
+    assert (S(S i)=1+(S i)) as same by omega.
+    rewrite same, <-c_shift_comm. all: try omega.
+    apply ηSum.
+  - apply leb_complete_conv in ni.
+    rewrite c_shift_subs_alt, c_shift_subs_alt, c_shift_subs_alt. simpl.
+    rewrite <-c_shift_comm. all: try omega.
+    apply ηSum.
++ clear V CI HC R VE CE HE. simpl. apply ηDoBind.
 }{
 intros wfins. inv orig. destruct H4. 
 + specialize (HC _ _ _ _ H2) as IH1.
@@ -969,6 +994,35 @@ inv orig. destruct H1.
   rewrite c_sub_subs, c_sub_subs, <-v_shift_sub, v_shift_shift.
   simpl. rewrite v_shift_comm, <-c_shift_sub, <-h_shift_sub.
   simpl in rule. eapply rule. apply sub_find_Some. eauto. all: omega.
++ clear V CI HC R VE CE HE. simpl.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_sub_subs, c_sub_subs. simpl.
+    assert (S(S n)=2+n) as samen by omega.
+    assert (S(S(S i))=2+(S i)) as samei by omega.
+    rewrite samei, samen, <-v_shift_comm.
+    rewrite <-c_shift_sub. all: try omega.
+    apply ηPair.
+  - apply leb_complete_conv in ni.
+    rewrite c_sub_subs_alt, c_sub_subs_alt.
+    assert (S(S i)=2+i) as samei by omega.
+    assert (S(S n)=2+n) as samen by omega.
+    simpl. rewrite samei, samen, <-v_shift_comm. 
+    rewrite <-c_shift_sub. all : try omega.
+    apply ηPair.
++ clear V CI HC R VE CE HE. simpl.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_sub_subs, c_sub_subs, c_sub_subs. simpl.
+    assert (S(S i)=1+(S i)) as samei by omega.
+    rewrite samei, <-v_shift_comm.
+    rewrite <-c_shift_sub. all: try omega.
+    apply ηSum.
+  - apply leb_complete_conv in ni.
+    rewrite c_sub_subs_alt, c_sub_subs_alt, c_sub_subs_alt. simpl.
+    rewrite <-v_shift_comm, <-c_shift_sub. all: try omega.
+    apply ηSum.
++ clear V CI HC R VE CE HE. simpl. apply ηDoBind.
 }{
 intros gets vtys.
 inv orig. destruct H4.
@@ -1491,6 +1545,59 @@ destruct orig. destruct H1.
   eapply rule. unfold h_subs. 
   apply negshift_find_Some. rewrite <-(v_shift_comm 1 i 0). 
   apply sub_find_Some. eauto. all: omega.
++ clear V CI HC R VE CE HE. simpl.
+  assert (forall c, c_subs (ΠMatch v x y c) v_s i 
+    = ΠMatch (v_subs v v_s i) x y (c_subs c (Sub.v_shift v_s 2 0) (2+i))).
+  { intro c'. unfold c_subs. simpl. rewrite v_shift_comm. reflexivity. omega. }
+  rewrite H1. clear H1.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_subs_subs, (c_subs_subs _ (2+n)). simpl.
+    specialize ηPair as rule.
+    assert (S(S n)=2+n) as samen by omega.
+    assert (S(S(S i))=1+(1+(S i))) as samei by omega.
+    rewrite samei, samen, <-v_shift_comm.
+    rewrite <-(v_shift_shift 1 1), <-(c_shift_shift 1 1).
+    rewrite <-c_shift_subs_alt, <-c_shift_subs_alt, c_shift_shift.
+    assert (v_subs (Pair (Var (x', 1)) (Var (y', 0))) (Sub.v_shift v_s 2 0) (S (S i))
+      = (Pair (Var (x', 1)) (Var (y', 0)))).
+    { unfold v_subs. simpl. reflexivity. }
+    rewrite H1. clear H1. apply ηPair. all: omega.
+  - apply leb_complete_conv in ni.
+    destruct n. omega.
+    rewrite (c_subs_subs_alt _ n), (c_subs_subs_alt _ ). all: try omega. simpl.
+    specialize ηPair as rule.
+    assert (v_subs (Pair (Var (x', 1)) (Var (y', 0))) (Sub.v_shift v_s 2 0) (S (S i))
+      = (Pair (Var (x', 1)) (Var (y', 0)))).
+    { unfold v_subs. simpl. reflexivity. }
+    rewrite H1. clear H1. 
+    assert (S(S n)=2+n) as samen by omega.
+    rewrite samen, <-v_shift_comm.
+    rewrite <-(v_shift_shift 1 1), <-(c_shift_shift 1 1).
+    rewrite <-c_shift_subs_alt, <-c_shift_subs_alt, c_shift_shift.
+    apply ηPair. all: omega.
++ clear V CI HC R VE CE HE. simpl.
+  assert (forall c1 c2, c_subs (ΣMatch v x c1 y c2) v_s i 
+    = ΣMatch (v_subs v v_s i) 
+        x (c_subs c1 (Sub.v_shift v_s 1 0) (1+i))
+        y (c_subs c2 (Sub.v_shift v_s 1 0) (1+i))).
+  { intro c'. unfold c_subs. simpl. rewrite v_shift_comm. reflexivity. omega. }
+  rewrite H1. clear H1.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite (c_subs_subs _ n), (c_subs_subs _ (1+n)), (c_subs_subs _ (1+n)).
+    simpl. all: try omega.
+    assert (S(S i)=1+(S i)) as samei by omega.
+    rewrite samei. rewrite <-v_shift_comm.
+    rewrite <-c_shift_subs_alt. all: try omega.
+    apply ηSum.
+  - apply leb_complete_conv in ni.
+    rewrite (c_subs_subs_alt _ n), (c_subs_subs_alt _ n).
+    destruct n. all: try omega.
+    rewrite (c_subs_subs_alt _ n). simpl.
+    rewrite <-v_shift_comm, <-c_shift_subs_alt. all: try omega.
+    apply ηSum.
++ clear V CI HC R VE CE HE. simpl. apply ηDoBind.
 }{
 intros tyvs geq len.
 destruct orig. destruct H4.
