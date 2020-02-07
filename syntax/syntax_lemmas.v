@@ -94,11 +94,16 @@ Qed.
 
 
 
-Lemma get_join_ctx_tctx Γ Z D i:
-  get_vtype Γ i = get_vtype (join_ctx_tctx Γ Z D) (i+tctx_len Z).
+Fixpoint get_tctx_to_ctx Z D A i:
+  get_ttype Z i = Some A <-> get_vtype (tctx_to_ctx Z D) i = Some (TyFun A D).
 Proof.
-induction Z; simpl. f_equal. omega.
-assert (i+S(tctx_len Z)=S(i+tctx_len Z)) by omega. rewrite H. auto.
+constructor; destruct Z; simpl.
++ intro. discriminate. 
++ destruct i. intro same. inv same. reflexivity. 
+  intro. apply get_tctx_to_ctx. auto.
++ intro. discriminate.
++ destruct i. intro same. inv same. reflexivity.
+  intro. apply get_tctx_to_ctx in H. auto.
 Qed.
 
 
@@ -118,14 +123,6 @@ induction Γ2; simpl. auto. f_equal. auto.
 Qed.
 
 
-Lemma join_ctx_tctx_insert  Γ Z D i A :
-    join_ctx_tctx (ctx_insert Γ A i) Z D 
-  = ctx_insert (join_ctx_tctx Γ Z D) A (tctx_len Z+i). 
-Proof.
-induction Z; simpl. auto. f_equal. auto.
-Qed.
-
-
 Lemma join_ctxs_remove Γ1 Γ2 i:
     join_ctxs (ctx_remove Γ1 i) Γ2
   = ctx_remove (join_ctxs Γ1 Γ2) (ctx_len Γ2 + i). 
@@ -134,26 +131,18 @@ induction Γ2; simpl. auto. f_equal. auto.
 Qed.
 
 
-Lemma join_ctx_tctx_remove  Γ Z D i :
-    join_ctx_tctx (ctx_remove Γ i) Z D 
-  = ctx_remove (join_ctx_tctx Γ Z D) (tctx_len Z + i). 
-Proof.
-induction Z; simpl. auto. f_equal. auto.
-Qed.
-
-
 (* ==================== Ctx Length ==================== *)
 
-Lemma join_ctxs_len Γ Γ':
+Lemma len_join_ctxs Γ Γ':
   ctx_len (join_ctxs Γ Γ') = ctx_len Γ + ctx_len Γ'.
 Proof.
 induction Γ'; simpl; auto. rewrite IHΓ'. omega.
 Qed.
 
-Lemma join_ctx_tctx_len Γ Z D:
-  ctx_len (join_ctx_tctx Γ Z D) = ctx_len Γ + tctx_len Z.
+Lemma len_tctx_to_ctx Z D:
+  tctx_len Z = ctx_len (tctx_to_ctx Z D).
 Proof.
-induction Z; simpl; auto. rewrite IHZ. omega.
+induction Z; simpl; auto.
 Qed.
 
 (* ==================== Ctx Guarantees ==================== *)
@@ -256,4 +245,18 @@ Lemma find_case_no_var h i op x k c:
 Proof.
 intros. induction h. simpl in H0. discriminate.
 inv H. simpl in H0. destruct (op==o); try inv H0; auto.
+Qed.
+
+(* ==================== Term Properties ==================== *)
+
+Lemma join_ctxs_left_unit Γ:
+  join_ctxs CtxØ Γ = Γ.
+Proof.
+induction Γ; simpl; auto. rewrite IHΓ. auto.
+Qed.
+
+Lemma join_ctxs_left_step Γ' A Γ:
+  join_ctxs (CtxU Γ' A) Γ = join_ctxs Γ' (ctx_insert Γ A (ctx_len Γ)).
+Proof.
+induction Γ; simpl; auto. f_equal. auto.
 Qed.

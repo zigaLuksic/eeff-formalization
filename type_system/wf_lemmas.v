@@ -18,7 +18,7 @@ discriminate. destruct num.
 Qed.
 
 
-Lemma ctx_insert_wf Γ A i:
+Lemma wf_ctx_insert Γ A i:
   wf_ctx Γ -> wf_vtype A -> wf_ctx (ctx_insert Γ A i).
 Proof.
 revert i A; induction Γ; intros i A orig wfv; induction i; simpl.
@@ -26,14 +26,14 @@ all: (try inv orig); apply WfCtxU || apply WfCtxØ; auto.
 all: apply WfCtxU || apply WfCtxØ; auto.
 Qed.
 
-Lemma ctx_insert_wf_rev Γ A i:
+Lemma wf_ctx_insert_rev Γ A i:
   wf_ctx (ctx_insert Γ A i) -> wf_ctx Γ.
 Proof.
 revert i A. induction Γ; intros i A orig. apply WfCtxØ.
 destruct i; simpl in *; inv orig. assumption. apply WfCtxU; eauto.
 Qed.
 
-Lemma ctx_remove_wf Γ i:
+Lemma wf_ctx_remove Γ i:
   wf_ctx Γ -> wf_ctx (ctx_remove Γ i).
 Proof.
 revert i; induction Γ; intros i orig; induction i; simpl.
@@ -50,16 +50,26 @@ all: destruct (op == o); inv orig; try inv gets; auto; apply IHΣ; auto.
 Qed.
 
 
-Lemma join_ctxs_wf Γ Γ' :
+Lemma wf_join_ctxs Γ Γ' :
   wf_ctx Γ -> wf_ctx Γ' -> wf_ctx (join_ctxs Γ Γ').
 Proof.
 intros wf wf'. induction wf'; simpl; auto. apply WfCtxU; auto.
 Qed.
 
 
-Lemma join_ctx_tctx_wf Γ Z D:
-  wf_ctx Γ -> wf_tctx Z -> wf_ctype D -> wf_ctx (join_ctx_tctx Γ Z D).
+Lemma wf_tctx_to_ctx Z D:
+  wf_tctx Z -> wf_ctype D -> wf_ctx (tctx_to_ctx Z D).
 Proof.
-intros wfctx wfZ wfD. induction wfZ; simpl. auto. 
+intros wfZ wfD. induction wfZ; simpl. apply WfCtxØ. 
 apply WfCtxU. auto. apply WfTyFun; auto.
+Qed.
+
+Lemma has_eq_wf_parts E Σ Γ Z T1 T2:
+  wf_eqs E Σ -> has_eq E Γ Z T1 T2 ->
+  wf_ctx Γ /\ wf_tctx Z /\ wf_t Γ Z T1 Σ /\ wf_t Γ Z T2 Σ.
+Proof.
+intros wf_eqs has. induction wf_eqs; inv has.
+- destruct H4 as [a [b [c d]]]. subst. 
+  constructor. 2:constructor. 3:constructor. all: auto.
+- auto.
 Qed.

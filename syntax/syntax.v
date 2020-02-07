@@ -39,7 +39,7 @@ with comp : Type :=
 
 with hcases : Type :=
 | CasesØ : hcases
-| CasesU : hcases -> op_id -> var_name -> var_name -> comp -> hcases
+| CasesU : hcases -> op_id -> var_name -> var_name -> comp -> hcases (* x~0 k~1 *)
 
 with vtype : Type :=
 | TyUnit : vtype
@@ -151,17 +151,16 @@ Fixpoint tctx_len Z :=
   end.
 
 
+Fixpoint tctx_to_ctx Z D :=
+  match Z with
+  | TCtxØ => CtxØ
+  | TCtxU Z A => CtxU (tctx_to_ctx Z D) (TyFun A D)
+  end.
+
 Fixpoint join_ctxs Γ1 Γ2 :=
   match Γ2 with
   | CtxØ => Γ1
   | CtxU Γ2' A => CtxU (join_ctxs Γ1 Γ2') A
-  end.
-
-
-Fixpoint join_ctx_tctx Γ Z D :=
-  match Z with
-  | TCtxØ => Γ
-  | TCtxU Z A => CtxU (join_ctx_tctx Γ Z D) (TyFun A D)
   end.
 
 (* ==================== Term Properties ==================== *)

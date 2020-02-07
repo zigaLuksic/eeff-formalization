@@ -122,6 +122,17 @@ apply Ceq; auto. destruct H3.
     * apply WfCtxU. auto. 
       eapply get_op_type_wf in gets. destruct gets. auto. inv H. auto.
     * eapply SubtypeCtxU. apply ctx_subtype_refl. all: auto.
++ inv H0. eapply OOTB; eauto. eapply eqs_subtype_contains; eauto.
+  eapply ctx_subtype_trans; eauto.
+  inv H1. inv H6. eapply has_eq_wf_parts in H3; eauto.
+  destruct H3 as [wfg[wfz[wf1 wf2]]]. 
+  eapply ctx_subtype_join_ctxs. apply ctx_subtype_tctx_to_ctx.
+  - auto.
+  - apply SubtypeCTy; eauto.
+  - apply ctx_subtype_refl. auto.
++ eapply CeqShift; eauto.
++ eapply CeqSub; eauto.
++ eapply CeqSubs; eauto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.

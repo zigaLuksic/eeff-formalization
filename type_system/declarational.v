@@ -11,53 +11,58 @@ Require Export syntax syntax_lemmas subtyping substitution.
 (* We increase context length so that we don't have to shift h. *)
 Fixpoint handle_t Γ_len Z_len h T :=
   match T with
-  | TApp x v => App (Var x) (Sub.v_shift v Z_len 0)
-  | TAbsurd v => Absurd (Sub.v_shift v Z_len 0)
+  | TApp (name, num) v => App (Var (name, Γ_len+num)) v
+  | TAbsurd v => Absurd v
   | TΠMatch v x y T => 
-      ΠMatch (Sub.v_shift v Z_len 0) x y (handle_t (2+Γ_len) Z_len h T)
+      ΠMatch v x y (handle_t (2+Γ_len) Z_len h T)
   | TΣMatch v x T1 y T2 => 
-      ΣMatch (Sub.v_shift v Z_len 0)
+      ΣMatch v
         x (handle_t (1+Γ_len) Z_len h T1) 
         y (handle_t (1+Γ_len) Z_len h T2)
   | TListMatch v T1 x xs T2 =>
-      ListMatch (Sub.v_shift v Z_len 0)
+      ListMatch v
         (handle_t Γ_len Z_len h T1)
         x xs (handle_t (2+Γ_len) Z_len h T2)
   | TOp op v y T =>
       match find_case h op with 
       | Some (x, k, c_op) => 
-          (c_subs2_out (Sub.c_shift c_op (Γ_len + Z_len) 0) 
-            (Fun y (handle_t (1+Γ_len) Z_len h T)) 
-            (Sub.v_shift v Z_len 0))
-      | None => Op op v y (handle_t (1+Γ_len) Z_len h T)
+          (c_subs 
+            (c_subs 
+              (Sub.c_shift c_op (Γ_len + Z_len) 0) 
+              (Fun y (handle_t (1+Γ_len) Z_len h T)) (Γ_len + Z_len)
+            )
+            v (Γ_len + Z_len))
+      | None => 
+          (* You shouldn't be here *)
+          Op op v y (handle_t (1+Γ_len) Z_len h T) 
       end
   end.
 
 
-Fixpoint instantiate_t Z_len T :=
+Fixpoint instantiate_t Γ_len T :=
   match T with
-  | TApp x v => App (Var x) (Sub.v_shift v Z_len 0)
-  | TAbsurd v => Absurd (Sub.v_shift v Z_len 0)
+  | TApp (name, num) v => App (Var (name, Γ_len+num)) v
+  | TAbsurd v => Absurd v
   | TΠMatch v x y T => 
-      ΠMatch (Sub.v_shift v Z_len 0) x y (instantiate_t Z_len T)
+      ΠMatch v x y (instantiate_t Γ_len T)
   | TΣMatch v x T1 y T2 => 
-      ΣMatch (Sub.v_shift v Z_len 0)
-        x (instantiate_t Z_len T1) 
-        y (instantiate_t Z_len T2)
+      ΣMatch v
+        x (instantiate_t Γ_len T1) 
+        y (instantiate_t Γ_len T2)
   | TListMatch v T1 x xs T2 => 
-      ListMatch (Sub.v_shift v Z_len 0)
-        (instantiate_t Z_len T1) 
-        x xs (instantiate_t Z_len T2)
+      ListMatch v
+        (instantiate_t Γ_len T1) 
+        x xs (instantiate_t Γ_len T2)
   | TOp op v y T =>
-      Op op (Sub.v_shift v Z_len 0) y (instantiate_t Z_len T)
+      Op op v y (instantiate_t Γ_len T)
   end.
 
 (* ==================== Wellformed Judgements ==================== *)
 
 Inductive wf_vtype : vtype -> Prop :=
-| WfUnit : wf_vtype TyUnit 
-| WfInt : wf_vtype TyInt
-| WfEmpty : wf_vtype TyØ
+| WfTyUnit : wf_vtype TyUnit 
+| WfTyInt : wf_vtype TyInt
+| WfTyEmpty : wf_vtype TyØ
 | WfTyΣ A B: wf_vtype A -> wf_vtype B -> wf_vtype (TyΣ A B)
 | WfTyΠ A B : wf_vtype A -> wf_vtype B -> wf_vtype (TyΠ A B)
 | WfTyList A : wf_vtype A -> wf_vtype (TyList A)
@@ -224,11 +229,11 @@ with respects : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | RespectEqsØ Γ h Σ D : respects' Γ h Σ D EqsØ
 | RespectEqsU Γ h Σ D E Γ' Z T1 T2 :
-    respects Γ h Σ D E -> 
-    ceq D (join_ctx_tctx (join_ctxs Γ Γ') Z D)
-      (handle_t (ctx_len Γ') (tctx_len Z) h T1) 
-      (handle_t (ctx_len Γ') (tctx_len Z) h T2) ->
-    respects' Γ h Σ D (EqsU E Γ' Z T1 T2)
+    respects Γ' h Σ D E -> 
+    ceq D (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
+      (handle_t (ctx_len Γ) (tctx_len Z) h T1) 
+      (handle_t (ctx_len Γ) (tctx_len Z) h T2) ->
+    respects' Γ' h Σ D (EqsU E Γ Z T1 T2)
 
 with veq : vtype -> ctx -> val -> val -> Prop := 
 | Veq A Γ v1 v2 : 
@@ -330,11 +335,23 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     veq A_op Γ v v' ->
     ceq (CTy A Σ E) (CtxU Γ B_op) c c' ->
     ceq' (CTy A Σ E) Γ (Op op v y c) (Op op v' y' c')
-(* | OOTB A Σ E Γ Z T1 T2:
+| OOTB A Σ E Γ' Γ Z T1 T2:
     has_eq E Γ Z T1 T2 ->
-    (* Do we add context subtping here??? *)
-    ceq' (CTy A Σ E) (join_ctx_tctx Γ Z (CTy A Σ E))
-      (instantiate_t (tctx_len Z) T1) (instantiate_t (tctx_len Z) T2)  *)
+    wf_ctx Γ' -> ctx_subtype Γ' (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
+    ceq' (CTy A Σ E) Γ'
+      (instantiate_t (ctx_len Γ) T1) (instantiate_t (ctx_len Γ) T2)
+| CeqShift C Γ A i c1 c2:
+    (* USE ONLY FOR OOTB *)
+    ceq C Γ c1 c2 -> wf_vtype A ->
+    ceq' C (ctx_insert Γ A i) (Sub.c_shift c1 1 i) (Sub.c_shift c2 1 i) 
+| CeqSub C Γ c1 c2 i v_s:
+    (* USE ONLY FOR OOTB *)
+    ceq C Γ c1 c2 -> 
+    ceq' C Γ (Sub.c_sub c1 (i, v_s)) (Sub.c_sub c2 (i, v_s))
+| CeqSubs C Γ Γ' c1 c2 v_s i:
+    (* USE ONLY FOR OOTB *)
+    ceq C Γ' c1 c2 ->
+    ceq' C Γ (c_subs c1 v_s i) (c_subs c2 v_s i)
 | βΠMatch v1 v2 x y c C Γ: 
     ceq' C Γ
       (ΠMatch (Pair v1 v2) x y c) 

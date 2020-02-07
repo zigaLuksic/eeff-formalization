@@ -219,4 +219,52 @@ eapply Heq. 2: exact H0. all:eauto. inv vseq. assumption.
 Qed.
 
 
+Fixpoint veq_join_ctxs Γ Γ' v1 v2 A:
+  wf_ctx Γ' -> veq A Γ v1 v2 -> veq A (join_ctxs Γ' Γ) v1 v2
+with ceq_join_ctxs Γ Γ' c1 c2 C:
+  wf_ctx Γ' -> ceq C Γ c1 c2 -> ceq C (join_ctxs Γ' Γ) c1 c2
+with heq_join_ctxs Γ Γ' h1 h2 Σ D:
+  wf_ctx Γ' -> heq Σ D Γ h1 h2 -> heq Σ D (join_ctxs Γ' Γ) h1 h2 .
+Proof.
+all: intros wfc' orig.
++ destruct Γ'.
+  - rewrite join_ctxs_left_unit. auto.
+  - rewrite join_ctxs_left_step. auto. 
+    apply veq_join_ctxs. inv wfc'. eauto.
+    rewrite <-(v_shift_too_high v1 1 (ctx_len Γ)).
+    rewrite <-(v_shift_too_high v2 1 (ctx_len Γ)).
+    apply veq_insert_typesafe. auto. inv wfc'. auto. 
+    all: eapply has_vtype_is_under_ctx; inv orig; eauto.
++ destruct Γ'.
+  - rewrite join_ctxs_left_unit. auto.
+  - rewrite join_ctxs_left_step. auto. 
+    apply ceq_join_ctxs. inv wfc'. eauto.
+    rewrite <-(c_shift_too_high c1 1 (ctx_len Γ)).
+    rewrite <-(c_shift_too_high c2 1 (ctx_len Γ)).
+    apply ceq_insert_typesafe. auto. inv wfc'. auto. 
+    all: eapply has_ctype_is_under_ctx; inv orig; eauto.
++ destruct Γ'.
+  - rewrite join_ctxs_left_unit. auto.
+  - rewrite join_ctxs_left_step. auto. 
+    apply heq_join_ctxs. inv wfc'. eauto.
+    rewrite <-(h_shift_too_high h1 1 (ctx_len Γ)).
+    rewrite <-(h_shift_too_high h2 1 (ctx_len Γ)).
+    apply heq_insert_typesafe. auto. inv wfc'. auto.
+    all: inv orig; eapply has_htype_is_under_ctx; eauto.
+Qed.
+
+(* 
+Lemma handle_t_makes_sense Γ' x c_r h A Σ E D Γ Z T:
+  has_vtype Γ' (Handler x c_r h)  (TyHandler (CTy A Σ E) D) ->
+  wf_t Γ Z T Σ ->
+  ceq D (join_ctxs Γ' (join_ctx_tctx Γ Z D))
+    (handle_t (ctx_len Γ) (tctx_len Z) h T)
+    (Handle 
+      (Sub.v_shift (Handler x c_r h) (ctx_len Γ + tctx_len Z) 0) 
+      (instantiate_t (tctx_len Z) T))
+.
+Proof.
+induction T; intros htys wft.
++ simpl. *)
+
 (* h : C => D -> c1 ~C c2 -> with h handle c1 ~D with h handle c2 *)

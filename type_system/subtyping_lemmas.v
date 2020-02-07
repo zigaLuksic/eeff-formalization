@@ -214,6 +214,14 @@ exists A'0. exists B'0. aconstructor. constructor.
 Qed.
 
 
+Fixpoint ctx_subtype_trans Γ Γ' Γ'':
+  ctx_subtype Γ Γ' -> ctx_subtype Γ' Γ'' -> ctx_subtype Γ Γ''.
+Proof.
+destruct Γ; destruct Γ'; destruct Γ''; intros sty sty'. all: inv sty; inv sty'.
+- apply SubtypeCtxØ.
+- apply SubtypeCtxU. eauto. eapply vsubtype_trans; eauto.
+Qed.
+
 (* ==================== Context Properties ==================== *)
 
 Fixpoint ctx_subtype_get Γ Γ' A num (csty : ctx_subtype Γ Γ') {struct csty}:
@@ -245,13 +253,13 @@ Proof.
 intros sty1 sty2. induction sty2; auto. apply SubtypeCtxU; assumption. 
 Qed.
 
-
-Lemma ctx_subtype_join_ctx_tctx Γ Γ' Z D:
-  ctx_subtype Γ Γ' -> wf_tctx Z -> wf_ctype D ->
-  ctx_subtype (join_ctx_tctx Γ Z D) (join_ctx_tctx Γ' Z D).
+Lemma ctx_subtype_tctx_to_ctx Z C C':
+  wf_tctx Z -> csubtype C C' -> 
+  ctx_subtype (tctx_to_ctx Z C) (tctx_to_ctx Z C').
 Proof.
-intros sty wfZ wfD. induction Z; auto.
-inv wfZ. apply SubtypeCtxU. auto. apply vsubtype_refl. apply WfTyFun; auto. 
+intros wfz sty. induction Z; simpl. apply SubtypeCtxØ. 
+apply SubtypeCtxU. inv wfz. auto. apply SubtypeTyFun.
+apply vsubtype_refl. inv wfz. auto. auto. 
 Qed.
 
 
@@ -416,9 +424,11 @@ inv r. eapply Respects; auto. destruct H3.
 + eapply RespectEqsØ.
 + eapply RespectEqsU; eauto.
   eapply ctx_subtype_ceq. eauto.
-  apply join_ctx_tctx_wf. apply join_ctxs_wf. all: inv H2; auto. 
-  apply ctx_subtype_join_ctx_tctx. apply ctx_subtype_join_ctxs. 
-  all: assumption || apply ctx_subtype_refl; assumption.
+  apply wf_join_ctxs. apply wf_join_ctxs. all: inv H2; auto.
+  apply wf_tctx_to_ctx; auto.   
+  apply ctx_subtype_join_ctxs. apply ctx_subtype_join_ctxs. 
+  all: auto; apply ctx_subtype_refl.
+  apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
 inv equals. destruct H1; apply Veq; eauto.
@@ -446,7 +456,7 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 }{
 intros wf ctxsty.
 inv equals. destruct H1; apply Ceq; eauto.
-all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
+all: clear ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 + eapply CeqRet; eauto.
@@ -485,6 +495,13 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq
   eapply ctx_subtype_ceq; eauto; inv H3; inv H5; inv H3.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
++ eapply OOTB; eauto. eapply ctx_subtype_trans; eauto.
++ eapply ctx_subtype_insert in ctxsty; auto.
+  destruct ctxsty as [Γ''[A'[same[stya[wfa csty]]]]]. subst.
+  eapply CeqShift; eauto. eapply ctx_subtype_ceq; eauto.
+  eapply wf_ctx_insert_rev. eauto. inv H1. inv H3. auto.
++ eapply CeqSub; eauto.
++ eapply CeqSubs; eauto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.
@@ -640,10 +657,10 @@ Qed.
 (* ==================== Respects Subtypes ==================== *)
 
 Lemma has_eq_respects Γ h Σ D E Γ' Z T1 T2:
-  respects Γ h Σ D E -> has_eq E Γ' Z T1 T2 ->
-  ceq D (join_ctx_tctx (join_ctxs Γ Γ') Z D)
-    (handle_t (ctx_len Γ') (tctx_len Z) h T1)
-    (handle_t (ctx_len Γ') (tctx_len Z) h T2).
+  respects Γ' h Σ D E -> has_eq E Γ Z T1 T2 ->
+  ceq D (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
+    (handle_t (ctx_len Γ) (tctx_len Z) h T1) 
+    (handle_t (ctx_len Γ) (tctx_len Z) h T2) .
 Proof.
 intros r c. induction E; simpl in c; destruct c.
 - destruct H as [a[b[c]]]. subst. inv r. inv H3. assumption.
