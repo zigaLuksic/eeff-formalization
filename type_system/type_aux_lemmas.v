@@ -36,7 +36,7 @@ intro types. destruct types. destruct H2; simpl. auto. constructor; eauto.
 assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ (TyFun B_op D)) A_op)) by auto.
 rewrite H5. eauto.
 }
-Qed.
+Admitted.
 
 
 Lemma wf_is_under_ctx_tctx Γ Z T Σ:
@@ -62,15 +62,16 @@ revert Γ. induction T; intros Γ wf.
 + inv wf. simpl. constructor. constructor.
   eapply has_vtype_is_under_ctx. eauto.
   all: apply IHT in H8; destruct H8; assumption.
-Qed.
+Admitted.
 
 
 Lemma handle_t_no_var h i Γ Z T Σ:
   h_no_var h i -> wf_t Γ Z T Σ ->
   c_no_var (handle_t (ctx_len Γ) (tctx_len Z) h T) 
-    (i + ctx_len Γ + tctx_len Z).
+    (i + tctx_len Z + ctx_len Γ).
 Proof.
-revert h Γ i. induction T; intros; simpl.
+  admit.
+(* revert h Γ i. induction T; intros; simpl.
 all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega.
 all: assert (S(S(i+ctx_len Γ+tctx_len Z))=(i+S(S(ctx_len Γ)))+tctx_len Z) 
   as ssctx by omega.
@@ -106,17 +107,17 @@ all: assert (S(i+ctx_len Γ+tctx_len Z)=(i+S(ctx_len Γ))+tctx_len Z)
       assert (S(S(i+ctx_len Γ+tctx_len Z))=ctx_len Γ+tctx_len Z+(2+i)) by omega.
       rewrite H0. apply c_no_var_shift. eauto. omega.
     * assert (S(S(i+ctx_len Γ+tctx_len Z))=ctx_len Γ+tctx_len Z+(2+i)) by omega.
-      rewrite H0. admit. (* apply IHT.
+      rewrite H0. apply IHT.
       rewrite v_shift_shift, H0. apply v_no_var_shift; try omega.
-      eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. eauto. omega. *)
+      eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. eauto. omega.
     * simpl. assert (S(i+ctx_len Γ+tctx_len Z)=i+(S (ctx_len Γ))+tctx_len Z).
       omega. assert (S (ctx_len Γ) = ctx_len (CtxU Γ B_op)). simpl. omega.
-      admit. (* rewrite H0, H1. auto. *)
+       rewrite H0, H1. auto.
   - simpl. constructor.
     * rewrite comm. eapply v_under_var_no_var.
       eapply has_vtype_is_under_ctx. eauto. all: omega.
     * rewrite sctx. assert (S (ctx_len Γ) = ctx_len (CtxU Γ B_op)).
-      simpl. omega. rewrite H0. auto.
+      simpl. omega. rewrite H0. auto. *)
 Admitted.
 
 (* ==================== Handling and Shifts. ==================== *)
@@ -125,9 +126,10 @@ Lemma handle_t_shift Γ' Γ Z h T Σ D i:
   wf_t Γ Z T Σ -> has_htype Γ' h Σ D -> 
     handle_t (ctx_len Γ) (tctx_len Z) (Sub.h_shift h 1 i) T
   = Sub.c_shift (handle_t (ctx_len Γ) (tctx_len Z) h T) 
-      1 (i + ctx_len Γ + tctx_len Z).
+      1 (i + tctx_len Z + ctx_len Γ).
 Proof.
-revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
+  admit.
+(* revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
 all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega.
 + apply tctx_len_gets in H5 as zlen.
   destruct ((i + ctx_len Γ + tctx_len Z) <=? num) eqn:cmp.
@@ -183,7 +185,7 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
     (* f_equal. simpl. 
     assert (S(ctx_len Γ)=ctx_len (CtxU Γ B_op)) by (simpl;omega).
     assert (S(i+ctx_len Γ+tctx_len Z)=i+ctx_len (CtxU Γ B_op)+tctx_len Z).
-    simpl. omega. rewrite H, H0, IHT. f_equal. all: assumption. *)
+    simpl. omega. rewrite H, H0, IHT. f_equal. all: assumption. *) *)
 Admitted.
 
 
@@ -191,9 +193,10 @@ Lemma handle_t_negshift Γ' Γ Z h T Σ D i:
   h_no_var h i -> wf_t Γ Z T Σ -> has_htype Γ' h Σ D -> 
     handle_t (ctx_len Γ) (tctx_len Z) (Sub.h_negshift h 1 i) T
   = Sub.c_negshift (handle_t (ctx_len Γ) (tctx_len Z) h T) 
-      1 (i + ctx_len Γ + tctx_len Z).
+      1 (i + tctx_len Z + ctx_len Γ).
 Proof.
-revert Γ h i. induction T; intros Γ h i novar wf types; simpl; inv wf.
+  admit.
+(* revert Γ h i. induction T; intros Γ h i novar wf types; simpl; inv wf.
 all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega.
 + apply tctx_len_gets in H5 as zlen.
   destruct ((i + ctx_len Γ + tctx_len Z) <=? num) eqn:cmp.
@@ -267,7 +270,7 @@ all: assert (i+ctx_len Γ+tctx_len Z=tctx_len Z+(i+ctx_len Γ)) as comm by omega
   * admit.
     (* assert (S(ctx_len Γ)=ctx_len (CtxU Γ B_op)) by (simpl;omega).
     assert (S(i+ctx_len Γ+tctx_len Z)=i+ctx_len (CtxU Γ B_op)+tctx_len Z).
-    simpl. omega. simpl. rewrite H0, H. eapply handle_t_no_var; eauto. *)
+    simpl. omega. simpl. rewrite H0, H. eapply handle_t_no_var; eauto. *) *)
 Admitted.
 
 
@@ -275,7 +278,7 @@ Lemma handle_t_sub Γ' Γ Z h T Σ D i v_s:
   wf_t Γ Z T Σ -> has_htype Γ' h Σ D ->
     handle_t (ctx_len Γ) (tctx_len Z) (Sub.h_sub h (i, v_s)) T
   = Sub.c_sub (handle_t (ctx_len Γ) (tctx_len Z) h T)
-      (i+ctx_len Γ+tctx_len Z, Sub.v_shift v_s (ctx_len Γ+tctx_len Z) 0).
+      (i+tctx_len Z+ctx_len Γ, Sub.v_shift v_s (tctx_len Z+ctx_len Γ) 0).
 Proof.
 admit.
 (* revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
@@ -473,9 +476,10 @@ inv orig. destruct H3.
 + clear V CI HC R VE CE HE. apply RespectEqsØ.
 + specialize (R _ _ _ _ _ H3) as IHres. specialize (CE _ _ _ _ H4) as IHeq.
   clear V CI HC R VE CE HE. apply RespectEqsU. auto.
-  rewrite join_ctxs_insert, join_ctx_tctx_insert.
+  rewrite join_ctxs_insert, join_ctxs_insert.
   erewrite handle_t_shift. erewrite handle_t_shift.
-  assert (tctx_len Z+(ctx_len Γ'+i) = i+ctx_len Γ'+tctx_len Z) by omega.
+  rewrite <-len_tctx_to_ctx.
+  assert (ctx_len Γ+(tctx_len Z+i) = i+tctx_len Z+ctx_len Γ) by omega.
   rewrite H5. apply IHeq.
   all: inv H2. all: try eassumption.
 }{
@@ -648,7 +652,7 @@ intros wfins. inv orig. destruct H4.
   - rewrite ctx_insert_extend, ctx_insert_extend. eauto.
   - eauto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint v_shift_typesafe v (Γ:ctx) A0 A :
@@ -693,19 +697,7 @@ apply heq_insert_typesafe. assumption.
 Qed.
 
 
-Lemma v_join_ctx_tctx_typesafe Γ Z D v A :
-  has_vtype Γ v A -> wf_tctx Z -> wf_ctype D ->
-  has_vtype (join_ctx_tctx Γ Z D) (Sub.v_shift v (tctx_len Z) 0) A.
-Proof.
-intros; induction Z; simpl.
-+ rewrite v_shift_0. assumption.
-+ assert (S(tctx_len Z)=tctx_len Z+1) by omega. rewrite H2.
-  rewrite <-v_shift_shift. apply v_shift_typesafe.
-  all: inv H0; try apply WfTyFun; auto.
-Qed.
-
-
-Lemma v_join_ctxs_typesafe Γ Γ' v A :
+Lemma v_join_ctxs_typesafe_left Γ Γ' v A :
   has_vtype Γ v A -> wf_ctx Γ' -> 
   has_vtype (join_ctxs Γ Γ') (Sub.v_shift v (ctx_len Γ') 0) A.
 Proof.
@@ -715,19 +707,54 @@ intros; induction Γ'; simpl.
   rewrite <-v_shift_shift. apply v_shift_typesafe; inv H0; auto.
 Qed.
 
-
-Lemma v_join_all_ctxs_typesafe Γ Γ' Z D v A :
-  has_vtype Γ v A -> wf_ctx Γ' -> wf_tctx Z -> wf_ctype D ->
-  has_vtype (join_ctx_tctx (join_ctxs Γ Γ') Z D)
-    (Sub.v_shift v (ctx_len Γ'+tctx_len Z) 0) A.
+Lemma c_join_ctxs_typesafe_left Γ Γ' c C :
+  has_ctype Γ c C -> wf_ctx Γ' -> 
+  has_ctype (join_ctxs Γ Γ') (Sub.c_shift c (ctx_len Γ') 0) C.
 Proof.
 intros; induction Γ'; simpl.
-+ apply v_join_ctx_tctx_typesafe; auto.
-+ assert (S(ctx_len Γ'+tctx_len Z)=S(ctx_len Γ')+tctx_len Z) by omega.
-  rewrite H3, <-v_shift_shift. apply v_join_ctx_tctx_typesafe; auto.
-  assert (S(ctx_len Γ')=ctx_len Γ'+1) by omega. rewrite H4.
-  rewrite <-v_shift_shift. apply v_shift_typesafe; inv H0; auto.
-  apply v_join_ctxs_typesafe; auto.
++ rewrite c_shift_0. assumption.
++ assert (S(ctx_len Γ')=ctx_len Γ'+1) by omega. rewrite H1.
+  rewrite <-c_shift_shift. apply c_shift_typesafe; inv H0; auto.
+Qed.
+
+
+Fixpoint v_join_ctxs_typesafe_right Γ Γ' v A {struct Γ'}:
+  has_vtype Γ v A -> wf_ctx Γ' -> 
+  has_vtype (join_ctxs Γ' Γ) v A.
+Proof.
+intros; destruct Γ'; simpl.
++ rewrite join_ctxs_left_unit. assumption.
++ rewrite join_ctxs_left_step.
+  apply v_join_ctxs_typesafe_right. 
+  rewrite <-(v_shift_too_high _ 1 (ctx_len Γ)).
+  apply v_insert_typesafe. auto. inv H0. auto.
+  eapply has_vtype_is_under_ctx. eauto. inv H0. auto.
+Qed.
+
+
+Lemma v_join_all_ctxs_typesafe Γ Γ' Z D v A :
+  has_vtype Γ' v A -> wf_ctx Γ -> wf_tctx Z -> wf_ctype D ->
+  has_vtype (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
+    (Sub.v_shift v (tctx_len Z+ctx_len Γ) 0) A.
+Proof.
+intros. 
+rewrite <-v_shift_shift.
+apply v_join_ctxs_typesafe_left; auto.
+erewrite len_tctx_to_ctx. apply v_join_ctxs_typesafe_left. auto.
+apply wf_tctx_to_ctx; auto.
+Qed.
+
+
+Lemma c_join_all_ctxs_typesafe Γ Γ' Z D c C :
+  has_ctype Γ' c C -> wf_ctx Γ -> wf_tctx Z -> wf_ctype D ->
+  has_ctype (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
+    (Sub.c_shift c (tctx_len Z+ctx_len Γ) 0) C.
+Proof.
+intros. 
+rewrite <-c_shift_shift.
+apply c_join_ctxs_typesafe_left; auto.
+erewrite len_tctx_to_ctx. apply c_join_ctxs_typesafe_left. auto.
+apply wf_tctx_to_ctx; auto.
 Qed.
 
 
@@ -877,7 +904,9 @@ destruct H3.
   clear V CI HC R VE CE HE.
   apply RespectEqsU. eauto. erewrite handle_t_sub. erewrite handle_t_sub.
   eapply IHc. all: inv H2; eauto. clear IHc IHr.
-  * erewrite <-get_join_ctx_tctx, <-get_join_ctxs. eauto.
+  * assert (i+tctx_len Z+ctx_len Γ=ctx_len Γ+(tctx_len Z+i)) as same by omega.
+    erewrite same, <-get_join_ctxs_left, len_tctx_to_ctx, <-get_join_ctxs_left. 
+    eauto.
   * eapply v_join_all_ctxs_typesafe; auto.
 }{
 intros gets tyvs. apply Veq.
@@ -1069,7 +1098,7 @@ inv orig. destruct H4.
     all: inv H6; inv H8; inv H6. inv H14. assumption. assumption.
   - eauto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint v_subs_typesafe 
@@ -1297,19 +1326,25 @@ destruct orig. destruct H3.
 + clear V CI HC R VE CE HE.
   apply Respects; auto; unfold h_subs; simpl. apply RespectEqsØ.
 + specialize (R _ _ _ _ _ _ i v_s _ H3 tysh tyvs geq) as IHr.
-  specialize (CE (join_ctx_tctx (join_ctxs Γ Γ') Z D) (join_ctx_tctx (join_ctxs Γ0 Γ') Z D) D (handle_t (ctx_len Γ') (tctx_len Z) h T1) (handle_t (ctx_len Γ') (tctx_len Z) h T2) (ctx_len Γ' + tctx_len Z + i) (Sub.v_shift v_s (ctx_len Γ' + tctx_len Z) 0) A_s H4) as IHc.
+  specialize (CE 
+    (join_ctxs (join_ctxs Γ (tctx_to_ctx Z D)) Γ0) 
+    (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ0) 
+    D (handle_t (ctx_len Γ0) (tctx_len Z) h T1) 
+    (handle_t (ctx_len Γ0) (tctx_len Z) h T2) 
+    (i + tctx_len Z + ctx_len Γ0) 
+    (Sub.v_shift v_s (tctx_len Z+ctx_len Γ0) 0) A_s H4) as IHc.
   all: clear V CI HC R VE CE HE.
   apply Respects; auto; unfold h_subs; simpl. apply RespectEqsU. auto.
-  assert (i + ctx_len Γ' + tctx_len Z = ctx_len Γ' + tctx_len Z + i) by omega. 
   erewrite handle_t_negshift, handle_t_sub, v_shift_comm.
   erewrite handle_t_negshift, handle_t_sub, (v_shift_comm 1 i).
-  rewrite H5. eapply IHc.
+  assert (tctx_len Z+ctx_len Γ0+i=i+tctx_len Z+ctx_len Γ0) as s by omega.
+  rewrite s. eapply IHc. all: clear IHc.
   all: omega || (inv H2; eauto).
   - apply v_join_all_ctxs_typesafe; auto.
-  - assert (ctx_len Γ' + tctx_len Z + i = tctx_len Z + (ctx_len Γ'+i)) by omega.
-    rewrite H2, <-join_ctx_tctx_insert. f_equal.
-    rewrite <-join_ctxs_insert. f_equal.
-  - rewrite join_ctx_tctx_len, len_join_ctxs. omega.
+  - assert (i+tctx_len Z+ctx_len Γ0=ctx_len Γ0+(tctx_len Z+i)) as ss by omega.
+    rewrite ss, <-join_ctxs_insert. f_equal.
+    erewrite len_tctx_to_ctx, <-join_ctxs_insert. auto.
+  - rewrite len_join_ctxs, len_join_ctxs, <-len_tctx_to_ctx. omega.
   - apply h_sub_makes_no_var. apply v_shift_makes_no_var.
   - eapply h_sub_typesafe; eauto. apply get_ctx_insert_new. auto.
     eapply v_insert_typesafe; auto. inv tyvs. auto.
@@ -1655,21 +1690,122 @@ destruct orig. destruct H4.
     simpl. do 2 f_equal. assumption. simpl. omega. omega.
   - eauto.
 }
+Admitted.
+
+
+Fixpoint cop_insert_ctx Γ' Γ A B D c {struct Γ}:
+  wf_ctx Γ -> has_ctype (CtxU (CtxU Γ' (TyFun B D)) A) c D ->
+  has_ctype 
+    (CtxU (CtxU (join_ctxs Γ' Γ) (TyFun B D)) A) 
+    (Sub.c_shift c (ctx_len Γ) 2) D.
+Proof.
+intros wfg tys.
+destruct Γ; simpl.
++ rewrite c_shift_0. auto.
++ assert (CtxU (CtxU (CtxU (join_ctxs Γ' Γ) v) (TyFun B D)) A
+    = ctx_insert (CtxU (CtxU (join_ctxs Γ' Γ) (TyFun B D)) A) v 2).
+  { simpl. do 2 f_equal. destruct Γ; simpl. destruct Γ'; simpl. all: auto. }
+  assert (S (ctx_len Γ) = ctx_len Γ + 1) by omega.
+  rewrite H, H0. rewrite <-(c_shift_shift). apply c_insert_typesafe.
+  all: inv wfg; auto.
 Qed.
 
-Fixpoint handle_t_types Γ Z T Σ Γ' x cr h A E D:
-  wf_ctx Γ -> wf_tctx Z -> wf_t Γ Z T Σ -> 
-  has_vtype Γ' (Handler x cr h) (TyHandler (CTy A Σ E) D) ->
+
+Fixpoint handle_t_cop_types Γ' Γ Z A B D c:
+  wf_ctx Γ -> wf_tctx Z ->
+  has_ctype (CtxU (CtxU Γ' (TyFun B D)) A) c D ->
   has_ctype 
-    (join_ctxs Γ' (join_ctx_tctx Γ Z D)) 
+    (CtxU (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) (TyFun B D)) A) 
+    (Sub.c_shift c (tctx_len Z + ctx_len Γ) 2) D.
+Proof.
+intros wfg wfz tys.
+rewrite <-join_ctxs_assoc. 
+erewrite len_tctx_to_ctx, <-len_join_ctxs.
+apply cop_insert_ctx. apply wf_join_ctxs. apply wf_tctx_to_ctx. all: auto.
+inv tys. auto.
+Qed.
+
+
+Fixpoint handle_t_types Γ Z T Σ Γ' h D {struct T}:
+  wf_ctx Γ -> wf_tctx Z -> wf_t Γ Z T Σ -> has_htype Γ' h  Σ D ->
+  has_ctype 
+    (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
     (handle_t (ctx_len Γ) (tctx_len Z) h T) D.
 Proof.
 intros wfc wfz wft tys.
 assert (wf_ctype D) by (inv tys; inv H0; assumption).
-assert (wf_ctx (join_ctxs Γ' (join_ctx_tctx Γ Z D))).
-{ apply wf_join_ctxs. inv tys. assumption. apply join_ctx_tctx_wf; auto. } 
-destruct T; simpl; apply TypeC; auto.
-+ inv wft. eapply TypeApp; admit.
-+ inv wft. eapply TypeAbsurd. admit.
-+ inv wft. eapply TypeΠMatch. admit. 
-  
+assert (wf_ctx (join_ctxs Γ' (tctx_to_ctx Z D))) as wfct.
+{ apply wf_join_ctxs. inv tys. auto. apply wf_tctx_to_ctx; auto. }
+assert (wf_ctx (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)) as wfctt.
+{ apply wf_join_ctxs; auto. }
+destruct T; simpl.
++ apply TypeC; auto. inv wft. eapply TypeApp.
+  - apply TypeV; auto. instantiate (1:=A).
+    apply WfTyFun. inv H4. auto. auto. apply TypeVar.
+    erewrite <-get_join_ctxs_left. apply get_join_ctxs_right.
+    apply get_tctx_to_ctx. auto.
+  - apply v_join_ctxs_typesafe_right; auto.
++ apply TypeC; auto. inv wft. eapply TypeAbsurd. apply v_join_ctxs_typesafe_right; auto.
++ apply TypeC; auto. inv wft. eapply TypeΠMatch.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - assert (CtxU (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) A) B
+      = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) (CtxU (CtxU Γ A) B)). 
+    { simpl.  reflexivity. }
+    assert (S (S (ctx_len Γ))=ctx_len (CtxU (CtxU Γ A) B)).
+    { simpl. reflexivity. }
+    rewrite H0. rewrite H1. eapply handle_t_types; eauto.
+    apply WfCtxU. apply WfCtxU. auto. all: inv H7; inv H3; auto.
++ apply TypeC; auto. inv wft. eapply TypeΣMatch.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - assert (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) A
+      = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) (CtxU Γ A)). 
+    { simpl.  reflexivity. }
+    assert (S (ctx_len Γ)=ctx_len (CtxU Γ A)).
+    { simpl. reflexivity. }
+    rewrite H0. rewrite H1. eapply handle_t_types; eauto.
+    apply WfCtxU. auto. inv H8. inv H3. auto.
+  - assert (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) B
+      = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) (CtxU Γ B)). 
+    { simpl.  reflexivity. }
+    assert (S (ctx_len Γ)=ctx_len (CtxU Γ B)).
+    { simpl. reflexivity. }
+    rewrite H0. rewrite H1. eapply handle_t_types; eauto.
+    apply WfCtxU. auto. inv H8. inv H3. auto.
++ apply TypeC; auto. inv wft. eapply TypeListMatch.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - eauto.
+  - assert (CtxU(CtxU(join_ctxs(join_ctxs Γ' (tctx_to_ctx Z D))Γ)A)(TyList A)
+      = join_ctxs(join_ctxs Γ'(tctx_to_ctx Z D))(CtxU(CtxU Γ A)(TyList A))). 
+    { simpl.  reflexivity. }
+    assert (S (S (ctx_len Γ))=ctx_len (CtxU (CtxU Γ A) (TyList A))).
+    { simpl. reflexivity. }
+    rewrite H0. rewrite H1. eapply handle_t_types; eauto.
+    apply WfCtxU. apply WfCtxU. auto. all: inv H8; auto; inv H3; auto.
++ inv wft.
+  specialize (h_has_case Γ' h Σ D o A_op B_op tys H7) as has.
+  destruct has as [x[k[c_op finds]]].
+  eapply case_has_type in finds as coptys; eauto. rewrite finds.
+  unfold c_subs2_out.
+  eapply c_subs_typesafe. instantiate (1:= 
+  (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)) (TyFun B_op D)).
+  eapply c_subs_typesafe. instantiate (1:= 
+  (CtxU (CtxU(join_ctxs (join_ctxs Γ'(tctx_to_ctx Z D)) Γ) (TyFun B_op D))A_op)).
+  - assert (ctx_len Γ + tctx_len Z = tctx_len Z + ctx_len Γ) as same by omega.
+    rewrite same. apply handle_t_cop_types; eauto.
+  - apply v_shift_typesafe. apply v_join_ctxs_typesafe_right; eauto.
+    inv coptys. inv H0. inv H5. auto. 
+  - simpl. auto.
+  - omega.
+  - apply TypeV; eauto. inv coptys. inv H0. inv H5. eauto.
+    apply TypeFun.
+    assert (S (ctx_len Γ) = ctx_len (CtxU Γ B_op)) as samelen by (simpl; auto).
+    assert (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) B_op
+      = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) (CtxU Γ B_op)).
+    { simpl. reflexivity. }
+    rewrite samelen, H0. eapply handle_t_types; eauto.
+    apply WfCtxU. auto. inv coptys. inv H1. inv H6. inv H11. auto. 
+  - assert (forall γ A, CtxU γ A = ctx_insert γ A 0).
+    { intros. induction γ; simpl; auto. }
+    rewrite H0. auto.
+  - omega.
+Qed.

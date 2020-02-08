@@ -4,7 +4,7 @@
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Require Export syntax syntax_lemmas subtyping substitution.
+Require Export syntax subtyping substitution.
 
 (* ==================== Template Handling ==================== *)
 
@@ -25,13 +25,10 @@ Fixpoint handle_t Γ_len Z_len h T :=
         x xs (handle_t (2+Γ_len) Z_len h T2)
   | TOp op v y T =>
       match find_case h op with 
-      | Some (x, k, c_op) => 
-          (c_subs 
-            (c_subs 
-              (Sub.c_shift c_op (Γ_len + Z_len) 0) 
-              (Fun y (handle_t (1+Γ_len) Z_len h T)) (Γ_len + Z_len)
-            )
-            v (Γ_len + Z_len))
+      | Some (x, k, c_op) => c_subs2_out
+            (Sub.c_shift c_op (Γ_len + Z_len) 2) 
+              (Fun y (handle_t (1+Γ_len) Z_len h T)) 
+              v
       | None => 
           (* You shouldn't be here *)
           Op op v y (handle_t (1+Γ_len) Z_len h T) 

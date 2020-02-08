@@ -92,6 +92,27 @@ all: destruct j; simpl; auto.
 all: destruct i; simpl; omega || auto. f_equal. apply IHΓ. omega.
 Qed.
 
+(* ==================== Ctx Joins ==================== *)
+
+Lemma join_ctxs_left_unit Γ:
+  join_ctxs CtxØ Γ = Γ.
+Proof.
+induction Γ; simpl; auto. rewrite IHΓ. auto.
+Qed.
+
+
+Lemma join_ctxs_left_step Γ' A Γ:
+  join_ctxs (CtxU Γ' A) Γ = join_ctxs Γ' (ctx_insert Γ A (ctx_len Γ)).
+Proof.
+induction Γ; simpl; auto. f_equal. auto.
+Qed.
+
+
+Fixpoint join_ctxs_assoc Γ Γ' Γ'':
+  join_ctxs Γ (join_ctxs Γ' Γ'') = join_ctxs (join_ctxs Γ Γ') Γ''.
+Proof.
+destruct Γ''; simpl; auto. f_equal. auto.
+Qed.
 
 
 Fixpoint get_tctx_to_ctx Z D A i:
@@ -107,11 +128,18 @@ constructor; destruct Z; simpl.
 Qed.
 
 
-Lemma get_join_ctxs Γ Γ' i:
-  get_vtype Γ' i = get_vtype (join_ctxs Γ' Γ) (i+ctx_len Γ).
+Lemma get_join_ctxs_left Γ Γ' i:
+  get_vtype Γ' i = get_vtype (join_ctxs Γ' Γ) (ctx_len Γ+i).
 Proof.
-induction Γ; simpl. f_equal. omega.
-assert (i+S(ctx_len Γ)=S(i+ctx_len Γ)) by omega. rewrite H. auto.
+induction Γ; simpl; auto.
+Qed.
+
+
+Fixpoint get_join_ctxs_right Γ Γ' i A {struct Γ'}:
+  get_vtype Γ' i = Some A -> get_vtype (join_ctxs Γ Γ') i = Some A.
+Proof.
+intro gets. destruct Γ'; simpl in *. discriminate.
+destruct i. auto. auto.
 Qed.
 
 
@@ -247,16 +275,3 @@ intros. induction h. simpl in H0. discriminate.
 inv H. simpl in H0. destruct (op==o); try inv H0; auto.
 Qed.
 
-(* ==================== Term Properties ==================== *)
-
-Lemma join_ctxs_left_unit Γ:
-  join_ctxs CtxØ Γ = Γ.
-Proof.
-induction Γ; simpl; auto. rewrite IHΓ. auto.
-Qed.
-
-Lemma join_ctxs_left_step Γ' A Γ:
-  join_ctxs (CtxU Γ' A) Γ = join_ctxs Γ' (ctx_insert Γ A (ctx_len Γ)).
-Proof.
-induction Γ; simpl; auto. f_equal. auto.
-Qed.

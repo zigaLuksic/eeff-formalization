@@ -12,16 +12,28 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 Require Export syntax_lemmas substitution_lemmas type_lemmas logic_lemmas String.
 Open Scope string_scope.
 
+Ltac obvious := 
+     apply WfCtxØ || (apply WfCtxU; obvious) 
+  || apply WfTCtxØ  || (apply WfTCtxU; obvious) 
+  || apply WfEqsØ || apply WfSigØ || (apply WfSigU; obvious)
+  || apply WfTyUnit || apply WfTyInt 
+  || (apply WfTyFun; obvious) || (apply WfTyΣ; obvious)
+  || (apply WfTyΠ; obvious) || (apply WfCTy; obvious)
+  || auto.
+
+Ltac obvious_vtype := ((apply TypeV; ((apply TypeUnit; obvious)
+  || (apply TypeInt; obvious)
+  || (apply TypeInl; obvious_vtype)
+  || (apply TypeInr; obvious_vtype)
+  || obvious))
+  || obvious).
+
 Example sig := (SigU (SigØ) ("choose") TyUnit (TyΣ TyUnit TyUnit)).
 
 Lemma sig_wf:
   wf_sig sig.
 Proof.
-unfold sig. apply WfSigU.
-- apply WfSigØ.
-- simpl. auto.
-- apply WfTyUnit.
-- apply WfTyΣ; apply WfTyUnit.
+unfold sig. obvious.
 Qed.
 
 Example eq_idem := (EqsU (EqsØ) CtxØ (TCtxU TCtxØ TyUnit)
@@ -35,25 +47,16 @@ Example eq_idem := (EqsU (EqsØ) CtxØ (TCtxU TCtxØ TyUnit)
 Lemma eq_idem_wf:
   wf_eqs eq_idem sig.
 Proof.
-assert (wf_ctx CtxØ) by apply WfCtxØ.
-assert (wf_vtype TyUnit) by apply WfTyUnit.
 assert (forall Γ, wf_ctx Γ -> has_vtype Γ Unit TyUnit).
-{ intros Γ wf. apply TypeV. auto. apply WfTyUnit. apply TypeUnit. }
-unfold eq_idem. apply WfEqsU; auto.
-- apply WfEqsØ.
-- apply WfTCtxU. apply WfTCtxØ. apply WfTyUnit.
-- apply sig_wf.
-- eapply WfTApp; eauto.
-- eapply WfTOp.
+{ intros Γ wf. apply TypeV; obvious. apply TypeUnit. }
+unfold eq_idem. apply WfEqsU; obvious.
+- eapply WfTApp; obvious. apply H; obvious. simpl. auto.
+- eapply WfTOp; obvious_vtype.
   + unfold sig. simpl. reflexivity.
-  + auto.
   + eapply WfTΣMatch.
-    * apply TypeV. apply WfCtxU. auto. apply WfTyΣ; auto.
-      apply WfTyΣ; eauto. apply TypeVar. simpl. auto.
-    * eapply WfTApp. apply H1.
-      apply WfCtxU. apply WfCtxU. auto. apply WfTyΣ. all: auto.
-    * eapply WfTApp. apply H1.
-      apply WfCtxU. apply WfCtxU. auto. apply WfTyΣ. all: auto.
+    * apply TypeV; obvious. apply TypeVar. simpl. auto.
+    * eapply WfTApp. obvious_vtype. simpl. auto.
+    * eapply WfTApp. obvious_vtype. simpl. auto.
 Qed.
 
 Example handler :=
@@ -64,36 +67,43 @@ Example handler :=
 Lemma handler_types:
   has_vtype CtxØ handler (TyHandler (CTy TyInt sig eq_idem) (CTy TyInt SigØ EqsØ))
 .
-assert (wf_ctype (CTy TyInt sig eq_idem)).
-{ apply WfCTy. apply WfTyInt. apply sig_wf. apply eq_idem_wf. }
-assert (wf_ctype (CTy TyInt SigØ EqsØ)).
-{ apply WfCTy. apply WfTyInt. apply WfSigØ. apply WfEqsØ. }
-apply TypeV. apply WfCtxØ. apply WfTyHandler; auto.
-apply TypeHandler.
-+ assert (wf_ctx (CtxU CtxØ TyInt)).
-  apply WfCtxU. apply WfCtxØ. apply WfTyInt. 
-  apply TypeC; auto.
-  apply TypeRet. apply TypeV. auto. apply WfTyInt.
+specialize eq_idem_wf as eqwf.
+apply TypeV; obvious. apply WfTyHandler; obvious.
+apply TypeHandler; obvious.
++ apply TypeC; obvious. apply TypeRet. apply TypeV; obvious.
   apply TypeVar. simpl. auto.
-+ assert (wf_ctx CtxØ) by apply WfCtxØ.
-  apply TypeH; auto. apply sig_wf.
-  apply TypeCasesU. 
-  - simpl. auto.
-  - apply TypeH; auto. apply WfSigØ.
-    apply TypeCasesØ.
-  - assert (wf_ctx (CtxU (CtxU CtxØ (TyFun (TyΣ TyUnit TyUnit) (CTy TyInt SigØ EqsØ))) TyUnit)).
-    { assert (wf_vtype TyUnit) by apply WfTyUnit.
-      apply WfCtxU. apply WfCtxU. auto. apply WfTyFun. apply WfTyΣ. all: auto. }
-    apply TypeC; auto.
-    eapply TypeApp.
-    * apply TypeV; auto. inv H2. inv H5. eauto.
++ apply TypeH; obvious. apply TypeCasesU; obvious.
+  - apply TypeH; obvious. apply TypeCasesØ.
+  - apply TypeC; obvious.
+    eapply TypeApp; obvious.
+    * apply TypeV; auto. obvious.
+      instantiate (1:= TyΣ TyUnit TyUnit). obvious.
       apply TypeVar. simpl. auto.
-    * apply TypeV; auto. apply WfTyΣ; apply WfTyUnit.
-      apply TypeInl. apply TypeV; auto. apply WfTyUnit.
-      apply TypeUnit.
-+ apply Respects.
-  apply WfCtxØ. apply sig_wf. auto. apply eq_idem_wf.
+    * obvious_vtype.
++ apply Respects; obvious.
   apply RespectEqsU.
-  apply Respects. apply WfCtxØ. apply sig_wf. auto. apply WfEqsØ.
-  apply RespectEqsØ.
+  apply Respects; obvious. apply RespectEqsØ.
   simpl. unfold c_subs2_out. unfold c_subs_out. unfold c_subs. simpl.
+  eapply ceq_sym. eapply ceq_trans. apply operational_in_logic.
+  - apply TypeC; obvious.
+    eapply TypeApp.
+    Focus 2.
+      instantiate (1:= TyΣ TyUnit TyUnit).
+      obvious_vtype.
+    apply TypeV; obvious. apply TypeFun. apply TypeC; obvious.
+    eapply TypeΣMatch. obvious_vtype. apply TypeVar. simpl. auto.
+    all: eapply TypeC; obvious; eapply TypeApp; obvious.
+    * apply TypeV; obvious. apply TypeVar. auto.
+    * obvious_vtype.
+    * apply TypeV; obvious. apply TypeVar. auto.
+    * obvious_vtype.
+  - apply Step_App.
+  - unfold c_subs_out. unfold c_subs. simpl.
+    eapply Ceq; obvious.
+    * apply TypeC; obvious. eapply TypeΣMatch; obvious_vtype.
+      all: apply TypeC; obvious; eapply TypeApp; obvious_vtype.
+      all: apply TypeVar; auto.
+    * apply TypeC; obvious. eapply TypeApp; obvious_vtype.
+      apply TypeVar; auto.
+    * eapply βΣMatch_Inl.
+Qed.
