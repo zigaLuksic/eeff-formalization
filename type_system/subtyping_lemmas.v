@@ -332,10 +332,14 @@ with ctx_subtype_ceq Γ Γ' C c1 c2 (equals : ceq C Γ c1 c2) {struct equals}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> ceq C Γ' c1 c2
 
 with ctx_subtype_heq Γ Γ' Σ D h1 h2 (equals : heq Σ D Γ h1 h2) {struct equals}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> heq Σ D Γ' h1 h2.
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> heq Σ D Γ' h1 h2
+
+with ctx_subtype_wf_inst Γ Γ' I Γi (wf : wf_inst Γ I Γi) {struct wf}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_inst Γ' I Γi.
+
 Proof.
 {
-clear ctx_subtype_veq ctx_subtype_ceq ctx_subtype_heq.
+clear ctx_subtype_veq ctx_subtype_ceq ctx_subtype_heq ctx_subtype_wf_inst.
 intros wf ctxsty.
 destruct types. induction H1; apply TypeV; try assumption.
 + apply TypeUnit.
@@ -361,7 +365,8 @@ destruct types. induction H1; apply TypeV; try assumption.
 + eapply TypeVSubtype. 2 : eauto.
   eapply (ctx_subtype_vtype Γ Γ'); assumption.
 }{
-clear ctx_subtype_respects ctx_subtype_veq ctx_subtype_ceq ctx_subtype_heq.
+clear ctx_subtype_wf_inst ctx_subtype_respects.
+clear ctx_subtype_veq ctx_subtype_ceq ctx_subtype_heq.
 intros wf ctxsty.
 destruct types. induction H1; apply TypeC; try assumption.
 + apply TypeRet. eauto.
@@ -406,7 +411,8 @@ destruct types. induction H1; apply TypeC; try assumption.
 + eapply TypeCSubtype. 2: exact H2.
   eapply ctx_subtype_ctype. all: eauto.
 }{
-clear ctx_subtype_vtype ctx_subtype_respects ctx_subtype_veq ctx_subtype_ceq ctx_subtype_heq.
+clear ctx_subtype_vtype ctx_subtype_respects ctx_subtype_veq.
+clear ctx_subtype_ceq ctx_subtype_heq ctx_subtype_wf_inst.
 intros wf ctxsty.
 destruct types. induction H2; apply TypeH; try assumption.
 + eapply TypeCasesØ.
@@ -418,7 +424,8 @@ destruct types. induction H2; apply TypeH; try assumption.
   - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
     all: apply vsubtype_refl; assumption.
 }{
-clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype ctx_subtype_veq ctx_subtype_heq.
+clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
+clear ctx_subtype_veq ctx_subtype_heq.
 intros wf ctxsty.
 inv r. eapply Respects; auto. destruct H3.
 + eapply RespectEqsØ.
@@ -495,13 +502,7 @@ all: clear ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
   eapply ctx_subtype_ceq; eauto; inv H3; inv H5; inv H3.
   - apply WfCtxU; assumption.
   - apply SubtypeCtxU. assumption. apply vsubtype_refl. assumption.
-+ eapply OOTB; eauto. eapply ctx_subtype_trans; eauto.
-+ eapply ctx_subtype_insert in ctxsty; auto.
-  destruct ctxsty as [Γ''[A'[same[stya[wfa csty]]]]]. subst.
-  eapply CeqShift; eauto. eapply ctx_subtype_ceq; eauto.
-  eapply wf_ctx_insert_rev. eauto. inv H1. inv H3. auto.
-+ eapply CeqSub; eauto.
-+ eapply CeqSubs; eauto.
++ eapply OOTB; eauto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.
@@ -519,7 +520,8 @@ all: clear ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
 }{
 intros wf ctxsty.
 inv equals. destruct H4.
-all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_veq.
+all: clear ctx_subtype_vtype ctx_subtype_ctype.
+all: clear ctx_subtype_veq ctx_subtype_wf_inst.
 + eapply Heq. auto. exact H0. exact H1. all: eauto. eapply HeqSigØ.
 + eapply Heq. exact H. exact H0. all: eauto.
   eapply HeqSigU; eauto.
@@ -527,9 +529,48 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_veq.
   - apply WfCtxU. apply WfCtxU. all: assumption.
   - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
     all: apply vsubtype_refl; assumption.
+}{
+clear ctx_subtype_htype ctx_subtype_ctype ctx_subtype_veq ctx_subtype_ceq.
+clear ctx_subtype_respects ctx_subtype_heq.
+intros wfc ctxsty.
+destruct wf.
++ eapply WfInstØ. auto.
++ eapply WfInstU; eauto.
 }
 Qed.
 
+
+(* ==================== Instantiation Properties ==================== *)
+
+
+Lemma wf_inst_subtype Γcheck I Γ Γ':
+  wf_ctx Γ' -> ctx_subtype Γ Γ' -> wf_inst Γcheck I Γ ->
+  wf_inst Γcheck I Γ'.
+Proof.
+intros wfc csty orig. revert Γ' wfc csty. 
+induction orig; intros Γ' wfc csty.
++ inv csty. apply WfInstØ. auto.
++ inv csty. apply WfInstU.
+  - apply TypeV. inv H. auto. inv wfc. auto.
+    eapply TypeVSubtype; eauto.
+  - apply IHorig. inv wfc. auto. auto.
+Qed.
+
+
+Lemma wf_inst_tctx_subtype C C' Γ' Γ Z I:
+  csubtype C C' -> wf_ctype C' ->
+  wf_inst Γ' I (join_ctxs (tctx_to_ctx Z C) Γ) ->
+  wf_inst Γ' I (join_ctxs (tctx_to_ctx Z C') Γ).
+Proof.
+intros. 
+apply wf_inst_wf_ctx in H1 as wfjc.
+apply wf_join_ctxs_rev in wfjc. destruct wfjc as [wfz wfc].
+apply wf_tctx_to_ctx_rev in wfz.
+eapply wf_inst_subtype; eauto.
++ apply wf_join_ctxs; auto. apply wf_tctx_to_ctx; auto.
++ apply ctx_subtype_join_ctxs. apply ctx_subtype_tctx_to_ctx; eauto.
+  apply ctx_subtype_refl. auto.
+Qed.
 
 (* ==================== Subtype Shapes ==================== *)
 

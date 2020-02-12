@@ -261,3 +261,30 @@ Fixpoint t_under_tvar T j :=
   | TListMatch v T1 x xs T2 => (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
   | TOp op v_arg y T => (t_under_tvar T j)
   end.
+
+
+(* ==================== Instantiation ==================== *)
+
+Inductive instantiation : Type :=
+| InstØ : instantiation
+| InstU : instantiation -> val -> instantiation.
+
+
+Fixpoint get_inst_val I i :=
+  match I, i with
+  | InstØ , _=> Unit (* THIS SHOULD NEVER OCCUR *)
+  | InstU I' v, 0 => v
+  | InstU I' v, S i' =>  get_inst_val I' i'
+  end.
+
+Fixpoint inst_no_var I i :=
+  match I with
+  | InstØ => True
+  | InstU I' v => v_no_var v i /\ inst_no_var I' i
+  end.
+
+Fixpoint inst_under_var I i :=
+  match I with
+  | InstØ => True
+  | InstU I' v => v_no_var v i /\ inst_under_var I' i
+  end.

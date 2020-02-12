@@ -178,3 +178,79 @@ Definition h_subs_out (h:hcases) (v_s:val) := h_subs h v_s 0.
 Definition c_subs2_out (c:comp) v1 v0 :=
   (* 1 -> v1, 0 -> v0 *)
   c_subs_out (c_subs_out c (Sub.v_shift v0 1 0)) v1.
+
+
+(* ==================== Instantiation ==================== *)
+
+Fixpoint inst_shift I d cut :=
+  match I with
+  | InstØ => InstØ
+  | InstU I' v => InstU (inst_shift I' d cut) (Sub.v_shift v d cut)
+  end.
+
+Fixpoint inst_negshift I d cut :=
+  match I with
+  | InstØ => InstØ
+  | InstU I' v => InstU (inst_negshift I' d cut) (Sub.v_negshift v d cut)
+  end.
+
+Fixpoint inst_sub I sub :=
+  match I with
+  | InstØ => InstØ
+  | InstU I' v => InstU (inst_sub I' sub) (Sub.v_sub v sub)
+  end.
+
+Fixpoint inst_subs I vs i :=
+  match I with
+  | InstØ => InstØ
+  | InstU I' v => InstU (inst_subs I' vs i) (v_subs v vs i)
+  end.
+
+Fixpoint v_inst v I shift:=
+  match v with
+  | Var (x, n) => get_inst_val I (n-shift)
+  | Unit => Unit
+  | Int n => Int n
+  | Inl v' => Inl (v_inst v' I shift)
+  | Inr v' => Inr (v_inst v' I shift)
+  | Pair v1 v2 => 
+      Pair (v_inst v1 I shift) (v_inst v2 I shift)
+  | ListNil => ListNil
+  | ListCons v vs => 
+      ListCons (v_inst v I shift) (v_inst vs I shift)
+  | Fun x c => 
+      Fun x (c_inst c (inst_shift I 1 0) (1+shift))
+  | Handler x c_ret h =>
+      Handler x (c_inst c_ret (inst_shift I 1 0) (1+shift)) (h_inst h I shift)
+  end
+with c_inst c I shift :=
+  match c with
+  | Ret v => Ret (v_inst v I shift)
+  | Absurd v => Absurd (v_inst v I shift)
+  | ΠMatch v x y c => 
+      ΠMatch (v_inst v I shift) x y (c_inst c (inst_shift I 2 0) (2+shift))
+  | ΣMatch v x c1 y c2 =>
+      ΣMatch (v_inst v I shift)
+        x (c_inst c1 (inst_shift I 1 0) (1+shift)) 
+        y (c_inst c2 (inst_shift I 1 0) (1+shift))
+  | ListMatch v c1 x xs c2 =>
+      ListMatch (v_inst v I shift)
+        (c_inst c1 I shift) x xs (c_inst c2 (inst_shift I 2 0) (2+shift))
+  | App v1 v2 => 
+      App (v_inst v1 I shift) (v_inst v2 I shift)
+  | Op op v_arg y c => 
+      Op op (v_inst v_arg I shift) y (c_inst c (inst_shift I 1 0) (1+shift))
+  | LetRec f x c1 c2 =>
+      LetRec f x (c_inst c1 (inst_shift I 2 0) (2+shift)) 
+        (c_inst c2 (inst_shift I 1 0) (1+shift))
+  | DoBind x c1 c2 => 
+      DoBind x (c_inst c1 I shift) (c_inst c2 (inst_shift I 1 0) (1+shift))
+  | Handle v c' => 
+      Handle (v_inst v I shift) (c_inst c' I shift)
+  end
+with h_inst h I shift :=
+  match h with
+  | CasesØ => CasesØ
+  | CasesU h op x k c => 
+      CasesU (h_inst h I shift) op x k (c_inst c (inst_shift I 2 0) (2+shift))
+  end.

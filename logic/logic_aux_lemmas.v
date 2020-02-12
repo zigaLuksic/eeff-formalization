@@ -7,7 +7,6 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
-
 Lemma heq_cases_ceq Σ D Γ h1 h2 op A B x1 x2 k1 k2 c1 c2 :
   heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
   find_case h1 op = Some (x1, k1, c1) ->
@@ -123,16 +122,8 @@ apply Ceq; auto. destruct H3.
       eapply get_op_type_wf in gets. destruct gets. auto. inv H. auto.
     * eapply SubtypeCtxU. apply ctx_subtype_refl. all: auto.
 + inv H0. eapply OOTB; eauto. eapply eqs_subtype_contains; eauto.
-  eapply ctx_subtype_trans; eauto.
-  inv H1. inv H6. eapply has_eq_wf_parts in H3; eauto.
-  destruct H3 as [wfg[wfz[wf1 wf2]]]. 
-  eapply ctx_subtype_join_ctxs. apply ctx_subtype_tctx_to_ctx.
-  - auto.
-  - apply SubtypeCTy; eauto.
-  - apply ctx_subtype_refl. auto.
-+ eapply CeqShift; eauto.
-+ eapply CeqSub; eauto.
-+ eapply CeqSubs; eauto.
+  eapply wf_inst_tctx_subtype; eauto.
+  apply SubtypeCTy; auto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
 + eapply βΣMatch_Inr.

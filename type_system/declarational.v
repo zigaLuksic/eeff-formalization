@@ -36,23 +36,24 @@ Fixpoint handle_t Γ_len Z_len h T :=
   end.
 
 
-Fixpoint instantiate_t Γ_len T :=
+Fixpoint tmpl_to_comp Γ_len T :=
   match T with
   | TApp (name, num) v => App (Var (name, Γ_len+num)) v
   | TAbsurd v => Absurd v
   | TΠMatch v x y T => 
-      ΠMatch v x y (instantiate_t Γ_len T)
+      ΠMatch v x y (tmpl_to_comp Γ_len T)
   | TΣMatch v x T1 y T2 => 
       ΣMatch v
-        x (instantiate_t Γ_len T1) 
-        y (instantiate_t Γ_len T2)
+        x (tmpl_to_comp Γ_len T1) 
+        y (tmpl_to_comp Γ_len T2)
   | TListMatch v T1 x xs T2 => 
       ListMatch v
-        (instantiate_t Γ_len T1) 
-        x xs (instantiate_t Γ_len T2)
+        (tmpl_to_comp Γ_len T1) 
+        x xs (tmpl_to_comp Γ_len T2)
   | TOp op v y T =>
-      Op op v y (instantiate_t Γ_len T)
+      Op op v y (tmpl_to_comp Γ_len T)
   end.
+
 
 (* ==================== Wellformed Judgements ==================== *)
 
@@ -332,23 +333,12 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     veq A_op Γ v v' ->
     ceq (CTy A Σ E) (CtxU Γ B_op) c c' ->
     ceq' (CTy A Σ E) Γ (Op op v y c) (Op op v' y' c')
-| OOTB A Σ E Γ' Γ Z T1 T2:
+| OOTB A Σ E Γ' I Γ Z T1 T2:
     has_eq E Γ Z T1 T2 ->
-    wf_ctx Γ' -> ctx_subtype Γ' (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
+    wf_inst Γ' I (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
     ceq' (CTy A Σ E) Γ'
-      (instantiate_t (ctx_len Γ) T1) (instantiate_t (ctx_len Γ) T2)
-| CeqShift C Γ A i c1 c2:
-    (* USE ONLY FOR OOTB *)
-    ceq C Γ c1 c2 -> wf_vtype A ->
-    ceq' C (ctx_insert Γ A i) (Sub.c_shift c1 1 i) (Sub.c_shift c2 1 i) 
-| CeqSub C Γ c1 c2 i v_s:
-    (* USE ONLY FOR OOTB *)
-    ceq C Γ c1 c2 -> 
-    ceq' C Γ (Sub.c_sub c1 (i, v_s)) (Sub.c_sub c2 (i, v_s))
-| CeqSubs C Γ Γ' c1 c2 v_s i:
-    (* USE ONLY FOR OOTB *)
-    ceq C Γ' c1 c2 ->
-    ceq' C Γ (c_subs c1 v_s i) (c_subs c2 v_s i)
+      (c_inst (tmpl_to_comp (ctx_len Γ) T1) I 0)
+      (c_inst (tmpl_to_comp (ctx_len Γ) T2) I 0)
 | βΠMatch v1 v2 x y c C Γ: 
     ceq' C Γ
       (ΠMatch (Pair v1 v2) x y c) 
@@ -418,4 +408,10 @@ with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
     ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
     heq Σ D Γ h1 h2 ->
     heq' (SigU Σ op A B) D Γ h1 h2
+
+with wf_inst : ctx -> instantiation -> ctx -> Prop :=
+| WfInstØ Γcheck : wf_ctx Γcheck -> wf_inst Γcheck InstØ CtxØ
+| WfInstU Γcheck I v Γ A : 
+  has_vtype Γcheck v A -> wf_inst Γcheck I Γ ->
+  wf_inst Γcheck (InstU I v) (CtxU Γ A) 
 .
