@@ -214,76 +214,84 @@ Function f_opt (A B:Type) (opt : option A) (f : A -> option B) :=
   end.
 
 
-Fixpoint v_inst v I shift:=
+Fixpoint v_inst v I:=
   match v with
-  | Var (x, n) => get_inst_val I (n-shift)
+  | Var (x, n) => get_inst_val I n
   | Unit => Some Unit
   | Int n => Some (Int n)
-  | Inl v => f_opt (v_inst v I shift) (fun v' => Some (Inl v'))
-  | Inr v => f_opt (v_inst v I shift) (fun v' => Some (Inr v'))
+  | Inl v => f_opt (v_inst v I) (fun v' => Some (Inl v'))
+  | Inr v => f_opt (v_inst v I) (fun v' => Some (Inr v'))
   | Pair v1 v2 => 
-      f_opt (v_inst v1 I shift) (fun v1' =>
-      f_opt (v_inst v2 I shift) (fun v2' =>
+      f_opt (v_inst v1 I) (fun v1' =>
+      f_opt (v_inst v2 I) (fun v2' =>
       Some (Pair v1' v2') ))
   | ListNil => Some ListNil
   | ListCons v vs => 
-      f_opt (v_inst v I shift) (fun v' =>
-      f_opt (v_inst vs I shift)(fun vs' =>
+      f_opt (v_inst v I) (fun v' =>
+      f_opt (v_inst vs I)(fun vs' =>
       Some (ListCons v' vs') ))
   | Fun x c => 
-      f_opt (c_inst c (inst_shift I 1 0) (1+shift)) (fun c' =>
+      f_opt (c_inst c (InstU (inst_shift I 1 0) (Var (x, 0)))) (fun c' =>
       Some (Fun x c') )
   | Handler x c_ret h =>
-      f_opt (c_inst c_ret (inst_shift I 1 0) (1+shift)) (fun c' =>
-      f_opt (h_inst h I shift) (fun h' =>
+      f_opt (c_inst c_ret (InstU (inst_shift I 1 0) (Var (x, 0)))) (fun c' =>
+      f_opt (h_inst h I) (fun h' =>
       Some (Handler x c' h') ))
   end
-with c_inst c I shift :=
+with c_inst c I :=
   match c with
   | Ret v => 
-      f_opt (v_inst v I shift) (fun v' => Some (Ret v'))
+      f_opt (v_inst v I) (fun v' => Some (Ret v'))
   | Absurd v => 
-      f_opt (v_inst v I shift) (fun v' => Some (Absurd v'))
+      f_opt (v_inst v I) (fun v' => Some (Absurd v'))
   | ΠMatch v x y c => 
-      f_opt (v_inst v I shift) (fun v' =>
-      f_opt (c_inst c (inst_shift I 2 0) (2+shift)) (fun c' =>
+      f_opt (v_inst v I) (fun v' =>
+      f_opt (c_inst c 
+        (InstU (InstU (inst_shift I 2 0) (Var (x, 1)))  (Var (y, 0)))) 
+        (fun c' =>
       Some (ΠMatch v' x y c') ))
   | ΣMatch v x c1 y c2 =>
-      f_opt (v_inst v I shift) (fun v' =>
-      f_opt (c_inst c1 (inst_shift I 1 0) (1+shift)) (fun c1' =>
-      f_opt (c_inst c2 (inst_shift I 1 0) (1+shift)) (fun c2' =>
+      f_opt (v_inst v I) (fun v' =>
+      f_opt (c_inst c1 (InstU (inst_shift I 1 0) (Var (x, 0)))) (fun c1' =>
+      f_opt (c_inst c2 (InstU (inst_shift I 1 0) (Var (y, 0)))) (fun c2' =>
       Some (ΣMatch v' x c1' y c2') )))
   | ListMatch v c1 x xs c2 =>
-      f_opt (v_inst v I shift)  (fun v'  =>
-      f_opt (c_inst c1 I shift) (fun c1' =>
-      f_opt (c_inst c2 (inst_shift I 2 0) (2+shift)) (fun c2' =>
+      f_opt (v_inst v I)  (fun v'  =>
+      f_opt (c_inst c1 I) (fun c1' =>
+      f_opt (c_inst c2 
+        (InstU (InstU (inst_shift I 2 0)  (Var (x, 1)))  (Var (xs, 0)))) 
+        (fun c2' =>
       Some (ListMatch v' c1' x xs c2') )))
   | App v1 v2 => 
-      f_opt (v_inst v1 I shift) (fun v1' =>
-      f_opt (v_inst v2 I shift) (fun v2' =>
+      f_opt (v_inst v1 I) (fun v1' =>
+      f_opt (v_inst v2 I) (fun v2' =>
       Some (App v1' v2') ))
   | Op op v y c =>
-      f_opt (v_inst v I shift) (fun v' =>
-      f_opt (c_inst c (inst_shift I 1 0) (1+shift)) (fun c' =>
+      f_opt (v_inst v I) (fun v' =>
+      f_opt (c_inst c (InstU (inst_shift I 1 0) (Var (y, 0)))) (fun c' =>
       Some (Op op v' y c') ))
   | LetRec f x c1 c2 =>
-      f_opt (c_inst c1 (inst_shift I 2 0) (2+shift)) (fun c1' =>
-      f_opt (c_inst c2 (inst_shift I 1 0) (1+shift)) (fun c2' =>
+      f_opt (c_inst c1 
+        (InstU (InstU (inst_shift I 2 0)  (Var (x, 1)))  (Var (f, 0)))) 
+        (fun c1' =>
+      f_opt (c_inst c2 (InstU (inst_shift I 1 0) (Var (f, 0)))) (fun c2' =>
       Some (LetRec f x c1' c2') ))
   | DoBind x c1 c2 => 
-      f_opt (c_inst c1 I shift) (fun c1' =>
-      f_opt (c_inst c2 (inst_shift I 1 0) (1+shift)) (fun c2' =>
+      f_opt (c_inst c1 I) (fun c1' =>
+      f_opt (c_inst c2 (InstU (inst_shift I 1 0) (Var (x, 0)))) (fun c2' =>
       Some (DoBind x c1' c2') ))
   | Handle v c =>
-      f_opt (v_inst v I shift)  (fun v' =>
-      f_opt (c_inst c I shift) (fun c' =>
+      f_opt (v_inst v I)  (fun v' =>
+      f_opt (c_inst c I) (fun c' =>
       Some (Handle v' c') ))
   end
-with h_inst h I shift :=
+with h_inst h I :=
   match h with
   | CasesØ => Some CasesØ
   | CasesU h op x k c =>
-      f_opt (h_inst h I shift) (fun h' =>
-      f_opt (c_inst c (inst_shift I 2 0) (2+shift)) (fun c' =>
+      f_opt (h_inst h I) (fun h' =>
+      f_opt (c_inst c 
+        (InstU (InstU (inst_shift I 2 0)  (Var (x, 1)))  (Var (k, 0)))) 
+        (fun c' =>
       Some (CasesU h' op x k c') ))
   end.
