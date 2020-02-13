@@ -1714,10 +1714,7 @@ with c_wf_inst_typesafe Γ I Γ' c C (orig:has_ctype Γ' c C) :
   exists c', c_inst c I = Some c' /\ has_ctype Γ c' C
 with h_wf_inst_typesafe Γ I Γ' h Σ D (orig:has_htype Γ' h Σ D) :
   wf_inst Γ I Γ' -> 
-  exists h', h_inst h I = Some h' /\ has_htype Γ h' Σ D
-with respects_wf_inst_typesafe Γ I Γ' h Σ D E (orig:respects Γ' h Σ D E) :
-  wf_inst Γ I Γ' ->
-  exists h', h_inst h I = Some h' /\ respects Γ h' Σ D E.
+  exists h', h_inst h I = Some h' /\ has_htype Γ h' Σ D.
 Proof.
 all: intro wfinst; assert (wf_ctx Γ) by (inv wfinst; auto; inv H; auto).
 {
@@ -1747,10 +1744,14 @@ destruct orig. destruct H2; simpl.
 + eapply (wf_inst_extend x) in wfinst as wf2. 2: inv H1; inv H7; eauto.
   eapply c_wf_inst_typesafe in H2; eauto. destruct H2 as [c1'[gets1 tys1]].
   eapply h_wf_inst_typesafe in H3; eauto. destruct H3 as [h'[gets2 tys2]].
-  eapply respects_wf_inst_typesafe in H4; eauto. destruct H4 as [h''[gets3 r3]].
-  rewrite gets2 in gets3. inv gets3.
-  exists (Handler x c1' h''). rewrite gets1. simpl. rewrite gets2. simpl.
+  exists (Handler x c1' h'). rewrite gets1. simpl. rewrite gets2. simpl.
   aconstructor. apply TypeV; auto. apply TypeHandler; auto.
+  induction E as [ | E IHE γ Z T1 T2].
+  - inv H1. inv H5. apply Respects; auto. apply RespectEqsØ.
+  - inv H1. inv H5. apply Respects; auto. apply RespectEqsU.
+    * apply IHE. apply WfTyHandler; auto. apply WfCTy; auto. inv H9. auto.
+      inv H4. inv H10. auto.
+    * inv H4. inv H10.
 + eapply v_wf_inst_typesafe in H2; eauto. destruct H2 as [v1'[gets1 tys1]].
   exists v1'. aconstructor. apply TypeV; auto. eapply TypeVSubtype; eauto.
 }{
