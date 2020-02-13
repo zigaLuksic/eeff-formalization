@@ -272,8 +272,8 @@ Inductive instantiation : Type :=
 
 Fixpoint get_inst_val I i :=
   match I, i with
-  | InstØ , _=> Unit (* THIS SHOULD NEVER OCCUR *)
-  | InstU I' v, 0 => v
+  | InstØ , _=> None
+  | InstU I' v, 0 => Some v
   | InstU I' v, S i' =>  get_inst_val I' i'
   end.
 

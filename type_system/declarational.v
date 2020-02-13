@@ -333,12 +333,12 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     veq A_op Γ v v' ->
     ceq (CTy A Σ E) (CtxU Γ B_op) c c' ->
     ceq' (CTy A Σ E) Γ (Op op v y c) (Op op v' y' c')
-| OOTB A Σ E Γ' I Γ Z T1 T2:
+| OOTB A Σ E Γ' I Γ Z T1 T2 c1 c2:
     has_eq E Γ Z T1 T2 ->
     wf_inst Γ' I (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
-    ceq' (CTy A Σ E) Γ'
-      (c_inst (tmpl_to_comp (ctx_len Γ) T1) I 0)
-      (c_inst (tmpl_to_comp (ctx_len Γ) T2) I 0)
+    c_inst (tmpl_to_comp (ctx_len Γ) T1) I 0 = Some c1 ->
+    c_inst (tmpl_to_comp (ctx_len Γ) T2) I 0 = Some c2 ->
+    ceq' (CTy A Σ E) Γ' c1 c2
 | βΠMatch v1 v2 x y c C Γ: 
     ceq' C Γ
       (ΠMatch (Pair v1 v2) x y c) 

@@ -9,6 +9,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas
   logic_aux_lemmas.
+Open Scope string_scope.
 
 Ltac inv H := inversion H; clear H; subst.
 
@@ -36,7 +37,7 @@ intro types. destruct types. destruct H2; simpl. auto. constructor; eauto.
 assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ (TyFun B_op D)) A_op)) by auto.
 rewrite H5. eauto.
 }
-Qed.
+Admitted.
 
 
 Lemma wf_is_under_ctx_tctx Γ Z T Σ:
@@ -62,7 +63,7 @@ revert Γ. induction T; intros Γ wf.
 + inv wf. simpl. constructor. constructor.
   eapply has_vtype_is_under_ctx. eauto.
   all: apply IHT in H8; destruct H8; assumption.
-Qed.
+Admitted.
 
 
 Lemma handle_t_no_var h i Γ Z T Σ:
@@ -103,7 +104,7 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   - simpl. constructor.
     * eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. eauto. omega.
     * rewrite slen, (sctx B_op). eauto.
-Qed.
+Admitted.
 
 (* ==================== Handling and Shifts. ==================== *)
 
@@ -157,7 +158,7 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     apply v_under_var_shift. apply has_vtype_is_under_ctx in H7.
     eapply v_under_var_weaken. eauto. omega. omega. 
   * f_equal. rewrite slen, (sctx B_op). auto. 
-Qed.
+Admitted.
 
 
 Lemma handle_t_negshift Γ' Γ Z h T Σ D i:
@@ -219,7 +220,7 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     apply v_no_var_shift. apply has_vtype_is_under_ctx in H7.
     eapply v_under_var_no_var. eauto. all: omega.
   * simpl. rewrite slen, (sctx B_op). eapply handle_t_no_var; eauto.
-Qed.
+Admitted.
 
 
 Lemma handle_t_sub Γ' Γ Z h T Σ D i v_s:
@@ -280,7 +281,7 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     eapply v_under_var_weaken. eauto. omega. omega. 
   * assert (tctx_len Z + ctx_len Γ + 1 = tctx_len Z + S(ctx_len Γ)) as same.
     omega. f_equal. rewrite v_shift_shift, same, slen, (sctx B_op). auto.
-Qed.
+Admitted.
 
 
 (* ==================== Safety and Shifts. ==================== *)
@@ -509,8 +510,9 @@ inv orig. destruct H1.
   clear V CI HC R VE CE HE WF. simpl. eapply CeqOp; eauto.
   rewrite ctx_insert_extend; auto.
 + specialize (WF _ _ _ H2) as IHwf.
-  clear V CI HC R VE CE HE WF.
-  rewrite c_shift_inst, c_shift_inst. eapply OOTB; eauto.
+  clear V CI HC R VE CE HE WF. eapply OOTB; eauto.
+  rewrite <-c_shift_inst. rewrite H3. simpl. auto.
+  rewrite <-c_shift_inst. rewrite H4. simpl. auto.
 + clear V CI HC R VE CE HE WF. specialize βΠMatch as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
   rewrite c_shift_subs, c_shift_subs, <-v_shift_comm.
@@ -597,7 +599,7 @@ intros wfins. inv orig.
   clear V CI HC R VE CE HE WF. simpl.
   apply WfInstU; auto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint v_shift_typesafe v (Γ:ctx) A0 A :
@@ -644,7 +646,7 @@ apply veq_insert_typesafe. assumption.
 apply ceq_insert_typesafe. assumption.
 apply heq_insert_typesafe. assumption.
 apply wf_inst_insert_typesafe. assumption.
-Qed.
+Admitted.
 
 
 Lemma v_join_ctxs_typesafe_left Γ Γ' v A :
@@ -655,7 +657,7 @@ intros; induction Γ'; simpl.
 + rewrite v_shift_0. assumption.
 + assert (S(ctx_len Γ')=ctx_len Γ'+1) by omega. rewrite H1.
   rewrite <-v_shift_shift. apply v_shift_typesafe; inv H0; auto.
-Qed.
+Admitted.
 
 
 Lemma c_join_ctxs_typesafe_left Γ Γ' c C :
@@ -666,7 +668,7 @@ intros; induction Γ'; simpl.
 + rewrite c_shift_0. assumption.
 + assert (S(ctx_len Γ')=ctx_len Γ'+1) by omega. rewrite H1.
   rewrite <-c_shift_shift. apply c_shift_typesafe; inv H0; auto.
-Qed.
+Admitted.
 
 
 Fixpoint v_join_ctxs_typesafe_right Γ Γ' v A {struct Γ'}:
@@ -680,7 +682,7 @@ intros; destruct Γ'; simpl.
   rewrite <-(v_shift_too_high _ 1 (ctx_len Γ)).
   apply v_insert_typesafe. auto. inv H0. auto.
   eapply has_vtype_is_under_ctx. eauto. inv H0. auto.
-Qed.
+Admitted.
 
 
 Lemma v_join_all_ctxs_typesafe Γ Γ' Z D v A :
@@ -693,7 +695,7 @@ rewrite <-v_shift_shift.
 apply v_join_ctxs_typesafe_left; auto.
 erewrite len_tctx_to_ctx. apply v_join_ctxs_typesafe_left. auto.
 apply wf_tctx_to_ctx; auto.
-Qed.
+Admitted.
 
 
 Lemma c_join_all_ctxs_typesafe Γ Γ' Z D c C :
@@ -706,7 +708,7 @@ rewrite <-c_shift_shift.
 apply c_join_ctxs_typesafe_left; auto.
 erewrite len_tctx_to_ctx. apply c_join_ctxs_typesafe_left. auto.
 apply wf_tctx_to_ctx; auto.
-Qed.
+Admitted.
 
 
 Fixpoint v_sub_typesafe 
@@ -961,8 +963,9 @@ inv orig. destruct H1.
   eapply IHc. simpl. eauto. apply v_shift_typesafe. assumption.
   apply get_op_type_wf in H1. destruct H1. assumption. inv H. inv H5. auto.
 + specialize (WF _ _ _ H2) as IHwf.
-  clear V CI HC R VE CE HE WF. 
-  rewrite c_sub_inst, c_sub_inst. eapply OOTB; eauto.
+  clear V CI HC R VE CE HE WF. clear H2. eapply OOTB; eauto.
+  rewrite <-c_sub_inst. rewrite H3. simpl. auto.
+  rewrite <-c_sub_inst. rewrite H4. simpl. auto.
 + clear V CI HC R VE CE HE WF. specialize βΠMatch as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
   rewrite c_sub_subs, c_sub_subs, <-v_shift_sub, v_shift_shift.
@@ -1056,7 +1059,7 @@ intros gets vtys. destruct orig.
   clear V CI HC R VE CE HE WF. simpl.
   apply WfInstU; eauto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint v_subs_typesafe 
@@ -1442,8 +1445,9 @@ destruct orig. destruct H1.
   clear V CI HC R VE CE HE WF. unfold c_subs. simpl. eapply CeqOp; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. auto. simpl. omega. omega.
 + specialize (WF _ _ _ _ i _ _ H2 tyvs) as IHwf.
-  clear V CI HC R VE CE HE WF.
-  rewrite c_subs_inst, c_subs_inst. eapply OOTB; eauto.
+  clear V CI HC R VE CE HE WF. eapply OOTB; eauto.
+  rewrite <-c_subs_inst. rewrite H3. simpl. auto.
+  rewrite <-c_subs_inst. rewrite H4. simpl. auto.
 + clear V CI HC R VE CE HE WF. specialize βΠMatch as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
   rewrite c_subs_subs, (c_subs_subs _ 0). simpl.
@@ -1655,7 +1659,7 @@ intros tyvs geq len. destruct orig.
   clear V CI HC R VE CE HE WF. simpl.
   apply WfInstU; eauto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint cop_insert_ctx Γ' Γ A B D c {struct Γ}:
@@ -1673,8 +1677,64 @@ destruct Γ; simpl.
   assert (S (ctx_len Γ) = ctx_len Γ + 1) by omega.
   rewrite H, H0. rewrite <-(c_shift_shift). apply c_insert_typesafe.
   all: inv wfg; auto.
-Qed.
+Admitted.
 
+
+(* ==================== Instantiation ==================== *)
+
+Lemma wf_inst_get_Some Γ I Γ' n A:
+  wf_inst Γ I Γ' -> get_vtype Γ' n = Some A ->
+  exists v, get_inst_val I n = Some v /\ has_vtype Γ v A.
+Proof.
+intros wf. revert n A. induction wf; intros n A' gets.
++ simpl in gets. discriminate.
++ simpl in gets. destruct n.
+  - inv gets. exists v. eauto.
+  - apply IHwf. auto.
+Admitted.
+
+
+Fixpoint v_wf_inst_typesafe Γ I Γ' v A (orig:has_vtype Γ' v A) :
+  wf_inst Γ I Γ' -> 
+  exists v', v_inst v I 0 = Some v' /\ has_vtype Γ v' A
+with c_wf_inst_typesafe Γ I Γ' c C (orig:has_ctype Γ' c C) :
+  wf_inst Γ I Γ' -> 
+  exists c', c_inst c I 0 = Some c' /\ has_ctype Γ c' C
+with h_wf_inst_typesafe Γ I Γ' h Σ D (orig:has_htype Γ' h Σ D) :
+  wf_inst Γ I Γ' -> 
+  exists h', h_inst h I 0 = Some h' /\ has_htype Γ h' Σ D.
+Proof.
+all: intro wfinst; assert (wf_ctx Γ) by (inv wfinst; auto; inv H; auto).
+{
+destruct orig. destruct H2; simpl.
++ exists Unit. aconstructor. apply TypeV; auto. apply TypeUnit.
++ exists (Int n). aconstructor. apply TypeV; auto. apply TypeInt.
++ eapply wf_inst_get_Some in H2 as gets; eauto.
+  destruct gets as [v[gets tys]]. 
+  assert (n-0=n) as same by omega. rewrite same.
+  exists v. aconstructor.
++ eapply v_wf_inst_typesafe in H2; eauto. destruct H2 as [v1'[gets1 tys1]].
+  eapply v_wf_inst_typesafe in H3; eauto. destruct H3 as [v2'[gets2 tys2]].
+  exists (Pair v1' v2'). rewrite gets1, gets2. simpl.
+  aconstructor. apply TypeV; auto. apply TypePair; auto.
++ eapply v_wf_inst_typesafe in H2; eauto. destruct H2 as [v1'[gets1 tys1]].
+  exists (Inl v1'). rewrite gets1. simpl.
+  aconstructor. apply TypeV; auto. apply TypeInl; auto.
++ eapply v_wf_inst_typesafe in H2; eauto. destruct H2 as [v1'[gets1 tys1]].
+  exists (Inr v1'). rewrite gets1. simpl.
+  aconstructor. apply TypeV; auto. apply TypeInr; auto.
++ exists ListNil. aconstructor. apply TypeV; auto. apply TypeListNil; auto.
++ eapply v_wf_inst_typesafe in H2; eauto. destruct H2 as [v1'[gets1 tys1]].
+  eapply v_wf_inst_typesafe in H3; eauto. destruct H3 as [v2'[gets2 tys2]].
+  exists (ListCons v1' v2'). rewrite gets1, gets2. simpl.
+  aconstructor. apply TypeV; auto. apply TypeListCons; auto.
++ eapply wf_inst_shift_typesafe in wfinst. 2: inv H1; eauto.
+  eapply c_wf_inst_typesafe in H2. destruct H2 as [c1'[gets1 tys1]].
+  exists (Fun x c1'). rewrite gets1. simpl.
+  aconstructor. apply TypeV; auto. apply TypeInr; auto.
+}
+
+(* ==================== Handling templates ==================== *)
 
 Fixpoint handle_t_cop_types Γ' Γ Z A B D c:
   wf_ctx Γ -> wf_tctx Z ->
@@ -1688,7 +1748,7 @@ rewrite <-join_ctxs_assoc.
 erewrite len_tctx_to_ctx, <-len_join_ctxs.
 apply cop_insert_ctx. apply wf_join_ctxs. apply wf_tctx_to_ctx. all: auto.
 inv tys. auto.
-Qed.
+Admitted.
 
 
 Fixpoint handle_t_types Γ Z T Σ Γ' h D {struct T}:
@@ -1774,4 +1834,4 @@ destruct T; simpl.
     { intros. induction γ; simpl; auto. }
     rewrite H0. auto.
   - omega.
-Qed.
+Admitted.

@@ -206,51 +206,84 @@ Fixpoint inst_subs I vs i :=
   | InstU I' v => InstU (inst_subs I' vs i) (v_subs v vs i)
   end.
 
+Set Implicit Arguments.
+Function f_opt (A B:Type) (opt : option A) (f : A -> option B) := 
+  match opt with
+  | Some x => f x
+  | None => None
+  end.
+
+
 Fixpoint v_inst v I shift:=
   match v with
   | Var (x, n) => get_inst_val I (n-shift)
-  | Unit => Unit
-  | Int n => Int n
-  | Inl v' => Inl (v_inst v' I shift)
-  | Inr v' => Inr (v_inst v' I shift)
+  | Unit => Some Unit
+  | Int n => Some (Int n)
+  | Inl v => f_opt (v_inst v I shift) (fun v' => Some (Inl v'))
+  | Inr v => f_opt (v_inst v I shift) (fun v' => Some (Inr v'))
   | Pair v1 v2 => 
-      Pair (v_inst v1 I shift) (v_inst v2 I shift)
-  | ListNil => ListNil
+      f_opt (v_inst v1 I shift) (fun v1' =>
+      f_opt (v_inst v2 I shift) (fun v2' =>
+      Some (Pair v1' v2') ))
+  | ListNil => Some ListNil
   | ListCons v vs => 
-      ListCons (v_inst v I shift) (v_inst vs I shift)
+      f_opt (v_inst v I shift) (fun v' =>
+      f_opt (v_inst vs I shift)(fun vs' =>
+      Some (ListCons v' vs') ))
   | Fun x c => 
-      Fun x (c_inst c (inst_shift I 1 0) (1+shift))
+      f_opt (c_inst c (inst_shift I 1 0) (1+shift)) (fun c' =>
+      Some (Fun x c') )
   | Handler x c_ret h =>
-      Handler x (c_inst c_ret (inst_shift I 1 0) (1+shift)) (h_inst h I shift)
+      f_opt (c_inst c_ret (inst_shift I 1 0) (1+shift)) (fun c' =>
+      f_opt (h_inst h I shift) (fun h' =>
+      Some (Handler x c' h') ))
   end
 with c_inst c I shift :=
   match c with
-  | Ret v => Ret (v_inst v I shift)
-  | Absurd v => Absurd (v_inst v I shift)
+  | Ret v => 
+      f_opt (v_inst v I shift) (fun v' => Some (Ret v'))
+  | Absurd v => 
+      f_opt (v_inst v I shift) (fun v' => Some (Absurd v'))
   | ΠMatch v x y c => 
-      ΠMatch (v_inst v I shift) x y (c_inst c (inst_shift I 2 0) (2+shift))
+      f_opt (v_inst v I shift) (fun v' =>
+      f_opt (c_inst c (inst_shift I 2 0) (2+shift)) (fun c' =>
+      Some (ΠMatch v' x y c') ))
   | ΣMatch v x c1 y c2 =>
-      ΣMatch (v_inst v I shift)
-        x (c_inst c1 (inst_shift I 1 0) (1+shift)) 
-        y (c_inst c2 (inst_shift I 1 0) (1+shift))
+      f_opt (v_inst v I shift) (fun v' =>
+      f_opt (c_inst c1 (inst_shift I 1 0) (1+shift)) (fun c1' =>
+      f_opt (c_inst c2 (inst_shift I 1 0) (1+shift)) (fun c2' =>
+      Some (ΣMatch v' x c1' y c2') )))
   | ListMatch v c1 x xs c2 =>
-      ListMatch (v_inst v I shift)
-        (c_inst c1 I shift) x xs (c_inst c2 (inst_shift I 2 0) (2+shift))
+      f_opt (v_inst v I shift)  (fun v'  =>
+      f_opt (c_inst c1 I shift) (fun c1' =>
+      f_opt (c_inst c2 (inst_shift I 2 0) (2+shift)) (fun c2' =>
+      Some (ListMatch v' c1' x xs c2') )))
   | App v1 v2 => 
-      App (v_inst v1 I shift) (v_inst v2 I shift)
-  | Op op v_arg y c => 
-      Op op (v_inst v_arg I shift) y (c_inst c (inst_shift I 1 0) (1+shift))
+      f_opt (v_inst v1 I shift) (fun v1' =>
+      f_opt (v_inst v2 I shift) (fun v2' =>
+      Some (App v1' v2') ))
+  | Op op v y c =>
+      f_opt (v_inst v I shift) (fun v' =>
+      f_opt (c_inst c (inst_shift I 1 0) (1+shift)) (fun c' =>
+      Some (Op op v' y c') ))
   | LetRec f x c1 c2 =>
-      LetRec f x (c_inst c1 (inst_shift I 2 0) (2+shift)) 
-        (c_inst c2 (inst_shift I 1 0) (1+shift))
+      f_opt (c_inst c1 (inst_shift I 2 0) (2+shift)) (fun c1' =>
+      f_opt (c_inst c2 (inst_shift I 1 0) (1+shift)) (fun c2' =>
+      Some (LetRec f x c1' c2') ))
   | DoBind x c1 c2 => 
-      DoBind x (c_inst c1 I shift) (c_inst c2 (inst_shift I 1 0) (1+shift))
-  | Handle v c' => 
-      Handle (v_inst v I shift) (c_inst c' I shift)
+      f_opt (c_inst c1 I shift) (fun c1' =>
+      f_opt (c_inst c2 (inst_shift I 1 0) (1+shift)) (fun c2' =>
+      Some (DoBind x c1' c2') ))
+  | Handle v c =>
+      f_opt (v_inst v I shift)  (fun v' =>
+      f_opt (c_inst c I shift) (fun c' =>
+      Some (Handle v' c') ))
   end
 with h_inst h I shift :=
   match h with
-  | CasesØ => CasesØ
-  | CasesU h op x k c => 
-      CasesU (h_inst h I shift) op x k (c_inst c (inst_shift I 2 0) (2+shift))
+  | CasesØ => Some CasesØ
+  | CasesU h op x k c =>
+      f_opt (h_inst h I shift) (fun h' =>
+      f_opt (c_inst c (inst_shift I 2 0) (2+shift)) (fun c' =>
+      Some (CasesU h' op x k c') ))
   end.
