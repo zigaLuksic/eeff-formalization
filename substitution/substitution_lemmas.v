@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export substitution syntax_lemmas.
 Require Import Le.
 
@@ -89,6 +89,12 @@ destruct (cut <=? db_i) eqn:cmp; simpl.
 - rewrite cmp. reflexivity. }
 { revert cut. induction c; intros cut; try destruct p; simpl; f_equal; auto. }
 { revert cut. induction h; intros cut; simpl; f_equal; auto. }
+Qed.
+
+Lemma inst_shift_shift n m cut (I:instantiation) :
+  inst_shift (inst_shift I n cut) m cut = inst_shift I (n+m) cut.
+Proof.
+intros. induction I; simpl; f_equal; auto. apply v_shift_shift.
 Qed.
 
 

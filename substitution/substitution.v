@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 Require Import Le.
 
@@ -294,4 +294,16 @@ with h_inst h I :=
         (InstU (InstU (inst_shift I 2 0)  (Var (x, 1)))  (Var (k, 0)))) 
         (fun c' =>
       Some (CasesU h' op x k c') ))
+  end.
+
+
+Fixpoint join_insts I I' :=
+  (* This is just an auxiliary function for doing proofs *)
+  match I' with
+  | InstØ => InstØ
+  | InstU I'' v => 
+      match (v_inst v I) with
+      | None => join_insts I I''
+      | Some v' => InstU (join_insts I I'') v'
+      end
   end.
