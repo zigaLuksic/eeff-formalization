@@ -1907,18 +1907,106 @@ c_inst (c_subs c v n) I
 c_subs (c_inst (inst_insert (inst_shift I 0) n (Var ("x", 0))) (v_inst v I) 0
 
 *)
-(* Fixpoint inst_insert I n v:
-  if n ?= 0 then InstU I v else
+
+Fixpoint inst_insert I n v:=
+  if n =? 0 then InstU I v else
   match I with
   | InstØ => InstØ
   | InstU I' v' => InstU (inst_insert I' (n-1) v) v'
-  end. *)
+  end.
 
-(* 
-Fixpoint v_inst_subs v vs n I :
+Fixpoint inst_len I :=
+  match I with
+  | InstØ => 0
+  | InstU I' _ => 1+(inst_len I')
+  end.
+
+Lemma inst_len_shift I i j :
+  inst_len (inst_shift I i j) = inst_len I.
+Proof.
+revert i j. induction I; intros; simpl; f_equal; auto.
+Qed.
+
+Lemma inst_insert_same I n v:
+  n <= inst_len I ->
+  get_inst_val (inst_insert I n v) n = Some v.
+Proof.
+revert n. induction I; intros n cmp.
++ simpl in cmp. assert (n=0) by omega. subst. simpl. auto.
++ simpl in *. destruct (n=?0) eqn:n0.
+  - apply Nat.eqb_eq in n0. subst. simpl. auto.
+  - simpl. apply Nat.eqb_neq in n0. destruct n. omega.
+    assert (S n - 1 = n) as same by omega. rewrite same.
+    apply IHI. omega.
+Qed.
+
+Lemma inst_insert_under I n m v:
+  n <= inst_len I -> m < n ->
+  get_inst_val (inst_insert I n v) m = get_inst_val I m.
+Proof.
+revert n m. induction I; intros n m safe cmp.
++ simpl in safe. omega.
++ simpl in *. destruct (n=?0) eqn:n0.
+  - apply Nat.eqb_eq in n0. omega.
+  - simpl. destruct m. auto.
+    apply IHI; omega.
+Qed.
+
+
+Fixpoint inst_shift_insert I n v i:
+  inst_shift (inst_insert I n v) i 0 
+  = inst_insert (inst_shift I i 0) n (Sub.v_shift v i 0).
+Proof.
+destruct I; simpl.
++ destruct (n=?0) eqn:n0; simpl; auto.
++ destruct (n=?0); simpl; auto. f_equal. auto.
+Qed.
+
+
+Fixpoint v_inst_subs k v vs n I:
+  n <= inst_len I ->
   v_inst (v_subs v vs n) I =
-  v_subs (v_inst v (inst_insert (inst_shift I 0) n (Var ("_", 0))))
-    (v_inst vs I) 0. *)
+  v_subs (v_inst v (inst_insert (inst_shift I 1 k) n (Var ("_", k))))
+    (v_inst vs I) k
+with c_inst_subs k c vs n I:
+  n <= inst_len I ->
+  c_inst (c_subs c vs n) I =
+  c_subs (c_inst c (inst_insert (inst_shift I 1 k) n (Var ("_", k))))
+    (v_inst vs I) k.
+Proof.
+{
+intros safe. destruct v; unfold v_subs in *; unfold c_subs in *; simpl; auto.
++ destruct v as (x, dbi).
+  destruct (dbi=?n) eqn:dbin; simpl.
+  2: destruct (n<=?dbi) eqn:cmp.
+  - apply Nat.eqb_eq in dbin. subst. 
+    rewrite inst_insert_same. simpl.
+    assert (k=?k=true) as same by (apply Nat.eqb_eq; auto). rewrite same.
+    rewrite v_negshift_shift, v_negshift_shift, v_shift_0, v_shift_0.
+    all: omega || auto. rewrite inst_len_shift. omega.
+  - admit.
+  - apply Nat.eqb_neq in dbin. apply leb_complete_conv in cmp.
+    rewrite inst_insert_under. simpl.
+    rewrite get_inst_val_shift.
+    destruct (get_inst_val I dbi) eqn:gets; simpl.
+    rewrite v_sub_no_var, v_negshift_shift, v_shift_0.
+    all: omega || auto.
+    apply v_shift_makes_no_var. rewrite inst_len_shift. auto.
++ admit.
++ admit.
++ admit.
++ admit.
++ f_equal. rewrite v_shift_comm. simpl. rewrite (c_inst_subs (S k)). simpl.
+  do 3 f_equal.
+  - f_equal. rewrite inst_shift_insert. simpl. f_equal.
+    rewrite <-inst_shift_comm. auto. all: omega.
+  - rewrite v_shift_comm. f_equal. rewrite v_shift_inst.
+}{
+  admit
+}
+Admitted.
+
+
 
 
 Fixpoint v_wf_inst_typesafe Γ I Γ' v A (orig:has_vtype Γ' v A) :
