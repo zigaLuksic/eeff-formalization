@@ -1877,32 +1877,45 @@ admit.
 Admitted.
 
 
-Fixpoint inst_to_subs I v n :=
-  match I with
-  | InstØ => v
-  | InstU I' v' => v_subs (inst_to_subs I' v (S n)) (Sub.v_shift v' n 0) n
-  end.
-
-Fixpoint inst_len I:=
-  match I with
-  | InstØ => 0
-  | InstU I' _ => S (inst_len I')
-  end.
-
-Fixpoint v_inst_is_subs v v' I:
-  v_inst v I = Some v' -> v_under_var v (inst_len I) ->
-  v' = inst_to_subs I (Sub.v_shift v (inst_len I) 0) (inst_len I).
+Fixpoint v_etasum_aux c I x x' n :
+  c_inst (c_subs (Sub.c_shift c 1 0) (Inl (Var (x', 0))) (S n))
+    (InstU (inst_shift I 1 0) (Var (x, 0)))
+  = f_opt (c_inst c I) (fun c' => 
+      Some (c_subs (Sub.c_shift c' 1 0) (Inl (Var (x, 0))) (S n))).
 Proof.
-intros rets under.
-destruct v; simpl in *.
-+ destruct v. 
-  induction I; intros. simpl in rets. discriminate.
-  simpl in *. unfold v_subs. simpl.
-  destruct v0; simpl.
-  assert (n<=?S(n+v0)=true) by (apply leb_correct; omega).
-  rewrite H. simpl.
+destruct c.
++ admit.
++ admit.
++ admit.
++ admit.
++ admit.
++ admit.
++ admit.
++ admit.
++ simpl. unfold c_subs in v_etasum_aux. simpl in v_etasum_aux. 
+  rewrite (v_etasum_aux c1 I x x' n).
+  destruct (c_inst c1 I); simpl; auto. rewrite v_etasum_aux.
 
-(* 
+
+(*
+v_under_var v 1 ->
+c_inst (c_subs (Sub.c_shift c 1 0) v n) (InstU I (Var (x, 0))) 
+=
+c_inst c (inst_insert (InstU I (Var (x, 0))) v n)
+
+*)
+
+(*
+This one might be it boys
+
+c_inst (c_subs c v n) I 
+=
+c_subs (c_inst (inst_insert (inst_shift I 0) n (Var ("x", 0))) (v_inst v I) 0
+
+*)
+
+
+
 Fixpoint v_wf_inst_typesafe Γ I Γ' v v' A (orig:has_vtype Γ' v A) :
   wf_inst Γ I Γ' -> v_inst v I = Some v' ->
   has_vtype Γ v' A
@@ -2119,4 +2132,4 @@ intros rets1 rets2. destruct orig. destruct H2; simpl.
   apply Ceq; auto. apply βListMatch_Nil.
   inv tyv. auto. inv tyv. inv H3. auto.
 + admit.
- *)
+
