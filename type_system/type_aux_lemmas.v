@@ -1784,17 +1784,11 @@ Admitted.
 (* ==================== Instantiation ==================== *)
 
 Lemma inst_find_None I h op:
-  find_case h op = None ->
-  f_opt (h_inst h I) (fun h' => find_case h' op) = None.
+  find_case h op = None -> find_case (h_inst h I) op = None.
 Proof.
 revert I op. induction h; intros I op orig.
 + simpl. auto.
-+ simpl in *. destruct (op==o). discriminate.
-  eapply (IHh I) in orig.
-  destruct (h_inst h I); simpl; auto.
-  destruct (c_inst c (InstU (InstU (inst_shift I 2 0) 
-    (Var (v, 1))) (Var (v0, 0)))); simpl; auto.
-  simpl in *. destruct (op==o). destruct n. auto. auto.
++ simpl in *. destruct (op==o). discriminate. auto.
 Qed.
 
 
@@ -1822,7 +1816,7 @@ intros wfa wfi. apply WfInstU.
 Qed.
 
 
-
+(* 
 Fixpoint v_wf_inst_returns Γ I Γ' v A (orig:has_vtype Γ' v A) :
   wf_inst Γ I Γ' -> 
   exists v', v_inst v I = Some v'
@@ -1894,7 +1888,7 @@ destruct c.
 + admit.
 + simpl. unfold c_subs in v_etasum_aux. simpl in v_etasum_aux. 
   rewrite (v_etasum_aux c1 I x x' n).
-  destruct (c_inst c1 I); simpl; auto. rewrite v_etasum_aux.
+  destruct (c_inst c1 I); simpl; auto. rewrite v_etasum_aux. *)
 
 
 (*
@@ -1913,30 +1907,41 @@ c_inst (c_subs c v n) I
 c_subs (c_inst (inst_insert (inst_shift I 0) n (Var ("x", 0))) (v_inst v I) 0
 
 *)
+(* Fixpoint inst_insert I n v:
+  if n ?= 0 then InstU I v else
+  match I with
+  | InstØ => InstØ
+  | InstU I' v' => InstU (inst_insert I' (n-1) v) v'
+  end. *)
+
+(* 
+Fixpoint v_inst_subs v vs n I :
+  v_inst (v_subs v vs n) I =
+  v_subs (v_inst v (inst_insert (inst_shift I 0) n (Var ("_", 0))))
+    (v_inst vs I) 0. *)
 
 
-
-Fixpoint v_wf_inst_typesafe Γ I Γ' v v' A (orig:has_vtype Γ' v A) :
-  wf_inst Γ I Γ' -> v_inst v I = Some v' ->
-  has_vtype Γ v' A
-with c_wf_inst_typesafe Γ I Γ' c c' C (orig:has_ctype Γ' c C) :
-  wf_inst Γ I Γ' -> c_inst c I = Some c' ->
-  has_ctype Γ c' C
-with h_wf_inst_typesafe Γ I Γ' h h' Σ D (orig:has_htype Γ' h Σ D) :
-  wf_inst Γ I Γ' -> h_inst h I = Some h' ->
-  has_htype Γ h' Σ D
-with respect_wf_inst_typesafe Γ I Γ' h h' Σ D E (orig:respects Γ' h Σ D E):
-  wf_inst Γ I Γ' -> h_inst h I = Some h' -> has_htype Γ h' Σ D ->
-  respects Γ h' Σ D E
-with veq_wf_inst_typesafe Γ I Γ' v1 v1' v2 v2' A (orig: veq A Γ' v1 v2):
-  wf_inst Γ I Γ' -> v_inst v1 I = Some v1' -> v_inst v2 I = Some v2' -> 
-    veq A Γ v1' v2'
-with ceq_wf_inst_typesafe Γ I Γ' c1 c1' c2 c2' C (orig: ceq C Γ' c1 c2):
-  wf_inst Γ I Γ' -> c_inst c1 I = Some c1' -> c_inst c2 I = Some c2' -> 
-    ceq C Γ c1' c2'
-with heq_wf_inst_typesafe Γ I Γ' h1 h1' h2 h2' Σ D (orig: heq Σ D Γ' h1 h2):
-  wf_inst Γ I Γ' -> h_inst h1 I = Some h1' -> h_inst h2 I = Some h2' -> 
-    heq Σ D Γ h1' h2'.
+Fixpoint v_wf_inst_typesafe Γ I Γ' v A (orig:has_vtype Γ' v A) :
+  wf_inst Γ I Γ' ->
+  has_vtype Γ (v_inst v I) A
+with c_wf_inst_typesafe Γ I Γ' c C (orig:has_ctype Γ' c C) :
+  wf_inst Γ I Γ' ->
+  has_ctype Γ (c_inst c I) C
+with h_wf_inst_typesafe Γ I Γ' h Σ D (orig:has_htype Γ' h Σ D) :
+  wf_inst Γ I Γ' ->
+  has_htype Γ (h_inst h I) Σ D
+with respect_wf_inst_typesafe Γ I Γ' h Σ D E (orig:respects Γ' h Σ D E):
+  wf_inst Γ I Γ' -> has_htype Γ (h_inst h I) Σ D ->
+  respects Γ (h_inst h I) Σ D E
+with veq_wf_inst_typesafe Γ I Γ' v1 v2 A (orig: veq A Γ' v1 v2):
+  wf_inst Γ I Γ' ->
+    veq A Γ (v_inst v1 I) (v_inst v2 I)
+with ceq_wf_inst_typesafe Γ I Γ' c1 c2 C (orig: ceq C Γ' c1 c2):
+  wf_inst Γ I Γ' ->
+    ceq C Γ (c_inst c1 I) (c_inst c2 I)
+with heq_wf_inst_typesafe Γ I Γ' h1 h2 Σ D (orig: heq Σ D Γ' h1 h2):
+  wf_inst Γ I Γ' ->
+    heq Σ D Γ (h_inst h1 I) (h_inst h2 I).
 Proof.
 all: rename v_wf_inst_typesafe into VL.
 all: rename c_wf_inst_typesafe into CL.
@@ -1947,20 +1952,17 @@ all: rename ceq_wf_inst_typesafe into CEL.
 all: rename heq_wf_inst_typesafe into HEL.
 all: intro wfinst; assert (wf_ctx Γ) by (inv wfinst; auto; inv H; auto).
 {
-intros rets. destruct orig. destruct H2; simpl.
-+ clear VL CL HL RL VEL CEL HEL. inv rets.
+destruct orig. destruct H2; simpl.
++ clear VL CL HL RL VEL CEL HEL.
   apply TypeV; auto. apply TypeUnit.
-+ clear VL CL HL RL VEL CEL HEL. inv rets.
++ clear VL CL HL RL VEL CEL HEL.
   apply TypeV; auto. apply TypeInt.
-+ clear VL CL HL RL VEL CEL HEL. inv rets.
-  eapply wf_inst_get_Some in H2 as gets; eauto.
-  destruct gets as [v''[gets tys]]. rewrite gets in H4. inv H4. auto.
-+ eapply v_wf_inst_returns in H2 as V1; eauto. destruct V1 as [v1' V1].
-  eapply v_wf_inst_returns in H3 as V2; eauto. destruct V2 as [v2' V2].
-  eapply VL in H2; eauto.
++ clear VL CL HL RL VEL CEL HEL.
+  eapply wf_inst_get_Some in H2 as gets; eauto. 
+  destruct gets as [v''[gets tys]]. rewrite gets. auto.
++ eapply VL in H2; eauto.
   eapply VL in H3; eauto.
   clear VL CL HL RL VEL CEL HEL.
-  simpl in rets. rewrite V1, V2 in rets. simpl in rets. inv rets.
   apply TypeV; auto. apply TypePair; auto.
 + admit.
 + admit.
@@ -1968,13 +1970,10 @@ intros rets. destruct orig. destruct H2; simpl.
 + admit.
 + admit.
 + eapply (wf_inst_extend x) in wfinst as wfinsc.
-  eapply h_wf_inst_returns in H3 as h1; eauto. destruct h1 as [h' h1].
-  eapply c_wf_inst_returns in H2 as C2; eauto. destruct C2 as [c' C2].
   eapply HL in H3; eauto.
-  eapply CL in H2; eauto.
   eapply RL in H4; eauto.
+  eapply CL in H2; eauto.
   all: clear VL CL HL RL VEL CEL HEL.
-  simpl in rets. rewrite h1, C2 in rets. simpl in rets. inv rets.
   apply TypeV; auto. apply TypeHandler; auto.
   inv H1. inv H7. auto.
 + admit.
@@ -2068,16 +2067,16 @@ admit.
   - inv H1. auto.
   - inv H1. apply WfTyFun; auto. *)
 }{
-intros rets tys. destruct orig. destruct H4; simpl.
+intros tys. destruct orig. destruct H4; simpl.
 + clear VL CL HL RL VEL CEL HEL. apply Respects; auto. apply RespectEqsØ.
 + eapply RL in H4; eauto.
   eapply CEL in H5 as ce; eauto.
   apply Respects; auto. apply RespectEqsU; eauto.
-  admit. admit. admit.
+  admit. admit.
 }{
  admit. 
 }{
-intros rets1 rets2. destruct orig. destruct H2; simpl.
+destruct orig. destruct H2; simpl.
 + admit.
 + admit.
 + admit.
@@ -2101,12 +2100,8 @@ intros rets1 rets2. destruct orig. destruct H2; simpl.
   eapply (wf_inst_extend x) in wfinst as wfinsc.
   eapply (wf_inst_extend xs) in wfinsc as wfinsc.
   simpl in wfinsc. rewrite inst_shift_shift in wfinsc.
-  eapply c_wf_inst_returns in tyc1 as C1; eauto. destruct C1 as [cc1' C1].
-  eapply c_wf_inst_returns in tyc2 as C2; eauto. destruct C2 as [cc2' C2].
-  simpl in *. rewrite C1, C2 in rets1. simpl in *. inv rets1.
-  rewrite rets2 in C1. inv C1.
   apply Ceq; auto. apply βListMatch_Nil.
-  inv tyv. auto. inv tyv. inv H3. auto.
+  inv tyv. eauto. inv tyv. inv H3. eauto.
 + admit.
 + admit.
 + admit.
@@ -2121,15 +2116,8 @@ intros rets1 rets2. destruct orig. destruct H2; simpl.
   apply shape_summatch in H1 as parts. destruct parts as [A[B[tyv[tyc1 tyc2]]]].
   eapply (wf_inst_extend y) in wfinst as wfinsc1.
   eapply (wf_inst_extend x) in wfinst as wfinsc2.
-  eapply v_wf_inst_returns in tyv as V; eauto. destruct V as [v' V].
-  eapply c_wf_inst_returns in tyc1 as C1; eauto. destruct C1 as [cc1' C1].
-  eapply c_wf_inst_returns in tyc2 as C2; eauto. destruct C2 as [cc2' C2].
-  simpl in *. rewrite V, C1, C2 in rets2. simpl in *. inv rets2.
   apply Ceq; auto.
-  rewrite <-c_subs_inst in rets1.
   apply ηSum.
-  rewrite rets2 in C1. inv C1.
-  apply Ceq; auto. apply βListMatch_Nil.
-  inv tyv. auto. inv tyv. inv H3. auto.
+  
 + admit.
 

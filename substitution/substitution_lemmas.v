@@ -1453,154 +1453,6 @@ revert n d c. induction I; intros; simpl in *. auto.
 destruct n; simpl; auto.
 Qed.
 
-Lemma InstU_shift cut i I d x:
-  i < cut -> 
-  InstU (inst_shift I d cut) (Var (x, i)) 
-  = inst_shift (InstU I (Var (x, i))) d cut.
-Proof.
-intros cmp. simpl. apply leb_correct_conv in cmp. rewrite cmp. auto.
-Qed.
-
-Fixpoint v_shift_inst I v d cut:
-  f_opt (v_inst v I) (fun v' => Some (Sub.v_shift v' d cut)) 
-  = v_inst v (inst_shift I d cut)
-with c_shift_inst I c d cut:
-  f_opt (c_inst c I) (fun c' => Some (Sub.c_shift c' d cut)) 
-  = c_inst c (inst_shift I d cut)
-with h_shift_inst I h d cut:
-  f_opt (h_inst h I) (fun h' => Some (Sub.h_shift h' d cut)) 
-  = h_inst h (inst_shift I d cut).
-Proof.
-all: rename v_shift_inst into VL.
-all: rename c_shift_inst into CL.
-all: rename h_shift_inst into HL.
-{
-destruct v; simpl; eauto.
-+ destruct v. erewrite <-get_inst_val_shift. auto. 
-+ specialize (VL I v d cut) as IHv.
-  clear VL CL HL. rewrite <-IHv.
-  destruct (v_inst v I); simpl; auto.
-+ specialize (VL I v d cut) as IHv.
-  clear VL CL HL. rewrite <-IHv.
-  destruct (v_inst v I); simpl; auto.
-+ specialize (VL I v1 d cut) as IHv1.
-  specialize (VL I v2 d cut) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v1 I); simpl; auto.
-  destruct (v_inst v2 I); simpl; auto.
-+ specialize (VL I v1 d cut) as IHv1.
-  specialize (VL I v2 d cut) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v1 I); simpl; auto.
-  destruct (v_inst v2 I); simpl; auto.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I' c d (1+cut)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_comm, (InstU_shift (1+cut)), <-HeqI', <-IHc.
-  destruct (c_inst c I'); simpl; auto.
-  all: omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I' c d (1+cut)) as IHc.
-  specialize (HL I h d cut) as IHh.
-  clear VL CL HL. 
-  rewrite inst_shift_comm, (InstU_shift (1+cut)), <-HeqI', <-IHc, <-IHh.
-  destruct (c_inst c I'); simpl; auto.
-  destruct (h_inst h I); simpl; auto.
-  all: omega.
-}{
-destruct c; simpl; eauto.
-+ specialize (VL I v d cut) as IHv.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-+ specialize (VL I v d cut) as IHv.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v1, 0))) as I'.
-  specialize (VL I v d cut) as IHv.
-  specialize (CL I' c d (2+cut)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_comm, (InstU_shift (2+cut)), (InstU_shift (2+cut)). 
-  rewrite <-HeqI', <-IHc, <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (c_inst c I'); simpl; auto.
-  all: omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v0, 0))) as I'.
-  remember (InstU (inst_shift I 1 0) (Var (v1, 0))) as I''.
-  specialize (VL I v d cut) as IHv.
-  specialize (CL I' c1 d (1+cut)) as IHc1.
-  specialize (CL I'' c2 d (1+cut)) as IHc2.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I); simpl; auto.
-  rewrite inst_shift_comm, (InstU_shift (1+cut)), (InstU_shift (1+cut)). 
-  rewrite <-HeqI', <-HeqI'', <-IHc1, <-IHc2. simpl. 2: omega.
-  destruct (c_inst c1 I'); simpl; auto.
-  destruct (c_inst c2 I''); simpl; auto.
-  all: omega.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v1, 0))) as I'.
-  specialize (VL I v d cut) as IHv.
-  specialize (CL I c1 d cut) as IHc1.
-  specialize (CL I' c2 d (2+cut)) as IHc2.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  rewrite inst_shift_comm, (InstU_shift (2+cut)), (InstU_shift (2+cut)).
-  rewrite <-HeqI', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I); simpl; auto.
-  destruct (c_inst c2 I'); simpl; auto.
-  all: omega.
-+ specialize (VL I v d cut) as IHv1.
-  specialize (VL I v0 d cut) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (v_inst v0 I ); simpl; auto.
-+ remember (InstU (inst_shift I 1 0) (Var (v0, 0))) as I'.
-  specialize (VL I v d cut) as IHv.
-  specialize (CL I' c d (1+cut)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_comm, (InstU_shift (1+cut)).
-  rewrite <-HeqI', <-IHc, <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (c_inst c I'); simpl; auto.
-  all: omega.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v, 0))) as I'.
-  remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I''.
-  specialize (CL I' c1 d (2+cut)) as IHc1.
-  specialize (CL I'' c2 d (1+cut)) as IHc2.
-  clear VL CL HL.
-  rewrite inst_shift_comm, (InstU_shift (2+cut)), (InstU_shift (2+cut)).
-  rewrite inst_shift_comm, (InstU_shift (1+cut)).
-  rewrite <-HeqI', <-HeqI'', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I'); simpl; auto.
-  destruct (c_inst c2 I''); simpl; auto.
-  all: omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I c1 d cut) as IHc1.
-  specialize (CL I' c2 d (1+cut)) as IHc2.
-  clear VL CL HL. 
-  rewrite inst_shift_comm, (InstU_shift (1+cut)). 
-  rewrite <-HeqI', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I ); simpl; auto.
-  destruct (c_inst c2 I'); simpl; auto.
-  all: omega.
-+ specialize (VL I v d cut) as IHv.
-  specialize (CL I c d cut) as IHc.
-  clear VL CL HL. rewrite <-IHv, <-IHc.
-  destruct (v_inst v I); simpl; auto.
-  destruct (c_inst c I); simpl; auto.
-}{
-destruct h; simpl; eauto.
-remember (InstU (InstU (inst_shift I 2 0) (Var (v, 1))) (Var (v0, 0))) as I'.
-specialize (HL I h d cut) as IHh.
-specialize (CL I' c d (2+cut)) as IHc.
-clear VL CL HL. 
-rewrite <-IHh. simpl.
-destruct (h_inst h I); simpl; auto.
-rewrite inst_shift_comm, (InstU_shift (2+cut)), (InstU_shift (2+cut)).
-rewrite <-HeqI', <-IHc. simpl.
-destruct (c_inst c I'); simpl; auto.
-all: omega.
-}
-Qed.
-
 
 Lemma get_inst_val_negshift I n d c :
   get_inst_val (inst_negshift I d c) n 
@@ -1608,177 +1460,6 @@ Lemma get_inst_val_negshift I n d c :
 Proof.
 revert n d c. induction I; intros; simpl in *. auto. 
 destruct n; simpl; auto.
-Qed.
-
-Lemma InstU_negshift cut i I d x:
-  i < cut -> 
-  InstU (inst_negshift I d cut) (Var (x, i)) 
-  = inst_negshift (InstU I (Var (x, i))) d cut.
-Proof.
-intros cmp. simpl. apply leb_correct_conv in cmp. rewrite cmp. auto.
-Qed.
-
-Fixpoint v_negshift_inst I v cut:
-  inst_no_var I cut ->
-  f_opt (v_inst v I) (fun v' => Some (Sub.v_negshift v' 1 cut)) 
-  = v_inst v (inst_negshift I 1 cut)
-with c_negshift_inst I c cut:
-  inst_no_var I cut ->
-  f_opt (c_inst c I) (fun c' => Some (Sub.c_negshift c' 1 cut)) 
-  = c_inst c (inst_negshift I 1 cut)
-with h_negshift_inst I h cut:
-  inst_no_var I cut ->
-  f_opt (h_inst h I) (fun h' => Some (Sub.h_negshift h' 1 cut)) 
-  = h_inst h (inst_negshift I 1 cut).
-Proof.
-all: rename v_negshift_inst into VL.
-all: rename c_negshift_inst into CL.
-all: rename h_negshift_inst into HL.
-{
-intro novar. destruct v; simpl; eauto.
-+ destruct v. erewrite <-get_inst_val_negshift. auto. 
-+ specialize (VL I v cut) as IHv.
-  clear VL CL HL. rewrite <-IHv; auto.
-  destruct (v_inst v I); simpl; auto.
-+ specialize (VL I v cut) as IHv.
-  clear VL CL HL. rewrite <-IHv; auto.
-  destruct (v_inst v I); simpl; auto.
-+ specialize (VL I v1 cut) as IHv1.
-  specialize (VL I v2 cut) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2; auto.
-  destruct (v_inst v1 I); simpl; auto.
-  destruct (v_inst v2 I); simpl; auto.
-+ specialize (VL I v1 cut) as IHv1.
-  specialize (VL I v2 cut) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2; auto.
-  destruct (v_inst v1 I); simpl; auto.
-  destruct (v_inst v2 I); simpl; auto.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I' c (1+cut)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_negshift_comm, (InstU_negshift (1+cut)), <-HeqI', <-IHc.
-  destruct (c_inst c I'); simpl; auto.
-  subst. simpl. constructor. 
-  2: apply inst_no_var_shift. all: omega || assumption.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I' c (1+cut)) as IHc.
-  specialize (HL I h cut) as IHh.
-  clear VL CL HL. 
-  rewrite inst_shift_negshift_comm, (InstU_negshift (1+cut)).
-  rewrite <-HeqI', <-IHc, <-IHh.
-  destruct (c_inst c I'); simpl; auto.
-  destruct (h_inst h I); simpl; auto.
-  auto. subst. simpl. constructor.
-  2: apply inst_no_var_shift. all: omega || assumption.
-}{
-intro novar. destruct c; simpl; eauto.
-+ specialize (VL I v cut) as IHv.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  all: omega || assumption.
-+ specialize (VL I v cut) as IHv.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  all: omega || assumption.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v1, 0))) as I'.
-  specialize (VL I v cut) as IHv.
-  specialize (CL I' c (2+cut)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_negshift_comm.
-  rewrite (InstU_negshift (2+cut)), (InstU_negshift (2+cut)). 
-  rewrite <-HeqI', <-IHc, <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (c_inst c I'); simpl; auto.
-  auto. subst. constructor. 2: constructor.
-  3: apply inst_no_var_shift. all: simpl; omega || assumption.
-+ remember (InstU (inst_shift I 1 0) (Var (v0, 0))) as I'.
-  remember (InstU (inst_shift I 1 0) (Var (v1, 0))) as I''.
-  specialize (VL I v cut) as IHv.
-  specialize (CL I' c1 (1+cut)) as IHc1.
-  specialize (CL I'' c2 (1+cut)) as IHc2.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I); simpl; auto.
-  rewrite inst_shift_negshift_comm.
-  rewrite (InstU_negshift (1+cut)), (InstU_negshift (1+cut)). 
-  rewrite <-HeqI', <-HeqI'', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I'); simpl; auto.
-  destruct (c_inst c2 I''); simpl; auto.
-  all: subst; simpl; omega || auto.
-  all: constructor; omega || apply inst_no_var_shift; auto; omega.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v1, 0))) as I'.
-  specialize (VL I v cut) as IHv.
-  specialize (CL I c1 cut) as IHc1.
-  specialize (CL I' c2 (2+cut)) as IHc2.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  rewrite inst_shift_negshift_comm.
-  rewrite (InstU_negshift (2+cut)), (InstU_negshift (2+cut)).
-  rewrite <-HeqI', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I); simpl; auto.
-  destruct (c_inst c2 I'); simpl; auto.
-  subst. constructor. 2: constructor.
-  3: apply inst_no_var_shift. all: simpl; omega || assumption.
-+ specialize (VL I v cut) as IHv1.
-  specialize (VL I v0 cut) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (v_inst v0 I ); simpl; auto.
-  all: omega || assumption.
-+ remember (InstU (inst_shift I 1 0) (Var (v0, 0))) as I'.
-  specialize (VL I v cut) as IHv.
-  specialize (CL I' c (1+cut)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_negshift_comm, (InstU_negshift (1+cut)).
-  rewrite <-HeqI', <-IHc, <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (c_inst c I'); simpl; auto.
-  2: subst; constructor; simpl.
-  3: apply inst_no_var_shift. all: simpl; omega || assumption.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v, 0))) as I'.
-  remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I''.
-  specialize (CL I' c1 (2+cut)) as IHc1.
-  specialize (CL I'' c2 (1+cut)) as IHc2.
-  clear VL CL HL.
-  rewrite inst_shift_negshift_comm.
-  rewrite (InstU_negshift (2+cut)), (InstU_negshift (2+cut)).
-  rewrite inst_shift_negshift_comm, (InstU_negshift (1+cut)).
-  rewrite <-HeqI', <-HeqI'', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I'); simpl; auto.
-  destruct (c_inst c2 I''); simpl; auto.
-  all: subst; omega || auto.
-  all: constructor. 4: constructor.
-  all: (simpl; omega) || apply inst_no_var_shift; auto; omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I c1 cut) as IHc1.
-  specialize (CL I' c2 (1+cut)) as IHc2.
-  clear VL CL HL. 
-  rewrite inst_shift_negshift_comm, (InstU_negshift (1+cut)). 
-  rewrite <-HeqI', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I ); simpl; auto.
-  destruct (c_inst c2 I'); simpl; auto.
-  subst. constructor.
-  2: apply inst_no_var_shift. all: simpl; omega || assumption.
-+ specialize (VL I v cut) as IHv.
-  specialize (CL I c cut) as IHc.
-  clear VL CL HL. rewrite <-IHv, <-IHc.
-  destruct (v_inst v I); simpl; auto.
-  destruct (c_inst c I); simpl; auto.
-  all: omega || assumption.
-}{
-intro novar. destruct h; simpl; eauto.
-remember (InstU (InstU (inst_shift I 2 0) (Var (v, 1))) (Var (v0, 0))) as I'.
-specialize (HL I h cut) as IHh.
-specialize (CL I' c (2+cut)) as IHc.
-clear VL CL HL. 
-rewrite <-IHh. simpl.
-destruct (h_inst h I); simpl; auto.
-rewrite inst_shift_negshift_comm.
-rewrite (InstU_negshift (2+cut)), (InstU_negshift (2+cut)).
-rewrite <-HeqI', <-IHc. simpl.
-destruct (c_inst c I'); simpl; auto.
-subst. constructor. 2:constructor.
-3: apply inst_no_var_shift. all: simpl; (omega || assumption).
-}
 Qed.
 
 
@@ -1790,152 +1471,97 @@ revert n. induction I; intros; simpl in *. auto.
 destruct n; simpl; auto.
 Qed.
 
-Lemma InstU_sub j i vs I x:
-  i < j -> 
-  InstU (inst_sub I (j, vs)) (Var (x, i)) 
-  = inst_sub (InstU I (Var (x, i))) (j, vs).
-Proof.
-intros cmp. simpl. assert (i=?j=false). apply Nat.eqb_neq. omega.
-rewrite H. auto.
-Qed.
 
-Fixpoint v_sub_inst I v i vs:
-  f_opt (v_inst v I) (fun v' => Some (Sub.v_sub v' (i, vs))) 
-  = v_inst v (inst_sub I (i, vs))
-with c_sub_inst I c i vs:
-  f_opt (c_inst c I) (fun c' => Some (Sub.c_sub c' (i, vs))) 
-  = c_inst c (inst_sub I (i, vs))
-with h_sub_inst I h i vs:
-  f_opt (h_inst h I) (fun h' => Some (Sub.h_sub h' (i, vs))) 
-  = h_inst h (inst_sub I (i, vs)).
+Fixpoint v_shift_inst I v d cut:
+  Sub.v_shift (v_inst v I) d cut = v_inst v (inst_shift I d cut)
+with c_shift_inst I c d cut:
+  Sub.c_shift (c_inst c I) d cut = c_inst c (inst_shift I d cut)
+with h_shift_inst I h d cut:
+  Sub.h_shift (h_inst h I) d cut = h_inst h (inst_shift I d cut).
 Proof.
-all: rename v_sub_inst into VL.
-all: rename c_sub_inst into CL.
-all: rename h_sub_inst into HL.
 {
 destruct v; simpl; eauto.
-+ destruct v. erewrite <-get_inst_val_sub. auto. 
-+ specialize (VL I v i vs) as IHv.
-  clear VL CL HL. rewrite <-IHv.
-  destruct (v_inst v I); simpl; auto.
-+ specialize (VL I v i vs) as IHv.
-  clear VL CL HL. rewrite <-IHv.
-  destruct (v_inst v I); simpl; auto.
-+ specialize (VL I v1 i vs) as IHv1.
-  specialize (VL I v2 i vs) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v1 I); simpl; auto.
-  destruct (v_inst v2 I); simpl; auto.
-+ specialize (VL I v1 i vs) as IHv1.
-  specialize (VL I v2 i vs) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v1 I); simpl; auto.
-  destruct (v_inst v2 I); simpl; auto.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I' c (1+i) (Sub.v_shift vs 1 0)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_sub, (InstU_sub (1+i)), <-HeqI', <-IHc.
-  destruct (c_inst c I'); simpl; auto.
-  all: omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I' c (1+i) (Sub.v_shift vs 1 0)) as IHc.
-  specialize (HL I h i vs) as IHh.
-  clear VL CL HL. 
-  rewrite inst_shift_sub, (InstU_sub (1+i)), <-HeqI', <-IHc, <-IHh.
-  destruct (c_inst c I'); simpl; auto.
-  destruct (h_inst h I); simpl; auto.
-  all: omega.
+{ destruct v. rewrite get_inst_val_shift.
+  destruct (get_inst_val I v0); simpl; auto. }
+all: f_equal; eauto.
+all: rewrite inst_shift_comm; simpl; omega || eauto.
+all: apply c_shift_inst; auto.
 }{
 destruct c; simpl; eauto.
-+ specialize (VL I v i vs) as IHv.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-+ specialize (VL I v i vs) as IHv.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v1, 0))) as I'.
-  specialize (VL I v i vs) as IHv.
-  specialize (CL I' c (2+i) (Sub.v_shift vs 2 0)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_sub, (InstU_sub (2+i)), (InstU_sub (2+i)). 
-  rewrite <-HeqI', <-IHc, <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (c_inst c I'); simpl; auto.
-  all: omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v0, 0))) as I'.
-  remember (InstU (inst_shift I 1 0) (Var (v1, 0))) as I''.
-  specialize (VL I v i vs) as IHv.
-  specialize (CL I' c1 (1+i) (Sub.v_shift vs 1 0)) as IHc1.
-  specialize (CL I'' c2 (1+i) (Sub.v_shift vs 1 0)) as IHc2.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I); simpl; auto.
-  rewrite inst_shift_sub, (InstU_sub (1+i)), (InstU_sub (1+i)). 
-  rewrite <-HeqI', <-HeqI'', <-IHc1, <-IHc2. simpl. 2: omega.
-  destruct (c_inst c1 I'); simpl; auto.
-  destruct (c_inst c2 I''); simpl; auto.
-  all: omega.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v1, 0))) as I'.
-  specialize (VL I v i vs) as IHv.
-  specialize (CL I c1 i vs) as IHc1.
-  specialize (CL I' c2 (2+i) (Sub.v_shift vs 2 0)) as IHc2.
-  clear VL CL HL. rewrite <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  rewrite inst_shift_sub, (InstU_sub (2+i)), (InstU_sub (2+i)).
-  rewrite <-HeqI', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I); simpl; auto.
-  destruct (c_inst c2 I'); simpl; auto.
-  all: omega.
-+ specialize (VL I v i vs) as IHv1.
-  specialize (VL I v0 i vs) as IHv2.
-  clear VL CL HL. rewrite <-IHv1, <-IHv2.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (v_inst v0 I ); simpl; auto.
-+ remember (InstU (inst_shift I 1 0) (Var (v0, 0))) as I'.
-  specialize (VL I v i vs) as IHv.
-  specialize (CL I' c (1+i) (Sub.v_shift vs 1 0)) as IHc.
-  clear VL CL HL. 
-  rewrite inst_shift_sub, (InstU_sub (1+i)).
-  rewrite <-HeqI', <-IHc, <-IHv. simpl.
-  destruct (v_inst v I ); simpl; auto.
-  destruct (c_inst c I'); simpl; auto.
-  all: omega.
-+ remember (InstU (InstU (inst_shift I 2 0) (Var (v0, 1))) (Var (v, 0))) as I'.
-  remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I''.
-  specialize (CL I' c1 (2+i) (Sub.v_shift vs 2 0)) as IHc1.
-  specialize (CL I'' c2 (1+i) (Sub.v_shift vs 1 0)) as IHc2.
-  clear VL CL HL.
-  rewrite inst_shift_sub, (InstU_sub (2+i)), (InstU_sub (2+i)).
-  rewrite inst_shift_sub, (InstU_sub (1+i)).
-  rewrite <-HeqI', <-HeqI'', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I'); simpl; auto.
-  destruct (c_inst c2 I''); simpl; auto.
-  all: omega.
-+ remember (InstU (inst_shift I 1 0) (Var (v, 0))) as I'.
-  specialize (CL I c1 i vs) as IHc1.
-  specialize (CL I' c2 (1+i) (Sub.v_shift vs 1 0)) as IHc2.
-  clear VL CL HL. 
-  rewrite inst_shift_sub, (InstU_sub (1+i)). 
-  rewrite <-HeqI', <-IHc1, <-IHc2. simpl.
-  destruct (c_inst c1 I ); simpl; auto.
-  destruct (c_inst c2 I'); simpl; auto.
-  all: omega.
-+ specialize (VL I v i vs) as IHv.
-  specialize (CL I c i vs) as IHc.
-  clear VL CL HL. rewrite <-IHv, <-IHc.
-  destruct (v_inst v I); simpl; auto.
-  destruct (c_inst c I); simpl; auto.
+all: f_equal; eauto.
+all: rewrite inst_shift_comm; simpl; omega || eauto.
+all: apply c_shift_inst; auto.
 }{
 destruct h; simpl; eauto.
-remember (InstU (InstU (inst_shift I 2 0) (Var (v, 1))) (Var (v0, 0))) as I'.
-specialize (HL I h i vs) as IHh.
-specialize (CL I' c (2+i) (Sub.v_shift vs 2 0)) as IHc.
-clear VL CL HL. 
-rewrite <-IHh. simpl.
-destruct (h_inst h I); simpl; auto.
-rewrite inst_shift_sub, (InstU_sub (2+i)), (InstU_sub (2+i)).
-rewrite <-HeqI', <-IHc. simpl.
-destruct (c_inst c I'); simpl; auto.
-all: omega.
+all: f_equal; eauto.
+all: rewrite inst_shift_comm; simpl; omega || eauto.
+all: apply c_shift_inst; auto.
+}
+Qed.
+
+
+Fixpoint v_negshift_inst I v cut:
+  inst_no_var I cut ->
+  Sub.v_negshift (v_inst v I) 1 cut = v_inst v (inst_negshift I 1 cut)
+with c_negshift_inst I c cut:
+  inst_no_var I cut ->
+  Sub.c_negshift (c_inst c I) 1 cut = c_inst c (inst_negshift I 1 cut)
+with h_negshift_inst I h cut:
+  inst_no_var I cut ->
+  Sub.h_negshift (h_inst h I) 1 cut = h_inst h (inst_negshift I 1 cut).
+Proof.
+{
+intros. destruct v; simpl; eauto.
+{ destruct v. rewrite get_inst_val_negshift.
+  destruct (get_inst_val I v0); simpl; auto. }
+all: f_equal; eauto.
+all: rewrite inst_shift_negshift_comm; simpl; omega || eauto.
+all: apply c_negshift_inst; simpl; constructor.
+all: omega || apply inst_no_var_shift; omega || eauto.
+}{
+assert (S(S cut) = 2+cut) as same by omega.
+intros. destruct c; simpl; eauto.
+all: f_equal; eauto.
+all: rewrite inst_shift_negshift_comm; simpl; omega || eauto.
+all: apply c_negshift_inst; try omega.
+all: simpl; constructor; try constructor; try rewrite same.
+all: try apply inst_no_var_shift; omega || eauto.
+}{
+assert (S(S cut) = 2+cut) as same by omega.
+intros. destruct h; simpl; eauto.
+all: f_equal; eauto.
+all: rewrite inst_shift_negshift_comm; simpl; omega || eauto.
+all: apply c_negshift_inst; try omega.
+all: simpl; constructor; try constructor; try rewrite same.
+all: try apply inst_no_var_shift; omega || eauto.
+}
+Qed.
+
+ 
+Fixpoint v_sub_inst I v i vs:
+  Sub.v_sub (v_inst v I) (i, vs) = v_inst v (inst_sub I (i, vs))
+with c_sub_inst I c i vs:
+  Sub.c_sub (c_inst c I) (i, vs) = c_inst c (inst_sub I (i, vs))
+with h_sub_inst I h i vs:
+  Sub.h_sub (h_inst h I) (i, vs) = h_inst h (inst_sub I (i, vs)).
+Proof.
+{
+destruct v; simpl; eauto.
+{ destruct v. rewrite get_inst_val_sub.
+  destruct (get_inst_val I v0); simpl; auto. }
+all: f_equal; eauto.
+all: rewrite inst_shift_sub; simpl; omega || eauto.
+all: apply c_sub_inst.
+}{
+destruct c; simpl; eauto.
+all: f_equal; eauto.
+all: rewrite inst_shift_sub; simpl; omega || eauto.
+all: apply c_sub_inst.
+}{
+destruct h; simpl; eauto.
+all: f_equal; eauto.
+all: rewrite inst_shift_sub; simpl; omega || eauto.
+all: apply c_sub_inst.
 }
 Qed.
 
@@ -1948,30 +1574,24 @@ rewrite IHI. f_equal.
 Qed.
 
 
-Fixpoint v_subs_inst I v vs i:
-  f_opt (v_inst v I) (fun v' => Some (v_subs v' vs i)) 
-  = v_inst v (inst_subs I vs i)
-with c_subs_inst I c vs i:
-  f_opt (c_inst c I) (fun c' => Some (c_subs c' vs i)) 
-  = c_inst c (inst_subs I vs i)
-with h_subs_inst I h vs i:
-  f_opt (h_inst h I) (fun h' => Some (h_subs h' vs i)) 
-  = h_inst h (inst_subs I vs i).
+Fixpoint v_subs_inst I v v_s i:
+  v_subs (v_inst v I) v_s i = v_inst v (inst_subs I v_s i)
+with c_subs_inst I c v_s i:
+  c_subs (c_inst c I) v_s i = c_inst c (inst_subs I v_s i)
+with h_subs_inst I h v_s i:
+  h_subs (h_inst h I) v_s i = h_inst h (inst_subs I v_s i).
 Proof.
 {
-unfold v_subs. rewrite <-inst_subs_unfold.
-rewrite <-v_negshift_inst, <-v_sub_inst.
-destruct (v_inst v I); simpl; auto.
+unfold v_subs. 
+rewrite v_sub_inst, v_negshift_inst, inst_subs_unfold. all: auto.
 apply inst_sub_makes_no_var. apply v_shift_makes_no_var.
 }{
-unfold c_subs. rewrite <-inst_subs_unfold.
-rewrite <-c_negshift_inst, <-c_sub_inst.
-destruct (c_inst c I); simpl; auto.
+unfold c_subs. 
+rewrite c_sub_inst, c_negshift_inst, inst_subs_unfold. all: auto.
 apply inst_sub_makes_no_var. apply v_shift_makes_no_var.
 }{
-unfold h_subs. rewrite <-inst_subs_unfold.
-rewrite <-h_negshift_inst, <-h_sub_inst.
-destruct (h_inst h I); simpl; auto.
+unfold h_subs. 
+rewrite h_sub_inst, h_negshift_inst, inst_subs_unfold. all: auto.
 apply inst_sub_makes_no_var. apply v_shift_makes_no_var.
 }
 Qed.
