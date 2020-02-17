@@ -2250,7 +2250,27 @@ all: assert (forall n, n-0=n) as n0 by (intros; omega).
 + admit.
 + admit.
 + admit.
-+ admit.
++ eapply CL in H0 as tys1; eauto.
+  eapply CL in H1 as tys2; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply shape_prodmatch in H1 as parts. destruct parts as [A[B[tyv tyc]]].
+  eapply (wf_inst_extend x) in wfinst as wfinsc1.
+  eapply (wf_inst_extend y) in wfinsc1 as wfinsc2.
+  apply Ceq; auto. all: inv tyv; inv H3. 2: exact H8. 2: exact H7.
+  specialize (ηPair Γ (v_inst v I) x x y y 0
+    (c_inst c (inst_insert (inst_shift I 1 0) n (Var ("_", 0)))
+    )) as rule. simpl in rule.
+  erewrite (c_inst_subs 0 "_").
+  rewrite (c_inst_subs 2 "_").
+  rewrite c_shift_inst in rule. simpl.
+  rewrite instU_is_insert, instU_is_insert.
+  rewrite (c_inst_no_var_same _ _ _ (Sub.c_shift c 2 0)).
+  rewrite c_negshift_shift. simpl.
+  rewrite (c_inst_no_var_same _ _ _ (Sub.c_shift c 1 0)).
+  rewrite c_negshift_shift, c_shift_0.
+  rewrite inst_shift_insert in rule. simpl in rule.
+  rewrite inst_shift_comm in rule. rewrite n0. simpl in *. apply rule.
+  all: omega || auto.
 + eapply CL in H0 as tys1; eauto.
   eapply CL in H1 as tys2; eauto.
   clear VL CL HL RL VEL CEL HEL.
