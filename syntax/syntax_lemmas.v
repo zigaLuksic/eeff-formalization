@@ -275,3 +275,45 @@ intros. induction h. simpl in H0. discriminate.
 inv H. simpl in H0. destruct (op==o); try inv H0; auto.
 Qed.
 
+(* ==================== Instantiation Properties ==================== *)
+
+Lemma inst_insert_same I n v:
+  n <= inst_len I ->
+  get_inst_val (inst_insert I n v) n = Some v.
+Proof.
+revert n. induction I; intros n cmp.
++ simpl in cmp. assert (n=0) by omega. subst. simpl. auto.
++ simpl in *. destruct (n=?0) eqn:n0.
+  - apply Nat.eqb_eq in n0. subst. simpl. auto.
+  - simpl. apply Nat.eqb_neq in n0. destruct n. omega.
+    assert (S n - 1 = n) as same by omega. rewrite same.
+    apply IHI. omega.
+Qed.
+
+
+Lemma inst_insert_under I n m v:
+  n <= inst_len I -> m < n ->
+  get_inst_val (inst_insert I n v) m = get_inst_val I m.
+Proof.
+revert n m. induction I; intros n m safe cmp.
++ simpl in safe. omega.
++ simpl in *. destruct (n=?0) eqn:n0.
+  - apply Nat.eqb_eq in n0. omega.
+  - simpl. destruct m. auto.
+    apply IHI; omega.
+Qed.
+
+
+Lemma inst_insert_above I n m v:
+  n <= inst_len I -> S m > n ->
+  get_inst_val (inst_insert I n v) (S m) = get_inst_val I m.
+Proof.
+revert n m. induction I; intros n m safe cmp; simpl in *.
++ destruct (n=?0); simpl; auto.
++ destruct (n=?0) eqn:n0; simpl.
+  - destruct m; auto.
+  - destruct n; simpl.
+    * apply Nat.eqb_neq in n0. destruct n0. auto.
+    * assert (n-0=n) by omega. rewrite H.
+      destruct m. omega. apply IHI; omega.
+Qed.

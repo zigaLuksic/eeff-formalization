@@ -288,3 +288,16 @@ Fixpoint inst_under_var I i :=
   | InstØ => True
   | InstU I' v => v_no_var v i /\ inst_under_var I' i
   end.
+
+Fixpoint inst_insert I n v:=
+if n =? 0 then InstU I v else
+match I with
+| InstØ => InstØ
+| InstU I' v' => InstU (inst_insert I' (n-1) v) v'
+end.
+
+Fixpoint inst_len I :=
+match I with
+| InstØ => 0
+| InstU I' _ => 1+(inst_len I')
+end.
