@@ -1,11 +1,11 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic".
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas
   logic_aux_lemmas.
@@ -2183,7 +2183,79 @@ intros tys. destruct orig. destruct H4; simpl.
   apply Respects; auto. apply RespectEqsU; eauto.
   admit. admit.
 }{
- admit. 
+destruct orig. destruct H2; simpl.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply VEL in H2; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqSym. auto.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply VEL in H2; eauto.
+  eapply VEL in H3; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. eapply VeqTrans; eauto.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  eapply wf_inst_get_Some in H2; eauto.
+  destruct H2 as [v'[gets tys]].
+  rewrite gets. apply veq_refl. 
+  apply TypeV; auto. inv H0. auto. eapply TypeVSubtype; eauto.
++ eapply VL in H0; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqUnit.
++ eapply VL in H0; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqInt; auto.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply VEL in H2; eauto.
+  eapply VEL in H3; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqPair; auto.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply VEL in H2; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqInl; auto.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply VEL in H2; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqInr; auto.
++ eapply VL in H0; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqListNil; auto.
++ eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply VEL in H2; eauto.
+  eapply VEL in H3; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqListCons; auto.
++ eapply (wf_inst_extend x) in wfinst as wfinsc.
+  eapply VL in H0; eauto.
+  eapply VL in H1; eauto.
+  eapply CEL in H2; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply Veq; auto. apply VeqFun; auto.
+  (* Problem with names. Names are annoying. *)
+  admit. admit.
++ admit.
++ admit.
++ admit.
+
++ eapply VL in H2; eauto.
+  clear VL CL HL RL VEL CEL HEL.
+  apply TypeC; auto. apply TypeAbsurd; auto.
++ eapply (wf_inst_extend x) in wfinst as wfinsc.
+  eapply (wf_inst_extend y) in wfinsc as wfinsc.
+  eapply VL in H2; eauto.
+  eapply CL in H3; eauto.
+  all: clear VL CL HL RL VEL CEL HEL.
+  simpl in H3. rewrite inst_shift_shift in H3.
+  apply TypeC; auto. eapply TypeΠMatch; eauto.
+  all: inv H2; inv H5; auto.
 }{
 destruct orig. destruct H2; simpl.
 all: assert (forall n, n-0=n) as n0 by (intros; omega).
