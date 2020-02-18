@@ -135,8 +135,8 @@ apply Ceq; auto. destruct H3.
 + eapply βDoBind_Op.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
-+ eapply ηPair.
-+ eapply ηSum.
++ eapply ηPair. omega.
++ eapply ηSum. omega.
 + eapply ηDoBind.
 }
 Qed.

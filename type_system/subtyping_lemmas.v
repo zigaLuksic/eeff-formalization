@@ -463,7 +463,7 @@ all: clear ctx_subtype_vtype ctx_subtype_ctype ctx_subtype_htype.
 }{
 intros wf ctxsty.
 inv equals. destruct H1; apply Ceq; eauto.
-all: clear ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
+all: clear ctx_subtype_htype ctx_subtype_heq.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 + eapply CeqRet; eauto.
@@ -514,8 +514,8 @@ all: clear ctx_subtype_ctype ctx_subtype_htype ctx_subtype_heq.
 + eapply βDoBind_Op.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
-+ eapply ηPair.
-+ eapply ηSum.
++ eapply ηPair. apply ctx_subtype_len in ctxsty. omega.
++ eapply ηSum. apply ctx_subtype_len in ctxsty. omega.
 + eapply ηDoBind.
 }{
 intros wf ctxsty.

@@ -519,6 +519,26 @@ all: try (destruct under; f_equal; auto) || (f_equal; auto).
 }
 Qed.
 
+Fixpoint v_subs_too_high v i v_s:
+v_under_var v i -> v_subs v i v_s = v
+with c_subs_too_high c i v_s:
+c_under_var c i -> c_subs c i v_s = c
+with h_subs_too_high h i v_s:
+h_under_var h i -> h_subs h i v_s = h.
+Proof.
+{
+intros under. unfold v_subs. 
+rewrite v_sub_too_high, v_negshift_too_high; auto.
+}{
+intros under. unfold c_subs. 
+rewrite c_sub_too_high, c_negshift_too_high; auto.
+}{
+intros under. unfold h_subs. 
+rewrite h_sub_too_high, h_negshift_too_high; auto.
+}
+Qed.
+
+
 
 Fixpoint v_sub_no_var v v' i {struct v}:
   v_no_var v i -> v_sub v (i, v') = v
@@ -701,25 +721,30 @@ Qed.
 (* ==================== Full Subs Properties ==================== *)
 
 Fixpoint v_under_var_subs v v' i j {struct v}:
-  v_under_var v i -> v_under_var v' i -> v_under_var (v_subs v j v') i
+  v_under_var v (S i) -> v_under_var v' i -> j <= i ->
+  v_under_var (v_subs v j v') i
 with c_under_var_subs c v' i j {struct c}:
-  c_under_var c i -> v_under_var v' i -> c_under_var (c_subs c j v') i
+  c_under_var c (S i) -> v_under_var v' i -> j <= i ->
+  c_under_var (c_subs c j v') i
 with h_under_var_subs h v' i j {struct h}:
-  h_under_var h i -> v_under_var v' i -> h_under_var (h_subs h j v') i.
+  h_under_var h (S i) -> v_under_var v' i -> j <= i ->
+  h_under_var (h_subs h j v') i.
 Proof.
 all: revert i j.
 + intros. destruct v.
-  { unfold v_subs. simpl. simpl in H. destruct (v=?j).
+  { unfold v_subs. simpl. simpl in H. destruct (v=?j) eqn:vj.
     + rewrite v_negshift_shift, v_shift_0. auto. omega.
-    + simpl. destruct (j<=?v); simpl; omega. }
+    + simpl. destruct (j<=?v) eqn:cmp; simpl; apply Nat.eqb_neq in vj.
+      apply leb_complete in cmp. omega.
+      apply leb_complete_conv in cmp. omega. }
   all: simpl in *; try inv H; try constructor.
   all: try apply v_under_var_subs || apply h_under_var_subs; auto.
-  all: rewrite v_shift_comm; apply c_under_var_subs || omega; auto.
+  all: rewrite v_shift_comm; apply c_under_var_subs || omega; omega || auto.
   all: apply v_under_var_shift; omega || assumption.
 + intros. induction c; simpl in *; auto.
   all: try constructor; try constructor; try inv H; auto.
   all: try apply v_under_var_subs; eauto.
-  4: destruct H2; eauto.
+  all: try destruct H3; eauto.
   all: rewrite v_shift_comm; try apply c_under_var_subs; omega || auto.
   all: try apply v_under_var_shift; omega || (try destruct H2; auto).
   all: assert (S(S i) = 2+i) as same by omega; rewrite same.

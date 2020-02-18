@@ -383,9 +383,11 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
         (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k))
         v )
 | ηPair Γ v n c C:
+    n <= ctx_len Γ ->
     ceq' C Γ (c_subs c n v) 
       (ΠMatch v (c_subs (c_shift c 2 0) (2+n) (Pair (Var 1) (Var 0))))
 | ηSum Γ v n c C:
+    n <= ctx_len Γ ->
     ceq' C Γ (c_subs c n v) 
       (ΣMatch v 
         (c_subs (c_shift c 1 0) (1+n) (Inl (Var 0))) 
