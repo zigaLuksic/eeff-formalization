@@ -7,10 +7,10 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 
 Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
-Lemma heq_cases_ceq Σ D Γ h1 h2 op A B x1 x2 k1 k2 c1 c2 :
+Lemma heq_cases_ceq Σ D Γ h1 h2 op A B c1 c2 :
   heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
-  find_case h1 op = Some (x1, k1, c1) ->
-  find_case h2 op = Some (x2, k2, c2) ->
+  find_case h1 op = Some c1 ->
+  find_case h2 op = Some c2 ->
   ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2.
 Proof.
 intros eqs gets finds1 finds2.
@@ -38,8 +38,8 @@ intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
   destruct g2 as [A2[B2[get2[_ _]]]].
   eapply h_has_case in H2 as case1; eauto.
   eapply h_has_case in H3 as case2; eauto.
-  destruct case1 as [x1[k1[c1 find1]]].
-  destruct case2 as [x2[k2[c2 find2]]].
+  destruct case1 as [c1 find1].
+  destruct case2 as [c2 find2].
   clear A1 B1 get1 A2 B2 get2.
   eapply HeqSigU; eauto.
   assert (ceq D (CtxU (CtxU Γ (TyFun B'0 D)) A'0) c1 c2).
@@ -142,11 +142,11 @@ apply Ceq; auto. destruct H3.
 Qed.
 
 
-Lemma heq_case_extend_trivial Σ D Γ h1 h2 op A1 A2 B1 B2 x1 x2 k1 k2 c1 c2:
+Lemma heq_case_extend_trivial Σ D Γ h1 h2 op A1 A2 B1 B2 c1 c2:
   heq Σ D Γ h1 h2 -> find_case h1 op = None -> find_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
-  heq Σ D Γ (CasesU h1 op x1 k1 c1) (CasesU h2 op x2 k2 c2).
+  heq Σ D Γ (CasesU h1 op c1) (CasesU h2 op c2).
 Proof.
 intros orig f1 f2 tys1 tys2.
 assert (wf_vtype A1) as wfa1 by (inv tys1; inv H; auto).
@@ -158,11 +158,11 @@ assert (wf_ctx Γ) as wfctx by (inv orig; inv H2; auto).
 destruct orig.
 assert (get_op_type Σ1 op = None) as getn1.
 { destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
+  eapply h_has_case in H2; eauto. destruct H2 as [c f].
   rewrite f in f1. discriminate. }
 assert (get_op_type Σ2 op = None) as getn2.
 { destruct (get_op_type Σ2 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H3; eauto. destruct H3 as [x[k[c f]]].
+  eapply h_has_case in H3; eauto. destruct H3 as [c f].
   rewrite f in f2. discriminate. }
 assert (sig_subtype Σ (SigU Σ1 op A1 B1)) as ss1.
 { apply sig_subtype_extend. auto. apply WfSigU; auto. inv H2. assumption. }
@@ -186,12 +186,12 @@ induction Σ as [ | Σ IH o A B].
 Qed.
 
 
-Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B x1 x2 k1 k2 c1 c2:
+Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B c1 c2:
   heq Σ D Γ h1 h2 -> find_case h1 op = None -> find_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D ->
   ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
-  heq (SigU Σ op A B) D Γ (CasesU h1 op x1 k1 c1) (CasesU h2 op x2 k2 c2).
+  heq (SigU Σ op A B) D Γ (CasesU h1 op c1) (CasesU h2 op c2).
 Proof.
 intros orig f1 f2 tys1 tys2 ceq12.
 assert (wf_vtype A) as wfa by (inv tys1; inv H; auto).
@@ -201,11 +201,11 @@ assert (wf_ctx Γ) as wfctx by (inv orig; inv H2; auto).
 destruct orig.
 assert (get_op_type Σ1 op = None) as getn1.
 { destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H2; eauto. destruct H2 as [x[k[c f]]].
+  eapply h_has_case in H2; eauto. destruct H2 as [c f].
   rewrite f in f1. discriminate. }
 assert (get_op_type Σ2 op = None) as getn2.
 { destruct (get_op_type Σ2 op) eqn: g. destruct p. 2: reflexivity.
-  eapply h_has_case in H3; eauto. destruct H3 as [x[k[c f]]].
+  eapply h_has_case in H3; eauto. destruct H3 as [c f].
   rewrite f in f2. discriminate. }
 assert (sig_subtype (SigU Σ op A B) (SigU Σ1 op A B)) as ss1.
 { eapply SubtypeSigU. apply sig_subtype_extend. auto. apply WfSigU; auto. 
@@ -268,13 +268,12 @@ apply sig_subtype_refl. inv orig. assumption.
 assumption. assumption.
 destruct orig. destruct H2.
 + eapply HeqSigØ.
-+ assert (find_case (CasesU h op_id x k c_op) op_id = Some (x, k, c_op)).
-  { simpl. destruct (op_id==op_id). auto. destruct n. auto. }
++ assert (find_case (CasesU h op c_op) op = Some c_op).
+  { simpl. destruct (op==op). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
   eapply heq_case_extend_trivial; eauto; inv H0; assumption.
 }
 Qed.
-
 
 
 Lemma veq_sym A Γ v1 v2:

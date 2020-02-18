@@ -45,17 +45,17 @@ Qed.
 Fixpoint veq_subs_logicsafe_weak
   Γ Γ' A v i v_s v_s' A_s (orig: has_vtype Γ' v A) {struct orig} :
   veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  veq A Γ (v_subs v v_s i) (v_subs v v_s' i)
+  veq A Γ (v_subs v i v_s) (v_subs v i v_s')
 
 with ceq_subs_logicsafe_weak
   Γ Γ' C c i v_s v_s' A_s (orig: has_ctype Γ' c C) {struct orig} :
   veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  ceq C Γ (c_subs c v_s i) (c_subs c v_s' i)
+  ceq C Γ (c_subs c i v_s) (c_subs c i v_s')
 
 with heq_subs_logicsafe_weak
   Γ Γ' Σ D h i v_s v_s' A_s (orig: has_htype Γ' h Σ D) {struct orig} :
   veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  heq Σ D Γ (h_subs h v_s i) (h_subs h v_s' i).
+  heq Σ D Γ (h_subs h i v_s) (h_subs h i v_s').
 
 Proof.
 all: rename veq_subs_logicsafe_weak into VEQ.
@@ -74,8 +74,8 @@ destruct orig. destruct H1.
     apply Nat.eqb_eq in ni. subst. rewrite get_ctx_insert_new in H1. inv H1. 
     inv vseq. assumption. all: omega || assumption.
   - assert (veq A Γ 
-      (if i <=? n then Var (x, n - 1) else Var (x, n))
-      (if i <=? n then Var (x, n - 1) else Var (x, n))).
+      (if i <=? n then Var (n-1) else Var n)
+      (if i <=? n then Var (n-1) else Var n)).
     apply veq_refl. apply TypeV; auto.
     { inv vseq. inv H2. assumption. }
     destruct (i<=?n) eqn: cmp.
@@ -100,7 +100,7 @@ destruct orig. destruct H1.
     apply veq_shift_typesafe; eauto. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
-+ assert (veq A' Γ (v_subs v v_s i) (v_subs v v_s' i)).
++ assert (veq A' Γ (v_subs v i v_s) (v_subs v i v_s')).
   eapply veq_subtype; eauto. inv H3. assumption.
 }{
 intros vseq ctxs clen. apply Ceq; try (inv orig; eassumption).
@@ -155,7 +155,7 @@ destruct orig. destruct H1.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
   apply veq_shift_typesafe. eauto. inv H3. inv H4. assumption.
   subst. apply ctx_insert_extend. simpl. all: omega.
-+ assert (ceq C' Γ (c_subs c v_s i) (c_subs c v_s' i)).
++ assert (ceq C' Γ (c_subs c i v_s) (c_subs c i v_s')).
   eapply ceq_subtype; eauto. inv H3. assumption.
 }{
 intros vseq ctxs clen. destruct orig. destruct H2.
@@ -188,30 +188,30 @@ Qed.
 Fixpoint veq_subs_logicsafe
   Γ Γ' A v1 v2 i v_s v_s' A_s (orig: veq A Γ' v1 v2) {struct orig} :
   veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  veq A Γ (v_subs v1 v_s i) (v_subs v2 v_s' i)
+  veq A Γ (v_subs v1 i v_s) (v_subs v2 i v_s')
 
 with ceq_subs_logicsafe
   Γ Γ' C c1 c2 i v_s v_s' A_s (orig: ceq C Γ' c1 c2) {struct orig} :
   veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  ceq C Γ (c_subs c1 v_s i) (c_subs c2 v_s' i)
+  ceq C Γ (c_subs c1 i v_s) (c_subs c2 i v_s')
 
 with heq_subs_logicsafe
   Γ Γ' Σ D h1 h2 i v_s v_s' A_s (orig: heq Σ D Γ' h1 h2) {struct orig} :
   veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
-  heq Σ D Γ (h_subs h1 v_s i) (h_subs h2 v_s' i).
+  heq Σ D Γ (h_subs h1 i v_s) (h_subs h2 i v_s').
 Proof.
 all: intros vseq ctxs clen.
 {
-assert (veq A Γ (v_subs v1 v_s i) (v_subs v1 v_s' i)).
+assert (veq A Γ (v_subs v1 i v_s) (v_subs v1 i v_s')).
 eapply veq_subs_logicsafe_weak; eauto. inv orig. eauto.
 eapply veq_trans; eauto. eapply veq_subs_typesafe; eauto. inv vseq. auto.
 }{
-assert (ceq C Γ (c_subs c1 v_s i) (c_subs c1 v_s' i)).
+assert (ceq C Γ (c_subs c1 i v_s) (c_subs c1 i v_s')).
 eapply ceq_subs_logicsafe_weak; eauto. inv orig. eauto.
 eapply ceq_trans; eauto. eapply ceq_subs_typesafe; eauto. inv vseq. auto.
 }{
 inv orig.
-assert (heq Σ D Γ (h_subs h1 v_s i) (h_subs h1 v_s' i)).
+assert (heq Σ D Γ (h_subs h1 i v_s) (h_subs h1 i v_s')).
 eapply heq_subtype. 3:exact H0. eapply heq_subs_logicsafe_weak. all: eauto.
 eapply heq_trans; eauto. eapply heq_subs_typesafe; eauto.
 eapply Heq. 2: exact H0. all:eauto. inv vseq. assumption.

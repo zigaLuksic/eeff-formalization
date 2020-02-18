@@ -722,8 +722,8 @@ Qed.
 (* ==================== Value Shapes ==================== *)
 
 (* Var *)
-Fixpoint shape_var_full Γ v x n A (orig : has_vtype Γ v A) {struct orig} :
-  v = Var (x, n) -> 
+Fixpoint shape_var_full Γ v n A (orig : has_vtype Γ v A) {struct orig} :
+  v = Var n -> 
   (exists A', get_vtype Γ n = Some A' /\ vsubtype A' A).
 Proof.
 intros same.
@@ -736,26 +736,26 @@ destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Lemma shape_var Γ x n A:
-  has_vtype Γ (Var (x, n)) A -> 
+Lemma shape_var Γ n A:
+  has_vtype Γ (Var n) A -> 
   (exists A', get_vtype Γ n = Some A' /\ vsubtype A' A).
 Proof.
-intro orig. apply (shape_var_full _ _ x n A) in orig as shape; eauto.
+intro orig. apply (shape_var_full _ _ n A) in orig as shape; eauto.
 Qed.
 
 
-Lemma shape_var_ctx_empty id A:
-  has_vtype CtxØ (Var id) A -> False.
+Lemma shape_var_ctx_empty n A:
+  has_vtype CtxØ (Var n) A -> False.
 Proof.
-intro orig. destruct id as (x, n).
-apply (shape_var_full _ _ x n A) in orig as shape. 
+intro orig.
+apply (shape_var_full _ _ n A) in orig as shape. 
 2: reflexivity. destruct shape as [A'[gets]]. simpl in gets. discriminate.
 Qed.
 
 
 (* Empty *)
 Fixpoint shape_empty_full Γ v A (orig : has_vtype Γ v A) {struct orig} :
-  A = TyØ -> (exists x n, v = Var (x, n)).
+  A = TyØ -> (exists n, v = Var n).
 Proof.
 intros samety.
 destruct orig. destruct H1; try discriminate. eauto.
@@ -764,7 +764,7 @@ Qed.
 
 
 Lemma shape_empty Γ v:
-  has_vtype Γ v TyØ -> (exists x num, v = Var (x, num)).
+  has_vtype Γ v TyØ -> (exists n, v = Var n).
 Proof.
 intro orig. apply (shape_empty_full _ _) in orig as shape; auto.
 Qed.
@@ -773,7 +773,7 @@ Qed.
 (* Pair *)
 Fixpoint shape_prod_full Γ v A B ty (orig : has_vtype Γ v ty) {struct orig} :
   ty = TyΠ A B ->
-  (exists x n, v = Var (x, n)) \/
+  (exists n, v = Var n) \/
   (exists v1 v2, v = Pair v1 v2 /\ has_vtype Γ v1 A /\ has_vtype Γ v2 B).
 Proof.
 intros same.
@@ -813,7 +813,7 @@ Proof.
 intro orig.
 apply (shape_prod_full _ _ A B) in orig as shape. 2: reflexivity.
 destruct shape.
-+ destruct H as [x [n]]. discriminate.
++ destruct H as [n same]. discriminate.
 + destruct H as [v1' [v2' [same]]]. inv same. assumption.
 Qed.
 
@@ -821,7 +821,7 @@ Qed.
 (* Sum *)
 Fixpoint shape_sum_full Γ v A B ty (orig : has_vtype Γ v ty) {struct orig} :
   ty = TyΣ A B ->
-  (exists x n, v = Var (x, n)) \/
+  (exists n, v = Var n) \/
   (exists v1, v = Inl v1 /\ has_vtype Γ v1 A) \/
   (exists v2, v = Inr v2 /\ has_vtype Γ v2 B).
 Proof.
@@ -873,7 +873,7 @@ Lemma shape_sum_inl Γ v A B :
 Proof.
 intro orig. apply (shape_sum_full _ _ A B) in orig as shape. 2: reflexivity.
 destruct shape.
-+ destruct H as [x [n]]. discriminate.
++ destruct H as [n same]. discriminate.
 + destruct H; destruct H; destruct H; inv H. auto.
 Qed.
 
@@ -883,7 +883,7 @@ Lemma shape_sum_inr Γ v A B :
 Proof.
 intro orig. apply (shape_sum_full _ _ A B) in orig as shape. 2: reflexivity.
 destruct shape.
-+ destruct H as [x [n]]. discriminate.
++ destruct H as [n same]. discriminate.
 + destruct H; destruct H; destruct H; inv H. auto.
 Qed.
 
@@ -891,7 +891,7 @@ Qed.
 (* List *)
 Fixpoint shape_list_full Γ v A ty (orig : has_vtype Γ v ty) {struct orig} :
   ty = TyList A ->
-  (exists x n, v = Var (x, n)) \/ (v = ListNil) \/
+  (exists n, v = Var n) \/ (v = ListNil) \/
   (exists w ws, v = 
     ListCons w ws /\ has_vtype Γ w A /\ has_vtype Γ ws (TyList A)).
 Proof.
@@ -911,7 +911,7 @@ destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Fixpoint shape_list_cons_full Γ v A w ws (orig : has_vtype Γ v A) {struct orig} :
+Fixpoint shape_list_cons_full Γ v A w ws (orig: has_vtype Γ v A) {struct orig}:
   v = ListCons w ws ->
   (exists A', A = TyList A' /\ has_vtype Γ w A' /\ has_vtype Γ ws (TyList A')).
 Proof.
@@ -936,13 +936,13 @@ Qed.
 
 
 (* Function *)
-Fixpoint shape_fun_full Γ v x c ty (orig : has_vtype Γ v ty) {struct orig} :
-  v = Fun x c ->
+Fixpoint shape_fun_full Γ v c ty (orig : has_vtype Γ v ty) {struct orig} :
+  v = Fun c ->
   (exists A C, ty = TyFun A C /\ has_ctype (CtxU Γ A) c C).
 Proof.
 intros same. destruct orig. destruct H1; try discriminate.
 + inv same. eauto.
-+ subst. apply (shape_fun_full _ _ x c) in H1. clear shape_fun_full. 
++ subst. apply (shape_fun_full _ _ c) in H1. clear shape_fun_full. 
   2: reflexivity. destruct H1 as [A''[C''[s]]]. subst.
   apply subtype_shape_fun_rev in H2. destruct H2 as [A'''[C'''[s[vty1]]]].
   exists A'''. exists C'''. aconstructor. subst. inv H0.
@@ -955,8 +955,8 @@ Qed.
 
 Fixpoint shape_tyfun_full Γ v A C ty (orig : has_vtype Γ v ty) {struct orig} :
   ty = TyFun A C ->
-  (exists x n, v = Var (x, n)) \/
-  (exists x c, v = Fun x c /\ has_ctype (CtxU Γ A) c C).
+  (exists n, v = Var n) \/
+  (exists c, v = Fun c /\ has_ctype (CtxU Γ A) c C).
 Proof.
 intros same. destruct orig. destruct H1; try discriminate. eauto.
 + inv same. eauto. 
@@ -964,8 +964,8 @@ intros same. destruct orig. destruct H1; try discriminate. eauto.
   destruct H2 as [A'' [C'' [funty]]]. subst. 
   apply (shape_tyfun_full _ _ A'' C'') in H1. clear shape_tyfun_full. 
   2: reflexivity. destruct H1. auto.
-  right. destruct H1. destruct H1 as [c']. 
-  exists x. exists c'.
+  right. destruct H1 as [c']. 
+  exists c'.
   destruct H1. aconstructor. apply TypeC; inv H0; auto.
   * apply WfCtxU; assumption.
   * destruct H2. eapply TypeCSubtype. 2: eauto.
@@ -973,20 +973,20 @@ intros same. destruct orig. destruct H1; try discriminate. eauto.
     apply SubtypeCtxU. apply ctx_subtype_refl. all: assumption.
 Qed.
 
-Lemma shape_fun Γ x c A C :
-  has_vtype Γ (Fun x c) (TyFun A C) -> has_ctype (CtxU Γ A) c C.
+Lemma shape_fun Γ c A C :
+  has_vtype Γ (Fun c) (TyFun A C) -> has_ctype (CtxU Γ A) c C.
 Proof.
 intro orig. apply (shape_tyfun_full _ _ A C) in orig as shape. 2: reflexivity.
 destruct shape.
-+ destruct H as [y [n]]. discriminate.
-+ do 3 (destruct H). inv H. inv H0. apply TypeC; assumption.
++ destruct H. discriminate.
++ destruct H as [c'[same tys]]. inv same. auto.
 Qed.
 
 
 (* Handler *)
-Fixpoint shape_handler_full Γ v x c_r h ty
+Fixpoint shape_handler_full Γ v c_r h ty
   (orig : has_vtype Γ v ty) {struct orig} :
-  v = Handler x c_r h ->
+  v = Handler c_r h ->
   (exists A Σ E D Σ' D', ty = TyHandler (CTy A Σ E) D /\ 
     has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ' D' /\ respects Γ h Σ' D' E
     /\ sig_subtype Σ Σ' /\ csubtype D' D).
@@ -996,7 +996,7 @@ intros same. destruct orig. destruct H1; try discriminate.
   exists Σ. exists D. inv same. do 3 aconstructor.
   inv H0. inv H6. aconstructor. constructor.
   apply sig_subtype_refl. auto. apply csubtype_refl. auto.
-+ subst. apply (shape_handler_full _ _ x c_r h) in H1.
++ subst. apply (shape_handler_full _ _ c_r h) in H1.
   clear shape_handler_full. 2: reflexivity.
   destruct H1 as [A''[Σ[E[D[Σ'[D'[same[cty[hty[r[sty]]]]]]]]]]]. subst.
   apply subtype_shape_handler_rev in H2. destruct H2 as [C' [D''[same[sty']]]].
@@ -1022,14 +1022,14 @@ Qed.
 Fixpoint shape_tyhandler_full Γ v A Σ E D ty
   (orig : has_vtype Γ v ty) {struct orig} :
   ty = TyHandler (CTy A Σ E) D ->
-  (exists x n, v = Var (x, n)) \/
-  (exists x c_r h Σ' D', v = Handler x c_r h /\ has_ctype (CtxU Γ A) c_r D' 
+  (exists n, v = Var n) \/
+  (exists c_r h Σ' D', v = Handler c_r h /\ has_ctype (CtxU Γ A) c_r D' 
     /\ has_htype Γ h Σ' D' /\ respects Γ h Σ' D' E
     /\ sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intros same. destruct orig. destruct H1; try discriminate. eauto.
 + clear shape_tyhandler_full. right.
-  exists x. exists c_ret. exists h. exists Σ. exists D.
+  exists c_ret. exists h. exists Σ. exists D.
   inv same. do 4 aconstructor. constructor; inv H2.
   apply sig_subtype_refl. assumption. apply csubtype_refl. assumption.
 + rewrite same in *. apply subtype_shape_handler in H2. 
@@ -1037,8 +1037,8 @@ intros same. destruct orig. destruct H1; try discriminate. eauto.
   destruct C' as [A' Σ' E'].
   apply (shape_tyhandler_full _ _ A' Σ' E' D') in H1.
   clear shape_tyhandler_full. 2: reflexivity. destruct H1. auto.
-  right. destruct H1 as [x[cr[h[Σ''[D''[same[cty[hty[r]]]]]]]]].
-  exists x. exists cr. exists h. exists Σ''. exists D''.
+  right. destruct H1 as [cr[h[Σ''[D''[same[cty[hty[r]]]]]]]].
+  exists cr. exists h. exists Σ''. exists D''.
   aconstructor. constructor; destruct H1.
   - eapply ctx_subtype_ctype. eauto.
     inv H0. inv H7. apply WfCtxU; assumption.
@@ -1049,16 +1049,16 @@ intros same. destruct orig. destruct H1; try discriminate. eauto.
     eapply sig_subtype_trans; eauto. eapply csubtype_trans; eauto.
 Qed.
 
-Lemma shape_handler Γ x c_r h A Σ E D:
-  has_vtype Γ (Handler x c_r h) (TyHandler (CTy A Σ E) D) ->
+Lemma shape_handler Γ c_r h A Σ E D:
+  has_vtype Γ (Handler c_r h) (TyHandler (CTy A Σ E) D) ->
     (exists Σ' D', has_ctype (CtxU Γ A) c_r D' /\ has_htype Γ h Σ' D'
       /\ respects Γ h Σ' D' E /\ sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intro orig.
 apply (shape_tyhandler_full _ _ A Σ E D) in orig as shape. 2: reflexivity.
 destruct shape.
-+ destruct H as [y [n]]. discriminate.
-+ do 6 (destruct H). inv H. eauto.
++ destruct H as [n]. discriminate.
++ do 5 (destruct H). inv H. eauto.
 Qed.
 
 (* ========================= Handler Cases Shapes ========================= *)
@@ -1066,16 +1066,16 @@ Qed.
 Lemma h_has_case Γ h Σ D op A_op B_op:
   has_htype Γ h Σ D ->
   get_op_type Σ op = Some (A_op, B_op) ->
-  exists x k c_op, find_case h op = Some (x, k, c_op).
+  exists c_op, find_case h op = Some c_op.
 Proof.
 revert Γ Σ. induction h; intros Γ Σ typed gets; inv typed; inv H2.
 + simpl in gets. discriminate.
 + simpl in *. destruct (op==o); eauto.
 Qed.
 
-Lemma case_has_type Γ h Σ D op Aop Bop x k c_op:
+Lemma case_has_type Γ h Σ D op Aop Bop c_op:
   has_htype Γ h Σ D -> get_op_type Σ op = Some (Aop, Bop) ->
-  find_case h op = Some (x, k, c_op) ->
+  find_case h op = Some c_op ->
   has_ctype (CtxU (CtxU Γ (TyFun Bop D)) Aop) c_op D.
 Proof.
 revert Σ. induction h; intros Σ tys gets finds.
@@ -1127,38 +1127,38 @@ Qed.
 
 
 (* ΠMatch *)
-Fixpoint shape_prodmatch_full Γ c v x y c' C
+Fixpoint shape_prodmatch_full Γ c v c' C
   (orig : has_ctype Γ c C) {struct orig} :
-  c = (ΠMatch v x y c') ->
+  c = (ΠMatch v c') ->
   (exists A B, has_vtype Γ v (TyΠ A B) /\ has_ctype (CtxU (CtxU Γ A) B) c' C).
 Proof.  
 intros same. destruct orig. destruct H1; try discriminate; inv same.
 + clear shape_prodmatch_full. exists A. exists B. auto.
-+ apply (shape_prodmatch_full _ _ v x y c') in H1; clear shape_prodmatch_full. 
++ apply (shape_prodmatch_full _ _ v c') in H1; clear shape_prodmatch_full. 
   2: reflexivity. destruct H1 as [A' [B' [vty]]].
   exists A'. exists B'. aconstructor.
   apply TypeC; try (inv H1; assumption). eapply TypeCSubtype; eauto.
 Qed.
 
 
-Fixpoint shape_prodmatch Γ v x y c C :
-  has_ctype Γ (ΠMatch v x y c) C ->
+Fixpoint shape_prodmatch Γ v c C :
+  has_ctype Γ (ΠMatch v c) C ->
   (exists A B, has_vtype Γ v (TyΠ A B) /\  has_ctype (CtxU (CtxU Γ A) B) c C).
 Proof.
-intro orig. apply (shape_prodmatch_full _ _ v x y c) in orig; auto.
+intro orig. apply (shape_prodmatch_full _ _ v c) in orig; auto.
 Qed.
 
 
 (* ΣMatch *)
-Fixpoint shape_summatch_full Γ c v x c1 y c2 C
+Fixpoint shape_summatch_full Γ c v c1 c2 C
   (orig : has_ctype Γ c C) {struct orig} :
-  c = (ΣMatch v x c1 y c2) ->
+  c = (ΣMatch v c1 c2) ->
   (exists A B, has_vtype Γ v (TyΣ A B) /\
     has_ctype (CtxU Γ A) c1 C /\ has_ctype (CtxU Γ B) c2 C).
 Proof.  
 intros same. destruct orig. destruct H1; try discriminate.
 + clear shape_summatch_full. inv same. exists A. exists B. auto.
-+ apply (shape_summatch_full _ _ v x c1 y c2) in H1;
++ apply (shape_summatch_full _ _ v c1 c2) in H1;
   clear shape_summatch_full. 2: assumption.
   destruct H1 as [A' [B' [vty]]].
   exists A'. exists B'. aconstructor.
@@ -1167,25 +1167,25 @@ intros same. destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Fixpoint shape_summatch Γ v x c1 y c2 C :
-  has_ctype Γ (ΣMatch v x c1 y c2) C ->
+Fixpoint shape_summatch Γ v c1 c2 C :
+  has_ctype Γ (ΣMatch v c1 c2) C ->
   (exists A B, has_vtype Γ v (TyΣ A B) /\
     has_ctype (CtxU Γ A) c1 C /\ has_ctype (CtxU Γ B) c2 C).
 Proof.
-intro orig. apply (shape_summatch_full _ _ v x c1 y c2) in orig; auto.
+intro orig. apply (shape_summatch_full _ _ v c1 c2) in orig; auto.
 Qed.
 
 
 (* ListMatch *)
-Fixpoint shape_listmatch_full Γ c v c1 x xs c2 C
+Fixpoint shape_listmatch_full Γ c v c1 c2 C
   (orig : has_ctype Γ c C) {struct orig} :
-  c = (ListMatch v c1 x xs c2) ->
+  c = (ListMatch v c1 c2) ->
   (exists A, has_vtype Γ v (TyList A) /\
     has_ctype Γ c1 C /\ has_ctype (CtxU (CtxU Γ A) (TyList A)) c2 C).
 Proof.
 intros same. destruct orig. destruct H1; try discriminate.
 + clear shape_listmatch_full. inv same. exists A. auto.
-+ apply (shape_listmatch_full _ _ v c1 x xs c2) in H1;
++ apply (shape_listmatch_full _ _ v c1 c2) in H1;
   clear shape_listmatch_full. 2: assumption.
   destruct H1 as [A' [vty[ty1 ty2]]].
   exists A'. aconstructor. constructor; apply TypeC; auto.
@@ -1193,8 +1193,8 @@ intros same. destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Fixpoint shape_listmatch Γ v c1 x xs c2 C:
-  has_ctype Γ (ListMatch v c1 x xs c2) C ->
+Fixpoint shape_listmatch Γ v c1 c2 C:
+  has_ctype Γ (ListMatch v c1 c2) C ->
   (exists A, has_vtype Γ v (TyList A) /\
     has_ctype Γ c1 C /\ has_ctype (CtxU (CtxU Γ A) (TyList A)) c2 C).
 Proof.
@@ -1218,11 +1218,11 @@ intros same. destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Fixpoint shape_app Γ x c v C :
-  has_ctype Γ (App (Fun x c) v) C ->
+Fixpoint shape_app Γ c v C :
+  has_ctype Γ (App (Fun c) v) C ->
   (exists A, has_ctype (CtxU Γ A) c C /\ has_vtype Γ v A).
 Proof.
-intro orig. eapply (shape_app_full _ _ (Fun x c) v C) in orig.
+intro orig. eapply (shape_app_full _ _ (Fun c) v C) in orig.
 2: reflexivity. destruct orig as [A [fty]]. apply shape_fun in fty. eauto.
 Qed.
 
@@ -1252,15 +1252,15 @@ Qed.
 
 
 (* LetRec *)
-Fixpoint shape_letrec_full Γ c f x c1 c2 D
+Fixpoint shape_letrec_full Γ c c1 c2 D
   (orig : has_ctype Γ c D) {struct orig} :
-  c = (LetRec f x c1 c2) ->
+  c = (LetRec c1 c2) ->
   (exists A C, has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C /\ 
     has_ctype (CtxU Γ (TyFun A C)) c2 D).
 Proof.  
 intros same. destruct orig. destruct H1; try discriminate.
 + clear shape_letrec_full. inv same. exists A. exists C. auto.
-+ apply (shape_letrec_full _ _ f x c1 c2) in H1;
++ apply (shape_letrec_full _ _ c1 c2) in H1;
   clear shape_letrec_full. 2: assumption.
   destruct H1 as [A' [C'' [cty]]]. inv H1.
   exists A'. exists C''. aconstructor. apply TypeC; auto.
@@ -1268,25 +1268,25 @@ intros same. destruct orig. destruct H1; try discriminate.
 Qed.
 
 
-Fixpoint shape_letrec Γ f x c1 c2 D :
-  has_ctype Γ (LetRec f x c1 c2) D ->
+Fixpoint shape_letrec Γ c1 c2 D :
+  has_ctype Γ (LetRec c1 c2) D ->
   (exists A C, has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C /\ 
     has_ctype (CtxU Γ (TyFun A C)) c2 D).
 Proof.
-intro orig. eapply (shape_letrec_full _ _ f x c1 c2 D) in orig; auto.
+intro orig. eapply (shape_letrec_full _ _ c1 c2 D) in orig; auto.
 Qed.
 
 
 (* DoBind *)
-Fixpoint shape_dobind_full Γ c C x c1 c2 A Σ E
+Fixpoint shape_dobind_full Γ c C c1 c2 A Σ E
   (orig : has_ctype Γ c C) {struct orig} :
-  c = (DoBind x c1 c2) -> C = (CTy A Σ E) ->
+  c = (DoBind c1 c2) -> C = (CTy A Σ E) ->
   (exists A', has_ctype Γ c1 (CTy A' Σ E) /\ has_ctype (CtxU Γ A') c2 C).
 Proof.  
 intros same samety. destruct orig. destruct H1; try discriminate; inv same.
 + inv samety. clear shape_dobind_full. exists A0. auto.
 + destruct C as (A', Σ', E').
-  apply (shape_dobind_full _ _ (CTy A' Σ' E') x c1 c2 A' Σ' E') in H1;
+  apply (shape_dobind_full _ _ (CTy A' Σ' E') c1 c2 A' Σ' E') in H1;
   clear shape_dobind_full; auto. destruct H1 as [A'' [cty]].
   exists A''. constructor.
   - apply TypeC. assumption. inv cty. inv H0. inv H4.
@@ -1296,26 +1296,26 @@ intros same samety. destruct orig. destruct H1; try discriminate; inv same.
 Qed.
 
 
-Fixpoint shape_dobind Γ x c1 c2 A Σ E :
-  has_ctype Γ (DoBind x c1 c2) (CTy A Σ E) ->
+Fixpoint shape_dobind Γ c1 c2 A Σ E :
+  has_ctype Γ (DoBind c1 c2) (CTy A Σ E) ->
   (exists A', has_ctype Γ c1 (CTy A' Σ E) /\ 
     has_ctype (CtxU Γ A') c2 (CTy A Σ E)).
 Proof.  
-intro orig. eapply (shape_dobind_full _ _ _ x c1 c2 A Σ E) in orig; auto.
+intro orig. eapply (shape_dobind_full _ _ _ c1 c2 A Σ E) in orig; auto.
 Qed.
 
 
 (* Op *)
-Fixpoint shape_op_full Γ c C op v y c' A Σ E
+Fixpoint shape_op_full Γ c C op v c' A Σ E
   (orig : has_ctype Γ c C) {struct orig} :
-  c = (Op op v y c') -> C = (CTy A Σ E) ->
+  c = (Op op v c') -> C = (CTy A Σ E) ->
   (exists Aop Bop, get_op_type Σ op = Some (Aop, Bop) /\
     has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c' C).
 Proof.  
 intros same samety. destruct orig. destruct H1; try discriminate; inv same.
 + inv samety. eauto.
 + destruct C as (A', Σ', E').
-  apply (shape_op_full _ _ (CTy A' Σ' E') op v y c' A' Σ' E') in H1;
+  apply (shape_op_full _ _ (CTy A' Σ' E') op v c' A' Σ' E') in H1;
   clear shape_op_full; eauto. destruct H1 as [A'' [B'' [g [vty]]]]. inv H2.
   eapply sig_subtype_get_Some in g; eauto. destruct g as [A'''[B'''[g'[s']]]].
   exists A'''. exists B'''. aconstructor. constructor.
@@ -1330,10 +1330,10 @@ intros same samety. destruct orig. destruct H1; try discriminate; inv same.
 Qed.
 
 
-Fixpoint shape_op Γ op v y c A Σ E :
-  has_ctype Γ (Op op v y c) (CTy A Σ E) -> 
+Fixpoint shape_op Γ op v c A Σ E :
+  has_ctype Γ (Op op v c) (CTy A Σ E) -> 
   (exists Aop Bop, get_op_type Σ op = Some (Aop, Bop) /\
     has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E)).
 Proof.  
-intro orig. eapply (shape_op_full _ _ _ op v y c A Σ E) in orig; auto.
+intro orig. eapply (shape_op_full _ _ _ op v c A Σ E) in orig; auto.
 Qed.

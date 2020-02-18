@@ -222,7 +222,7 @@ Proof.
 all: intros orig cmp.
 {
 induction v; simpl in orig; simpl; auto.
-+ destruct v. omega.
++ omega.
 + destruct orig. auto.
 + destruct orig. auto.
 + eapply c_under_var_weaken. eauto. omega.
@@ -250,7 +250,7 @@ with h_under_var_no_var h i j:
 Proof.
 {
 induction v; intros under cmp; simpl; auto; simpl in under.
-+ destruct v. omega.
++ omega.
 + inv under. auto.
 + inv under. auto.
 + eapply c_under_var_no_var. eauto. omega.
@@ -268,8 +268,8 @@ inv under. constructor. auto. eapply c_under_var_no_var; eauto; omega.
 }
 Qed.
 
-Lemma find_case_no_var h i op x k c:
-  h_no_var h i -> find_case h op = Some (x, k, c) -> c_no_var c (2+i).
+Lemma find_case_no_var h i op c:
+  h_no_var h i -> find_case h op = Some c -> c_no_var c (2+i).
 Proof.
 intros. induction h. simpl in H0. discriminate.
 inv H. simpl in H0. destruct (op==o); try inv H0; auto.

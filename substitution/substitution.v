@@ -5,11 +5,9 @@ Require Import Le.
 
 (* ==================== Shifts and Subs ==================== *)
 
-Module Sub.
-
 Fixpoint v_shift v d cut :=
   match v with
-  | Var (x, n) => if cut <=? n then Var (x, d + n) else Var (x, n)
+  | Var n => if cut <=? n then Var (d + n) else Var n
   | Unit => Unit
   | Int n => Int n
   | Inl v' => Inl (v_shift v' d cut)
@@ -19,39 +17,38 @@ Fixpoint v_shift v d cut :=
   | ListNil => ListNil
   | ListCons v vs => 
       ListCons (v_shift v d cut) (v_shift vs d cut)
-  | Fun x c =>
-      Fun x (c_shift c d (1+cut))
-  | Handler x c_ret h =>
-      Handler x (c_shift c_ret d (1+cut)) (h_shift h d cut)
+  | Fun c =>
+      Fun (c_shift c d (1+cut))
+  | Handler c_ret h =>
+      Handler (c_shift c_ret d (1+cut)) (h_shift h d cut)
   end
 with c_shift c d cut :=
   match c with
   | Ret v => Ret (v_shift v d cut)
   | Absurd v => Absurd (v_shift v d cut)
-  | ΠMatch v x y c => 
-      ΠMatch (v_shift v d cut) x y (c_shift c d (2+cut))
-  | ΣMatch v x c1 y c2 =>
+  | ΠMatch v c => 
+      ΠMatch (v_shift v d cut) (c_shift c d (2+cut))
+  | ΣMatch v c1 c2 =>
       ΣMatch (v_shift v d cut) 
-        x (c_shift c1 d (1+cut)) y (c_shift c2 d (1+cut))
-  | ListMatch v c1 x xs c2 =>
-      ListMatch (v_shift v d cut)
-        (c_shift c1 d cut) x xs (c_shift c2 d (2+cut))
+        (c_shift c1 d (1+cut)) (c_shift c2 d (1+cut))
+  | ListMatch v c1 c2 =>
+      ListMatch (v_shift v d cut) (c_shift c1 d cut) (c_shift c2 d (2+cut))
   | App v1 v2 => 
       App (v_shift v1 d cut) (v_shift v2 d cut)
-  | Op op v_arg y c => 
-      Op op (v_shift v_arg d cut) y (c_shift c d (1+cut))
-  | LetRec f x c1 c2 => 
-      LetRec f x (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
-  | DoBind x c1 c2 => 
-      DoBind x (c_shift c1 d cut) (c_shift c2 d (1+cut))
+  | Op op v c => 
+      Op op (v_shift v d cut) (c_shift c d (1+cut))
+  | LetRec c1 c2 => 
+      LetRec (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
+  | DoBind c1 c2 => 
+      DoBind (c_shift c1 d cut) (c_shift c2 d (1+cut))
   | Handle v c' => 
       Handle (v_shift v d cut) (c_shift c' d cut)
   end
 with h_shift h d cut :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op x k c => 
-      CasesU (h_shift h d cut) op x k (c_shift c d (2+cut))
+  | CasesU h op c => 
+      CasesU (h_shift h d cut) op (c_shift c d (2+cut))
   end.
 
 
@@ -61,57 +58,52 @@ Definition sub_shift (sub : nat * val) d :=
 
 Fixpoint v_negshift v d cut :=
   match v with
-  | Var (x, n) => 
-      if Nat.leb cut n then Var (x, n - d) else Var (x, n)   
+  | Var n => if Nat.leb cut n then Var (n - d) else Var n   
   | Unit => Unit
   | Int n => Int n
   | Inl v' => Inl (v_negshift v' d cut)
   | Inr v' => Inr (v_negshift v' d cut)
-  | Pair v1 v2 => 
-      Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
+  | Pair v1 v2 => Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
   | ListNil => ListNil
-  | ListCons v vs => 
-      ListCons (v_negshift v d cut) (v_negshift vs d cut)
-  | Fun x c => 
-      Fun x (c_negshift c d (1+cut))
-  | Handler x c_ret h =>
-      Handler x (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
+  | ListCons v vs => ListCons (v_negshift v d cut) (v_negshift vs d cut)
+  | Fun c => Fun (c_negshift c d (1+cut))
+  | Handler c_ret h =>
+      Handler (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
   end
 with c_negshift c d cut :=
   match c with
   | Ret v => Ret (v_negshift v d cut)
   | Absurd v => Absurd (v_negshift v d cut)
-  | ΠMatch v x y c => 
-      ΠMatch (v_negshift v d cut) x y (c_negshift c d (2+cut))
-  | ΣMatch v x c1 y c2 =>
+  | ΠMatch v c => 
+      ΠMatch (v_negshift v d cut) (c_negshift c d (2+cut))
+  | ΣMatch v c1 c2 =>
       ΣMatch (v_negshift v d cut)
-        x (c_negshift c1 d (1+cut)) y (c_negshift c2 d (1+cut))
-  | ListMatch v c1 x xs c2 =>
+        (c_negshift c1 d (1+cut)) (c_negshift c2 d (1+cut))
+  | ListMatch v c1 c2 =>
       ListMatch (v_negshift v d cut)
-        (c_negshift c1 d cut) x xs (c_negshift c2 d (2+cut))
+        (c_negshift c1 d cut) (c_negshift c2 d (2+cut))
   | App v1 v2 => 
       App (v_negshift v1 d cut) (v_negshift v2 d cut)
-  | Op op v_arg y c => 
-      Op op (v_negshift v_arg d cut) y (c_negshift c d (1+cut))
-  | LetRec f x c1 c2 =>
-      LetRec f x (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
-  | DoBind x c1 c2 => 
-      DoBind x (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
+  | Op op v c => 
+      Op op (v_negshift v d cut) (c_negshift c d (1+cut))
+  | LetRec c1 c2 =>
+      LetRec (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
+  | DoBind c1 c2 => 
+      DoBind (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
   | Handle v c' => 
       Handle (v_negshift v d cut) (c_negshift c' d cut)
   end
 with h_negshift h d cut :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op x k c => 
-      CasesU (h_negshift h d cut) op x k (c_negshift c d (2+cut))
+  | CasesU h op c => CasesU (h_negshift h d cut) op (c_negshift c d (2+cut))
   end.
 
 
 Fixpoint v_sub v (sub : nat * val) :=
 let (db_i, v_s) := sub in
   match v with
-  | Var (x, n) => if n =? db_i then v_s else Var (x, n) 
+  | Var n => if n =? db_i then v_s else Var n 
   | Unit => Unit
   | Int n => Int n
   | Inl v' => Inl (v_sub v' sub)
@@ -121,63 +113,62 @@ let (db_i, v_s) := sub in
   | ListNil => ListNil
   | ListCons v vs => 
       ListCons (v_sub v sub) (v_sub vs sub)
-  | Fun x c => 
-      Fun x (c_sub c (sub_shift sub 1))
-  | Handler x c_ret h =>
-      Handler x (c_sub c_ret (sub_shift sub 1)) (h_sub h sub)
+  | Fun c => 
+      Fun (c_sub c (sub_shift sub 1))
+  | Handler c_ret h =>
+      Handler (c_sub c_ret (sub_shift sub 1)) (h_sub h sub)
   end
 with c_sub c (sub : nat * val) :=
   match c with
   | Ret v => Ret (v_sub v sub)
   | Absurd v => Absurd (v_sub v sub)
-  | ΠMatch v x y c => 
-      ΠMatch (v_sub v sub) x y (c_sub c (sub_shift sub 2))
-  | ΣMatch v xl cl xr cr =>
+  | ΠMatch v c => 
+      ΠMatch (v_sub v sub) (c_sub c (sub_shift sub 2))
+  | ΣMatch v c1 c2 =>
       ΣMatch (v_sub v sub)
-        xl (c_sub cl (sub_shift sub 1)) xr (c_sub cr (sub_shift sub 1))
-  | ListMatch v c1 x xs c2 =>
+        (c_sub c1 (sub_shift sub 1)) (c_sub c2 (sub_shift sub 1))
+  | ListMatch v c1 c2 =>
       ListMatch (v_sub v sub)
-        (c_sub c1 sub) x xs (c_sub c2 (sub_shift sub 2))
+        (c_sub c1 sub) (c_sub c2 (sub_shift sub 2))
   | App v1 v2 => 
       App (v_sub v1 sub) (v_sub v2 sub)
-  | Op op v_arg y c => 
-      Op op (v_sub v_arg sub) y (c_sub c (sub_shift sub 1))
-  | LetRec f x c1 c2 =>
-      LetRec f x (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
-  | DoBind x c1 c2 => 
-      DoBind x (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
+  | Op op v c => 
+      Op op (v_sub v sub) (c_sub c (sub_shift sub 1))
+  | LetRec c1 c2 =>
+      LetRec (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
+  | DoBind c1 c2 => 
+      DoBind (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
   | Handle v c' => 
       Handle (v_sub v sub) (c_sub c' sub)
   end
 with h_sub h (sub : nat * val) :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op x k c => 
-      CasesU (h_sub h sub) op x k (c_sub c (sub_shift sub 2))
+  | CasesU h op c => 
+      CasesU (h_sub h sub) op (c_sub c (sub_shift sub 2))
   end.
 
-End Sub.
 
 (* ==================== Complete substitution ==================== *)
 
-Definition v_subs (v:val) (v_s:val) i :=
-  Sub.v_negshift (Sub.v_sub v (i, (Sub.v_shift v_s 1 i))) 1 i.
+Definition v_subs (v:val) i (v_s:val) :=
+  v_negshift (v_sub v (i, (v_shift v_s 1 i))) 1 i.
 
-Definition c_subs (c:comp) (v_s:val) i :=
-  Sub.c_negshift (Sub.c_sub c (i, (Sub.v_shift v_s 1 i))) 1 i.
+Definition c_subs (c:comp) i (v_s:val) :=
+  c_negshift (c_sub c (i, (v_shift v_s 1 i))) 1 i.
 
-Definition h_subs (h:hcases) (v_s:val) i :=
-  Sub.h_negshift (Sub.h_sub h (i, (Sub.v_shift v_s 1 i))) 1 i.
+Definition h_subs (h:hcases) i (v_s:val) :=
+  h_negshift (h_sub h (i, (v_shift v_s 1 i))) 1 i.
 
-Definition v_subs_out (v:val) (v_s:val) := v_subs v v_s 0.
+Definition v_subs_out (v:val) (v_s:val) := v_subs v 0 v_s.
 
-Definition c_subs_out (c:comp) (v_s:val) := c_subs c v_s 0.
+Definition c_subs_out (c:comp) (v_s:val) := c_subs c 0 v_s.
 
-Definition h_subs_out (h:hcases) (v_s:val) := h_subs h v_s 0.
+Definition h_subs_out (h:hcases) (v_s:val) := h_subs h 0 v_s.
 
 Definition c_subs2_out (c:comp) v1 v0 :=
   (* 1 -> v1, 0 -> v0 *)
-  c_subs_out (c_subs_out c (Sub.v_shift v0 1 0)) v1.
+  c_subs_out (c_subs_out c (v_shift v0 1 0)) v1.
 
 
 (* ==================== Instantiation ==================== *)
@@ -185,25 +176,25 @@ Definition c_subs2_out (c:comp) v1 v0 :=
 Fixpoint inst_shift I d cut :=
   match I with
   | InstØ => InstØ
-  | InstU I' v => InstU (inst_shift I' d cut) (Sub.v_shift v d cut)
+  | InstU I' v => InstU (inst_shift I' d cut) (v_shift v d cut)
   end.
 
 Fixpoint inst_negshift I d cut :=
   match I with
   | InstØ => InstØ
-  | InstU I' v => InstU (inst_negshift I' d cut) (Sub.v_negshift v d cut)
+  | InstU I' v => InstU (inst_negshift I' d cut) (v_negshift v d cut)
   end.
 
 Fixpoint inst_sub I sub :=
   match I with
   | InstØ => InstØ
-  | InstU I' v => InstU (inst_sub I' sub) (Sub.v_sub v sub)
+  | InstU I' v => InstU (inst_sub I' sub) (v_sub v sub)
   end.
 
-Fixpoint inst_subs I vs i :=
+Fixpoint inst_subs I i vs :=
   match I with
   | InstØ => InstØ
-  | InstU I' v => InstU (inst_subs I' vs i) (v_subs v vs i)
+  | InstU I' v => InstU (inst_subs I' i vs) (v_subs v i vs)
   end.
 
 Set Implicit Arguments.
@@ -215,7 +206,7 @@ Function f_opt (A B:Type) (opt : option A) (f : A -> option B) :=
 
 Fixpoint v_inst v I:=
   match v with
-  | Var (x, n) => 
+  | Var n => 
       match get_inst_val I n with
       | Some v' => v'
       | None => Unit (* This is the naughty branch *)
@@ -229,52 +220,52 @@ Fixpoint v_inst v I:=
   | ListNil => ListNil
   | ListCons v vs => 
       ListCons (v_inst v I) (v_inst vs I)
-  | Fun x c => 
-      Fun x (c_inst c (InstU (inst_shift I 1 0) (Var (x, 0))))
-  | Handler x c_ret h =>
-      Handler x 
-        (c_inst c_ret (InstU (inst_shift I 1 0) (Var (x, 0)))) 
+  | Fun c => 
+      Fun (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
+  | Handler c_ret h =>
+      Handler 
+        (c_inst c_ret (InstU (inst_shift I 1 0) (Var 0))) 
         (h_inst h I)
   end
 with c_inst c I :=
   match c with
   | Ret v => Ret (v_inst v I)
   | Absurd v => Absurd (v_inst v I)
-  | ΠMatch v x y c => 
-      ΠMatch (v_inst v I) x y 
-        (c_inst c (InstU (InstU (inst_shift I 2 0) (Var (x, 1))) (Var (y, 0))))
-  | ΣMatch v x c1 y c2 =>
+  | ΠMatch v c => 
+      ΠMatch (v_inst v I)
+        (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
+  | ΣMatch v c1 c2 =>
       ΣMatch (v_inst v I)
-        x (c_inst c1 (InstU (inst_shift I 1 0) (Var (x, 0)))) 
-        y (c_inst c2 (InstU (inst_shift I 1 0) (Var (y, 0))))
-  | ListMatch v c1 x xs c2 =>
+        (c_inst c1 (InstU (inst_shift I 1 0) (Var 0))) 
+        (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
+  | ListMatch v c1 c2 =>
       ListMatch (v_inst v I)
-        (c_inst c1 I) x xs 
+        (c_inst c1 I) 
         (c_inst c2 
-          (InstU (InstU (inst_shift I 2 0) (Var (x, 1))) (Var (xs, 0))))
+          (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   | App v1 v2 => 
       App (v_inst v1 I) (v_inst v2 I)
-  | Op op v_arg y c => 
-      Op op (v_inst v_arg I) 
-        y (c_inst c (InstU (inst_shift I 1 0) (Var (y, 0))))
-  | LetRec f x c1 c2 =>
-      LetRec f x 
+  | Op op v c => 
+      Op op (v_inst v I) 
+        (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
+  | LetRec c1 c2 =>
+      LetRec
         (c_inst c1 
-          (InstU (InstU (inst_shift I 2 0) (Var (x, 1))) (Var (f, 0)))) 
-        (c_inst c2 (InstU (inst_shift I 1 0) (Var (f, 0))))
-  | DoBind x c1 c2 => 
-      DoBind x (c_inst c1 I) 
-        (c_inst c2 (InstU (inst_shift I 1 0) (Var (x, 0))))
+          (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0))) 
+        (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
+  | DoBind c1 c2 => 
+      DoBind (c_inst c1 I) 
+        (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
   | Handle v c' => 
       Handle (v_inst v I) (c_inst c' I)
   end
 with h_inst h I :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op x k c => 
-      CasesU (h_inst h I) op x k 
+  | CasesU h op c => 
+      CasesU (h_inst h I) op
         (c_inst c 
-          (InstU (InstU (inst_shift I 2 0) (Var (x, 1))) (Var (k, 0))))
+          (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   end.
 
 

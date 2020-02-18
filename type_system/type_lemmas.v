@@ -153,34 +153,34 @@ Qed.
 Theorem progress c C:
   has_ctype CtxØ c C ->
   (exists v, c = Ret v) \/
-  (exists o v y c', c = Op o v y c') \/
+  (exists o v c', c = Op o v c') \/
   (exists c', step c c'). 
 Proof.
 revert C. induction c; intros C orig.
 + left. eauto.
 + apply shape_absurd in orig. apply shape_empty in orig as shape. 
-  destruct shape as [x [i]]. subst. apply shape_var_ctx_empty in orig.
+  destruct shape. subst. apply shape_var_ctx_empty in orig.
   destruct orig.
-+ rename v0 into x. rename v1 into y. right. right. clear IHc.
++ right. right. clear IHc.
   eapply shape_prodmatch in orig. destruct orig as [A [B [vty]]].
   eapply shape_prod_full in vty as shape. 2: reflexivity.
   destruct shape.
-  - destruct H0 as [name [db_i]]. rewrite H0 in *.
+  - destruct H0 as [n same]. rewrite same in *.
     apply shape_var_ctx_empty in vty. destruct vty.
   - destruct H0 as [v1[v2[same[ty1]]]]. subst.
     eexists. apply Step_ΠMatch.
-+ right. right. rename v0 into x. rename v1 into y. clear IHc1 IHc2.
++ right. right. clear IHc1 IHc2.
   eapply shape_summatch in orig. destruct orig as [A [B [vty]]].
   eapply shape_sum_full in vty as shape. 2: reflexivity.
   destruct shape. 2: destruct H0.
-  - destruct H0 as [name [db_i]]. rewrite H0 in *.
+  - destruct H0 as [n same]. rewrite same in *.
     apply shape_var_ctx_empty in vty. destruct vty.
   - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inl.
   - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inr.
-+ right. right. rename v0 into x. rename v1 into xs.
++ right. right.
   eapply shape_listmatch in orig. destruct orig as [A[vty[cty1 cty2]]].
   eapply shape_list_full in vty as shape; eauto. destruct shape. 
-  destruct H as [y[n]]. subst. apply shape_var_ctx_empty in vty. destruct vty. 
+  destruct H as [n same]. subst. apply shape_var_ctx_empty in vty. destruct vty. 
   destruct H.
   - exists c1. subst. apply Step_ListMatch_Nil.
   - destruct H as [w[ws[same[wty wsty]]]]. subst. 
@@ -189,34 +189,34 @@ revert C. induction c; intros C orig.
   eapply shape_app_full in orig. 2: reflexivity.
   destruct orig as [A [fty]]. eapply shape_tyfun_full in fty as ffty.
   2: reflexivity. destruct ffty.
-  - destruct H0 as [name [db_i]]. rewrite H0 in *.
+  - destruct H0 as [n same]. rewrite same in *.
     apply shape_var_ctx_empty in fty. destruct fty.
   - destruct H0 as [x [c [same]]]. subst. eexists. apply Step_App.
 + right. left. eauto.
-+ right. right. rename v into f. rename v0 into x. clear IHc1 IHc2.
++ right. right. clear IHc1 IHc2.
   eexists. apply Step_LetRec.
-+ right. right. rename v into x. clear IHc2. destruct C as (A, Σ, E). 
++ right. right. clear IHc2. destruct C as (A, Σ, E). 
   eapply shape_dobind in orig. destruct orig as [A' [c1ty]].
   apply IHc1 in c1ty as IH. clear IHc1. destruct IH as [h1 | [h2 | h3]].
   - destruct h1. rewrite H0 in *. eexists. apply Step_DoBind_Ret.
-  - destruct h2. destruct H0. destruct H0 as [y [c']]. rewrite H0 in *.
+  - destruct h2. destruct H0. destruct H0 as [c' same]. rewrite same in *.
     eexists. apply Step_DoBind_Op.
   - destruct h3. eexists. apply Step_DoBind_step. exact H0.
 + right. right. eapply shape_handle in orig. rename C into D.
   destruct orig as [C [hty]]. apply IHc in H as H'. clear IHc.
   destruct C as (A, Σ, E). eapply shape_tyhandler_full in hty as shape.
   2: reflexivity. destruct shape.
-  { destruct H0 as [x [i]]. subst.
+  { destruct H0 as [n same]. subst.
     apply shape_var_ctx_empty in hty. contradiction. }
-  destruct H0 as [x[c_r[h[Σ'[D'[same[crty]]]]]]]. subst.
+  destruct H0 as [c_r[h[Σ'[D'[same[crty]]]]]]. subst.
   destruct H'. 2: destruct H1.
   - destruct H1 as [v]. subst. eexists. apply Step_Handle_Ret.   
-  - destruct H1 as [op[v[y[c']]]]. subst. destruct H0 as [hcsty[r[sigsty]]].
+  - destruct H1 as [op[v[c']]]. subst. destruct H0 as [hcsty[r[sigsty]]].
     apply shape_op in H. destruct H as [A_op[B_op[gets]]].
     eapply sig_subtype_get_Some in gets. 2: exact sigsty.
     destruct gets as [A'[B'[gets']]].
     eapply h_has_case in hcsty. 2: exact gets'.
-    destruct hcsty as [x'[k'[c_op]]].
-    eexists. eapply Step_Handle_Op. exact H2.    
+    destruct hcsty as [c_op finds].
+    eexists. eapply Step_Handle_Op. eauto.    
   - destruct H1 as [c']. eexists. apply Step_Handle_Step. exact H1.
 Qed.

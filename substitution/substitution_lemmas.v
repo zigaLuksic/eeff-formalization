@@ -8,7 +8,7 @@ Require Import Le.
 (* ==================== Effects on getters ==================== *)
 
 Lemma shift_find_None h o i j :
-  find_case h o = None <-> find_case (Sub.h_shift h i j) o = None.
+  find_case h o = None <-> find_case (h_shift h i j) o = None.
 Proof.
 constructor; intro; induction h; auto; simpl in *;
 destruct (o==o0) eqn:cmp; try discriminate; auto.
@@ -16,7 +16,7 @@ Qed.
 
 
 Lemma negshift_find_None h o i j :
-  find_case h o = None <-> find_case (Sub.h_negshift h i j) o = None.
+  find_case h o = None <-> find_case (h_negshift h i j) o = None.
 Proof.
 constructor; intro; induction h; auto; simpl in *;
 destruct (o==o0) eqn:cmp; try discriminate; auto.
@@ -25,35 +25,35 @@ Qed.
 
 Lemma sub_find_None h o i v_s :
   find_case h o = None -> 
-  find_case (Sub.h_sub h (i, v_s)) o = None.
+  find_case (h_sub h (i, v_s)) o = None.
 Proof.
 intro; induction h; simpl in *. auto.
 destruct (o==o0) eqn:cmp. discriminate. auto.
 Qed.
 
 
-Lemma shift_find_Some h o i j x k c :
-  find_case h o = Some (x, k, c) -> 
-  find_case (Sub.h_shift h i j) o = Some (x, k, (Sub.c_shift c i (2+j))).
+Lemma shift_find_Some h o i j c :
+  find_case h o = Some c -> 
+  find_case (h_shift h i j) o = Some (c_shift c i (2+j)).
 Proof.
 intro; induction h; simpl in *. discriminate.
 destruct (o==o0) eqn:cmp. inv H. all: auto.
 Qed.
 
 
-Lemma negshift_find_Some h o i j x k c :
-  find_case h o = Some (x, k, c) -> 
-  find_case (Sub.h_negshift h i j) o = Some (x, k, (Sub.c_negshift c i (2+j))).
+Lemma negshift_find_Some h o i j c :
+  find_case h o = Some c -> 
+  find_case (h_negshift h i j) o = Some (c_negshift c i (2+j)).
 Proof.
 intro; induction h; simpl in *. discriminate.
 destruct (o==o0) eqn:cmp. inv H. all: auto.
 Qed.
 
 
-Lemma sub_find_Some h o i v_s x k c :
-  find_case h o = Some (x, k, c) -> 
-    find_case (Sub.h_sub h (i, v_s)) o 
-  = Some (x, k, (Sub.c_sub c (2+i, Sub.v_shift v_s 2 0))).
+Lemma sub_find_Some h o i v_s c :
+  find_case h o = Some c -> 
+    find_case (h_sub h (i, v_s)) o 
+  = Some (c_sub c (2+i, v_shift v_s 2 0)).
 Proof.
 intro; induction h; simpl in *. discriminate.
 destruct (o==o0) eqn:cmp. inv H. all: auto.
@@ -61,31 +61,30 @@ Qed.
 
 (* ==================== Shift and Sub interactions ==================== *)
 
-Lemma v_shift_0 cut v : Sub.v_shift v 0 cut = v
-with c_shift_0 cut c  : Sub.c_shift c 0 cut = c
-with h_shift_0 cut h  : Sub.h_shift h 0 cut = h.
+Lemma v_shift_0 cut v : v_shift v 0 cut = v
+with c_shift_0 cut c  : c_shift c 0 cut = c
+with h_shift_0 cut h  : h_shift h 0 cut = h.
 Proof.
 { revert cut. induction v; intros cut; simpl; try f_equal; auto.
-  destruct v. destruct (cut <=? v0); auto. }
+  destruct (cut <=? v); auto. }
 { revert cut. induction c; intros cut; simpl; f_equal; auto. }
 { revert cut. induction h; intros cut; simpl; f_equal; auto. }
 Qed.
 
 
 Lemma v_shift_shift n m cut v :
-  Sub.v_shift (Sub.v_shift v n cut) m cut = (Sub.v_shift v (n + m) cut)
+  v_shift (v_shift v n cut) m cut = (v_shift v (n + m) cut)
 with c_shift_shift n m cut c :
-  Sub.c_shift (Sub.c_shift c n cut) m cut = (Sub.c_shift c (n + m) cut)
+  c_shift (c_shift c n cut) m cut = (c_shift c (n + m) cut)
 with h_shift_shift n m cut h :
-  Sub.h_shift (Sub.h_shift h n cut) m cut = (Sub.h_shift h (n + m) cut).
+  h_shift (h_shift h n cut) m cut = (h_shift h (n + m) cut).
 Proof.
 {
 revert cut. induction v; intros cut; simpl; f_equal; auto.
-destruct v as (name, db_i).
-destruct (cut <=? db_i) eqn:cmp; simpl.
+destruct (cut <=? v) eqn:cmp; simpl.
 - apply (leb_complete _ _) in cmp.
-  assert (cut <=? n + db_i = true) by (apply leb_correct; omega).
-  rewrite H. do 2 f_equal. omega.
+  assert (cut <=? n + v = true) by (apply leb_correct; omega).
+  rewrite H. f_equal. omega.
 - rewrite cmp. reflexivity. }
 { revert cut. induction c; intros cut; try destruct p; simpl; f_equal; auto. }
 { revert cut. induction h; intros cut; simpl; f_equal; auto. }
@@ -100,25 +99,25 @@ Qed.
 
 Fixpoint v_shift_comm n i j d (v:val) {struct v}:
   i >= j ->
-  Sub.v_shift (Sub.v_shift v n i) d j = Sub.v_shift (Sub.v_shift v d j) n (d+i)
+  v_shift (v_shift v n i) d j = v_shift (v_shift v d j) n (d+i)
 
 with c_shift_comm n i j d (c:comp) {struct c}:
   i >= j ->
-  Sub.c_shift (Sub.c_shift c n i) d j = Sub.c_shift (Sub.c_shift c d j) n (d+i)
+  c_shift (c_shift c n i) d j = c_shift (c_shift c d j) n (d+i)
 
 with h_shift_comm n i j d (h:hcases) {struct h}:
   i >= j ->
-  Sub.h_shift (Sub.h_shift h n i) d j = Sub.h_shift (Sub.h_shift h d j) n (d+i).
+  h_shift (h_shift h n i) d j = h_shift (h_shift h d j) n (d+i).
 Proof.
 {
 intros cmp. induction v; simpl.
 { clear v_shift_comm c_shift_comm h_shift_comm.
-  destruct v as (x, dbi).
+  rename v into dbi.
   destruct (i<=?dbi) eqn:cmpi; destruct (j<=?dbi) eqn:cmpj; simpl.
   + apply leb_complete in cmpi. apply leb_complete in cmpj.
     assert (j<=?n+dbi=true) by (apply leb_correct; omega).
     assert (d+i<=?d+dbi=true) by (apply leb_correct; omega).
-    rewrite H, H0. do 2 f_equal. omega.
+    rewrite H, H0. f_equal. omega.
   + apply leb_complete in cmpi. apply leb_complete_conv in cmpj. omega.
   + apply leb_complete_conv in cmpi. rewrite cmpj. apply leb_complete in cmpj.
     assert (d+i<=?d+dbi=false) by (apply leb_correct_conv; omega).  
@@ -156,23 +155,23 @@ Qed.
 
 Lemma v_negshift_shift n m cut (v:val) :
   (m <= n) ->
-  Sub.v_negshift (Sub.v_shift v n cut) m cut = (Sub.v_shift v (n - m) cut)
+  v_negshift (v_shift v n cut) m cut = (v_shift v (n - m) cut)
 
 with c_negshift_shift n m cut (c:comp) :
   (m <= n) ->
-  Sub.c_negshift (Sub.c_shift c n cut) m cut = (Sub.c_shift c (n - m) cut)
+  c_negshift (c_shift c n cut) m cut = (c_shift c (n - m) cut)
 
 with h_negshift_shift n m cut (h:hcases) :
   (m <= n) ->  
-  Sub.h_negshift (Sub.h_shift h n cut) m cut = (Sub.h_shift h (n - m) cut).
+  h_negshift (h_shift h n cut) m cut = (h_shift h (n - m) cut).
 Proof.
 {
 clear v_negshift_shift.
 revert cut. induction v; intros cut m_le_n; simpl; f_equal; auto.
-destruct v as (x, i). simpl. destruct (cut <=? i) eqn:cmp; simpl.
+rename v into i. simpl. destruct (cut <=? i) eqn:cmp; simpl.
 - apply leb_complete in cmp.
   assert (cut <=? n + i=true) by (apply leb_correct; omega).
-  rewrite H. do 2 f_equal. omega.
+  rewrite H. f_equal. omega.
 - rewrite cmp. reflexivity.
 }{
 clear c_negshift_shift h_negshift_shift.
@@ -188,30 +187,30 @@ Qed.
 
 Lemma v_shift_negshift_comm v n i j :
   v_no_var v j -> i <= j ->
-    Sub.v_shift (Sub.v_negshift v 1 j) n i 
-  = Sub.v_negshift (Sub.v_shift v n i) 1 (n+j)
+    v_shift (v_negshift v 1 j) n i 
+  = v_negshift (v_shift v n i) 1 (n+j)
 
 with c_shift_negshift_comm c n i j :
   c_no_var c j -> i <= j ->
-    Sub.c_shift (Sub.c_negshift c 1 j) n i 
-  = Sub.c_negshift (Sub.c_shift c n i) 1 (n+j)
+    c_shift (c_negshift c 1 j) n i 
+  = c_negshift (c_shift c n i) 1 (n+j)
 
 with h_shift_negshift_comm h n i j :
   h_no_var h j -> i <= j ->
-    Sub.h_shift (Sub.h_negshift h 1 j) n i 
-  = Sub.h_negshift (Sub.h_shift h n i) 1 (n+j).
+    h_shift (h_negshift h 1 j) n i 
+  = h_negshift (h_shift h n i) 1 (n+j).
 Proof.
 {
 clear v_shift_negshift_comm.
 revert j; induction v; intros j novar cmpij; simpl.
 { 
-destruct v as (x, d). simpl. destruct (j<=?d) eqn:jd.
+rename v into d. simpl. destruct (j<=?d) eqn:jd.
 + apply leb_complete in jd. 
   assert (i<=?d=true) by (apply leb_correct; omega).
   rewrite H. simpl. assert (n+j<=?n+d=true) by (apply leb_correct; omega).
   rewrite H0. assert (i<=?d-1=true).
   { apply leb_correct. simpl in novar. omega. }
-  rewrite H1. do 2 f_equal. simpl in novar. omega.
+  rewrite H1. f_equal. simpl in novar. omega.
 + apply leb_complete_conv in jd. simpl.
   destruct (i<=?d) eqn:id; simpl.
   - assert (n+j<=?n+d=false) by (apply leb_correct_conv; omega).
@@ -252,31 +251,31 @@ Qed.
 
 Lemma v_shift_negshift_comm_alt v i j :
   v_no_var v j -> j < i ->
-    Sub.v_shift (Sub.v_negshift v 1 j) 1 i 
-  = Sub.v_negshift (Sub.v_shift v 1 (1+i)) 1 j
+    v_shift (v_negshift v 1 j) 1 i 
+  = v_negshift (v_shift v 1 (1+i)) 1 j
 
 with c_shift_negshift_comm_alt c i j :
   c_no_var c j -> j < i ->
-    Sub.c_shift (Sub.c_negshift c 1 j) 1 i 
-  = Sub.c_negshift (Sub.c_shift c 1 (1+i)) 1 j
+    c_shift (c_negshift c 1 j) 1 i 
+  = c_negshift (c_shift c 1 (1+i)) 1 j
 
 with h_shift_negshift_comm_alt h i j :
   h_no_var h j -> j < i ->
-    Sub.h_shift (Sub.h_negshift h 1 j) 1 i 
-  = Sub.h_negshift (Sub.h_shift h 1 (1+i)) 1 j.
+    h_shift (h_negshift h 1 j) 1 i 
+  = h_negshift (h_shift h 1 (1+i)) 1 j.
 Proof.
 {
 clear v_shift_negshift_comm_alt.
 revert j; induction v; intros j novar cmpij.
 { 
 assert (1+i=i+1) as hack by omega. rewrite hack.
-destruct v as (x, d). simpl. destruct (j<=?d) eqn:jd.
+rename v into d. simpl. destruct (j<=?d) eqn:jd.
 + apply leb_complete in jd. simpl in novar.
   destruct (i+1<=?d) eqn:sid; simpl.
   - assert (j<=? S d=true) by (apply leb_correct; omega).
     rewrite H. destruct d; simpl. omega. apply leb_complete in sid.
     assert (i<=?d-0=true) by (apply leb_correct; omega).
-    rewrite H0. do 2 f_equal. omega.
+    rewrite H0. f_equal. omega.
   - apply leb_complete_conv in sid. apply leb_correct in jd as jd'.
     rewrite jd'. destruct d. omega. 
     assert (i<=?S d-1=false) by (apply leb_correct_conv; omega). 
@@ -304,16 +303,15 @@ Qed.
 (* ==================== novar interactions ==================== *)
 
 Lemma v_shift_makes_no_var v j:
-  v_no_var (Sub.v_shift v 1 j) j
+  v_no_var (v_shift v 1 j) j
 with c_shift_makes_no_var c j:
-  c_no_var (Sub.c_shift c 1 j) j
+  c_no_var (c_shift c 1 j) j
 with h_shift_makes_no_var h j:
-  h_no_var (Sub.h_shift h 1 j) j.
+  h_no_var (h_shift h 1 j) j.
 Proof.
 {clear v_shift_makes_no_var.
 revert j; induction v; intros j; simpl; auto.
-destruct v as (name, num). simpl.
-destruct (j<=?num) eqn:cmp; simpl.
+destruct (j<=?v) eqn:cmp; simpl.
 + apply leb_complete in cmp. omega.
 + apply leb_iff_conv in cmp. omega. }
 {revert j; induction c; intros j; try destruct p; simpl; auto. }
@@ -322,11 +320,11 @@ Qed.
 
 
 Lemma v_no_var_shift (v:val) j n cut:
-  v_no_var v j -> (cut <= j) -> v_no_var (Sub.v_shift v n cut) (n+j)
+  v_no_var v j -> (cut <= j) -> v_no_var (v_shift v n cut) (n+j)
 with c_no_var_shift (c:comp) j n cut:
-  c_no_var c j -> (cut <= j) -> c_no_var (Sub.c_shift c n cut) (n+j)
+  c_no_var c j -> (cut <= j) -> c_no_var (c_shift c n cut) (n+j)
 with h_no_var_shift (h:hcases) j n cut:
-  h_no_var h j -> (cut <= j) -> h_no_var (Sub.h_shift h n cut) (n+j).
+  h_no_var h j -> (cut <= j) -> h_no_var (h_shift h n cut) (n+j).
 Proof.
 all: assert (forall j, S(n+j)=n+(S j)) as snj by (intro; omega).
 all: assert (forall j, S(S(n+j))=n+(S(S j))) as ssnj by (intro; omega).
@@ -334,8 +332,7 @@ all: assert (forall j, S(S(n+j))=n+(S(S j))) as ssnj by (intro; omega).
 clear v_no_var_shift.
 revert j. induction v; intros j orig cmpjc; simpl; simpl in orig;
 try constructor; try inv orig; auto.
-{ destruct v as (x, i). destruct (cut <=? i) eqn:cmp; simpl;
-  try rewrite leb_iff_conv in cmp; omega. }
+{ destruct (cut <=? v) eqn:cmp; simpl; try rewrite leb_iff_conv in cmp; omega. }
 all: rewrite snj; apply c_no_var_shift; omega || assumption.
 }{
 clear c_no_var_shift.
@@ -363,17 +360,17 @@ Qed.
 
 
 Lemma v_no_var_shift_alt (v:val) j n cut:
-  v_no_var v j -> (cut > j) -> v_no_var (Sub.v_shift v n cut) j
+  v_no_var v j -> (cut > j) -> v_no_var (v_shift v n cut) j
 with c_no_var_shift_alt (c:comp) j n cut:
-  c_no_var c j -> (cut > j) -> c_no_var (Sub.c_shift c n cut) j
+  c_no_var c j -> (cut > j) -> c_no_var (c_shift c n cut) j
 with h_no_var_shift_alt (h:hcases) j n cut:
-  h_no_var h j -> (cut > j) -> h_no_var (Sub.h_shift h n cut) j.
+  h_no_var h j -> (cut > j) -> h_no_var (h_shift h n cut) j.
 Proof.
 {
 clear v_no_var_shift_alt.
 revert j. induction v; intros j orig cmpjc; simpl; simpl in orig;
 try constructor; try inv orig; auto.
-{ destruct v as (x, i). destruct (cut <=? i) eqn:cmp; simpl; omega || auto.
+{ destruct (cut <=? v) eqn:cmp; simpl; omega || auto.
   rewrite leb_iff in cmp; omega. }
 all: apply c_no_var_shift_alt; omega || assumption.
 }{
@@ -391,18 +388,17 @@ Qed.
 
 
 Lemma v_sub_makes_no_var (v:val) j v_s :
-  v_no_var v_s j -> v_no_var (Sub.v_sub v (j, v_s)) j
+  v_no_var v_s j -> v_no_var (v_sub v (j, v_s)) j
 with c_sub_makes_no_var (c:comp) j v_s :
-  v_no_var v_s j -> c_no_var (Sub.c_sub c (j, v_s)) j
+  v_no_var v_s j -> c_no_var (c_sub c (j, v_s)) j
 with h_sub_makes_no_var (h:hcases) j v_s :
-  v_no_var v_s j -> h_no_var (Sub.h_sub h (j, v_s)) j.
+  v_no_var v_s j -> h_no_var (h_sub h (j, v_s)) j.
 Proof.
 {
 clear v_sub_makes_no_var.
 revert j. induction v; intros j v_s_clean; try constructor.
 all: try (apply IHv; assumption); auto.
-{ destruct v as (x, n). simpl. destruct (n =? j) eqn:nj; auto.
-  simpl. apply Nat.eqb_neq in nj. omega. }
+{simpl. destruct (v =? j) eqn:vj; auto. simpl. apply Nat.eqb_neq in vj. omega. }
 all: apply c_sub_makes_no_var; apply v_no_var_shift; omega || assumption.
 }{
 clear c_sub_makes_no_var.
@@ -430,17 +426,17 @@ Qed.
 
 
 Fixpoint v_under_var_shift v j n cut:
-  v_under_var v j -> cut <= j -> v_under_var (Sub.v_shift v n cut) (n+j)
+  v_under_var v j -> cut <= j -> v_under_var (v_shift v n cut) (n+j)
 with c_under_var_shift c j n cut:
-  c_under_var c j -> cut <= j -> c_under_var (Sub.c_shift c n cut) (n+j)
+  c_under_var c j -> cut <= j -> c_under_var (c_shift c n cut) (n+j)
 with h_under_var_shift h j n cut:
-  h_under_var h j -> cut <= j -> h_under_var (Sub.h_shift h n cut) (n+j).
+  h_under_var h j -> cut <= j -> h_under_var (h_shift h n cut) (n+j).
 Proof.
 all: assert (S(n+j)=n+S j) as Snj by omega.
 all: assert (S(S(n+j))=n+S(S j)) as SSnj by omega.
 {
 intros under cmp. destruct v; simpl; simpl in under; auto.
-{ destruct v. destruct (cut <=? v0) eqn:ccmp; simpl; omega. }
+{ destruct (cut <=? v) eqn:ccmp; simpl; omega. }
 all: try (destruct under; constructor; auto).
 all: rewrite Snj; eapply c_under_var_shift; eauto; omega.
 }{
@@ -459,15 +455,15 @@ Qed.
 
 
 Fixpoint v_shift_too_high v n cut :
-  v_under_var v cut -> Sub.v_shift v n cut = v
+  v_under_var v cut -> v_shift v n cut = v
 with c_shift_too_high c n cut :
-  c_under_var c cut -> Sub.c_shift c n cut = c
+  c_under_var c cut -> c_shift c n cut = c
 with h_shift_too_high h n cut :
-  h_under_var h cut -> Sub.h_shift h n cut = h.
+  h_under_var h cut -> h_shift h n cut = h.
 Proof.
 {
 intros under. destruct v; simpl; simpl in under.
-{ destruct v. assert (cut <=? v0 = false) by (apply leb_correct_conv; omega).
+{ assert (cut <=? v = false) by (apply leb_correct_conv; omega).
   rewrite H. reflexivity. }
 all: try (destruct under; f_equal; auto) || (f_equal; auto).
 }{
@@ -481,15 +477,15 @@ Qed.
 
 
 Fixpoint v_negshift_too_high v n cut :
-  v_under_var v cut -> Sub.v_negshift v n cut = v
+  v_under_var v cut -> v_negshift v n cut = v
 with c_negshift_too_high c n cut :
-  c_under_var c cut -> Sub.c_negshift c n cut = c
+  c_under_var c cut -> c_negshift c n cut = c
 with h_negshift_too_high h n cut :
-  h_under_var h cut -> Sub.h_negshift h n cut = h.
+  h_under_var h cut -> h_negshift h n cut = h.
 Proof.
 {
 intros under. destruct v; simpl; simpl in under.
-{ destruct v. assert (cut <=? v0 = false) by (apply leb_correct_conv; omega).
+{ assert (cut <=? v = false) by (apply leb_correct_conv; omega).
   rewrite H. reflexivity. }
 all: try (destruct under; f_equal; auto) || (f_equal; auto).
 }{
@@ -503,15 +499,15 @@ Qed.
 
 
 Fixpoint v_sub_too_high v i v_s:
-  v_under_var v i -> Sub.v_sub v (i, v_s) = v
+  v_under_var v i -> v_sub v (i, v_s) = v
 with c_sub_too_high c i v_s:
-  c_under_var c i -> Sub.c_sub c (i, v_s) = c
+  c_under_var c i -> c_sub c (i, v_s) = c
 with h_sub_too_high h i v_s:
-  h_under_var h i -> Sub.h_sub h (i, v_s) = h.
+  h_under_var h i -> h_sub h (i, v_s) = h.
 Proof.
 {
 intros under. destruct v; simpl; simpl in under.
-{ destruct v. assert (v0=?i=false) by (apply Nat.eqb_neq; omega).
+{ assert (v=?i=false) by (apply Nat.eqb_neq; omega).
   rewrite H. reflexivity. }
 all: try (destruct under; f_equal; auto) || (f_equal; auto).
 }{
@@ -525,18 +521,17 @@ Qed.
 
 
 Fixpoint v_sub_no_var v v' i {struct v}:
-  v_no_var v i -> Sub.v_sub v (i, v') = v
+  v_no_var v i -> v_sub v (i, v') = v
 with c_sub_no_var c v' i {struct c}:
-  c_no_var c i -> Sub.c_sub c (i, v') = c
+  c_no_var c i -> c_sub c (i, v') = c
 with h_sub_no_var h v' i {struct h}:
-  h_no_var h i -> Sub.h_sub h (i, v') = h.
+  h_no_var h i -> h_sub h (i, v') = h.
 Proof.
 all: revert i.
-+ intros i novar. destruct v; simpl in novar; try destruct novar. 
-  { destruct v as (x,d). simpl.
-    assert (d=?i=false) by (apply Nat.eqb_neq; omega).
-    rewrite H. reflexivity. }
-  all: simpl in *; f_equal; auto.
++ intros i novar. destruct v; simpl in novar. 
+  { assert (v=?i=false) by (apply Nat.eqb_neq; omega).
+    simpl. rewrite H. reflexivity. }
+  all: try destruct novar; simpl in *; f_equal; auto.
 + intros i novar. induction c; simpl in *; try destruct novar.
   all: f_equal; auto. all: destruct H0; auto.
 + intros i novar. induction h; simpl in *; try destruct novar.
@@ -547,36 +542,36 @@ Qed.
 
 Lemma v_shift_sub v v' i cut j :
   cut <= j ->
-    Sub.v_shift (Sub.v_sub v (j, v')) i cut 
-  = Sub.v_sub (Sub.v_shift v i cut) (i+j, Sub.v_shift v' i cut)
+    v_shift (v_sub v (j, v')) i cut 
+  = v_sub (v_shift v i cut) (i+j, v_shift v' i cut)
 
 with c_shift_sub c v' i cut j :
   cut <= j ->
-    Sub.c_shift (Sub.c_sub c (j, v')) i cut 
-  = Sub.c_sub (Sub.c_shift c i cut) (i+j, Sub.v_shift v' i cut)
+    c_shift (c_sub c (j, v')) i cut 
+  = c_sub (c_shift c i cut) (i+j, v_shift v' i cut)
 
 with h_shift_sub h v' i cut j :
   cut <= j ->
-    Sub.h_shift (Sub.h_sub h (j, v')) i cut
-  = Sub.h_sub (Sub.h_shift h i cut) (i+j, Sub.v_shift v' i cut).
+    h_shift (h_sub h (j, v')) i cut
+  = h_sub (h_shift h i cut) (i+j, v_shift v' i cut).
 Proof.
 all : assert (S(i+j)=i+(S j)) as sij by omega.
 all : assert (S(S(i+j))=i+(S (S j))) as ssij by omega.
 {
 revert cut; induction v; intros cut cmpcj; simpl.
-{ destruct v as (x, d). simpl. destruct (cut<=?d) eqn:cd.
-  + destruct (d=?j) eqn:dj.
-    * apply Nat.eqb_eq in dj. subst. simpl.
+{ simpl. destruct (cut<=?v) eqn:cv.
+  + destruct (v=?j) eqn:vj.
+    * apply Nat.eqb_eq in vj. subst. simpl.
       assert (i+j=?i+j=true) by (apply Nat.eqb_eq; omega).
       rewrite H. reflexivity.
-    * simpl. rewrite cd. assert (i+d=?i+j=false).
-      { apply Nat.eqb_neq. apply Nat.eqb_neq in dj. omega. }
+    * simpl. rewrite cv. assert (i+v=?i+j=false).
+      { apply Nat.eqb_neq. apply Nat.eqb_neq in vj. omega. }
       rewrite H. reflexivity.
-  + assert (d=?j=false).
-    { apply Nat.eqb_neq. apply leb_complete_conv in cd. omega. }
-    rewrite H. simpl. rewrite cd.
-    assert (d=?i+j=false).
-    { apply Nat.eqb_neq. apply leb_complete_conv in cd. omega. }
+  + assert (v=?j=false).
+    { apply Nat.eqb_neq. apply leb_complete_conv in cv. omega. }
+    rewrite H. simpl. rewrite cv.
+    assert (v=?i+j=false).
+    { apply Nat.eqb_neq. apply leb_complete_conv in cv. omega. }
     rewrite H0. reflexivity.
 }
 all : f_equal; auto.
@@ -597,7 +592,7 @@ Qed.
 Lemma inst_shift_sub I v' i cut j :
   cut <= j ->
     inst_shift (inst_sub I (j, v')) i cut 
-  = inst_sub (inst_shift I i cut) (i+j, Sub.v_shift v' i cut).
+  = inst_sub (inst_shift I i cut) (i+j, v_shift v' i cut).
 Proof.
 revert i cut j. induction I; intros; simpl; f_equal; auto.
 apply v_shift_sub. omega.
@@ -606,23 +601,23 @@ Qed.
 
 Lemma v_negshift_sub v v' cut j :
   cut < j -> v_no_var v cut -> v_no_var v' cut ->
-    Sub.v_negshift (Sub.v_sub v (j, v')) 1 cut 
-  = Sub.v_sub (Sub.v_negshift v 1 cut) (j-1, Sub.v_negshift v' 1 cut)
+    v_negshift (v_sub v (j, v')) 1 cut 
+  = v_sub (v_negshift v 1 cut) (j-1, v_negshift v' 1 cut)
 
 with c_negshift_sub c v' cut j :
   cut < j -> c_no_var c cut -> v_no_var v' cut ->
-    Sub.c_negshift (Sub.c_sub c (j, v')) 1 cut 
-  = Sub.c_sub (Sub.c_negshift c 1 cut) (j-1, Sub.v_negshift v' 1 cut)
+    c_negshift (c_sub c (j, v')) 1 cut 
+  = c_sub (c_negshift c 1 cut) (j-1, v_negshift v' 1 cut)
 
 with h_negshift_sub h v' cut j :
   cut < j -> h_no_var h cut -> v_no_var v' cut ->
-    Sub.h_negshift (Sub.h_sub h (j, v')) 1 cut
-  = Sub.h_sub (Sub.h_negshift h 1 cut) (j-1, Sub.v_negshift v' 1 cut).
+    h_negshift (h_sub h (j, v')) 1 cut
+  = h_sub (h_negshift h 1 cut) (j-1, v_negshift v' 1 cut).
 Proof.
 {
 revert cut j; induction v; intros cut j cmpcj novar novar'; simpl.
 { 
-destruct v as (x, d). simpl. simpl in novar.
+rename v into d. simpl. simpl in novar.
 destruct (cut<=?d) eqn:cd.
 + destruct (d=?j) eqn:dsj.
   - simpl. apply Nat.eqb_eq in dsj. subst.
@@ -668,24 +663,23 @@ Qed.
 
 Lemma v_sub_sub v v1 v2 i j :
   v_no_var v j ->
-    Sub.v_sub v (i, Sub.v_sub v1 (j, v2))
-  = Sub.v_sub (Sub.v_sub v (i, v1)) (j, v2)
+    v_sub v (i, v_sub v1 (j, v2))
+  = v_sub (v_sub v (i, v1)) (j, v2)
 
 with c_sub_sub c v1 v2 i j :
   c_no_var c j ->
-    Sub.c_sub c (i, Sub.v_sub v1 (j, v2))
-  = Sub.c_sub (Sub.c_sub c (i, v1)) (j, v2)
+    c_sub c (i, v_sub v1 (j, v2))
+  = c_sub (c_sub c (i, v1)) (j, v2)
 
 with h_sub_sub h v1 v2 i j :
   h_no_var h j ->
-    Sub.h_sub h (i, Sub.v_sub v1 (j, v2))
-  = Sub.h_sub (Sub.h_sub h (i, v1)) (j, v2).
+    h_sub h (i, v_sub v1 (j, v2))
+  = h_sub (h_sub h (i, v1)) (j, v2).
 Proof.
 {
 revert i j; induction v; intros i j novar; simpl.
-{ destruct v as (x, d). simpl.
-  destruct (d=?i) eqn:cd. reflexivity.
-  simpl in *. assert (d=?j=false) by (apply Nat.eqb_neq; omega).
+{ simpl. destruct (v=?i) eqn:cv. reflexivity.
+  simpl in *. assert (v=?j=false) by (apply Nat.eqb_neq; omega).
   rewrite H. reflexivity. }
 all : simpl in novar; try destruct novar; f_equal; auto.
 all : rewrite v_shift_sub, c_sub_sub; omega || auto.
@@ -707,18 +701,17 @@ Qed.
 (* ==================== Full Subs Properties ==================== *)
 
 Fixpoint v_under_var_subs v v' i j {struct v}:
-  v_under_var v i -> v_under_var v' i -> v_under_var (v_subs v v' j) i
+  v_under_var v i -> v_under_var v' i -> v_under_var (v_subs v j v') i
 with c_under_var_subs c v' i j {struct c}:
-  c_under_var c i -> v_under_var v' i -> c_under_var (c_subs c v' j) i
+  c_under_var c i -> v_under_var v' i -> c_under_var (c_subs c j v') i
 with h_under_var_subs h v' i j {struct h}:
-  h_under_var h i -> v_under_var v' i -> h_under_var (h_subs h v' j) i.
+  h_under_var h i -> v_under_var v' i -> h_under_var (h_subs h j v') i.
 Proof.
 all: revert i j.
 + intros. destruct v.
-  { destruct v as (x,d). unfold v_subs. simpl. simpl in H.
-    destruct (d=?j).
+  { unfold v_subs. simpl. simpl in H. destruct (v=?j).
     + rewrite v_negshift_shift, v_shift_0. auto. omega.
-    + simpl. destruct (j<=?d); simpl; omega. }
+    + simpl. destruct (j<=?v); simpl; omega. }
   all: simpl in *; try inv H; try constructor.
   all: try apply v_under_var_subs || apply h_under_var_subs; auto.
   all: rewrite v_shift_comm; apply c_under_var_subs || omega; auto.
@@ -741,24 +734,24 @@ Qed.
 
 Fixpoint v_no_var_subs v v' i j {struct v}:
   v_no_var v (1+i) -> v_no_var v' i -> j<=i ->
-  v_no_var (v_subs v v' j) i
+  v_no_var (v_subs v j v') i
 
 with c_no_var_subs c v' i j {struct c}:
   c_no_var c (1+i) -> v_no_var v' i -> j<=i ->
-  c_no_var (c_subs c v' j) i
+  c_no_var (c_subs c j v') i
 
 with h_no_var_subs h v' i j {struct h}:
   h_no_var h (1+i) -> v_no_var v' i -> j<=i ->
-  h_no_var (h_subs h v' j) i.
+  h_no_var (h_subs h j v') i.
 Proof.
 all: revert i j.
 + intros. destruct v.
-  { destruct v as (x,d). unfold v_subs. simpl. simpl in H.
-    destruct (d=?j) eqn:dj.
+  { unfold v_subs. simpl. simpl in H.
+    destruct (v=?j) eqn:vj.
     + rewrite v_negshift_shift, v_shift_0. auto. omega.
-    + simpl. destruct (j<=?d) eqn:jld; simpl; apply Nat.eqb_neq in dj.
-      - apply leb_complete in jld. omega.
-      - apply leb_complete_conv in jld. omega. }
+    + simpl. destruct (j<=?v) eqn:jlv; simpl; apply Nat.eqb_neq in vj.
+      - apply leb_complete in jlv. omega.
+      - apply leb_complete_conv in jlv. omega. }
   all: simpl in *; try inv H; try constructor.
   all: try apply v_no_var_subs || apply h_no_var_subs; auto.
   all: rewrite v_shift_comm; apply c_no_var_subs || omega; omega || auto.
@@ -778,22 +771,22 @@ Qed.
 
 
 Lemma v_shift_subs v v' i j (safe: j <= i): 
-    Sub.v_shift (v_subs v v' j) 1 i
-  = (v_subs (Sub.v_shift v 1 (1+i)) (Sub.v_shift v' 1 i) j)
+    v_shift (v_subs v j v') 1 i
+  = (v_subs (v_shift v 1 (1+i)) j (v_shift v' 1 i))
 
 with c_shift_subs c v' i j (safe: j <= i): 
-    Sub.c_shift (c_subs c v' j) 1 i
-  = (c_subs (Sub.c_shift c 1 (1+i)) (Sub.v_shift v' 1 i) j)
+    c_shift (c_subs c j v') 1 i
+  = (c_subs (c_shift c 1 (1+i)) j (v_shift v' 1 i))
 
 with h_shift_subs h v' i j (safe: j <= i): 
-    Sub.h_shift (h_subs h v' j) 1 i
-  = (h_subs (Sub.h_shift h 1 (1+i)) (Sub.v_shift v' 1 i) j).
+    h_shift (h_subs h j v') 1 i
+  = (h_subs (h_shift h 1 (1+i)) j (v_shift v' 1 i)).
 Proof.
 {
 induction v; unfold v_subs; simpl.
 {
 clear v_shift_subs c_shift_subs h_shift_subs.
-destruct v as (x, n). 
+rename v into n.
 destruct (n=?i) eqn:ni.
 apply Nat.eqb_eq in ni. subst.
 + destruct (i=?j) eqn:eqij.
@@ -896,22 +889,22 @@ Qed.
 
 
 Lemma v_shift_subs_alt v v' i j (safe: i <= j): 
-    Sub.v_shift (v_subs v v' j) 1 i
-  = (v_subs (Sub.v_shift v 1 i) (Sub.v_shift v' 1 i) (1+j))
+    v_shift (v_subs v j v') 1 i
+  = (v_subs (v_shift v 1 i) (1+j) (v_shift v' 1 i))
 
 with c_shift_subs_alt c v' i j (safe: i <= j): 
-    Sub.c_shift (c_subs c v' j) 1 i
-  = (c_subs (Sub.c_shift c 1 i) (Sub.v_shift v' 1 i) (1+j))
+    c_shift (c_subs c j v') 1 i
+  = (c_subs (c_shift c 1 i) (1+j) (v_shift v' 1 i))
 
 with h_shift_subs_alt h v' i j (safe: i <= j): 
-    Sub.h_shift (h_subs h v' j) 1 i
-  = (h_subs (Sub.h_shift h 1 i) (Sub.v_shift v' 1 i) (1+j)).
+    h_shift (h_subs h j v') 1 i
+  = (h_subs (h_shift h 1 i) (1+j) (v_shift v' 1 i)).
 Proof.
 {
 induction v; unfold v_subs; simpl.
 {
 clear v_shift_subs_alt c_shift_subs_alt h_shift_subs_alt.
-destruct v as (x, n).
+rename v into n.
 destruct (n=?i) eqn:ni.
 apply Nat.eqb_eq in ni. subst.
 + destruct (i=?j) eqn:eqij.
@@ -1007,24 +1000,24 @@ Qed.
 
 
 Lemma v_negshift_subs v v' i j (safe: j <= i): 
-  v_no_var v (1+i) -> v_no_var v' (i) ->
-    Sub.v_negshift (v_subs v v' j) 1 i
-  = (v_subs (Sub.v_negshift v 1 (1+i)) (Sub.v_negshift v' 1 i) j)
+  v_no_var v (1+i) -> v_no_var v' i ->
+    v_negshift (v_subs v j v') 1 i
+  = (v_subs (v_negshift v 1 (1+i)) j (v_negshift v' 1 i))
   
 with c_negshift_subs c v' i j (safe: j <= i): 
   c_no_var c (1+i) -> v_no_var v' (i) ->
-    Sub.c_negshift (c_subs c v' j) 1 i
-  = (c_subs (Sub.c_negshift c 1 (1+i)) (Sub.v_negshift v' 1 i) j)
+    c_negshift (c_subs c j v') 1 i
+  = (c_subs (c_negshift c 1 (1+i)) j (v_negshift v' 1 i))
   
 with h_negshift_subs h v' i j (safe: j <= i): 
   h_no_var h (1+i) -> v_no_var v' (i) ->
-    Sub.h_negshift (h_subs h v' j) 1 i
-  = (h_subs (Sub.h_negshift h 1 (1+i)) (Sub.v_negshift v' 1 i) j).
+    h_negshift (h_subs h j v') 1 i
+  = (h_subs (h_negshift h 1 (1+i)) j (v_negshift v' 1 i)).
 Proof.
 {
 intros nov nov'. destruct v; unfold v_subs; simpl.
 { clear v_negshift_subs c_negshift_subs h_negshift_subs.
-  destruct v as (x, n). destruct (n=?j) eqn:nj.
+  rename v into n. destruct (n=?j) eqn:nj.
   apply Nat.eqb_eq in nj. subst.
   destruct (1+i <=? j) eqn:cmpij.
   3 : destruct (1+i <=? n) eqn:Sin. all: simpl.
@@ -1113,23 +1106,23 @@ Qed.
 
 Lemma v_negshift_subs_alt v v' i j (safe: j >= i): 
   v_no_var v i -> v_no_var v' i ->
-    Sub.v_negshift (v_subs v v' (1+j)) 1 i
-  = (v_subs (Sub.v_negshift v 1 i) (Sub.v_negshift v' 1 i) j)
+    v_negshift (v_subs v (1+j) v') 1 i
+  = (v_subs (v_negshift v 1 i) j (v_negshift v' 1 i))
   
 with c_negshift_subs_alt c v' i j (safe: j >= i): 
   c_no_var c i -> v_no_var v' (i) ->
-    Sub.c_negshift (c_subs c v' (1+j)) 1 i
-  = (c_subs (Sub.c_negshift c 1 i) (Sub.v_negshift v' 1 i) j)
+    c_negshift (c_subs c (1+j) v') 1 i
+  = (c_subs (c_negshift c 1 i) j (v_negshift v' 1 i))
   
 with h_negshift_subs_alt h v' i j (safe: j >= i): 
   h_no_var h i -> v_no_var v' (i) ->
-    Sub.h_negshift (h_subs h v' (1+j)) 1 i
-  = (h_subs (Sub.h_negshift h 1 i) (Sub.v_negshift v' 1 i) j).
+    h_negshift (h_subs h (1+j) v') 1 i
+  = (h_subs (h_negshift h 1 i) j (v_negshift v' 1 i)).
 Proof.
 {
 intros nov nov'. destruct v; unfold v_subs; simpl.
 { clear v_negshift_subs_alt c_negshift_subs_alt h_negshift_subs_alt.
-  destruct v as (x, n). destruct (n=?S j) eqn:nSj.
+  rename v into n. destruct (n=?S j) eqn:nSj.
   apply Nat.eqb_eq in nSj. subst.
   2 : destruct (i <=? n) eqn:cmpin. all: simpl.
   + assert(i<=?S j=true) by (apply leb_correct; omega).
@@ -1219,24 +1212,24 @@ Qed.
 
 Lemma v_sub_subs v i j vi vj:
   j >= i ->
-    Sub.v_sub (v_subs v vi i) (j, vj)
-  = (v_subs (Sub.v_sub v (1+j, Sub.v_shift vj 1 i)) (Sub.v_sub vi (j, vj)) i)
+    v_sub (v_subs v i vi) (j, vj)
+  = (v_subs (v_sub v (1+j, v_shift vj 1 i)) i (v_sub vi (j, vj)))
 
 with c_sub_subs c i j vi vj: 
   j >= i ->
-    Sub.c_sub (c_subs c vi i) (j, vj)
-  = (c_subs (Sub.c_sub c (1+j, Sub.v_shift vj 1 i)) (Sub.v_sub vi (j, vj)) i)
+    c_sub (c_subs c i vi) (j, vj)
+  = (c_subs (c_sub c (1+j, v_shift vj 1 i)) i (v_sub vi (j, vj)))
 
 with h_sub_subs h i j vi vj: 
   j >= i ->
-    Sub.h_sub (h_subs h vi i) (j, vj)
-  = (h_subs (Sub.h_sub h (1+j, Sub.v_shift vj 1 i)) (Sub.v_sub vi (j, vj)) i).
+    h_sub (h_subs h i vi) (j, vj)
+  = (h_subs (h_sub h (1+j, v_shift vj 1 i)) i (v_sub vi (j, vj))).
 Proof.
 {
 intros cmp. induction v; unfold v_subs; simpl.
 {
 clear v_sub_subs c_sub_subs h_sub_subs.
-destruct v as (x, n). 
+rename v into n.
 destruct (n=?i) eqn:ni.
 apply Nat.eqb_eq in ni. subst.
 + assert (i=?S j=false) by (apply Nat.eqb_neq; omega). rewrite H.
@@ -1292,24 +1285,24 @@ Qed.
 
 Lemma v_sub_subs_alt v i j vi vj:
   j < i ->
-    Sub.v_sub (v_subs v vi i) (j, vj)
-  = (v_subs (Sub.v_sub v (j, Sub.v_shift vj 1 i)) (Sub.v_sub vi (j, vj)) i)
+    v_sub (v_subs v i vi) (j, vj)
+  = (v_subs (v_sub v (j, v_shift vj 1 i)) i (v_sub vi (j, vj)))
 
 with c_sub_subs_alt c i j vi vj: 
   j < i ->
-    Sub.c_sub (c_subs c vi i) (j, vj)
-  = (c_subs (Sub.c_sub c (j, Sub.v_shift vj 1 i)) (Sub.v_sub vi (j, vj)) i)
+    c_sub (c_subs c i vi) (j, vj)
+  = (c_subs (c_sub c (j, v_shift vj 1 i)) i (v_sub vi (j, vj)))
 
 with h_sub_subs_alt h i j vi vj: 
   j < i ->
-    Sub.h_sub (h_subs h vi i) (j, vj)
-  = (h_subs (Sub.h_sub h (j, Sub.v_shift vj 1 i)) (Sub.v_sub vi (j, vj)) i).
+    h_sub (h_subs h i vi) (j, vj)
+  = (h_subs (h_sub h (j, v_shift vj 1 i)) i (v_sub vi (j, vj))).
 Proof.
 {
 intros cmp. induction v; unfold v_subs; simpl.
 {
 clear v_sub_subs_alt c_sub_subs_alt h_sub_subs_alt.
-destruct v as (x, n). 
+rename v into n.
 destruct (n=?i) eqn:ni.
 apply Nat.eqb_eq in ni. subst.
 + assert (i=?j=false) by (apply Nat.eqb_neq; omega).
@@ -1360,36 +1353,36 @@ Qed.
 
 Lemma v_subs_subs v i j vi vj:
   j >= i ->
-    v_subs (v_subs v vi i) vj j
-  = (v_subs (v_subs v (Sub.v_shift vj 1 i) (1+j)) (v_subs vi vj j) i)
+    v_subs (v_subs v i vi) j vj
+  = (v_subs (v_subs v (1+j) (v_shift vj 1 i)) i (v_subs vi j vj))
 
 with c_subs_subs c i j vi vj: 
   j >= i ->
-    c_subs (c_subs c vi i) vj j
-  = (c_subs (c_subs c (Sub.v_shift vj 1 i) (1+j)) (v_subs vi vj j) i)
+    c_subs (c_subs c i vi) j vj
+  = (c_subs (c_subs c (1+j) (v_shift vj 1 i)) i (v_subs vi j vj))
 
 with h_subs_subs h i j vi vj: 
   j >= i ->
-    h_subs (h_subs h vi i) vj j
-  = (h_subs (h_subs h (Sub.v_shift vj 1 i) (1+j)) (v_subs vi vj j) i).
+    h_subs (h_subs h i vi) j vj
+  = (h_subs (h_subs h (1+j) (v_shift vj 1 i)) i (v_subs vi j vj)).
 Proof.
 {
 intro cmp.
-assert (v_subs v vi i=Sub.v_negshift(Sub.v_sub v (i, Sub.v_shift vi 1 i)) 1 i). reflexivity. unfold v_subs. rewrite <-H.
+assert (v_subs v i vi=v_negshift(v_sub v (i, v_shift vi 1 i)) 1 i). reflexivity. unfold v_subs. rewrite <-H.
 rewrite v_sub_subs, v_negshift_subs, v_shift_comm.
 all: try reflexivity || omega.
 all: apply v_sub_makes_no_var. rewrite v_shift_comm. 2: omega. 
 all: apply v_shift_makes_no_var. 
 }{
 intro cmp.
-assert (c_subs c vi i=Sub.c_negshift(Sub.c_sub c (i, Sub.v_shift vi 1 i)) 1 i). reflexivity. unfold c_subs. rewrite <-H.
+assert (c_subs c i vi=c_negshift(c_sub c (i, v_shift vi 1 i)) 1 i). reflexivity. unfold c_subs. rewrite <-H.
 rewrite c_sub_subs, c_negshift_subs, v_shift_comm.
 all: try reflexivity || omega.
 apply c_sub_makes_no_var. rewrite v_shift_comm. 2: omega. 
 2: apply v_sub_makes_no_var. all: apply v_shift_makes_no_var. 
 }{
 intro cmp.
-assert (h_subs h vi i=Sub.h_negshift(Sub.h_sub h (i, Sub.v_shift vi 1 i)) 1 i). reflexivity. unfold h_subs. rewrite <-H.
+assert (h_subs h i vi=h_negshift(h_sub h (i, v_shift vi 1 i)) 1 i). reflexivity. unfold h_subs. rewrite <-H.
 rewrite h_sub_subs, h_negshift_subs, v_shift_comm.
 all: try reflexivity || omega.
 apply h_sub_makes_no_var. rewrite v_shift_comm. 2: omega. 
@@ -1400,23 +1393,23 @@ Qed.
 
 Lemma v_subs_subs_alt v i j vi vj:
   j < (1+i) ->
-    v_subs (v_subs v vi (1+i)) vj j
-  = (v_subs (v_subs v (Sub.v_shift vj 1 i) j) (v_subs vi vj j) i)
+    v_subs (v_subs v (1+i) vi) j vj
+  = (v_subs (v_subs v j (v_shift vj 1 i)) i (v_subs vi j vj))
 
 with c_subs_subs_alt c i j vi vj: 
   j < (1+i) ->
-    c_subs (c_subs c vi (1+i)) vj j
-  = (c_subs (c_subs c (Sub.v_shift vj 1 i) j) (v_subs vi vj j) i)
+    c_subs (c_subs c (1+i) vi) j vj
+  = (c_subs (c_subs c j (v_shift vj 1 i)) i (v_subs vi j vj))
 
 with h_subs_subs_alt h i j vi vj: 
   j < (1+i)->
-    h_subs (h_subs h vi (1+i)) vj j
-  = (h_subs (h_subs h (Sub.v_shift vj 1 i) j) (v_subs vi vj j) i).
+    h_subs (h_subs h (1+i) vi) j vj
+  = (h_subs (h_subs h j (v_shift vj 1 i)) i (v_subs vi j vj)).
 Proof.
 {
 intro cmp.
-assert (v_subs v vi (1+i)
-  =Sub.v_negshift(Sub.v_sub v (1+i, Sub.v_shift vi 1 (1+i))) 1 (1+i)). 
+assert (v_subs v (1+i) vi
+  =v_negshift(v_sub v (1+i, v_shift vi 1 (1+i))) 1 (1+i)). 
 reflexivity. unfold v_subs. rewrite <-H.
 rewrite v_sub_subs_alt, v_negshift_subs_alt, <-v_shift_comm.
 all: try reflexivity || omega.
@@ -1424,8 +1417,8 @@ all: apply v_sub_makes_no_var. rewrite <-v_shift_comm. 2: omega.
 all: apply v_shift_makes_no_var. 
 }{
 intro cmp.
-assert (c_subs c vi (1+i)
-  =Sub.c_negshift(Sub.c_sub c ((1+i), Sub.v_shift vi 1 (1+i))) 1 (1+i)). 
+assert (c_subs c (1+i) vi
+  =c_negshift(c_sub c ((1+i), v_shift vi 1 (1+i))) 1 (1+i)). 
 reflexivity. unfold c_subs. rewrite <-H.
 rewrite c_sub_subs_alt, c_negshift_subs_alt, <-v_shift_comm.
 all: try reflexivity || omega.
@@ -1433,8 +1426,8 @@ apply c_sub_makes_no_var. rewrite <-v_shift_comm. 2: omega.
 2: apply v_sub_makes_no_var. all: apply v_shift_makes_no_var. 
 }{
 intro cmp.
-assert (h_subs h vi (1+i)
-  =Sub.h_negshift(Sub.h_sub h ((1+i), Sub.v_shift vi 1 (1+i))) 1 (1+i)). 
+assert (h_subs h (1+i) vi
+  =h_negshift(h_sub h ((1+i), v_shift vi 1 (1+i))) 1 (1+i)). 
 reflexivity. unfold h_subs. rewrite <-H.
 rewrite h_sub_subs_alt, h_negshift_subs_alt, <-v_shift_comm.
 all: try reflexivity || omega.
@@ -1453,7 +1446,7 @@ Qed.
 
 Lemma get_inst_val_shift I n d c :
   get_inst_val (inst_shift I d c) n 
-  = f_opt (get_inst_val I n) (fun v => Some (Sub.v_shift v d c)).
+  = f_opt (get_inst_val I n) (fun v => Some (v_shift v d c)).
 Proof.
 revert n d c. induction I; intros; simpl in *. auto. 
 destruct n; simpl; auto.
@@ -1462,7 +1455,7 @@ Qed.
 
 Lemma get_inst_val_negshift I n d c :
   get_inst_val (inst_negshift I d c) n 
-  = f_opt (get_inst_val I n) (fun v => Some (Sub.v_negshift v d c)).
+  = f_opt (get_inst_val I n) (fun v => Some (v_negshift v d c)).
 Proof.
 revert n d c. induction I; intros; simpl in *. auto. 
 destruct n; simpl; auto.
@@ -1471,7 +1464,7 @@ Qed.
 
 Lemma get_inst_val_sub I n i v:
   get_inst_val (inst_sub I (i, v)) n 
-  = f_opt (get_inst_val I n) (fun v' => Some (Sub.v_sub v' (i, v))).
+  = f_opt (get_inst_val I n) (fun v' => Some (v_sub v' (i, v))).
 Proof.
 revert n. induction I; intros; simpl in *. auto. 
 destruct n; simpl; auto.
@@ -1479,16 +1472,15 @@ Qed.
 
 
 Fixpoint v_shift_inst I v d cut:
-  Sub.v_shift (v_inst v I) d cut = v_inst v (inst_shift I d cut)
+  v_shift (v_inst v I) d cut = v_inst v (inst_shift I d cut)
 with c_shift_inst I c d cut:
-  Sub.c_shift (c_inst c I) d cut = c_inst c (inst_shift I d cut)
+  c_shift (c_inst c I) d cut = c_inst c (inst_shift I d cut)
 with h_shift_inst I h d cut:
-  Sub.h_shift (h_inst h I) d cut = h_inst h (inst_shift I d cut).
+  h_shift (h_inst h I) d cut = h_inst h (inst_shift I d cut).
 Proof.
 {
 destruct v; simpl; eauto.
-{ destruct v. rewrite get_inst_val_shift.
-  destruct (get_inst_val I v0); simpl; auto. }
+{ rewrite get_inst_val_shift. destruct (get_inst_val I v); simpl; auto. }
 all: f_equal; eauto.
 all: rewrite inst_shift_comm; simpl; omega || eauto.
 all: apply c_shift_inst; auto.
@@ -1508,18 +1500,17 @@ Qed.
 
 Fixpoint v_negshift_inst I v cut:
   inst_no_var I cut ->
-  Sub.v_negshift (v_inst v I) 1 cut = v_inst v (inst_negshift I 1 cut)
+  v_negshift (v_inst v I) 1 cut = v_inst v (inst_negshift I 1 cut)
 with c_negshift_inst I c cut:
   inst_no_var I cut ->
-  Sub.c_negshift (c_inst c I) 1 cut = c_inst c (inst_negshift I 1 cut)
+  c_negshift (c_inst c I) 1 cut = c_inst c (inst_negshift I 1 cut)
 with h_negshift_inst I h cut:
   inst_no_var I cut ->
-  Sub.h_negshift (h_inst h I) 1 cut = h_inst h (inst_negshift I 1 cut).
+  h_negshift (h_inst h I) 1 cut = h_inst h (inst_negshift I 1 cut).
 Proof.
 {
 intros. destruct v; simpl; eauto.
-{ destruct v. rewrite get_inst_val_negshift.
-  destruct (get_inst_val I v0); simpl; auto. }
+{ rewrite get_inst_val_negshift. destruct (get_inst_val I v); simpl; auto. }
 all: f_equal; eauto.
 all: rewrite inst_shift_negshift_comm; simpl; omega || eauto.
 all: apply c_negshift_inst; simpl; constructor.
@@ -1545,16 +1536,15 @@ Qed.
 
  
 Fixpoint v_sub_inst I v i vs:
-  Sub.v_sub (v_inst v I) (i, vs) = v_inst v (inst_sub I (i, vs))
+  v_sub (v_inst v I) (i, vs) = v_inst v (inst_sub I (i, vs))
 with c_sub_inst I c i vs:
-  Sub.c_sub (c_inst c I) (i, vs) = c_inst c (inst_sub I (i, vs))
+  c_sub (c_inst c I) (i, vs) = c_inst c (inst_sub I (i, vs))
 with h_sub_inst I h i vs:
-  Sub.h_sub (h_inst h I) (i, vs) = h_inst h (inst_sub I (i, vs)).
+  h_sub (h_inst h I) (i, vs) = h_inst h (inst_sub I (i, vs)).
 Proof.
 {
 destruct v; simpl; eauto.
-{ destruct v. rewrite get_inst_val_sub.
-  destruct (get_inst_val I v0); simpl; auto. }
+{ rewrite get_inst_val_sub. destruct (get_inst_val I v); simpl; auto. }
 all: f_equal; eauto.
 all: rewrite inst_shift_sub; simpl; omega || eauto.
 all: apply c_sub_inst.
@@ -1573,19 +1563,19 @@ Qed.
 
 
 Lemma inst_subs_unfold I i v_s:
-  inst_negshift (inst_sub I (i, Sub.v_shift v_s 1 i)) 1 i = inst_subs I v_s i.
+  inst_negshift (inst_sub I (i, v_shift v_s 1 i)) 1 i = inst_subs I i v_s.
 Proof.
 revert i. induction I; intros; simpl. auto.
 rewrite IHI. f_equal.
 Qed.
 
 
-Fixpoint v_subs_inst I v v_s i:
-  v_subs (v_inst v I) v_s i = v_inst v (inst_subs I v_s i)
-with c_subs_inst I c v_s i:
-  c_subs (c_inst c I) v_s i = c_inst c (inst_subs I v_s i)
-with h_subs_inst I h v_s i:
-  h_subs (h_inst h I) v_s i = h_inst h (inst_subs I v_s i).
+Fixpoint v_subs_inst I v vs i:
+  v_subs (v_inst v I) i vs = v_inst v (inst_subs I i vs)
+with c_subs_inst I c vs i:
+  c_subs (c_inst c I) i vs = c_inst c (inst_subs I i vs)
+with h_subs_inst I h vs i:
+  h_subs (h_inst h I) i vs = h_inst h (inst_subs I i vs).
 Proof.
 {
 unfold v_subs. 
@@ -1605,7 +1595,7 @@ Qed.
 
 Fixpoint inst_shift_insert I n v i {struct I}:
   inst_shift (inst_insert I n v) i 0 
-  = inst_insert (inst_shift I i 0) n (Sub.v_shift v i 0).
+  = inst_insert (inst_shift I i 0) n (v_shift v i 0).
 Proof.
 destruct I; simpl.
 + destruct (n=?0) eqn:n0; simpl; auto.
@@ -1622,17 +1612,17 @@ Qed.
 
 Fixpoint v_inst_no_var_same I vs i v:
   v_no_var v i -> v_under_var v (1+inst_len I) -> i <= inst_len I ->
-  v_inst v (inst_insert I i vs) = v_inst (Sub.v_negshift v 1 i) I
+  v_inst v (inst_insert I i vs) = v_inst (v_negshift v 1 i) I
 with c_inst_no_var_same I vs i c:
   c_no_var c i -> c_under_var c (1+inst_len I) -> i <= inst_len I ->
-  c_inst c (inst_insert I i vs) = c_inst (Sub.c_negshift c 1 i) I
+  c_inst c (inst_insert I i vs) = c_inst (c_negshift c 1 i) I
 with h_inst_no_var_same I vs i h:
   h_no_var h i -> h_under_var h (1+inst_len I) -> i <= inst_len I ->
-  h_inst h (inst_insert I i vs) = h_inst (Sub.h_negshift h 1 i) I.
+  h_inst h (inst_insert I i vs) = h_inst (h_negshift h 1 i) I.
 Proof.
 {
 intros safe under ilen. destruct v; simpl; auto.
-{ destruct v as (x, dbi). destruct (i<=?dbi) eqn:cmp.
+{ rename v into dbi. destruct (i<=?dbi) eqn:cmp.
   + apply leb_complete in cmp. simpl in *.
     destruct dbi. omega. 
     rewrite inst_insert_above. simpl.
