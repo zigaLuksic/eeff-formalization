@@ -92,6 +92,15 @@ all: destruct j; simpl; auto.
 all: destruct i; simpl; omega || auto. f_equal. apply IHΓ. omega.
 Qed.
 
+
+Fixpoint ctx_insert_comm Γ i A j B {struct Γ}:
+  i <= ctx_len Γ -> i <= j ->
+  ctx_insert (ctx_insert Γ A i) B (1+j) = ctx_insert (ctx_insert Γ B j) A i.
+Proof.
+intros. destruct Γ; destruct i; destruct j; simpl; omega || auto.
+f_equal. simpl in *. apply ctx_insert_comm; omega.
+Qed.
+
 (* ==================== Ctx Joins ==================== *)
 
 Lemma join_ctxs_left_unit Γ:
@@ -171,6 +180,21 @@ Lemma len_tctx_to_ctx Z D:
   tctx_len Z = ctx_len (tctx_to_ctx Z D).
 Proof.
 induction Z; simpl; auto.
+Qed.
+
+Lemma ctx_len_insert_trivial Γ A i:
+  ctx_len (ctx_insert Γ A i) >= ctx_len Γ.
+Proof.
+revert i. induction Γ; intros; simpl; destruct i; simpl; try omega.
+specialize (IHΓ i). omega.
+Qed.
+
+Lemma ctx_len_insert Γ A i:
+  i <= ctx_len Γ ->
+  ctx_len (ctx_insert Γ A i) = 1 + ctx_len Γ.
+Proof.
+revert i. induction Γ; intros; simpl; destruct i; simpl in *; try omega.
+specialize (IHΓ i). omega.
 Qed.
 
 (* ==================== Ctx Guarantees ==================== *)

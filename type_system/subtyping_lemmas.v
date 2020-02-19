@@ -294,6 +294,18 @@ revert Γ A i. induction Γ'; intros Γ A i wfg' wfg wfA sty.
 Qed.
 
 
+Fixpoint ctx_subtype_insert_rev Γ Γ' A A' n:
+  ctx_subtype Γ Γ' -> vsubtype A A' ->
+  ctx_subtype (ctx_insert Γ A n) (ctx_insert Γ' A' n).
+Proof.
+intros. destruct H; simpl in *; destruct n.
++ apply SubtypeCtxU. apply SubtypeCtxØ. auto.
++ apply SubtypeCtxØ.
++ apply SubtypeCtxU. apply SubtypeCtxU. all: auto.
++ apply SubtypeCtxU; auto.
+Qed.
+
+
 Lemma ctx_subtype_remove Γ Γ' i: 
   wf_ctx Γ' -> wf_ctx Γ ->
   ctx_subtype Γ' (ctx_remove Γ i) ->
@@ -514,8 +526,19 @@ all: clear ctx_subtype_htype ctx_subtype_heq.
 + eapply βDoBind_Op.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
-+ eapply ηPair. apply ctx_subtype_len in ctxsty. omega.
++ eapply ηPair. 
+  apply ctx_subtype_len in ctxsty. omega.
+  assert (wf_vtype (TyΠ A B)). 
+  { inv H2. apply wf_ctx_insert_vtype in H3; auto. }
+  eapply ctx_subtype_ctype; eauto. apply wf_ctx_insert; eauto.
+  eapply ctx_subtype_insert_rev. 
+  auto. apply vsubtype_refl. auto.
 + eapply ηSum. apply ctx_subtype_len in ctxsty. omega.
+  assert (wf_vtype (TyΣ A B)). 
+  { inv H2. apply wf_ctx_insert_vtype in H3; auto. }
+  eapply ctx_subtype_ctype; eauto. apply wf_ctx_insert; eauto.
+  eapply ctx_subtype_insert_rev. 
+  auto. apply vsubtype_refl. auto.
 + eapply ηDoBind.
 }{
 intros wf ctxsty.

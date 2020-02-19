@@ -33,6 +33,16 @@ revert i A. induction Γ; intros i A orig. apply WfCtxØ.
 destruct i; simpl in *; inv orig. assumption. apply WfCtxU; eauto.
 Qed.
 
+
+Lemma wf_ctx_insert_vtype Γ A i:
+  wf_ctx (ctx_insert Γ A i) -> i <= ctx_len Γ -> wf_vtype A.
+Proof.
+revert i. induction Γ; intros i wf safe; simpl in *.
++ destruct i. inv wf. auto. omega.
++ destruct i. inv wf. auto. inv wf. eapply IHΓ; eauto. omega.
+Qed.
+
+
 Lemma wf_ctx_remove Γ i:
   wf_ctx Γ -> wf_ctx (ctx_remove Γ i).
 Proof.

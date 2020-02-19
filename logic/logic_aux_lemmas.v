@@ -136,7 +136,9 @@ apply Ceq; auto. destruct H3.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
 + eapply ηPair. omega.
+  apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
 + eapply ηSum. omega.
+  apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
 + eapply ηDoBind.
 }
 Qed.
