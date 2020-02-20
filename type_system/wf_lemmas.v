@@ -110,3 +110,12 @@ revert Γ' I. induction Γ; intros Γ' I orig.
 + apply WfCtxØ.
 + inv orig. inv H3. apply WfCtxU; eauto.
 Qed.
+
+Lemma wf_sig_get_op Σ op A_op B_op:
+  wf_sig Σ -> get_op_type Σ op = Some (A_op, B_op) ->
+  wf_vtype A_op /\ wf_vtype B_op.
+Proof.
+intros wfs gets. induction Σ; simpl in *. discriminate.
+destruct (op==o). inv gets. inv wfs. auto.
+apply IHΣ. inv wfs. auto. auto.
+Qed.

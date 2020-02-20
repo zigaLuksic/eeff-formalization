@@ -72,6 +72,11 @@ Proof.
 Qed.
 
 
+Lemma inst_shift_0 cut I : inst_shift I 0 cut = I.
+Proof.
+  intros. induction I; simpl; f_equal; auto. apply v_shift_0.
+Qed.
+
 Lemma v_shift_shift n m cut v :
   v_shift (v_shift v n cut) m cut = (v_shift v (n + m) cut)
 with c_shift_shift n m cut c :

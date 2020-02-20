@@ -299,6 +299,13 @@ intros. induction h. simpl in H0. discriminate.
 inv H. simpl in H0. destruct (op==o); try inv H0; auto.
 Qed.
 
+Lemma find_case_under_var h i op c:
+  h_under_var h i -> find_case h op = Some c -> c_under_var c (2+i).
+Proof.
+intros. induction h. simpl in H0. discriminate.
+inv H. simpl in H0. destruct (op==o); try inv H0; auto.
+Qed.
+
 (* ==================== Instantiation Properties ==================== *)
 
 Lemma inst_insert_same I n v:

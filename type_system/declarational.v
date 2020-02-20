@@ -41,17 +41,17 @@ Fixpoint tmpl_to_comp Γ_len T :=
   | TApp n v => App (Var (Γ_len+n)) v
   | TAbsurd v => Absurd v
   | TΠMatch v T => 
-      ΠMatch v (tmpl_to_comp Γ_len T)
+      ΠMatch v (tmpl_to_comp (2+Γ_len) T)
   | TΣMatch v T1 T2 => 
       ΣMatch v
-        (tmpl_to_comp Γ_len T1) 
-        (tmpl_to_comp Γ_len T2)
+        (tmpl_to_comp (1+Γ_len) T1) 
+        (tmpl_to_comp (1+Γ_len) T2)
   | TListMatch v T1 T2 => 
       ListMatch v
         (tmpl_to_comp Γ_len T1) 
-        (tmpl_to_comp Γ_len T2)
+        (tmpl_to_comp (2+Γ_len) T2)
   | TOp op v T =>
-      Op op v (tmpl_to_comp Γ_len T)
+      Op op v (tmpl_to_comp (1+Γ_len) T)
   end.
 
 
