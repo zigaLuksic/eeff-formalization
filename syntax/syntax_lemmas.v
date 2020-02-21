@@ -1,117 +1,62 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 Require Import Le Compare_dec.
 
-Ltac inv H := inversion H; clear H; subst.
+(* ==================== Ctx Insert ==================== *)
 
-(* ==================== Ctx Modification ==================== *)
-
-Lemma get_ctx_remove_unchanged Γ i j :
-  i > j -> get_vtype Γ j = get_vtype (ctx_remove Γ i) j.
+Fixpoint get_ctx_insert_unchanged Γ A i j {struct Γ}:
+  i < j -> get_vtype Γ i = get_vtype (ctx_insert Γ j A) i.
 Proof.
-revert i j; induction Γ; intros i j lt; simpl.
-destruct i; auto. destruct j; destruct i; simpl; omega || auto.
-apply IHΓ. omega.
+intros cmp. destruct Γ; simpl.
+all: destruct i; destruct j; simpl; aomega.
+apply get_ctx_insert_unchanged. omega.
 Qed.
 
 
-Lemma get_ctx_remove_changed Γ i j :
-  i <= j -> get_vtype Γ (S j) = get_vtype (ctx_remove Γ i) j.
+Fixpoint get_ctx_insert_changed Γ A i j {struct Γ}:
+  i >= j -> get_vtype Γ i = get_vtype (ctx_insert Γ j A) (1+i).
 Proof.
-revert i j; induction Γ; intros i j lt; auto. simpl.
-- destruct i; auto.
-- destruct i; destruct j; simpl; auto. omega. apply IHΓ. omega.
+intros cmp. destruct Γ; simpl.
+all: destruct i; destruct j; simpl; aomega.
+apply get_ctx_insert_changed. omega.
 Qed.
 
 
-Lemma ctx_remove_extend Γ i A :
-  CtxU (ctx_remove Γ i) A = ctx_remove (CtxU Γ A) (1+i).
+Fixpoint get_ctx_insert_new Γ A i {struct Γ}:
+  ctx_len Γ >= i -> get_vtype (ctx_insert Γ i A) i = Some A.
+Proof.
+intros safe. destruct Γ; simpl; destruct i; simpl in *; aomega.
+apply get_ctx_insert_new. omega.
+Qed.
+
+
+Lemma ctx_insert_extend Γ i B A :
+  CtxU (ctx_insert Γ i B) A = ctx_insert (CtxU Γ A) (1+i) B.
 Proof.
 revert i; induction Γ; intros i; auto.
-Qed.
-
-
-Lemma get_ctx_insert_unchanged Γ A i j:
-  i < j -> get_vtype Γ i = get_vtype (ctx_insert Γ A j) i.
-Proof.
-revert i j. induction Γ; intros i j cmp; simpl.
-destruct i; destruct j; simpl; try reflexivity.
-+  omega.
-+ destruct j.
-  - omega.
-  - simpl. destruct i; auto. apply IHΓ. omega.
-Qed.
-
-
-Lemma get_ctx_insert_changed Γ A i j:
-  i >= j -> get_vtype Γ i = get_vtype (ctx_insert Γ A j) (1+i).
-Proof.
-revert i j. induction Γ; intros i j cmp; simpl.
-destruct i; destruct j; simpl; try reflexivity.
-destruct j; destruct i; auto.
-+ omega.
-+ simpl. apply IHΓ. omega.
-Qed.
-
-
-Lemma get_ctx_insert_new Γ A i:
-  ctx_len Γ >= i -> get_vtype (ctx_insert Γ A i) i = Some A.
-Proof.
-revert i. induction Γ; intros i len; simpl; destruct i.
-+ simpl. reflexivity.
-+ simpl in *. omega.
-+ simpl. reflexivity.
-+ simpl in *. apply IHΓ. omega.
-Qed.
-
-
-Lemma ctx_insert_extend Γ i A_ins A :
-  CtxU (ctx_insert Γ A_ins i) A = ctx_insert (CtxU Γ A) A_ins (1+i).
-Proof.
-revert i; induction Γ; intros i; auto.
-Qed.
-
-
-Lemma ctx_insert_remove Γ i j A (cmp : i <= j):
-  ctx_insert (ctx_remove Γ j) A i = ctx_remove (ctx_insert Γ A i) (1+j).
-Proof.
-revert i j cmp. induction Γ; intros i j cpm. 
-destruct i. simpl. destruct j; simpl; reflexivity.
-simpl. destruct j. omega. simpl. reflexivity. simpl. destruct j. 
-assert (i=0) by omega. rewrite H. simpl. destruct Γ; simpl; reflexivity.
-destruct i. simpl. reflexivity. simpl. f_equal. apply IHΓ. omega.
-Qed.
-
-
-Lemma ctx_insert_remove_alt Γ i j A (cmp : i > j):
-  ctx_insert (ctx_remove Γ j) A i = ctx_remove (ctx_insert Γ A (1+i)) j.
-Proof.
-revert i j cmp. induction Γ; intros i j cpm; simpl. 
-all: destruct j; simpl; auto.
-all: destruct i; simpl; omega || auto. f_equal. apply IHΓ. omega.
 Qed.
 
 
 Fixpoint ctx_insert_comm Γ i A j B {struct Γ}:
   i <= ctx_len Γ -> i <= j ->
-  ctx_insert (ctx_insert Γ A i) B (1+j) = ctx_insert (ctx_insert Γ B j) A i.
+  ctx_insert (ctx_insert Γ i A) (1+j) B = ctx_insert (ctx_insert Γ j B) i A.
 Proof.
-intros. destruct Γ; destruct i; destruct j; simpl; omega || auto.
+intros. destruct Γ; destruct i; destruct j; simpl; aomega.
 f_equal. simpl in *. apply ctx_insert_comm; omega.
 Qed.
 
 (* ==================== Ctx Joins ==================== *)
 
-Lemma join_ctxs_left_unit Γ:
+Lemma join_ctxs_CtxØ Γ:
   join_ctxs CtxØ Γ = Γ.
 Proof.
 induction Γ; simpl; auto. rewrite IHΓ. auto.
 Qed.
 
 
-Lemma join_ctxs_left_step Γ' A Γ:
-  join_ctxs (CtxU Γ' A) Γ = join_ctxs Γ' (ctx_insert Γ A (ctx_len Γ)).
+Lemma join_ctxs_CtxU Γ' A Γ:
+  join_ctxs (CtxU Γ' A) Γ = join_ctxs Γ' (ctx_insert Γ (ctx_len Γ) A).
 Proof.
 induction Γ; simpl; auto. f_equal. auto.
 Qed.
@@ -124,16 +69,14 @@ destruct Γ''; simpl; auto. f_equal. auto.
 Qed.
 
 
-Fixpoint get_tctx_to_ctx Z D A i:
+Fixpoint get_tctx_to_ctx Z i A D {struct Z}:
   get_ttype Z i = Some A <-> get_vtype (tctx_to_ctx Z D) i = Some (TyFun A D).
 Proof.
-constructor; destruct Z; simpl.
-+ intro. discriminate. 
-+ destruct i. intro same. inv same. reflexivity. 
-  intro. apply get_tctx_to_ctx. auto.
-+ intro. discriminate.
-+ destruct i. intro same. inv same. reflexivity.
-  intro. apply get_tctx_to_ctx in H. auto.
+constructor; intros gets; destruct Z; simpl.
+all: try discriminate.
+all: destruct i; try (inv gets; reflexivity).
++ apply get_tctx_to_ctx. auto.
++ simpl in gets. apply get_tctx_to_ctx in gets. auto.
 Qed.
 
 
@@ -148,25 +91,16 @@ Fixpoint get_join_ctxs_right Γ Γ' i A {struct Γ'}:
   get_vtype Γ' i = Some A -> get_vtype (join_ctxs Γ Γ') i = Some A.
 Proof.
 intro gets. destruct Γ'; simpl in *. discriminate.
-destruct i. auto. auto.
+destruct i; auto.
 Qed.
 
 
-Lemma join_ctxs_insert Γ1 Γ2 i A :
-  join_ctxs (ctx_insert Γ1 A i) Γ2 
-  = ctx_insert (join_ctxs Γ1 Γ2) A (ctx_len Γ2+i). 
+Lemma join_ctxs_insert Γ Γ' i A :
+    join_ctxs (ctx_insert Γ i A) Γ' 
+  = ctx_insert (join_ctxs Γ Γ') (ctx_len Γ'+i) A. 
 Proof.
-induction Γ2; simpl. auto. f_equal. auto.
+induction Γ'; simpl. auto. f_equal. auto.
 Qed.
-
-
-Lemma join_ctxs_remove Γ1 Γ2 i:
-    join_ctxs (ctx_remove Γ1 i) Γ2
-  = ctx_remove (join_ctxs Γ1 Γ2) (ctx_len Γ2 + i). 
-Proof.
-induction Γ2; simpl. auto. f_equal. auto.
-Qed.
-
 
 (* ==================== Ctx Length ==================== *)
 
@@ -176,59 +110,60 @@ Proof.
 induction Γ'; simpl; auto. rewrite IHΓ'. omega.
 Qed.
 
+
 Lemma len_tctx_to_ctx Z D:
   tctx_len Z = ctx_len (tctx_to_ctx Z D).
 Proof.
 induction Z; simpl; auto.
 Qed.
 
-Lemma ctx_len_insert_trivial Γ A i:
-  ctx_len (ctx_insert Γ A i) >= ctx_len Γ.
+
+Fixpoint ctx_len_insert_trivial Γ i A {struct Γ}:
+  ctx_len (ctx_insert Γ i A) >= ctx_len Γ.
 Proof.
-revert i. induction Γ; intros; simpl; destruct i; simpl; try omega.
-specialize (IHΓ i). omega.
+destruct Γ; simpl; destruct i; simpl; aomega.
+specialize (ctx_len_insert_trivial Γ i A). omega.
 Qed.
 
-Lemma ctx_len_insert Γ A i:
+
+Fixpoint ctx_len_insert Γ i A {struct Γ}:
   i <= ctx_len Γ ->
-  ctx_len (ctx_insert Γ A i) = 1 + ctx_len Γ.
+  ctx_len (ctx_insert Γ i A) = 1 + ctx_len Γ.
 Proof.
-revert i. induction Γ; intros; simpl; destruct i; simpl in *; try omega.
-specialize (IHΓ i). omega.
+intros safe. destruct Γ; simpl; destruct i; simpl in *; aomega.
+specialize (ctx_len_insert Γ i A). omega.
 Qed.
 
-(* ==================== Ctx Guarantees ==================== *)
+(* ==================== Ctx Length Guarantees ==================== *)
 
-Lemma ctx_len_get_vtype Γ n :
+Fixpoint ctx_len_get_vtype Γ n {struct Γ}:
   (exists A, get_vtype Γ n = Some A) <-> ctx_len Γ > n.
 Proof.
-constructor; revert n; induction Γ; intros n gets; simpl in *.
-- destruct gets. discriminate.
-- destruct n. omega. apply IHΓ in gets. omega.
-- omega.
-- destruct n. eauto. apply IHΓ. omega.
+constructor; induction Γ; intros; simpl in *; aomega.
+- destruct H. discriminate.
+- destruct n. omega. apply ctx_len_get_vtype in H. omega.
+- destruct n. eauto. apply ctx_len_get_vtype. omega.
 Qed.
 
 
-Lemma ctx_len_gets Γ n A:
+Lemma ctx_len_get_Some Γ n A:
   get_vtype Γ n = Some A -> ctx_len Γ > n.
 Proof.
 intro. apply ctx_len_get_vtype. eauto.
 Qed.
 
 
-Lemma tctx_len_get_ttype Z n :
+Fixpoint tctx_len_get_ttype Z n {struct Z}:
   (exists A, get_ttype Z n = Some A) <-> tctx_len Z > n.
 Proof.
-constructor; revert n; induction Z; intros n gets; simpl in *.
-- destruct gets. discriminate.
-- destruct n. omega. apply IHZ in gets. omega.
-- omega.
-- destruct n. eauto. apply IHZ. omega.
+constructor; destruct Z; intros; simpl in *; aomega.
+- destruct H. discriminate.
+- destruct n. omega. apply tctx_len_get_ttype in H. omega.
+- destruct n. eauto. apply tctx_len_get_ttype. omega.
 Qed.
 
 
-Lemma tctx_len_gets Z n A:
+Lemma tctx_len_get_Some Z n A:
   get_ttype Z n = Some A -> tctx_len Z > n.
 Proof.
 intro. apply tctx_len_get_ttype. eauto.
@@ -245,106 +180,98 @@ with h_under_var_weaken h i j:
 Proof.
 all: intros orig cmp.
 {
-induction v; simpl in orig; simpl; auto.
-+ omega.
-+ destruct orig. auto.
-+ destruct orig. auto.
-+ eapply c_under_var_weaken. eauto. omega.
-+ destruct orig. constructor. 2: eauto.
-  eapply c_under_var_weaken. eauto. omega.
+induction v; simpl in *; try destruct orig; aomega.
++ eapply c_under_var_weaken; eaomega.
++ constructor; eauto. eapply c_under_var_weaken; eaomega.
 }{
-induction c; simpl in orig; simpl; eauto.
+induction c; simpl in orig; simpl in *; eauto.
 all: destruct orig; constructor; eauto. 
-2: (destruct H0; constructor).
-4: (destruct H0; constructor).
-all: try (eapply c_under_var_weaken; eauto; omega).
+2: (destruct H0; constructor). 4: (destruct H0; constructor).
+all: try (eapply c_under_var_weaken; eaomega).
 }{
 induction h; simpl in orig; simpl; eauto.
-destruct orig; constructor; auto.
-eapply c_under_var_weaken; eauto; omega.
+destruct orig; aconstructor; eapply c_under_var_weaken; eaomega.
 }
 Qed.
 
-Lemma v_under_var_no_var v i j:
+
+Fixpoint v_under_var_no_var v i j:
   v_under_var v i -> i<=j -> v_no_var v j
 with c_under_var_no_var c i j:
   c_under_var c i -> i<=j -> c_no_var c j
 with h_under_var_no_var h i j:
   h_under_var h i -> i<=j -> h_no_var h j.
 Proof.
+all: intros under cmp.
 {
-induction v; intros under cmp; simpl; auto; simpl in under.
-+ omega.
-+ inv under. auto.
-+ inv under. auto.
-+ eapply c_under_var_no_var. eauto. omega.
-+ inv under. constructor. eapply c_under_var_no_var. eauto.     
-  omega. eapply h_under_var_no_var. eauto. omega.
+induction v; simpl in *; try destruct under; eaomega.
++ eapply c_under_var_no_var; eaomega.
++ constructor. eapply c_under_var_no_var; eaomega. eauto.
 }{
-induction c; intros under cmp; simpl; auto.
-all: simpl in under; try inv under; try constructor.
-all: try eapply v_under_var_no_var; eauto.
-all: try eapply c_under_var_no_var; eauto; try omega.
-all: destruct H0; constructor; eapply c_under_var_no_var; eauto; omega.
+induction c; simpl in *; try destruct under; eaomega.
+all: constructor; try constructor; try destruct H0; eaomega.
+all: try eapply c_under_var_no_var; eaomega.
 }{
-induction h; intros under cmp; simpl; auto.
-inv under. constructor. auto. eapply c_under_var_no_var; eauto; omega.
+induction h; simpl in *; auto.
+destruct under. aconstructor. eapply c_under_var_no_var; eaomega.
 }
 Qed.
 
-Lemma find_case_no_var h i op c:
-  h_no_var h i -> find_case h op = Some c -> c_no_var c (2+i).
+
+Lemma get_case_no_var h i op c:
+  h_no_var h i -> get_case h op = Some c -> c_no_var c (2+i).
 Proof.
-intros. induction h. simpl in H0. discriminate.
-inv H. simpl in H0. destruct (op==o); try inv H0; auto.
+intros hno gets. induction h. 
++ simpl in hno. discriminate.
++ inv hno. simpl in gets. destruct (op==o); try inv gets; auto.
 Qed.
 
-Lemma find_case_under_var h i op c:
-  h_under_var h i -> find_case h op = Some c -> c_under_var c (2+i).
+
+Lemma get_case_under_var h i op c:
+  h_under_var h i -> get_case h op = Some c -> c_under_var c (2+i).
 Proof.
-intros. induction h. simpl in H0. discriminate.
-inv H. simpl in H0. destruct (op==o); try inv H0; auto.
+intros hno gets. induction h.
++ simpl in hno. discriminate.
++ inv hno. simpl in gets. destruct (op==o); try inv gets; auto.
 Qed.
 
 (* ==================== Instantiation Properties ==================== *)
 
-Lemma inst_insert_same I n v:
+Fixpoint inst_insert_same I n v {struct I}:
   n <= inst_len I ->
   get_inst_val (inst_insert I n v) n = Some v.
 Proof.
-revert n. induction I; intros n cmp.
-+ simpl in cmp. assert (n=0) by omega. subst. simpl. auto.
-+ simpl in *. destruct (n=?0) eqn:n0.
+intros cmp. destruct I; simpl in *.
++ assert (n=0) as same by omega. subst. simpl. auto.
++ destruct (n=?0) eqn:n0; simpl in *.
   - apply Nat.eqb_eq in n0. subst. simpl. auto.
-  - simpl. apply Nat.eqb_neq in n0. destruct n. omega.
+  - apply Nat.eqb_neq in n0. destruct n. omega.
     assert (S n - 1 = n) as same by omega. rewrite same.
-    apply IHI. omega.
+    apply inst_insert_same. omega.
 Qed.
 
 
-Lemma inst_insert_under I n m v:
+Fixpoint inst_insert_under I n m v {struct I}:
   n <= inst_len I -> m < n ->
   get_inst_val (inst_insert I n v) m = get_inst_val I m.
 Proof.
-revert n m. induction I; intros n m safe cmp.
-+ simpl in safe. omega.
-+ simpl in *. destruct (n=?0) eqn:n0.
-  - apply Nat.eqb_eq in n0. omega.
-  - simpl. destruct m. auto.
-    apply IHI; omega.
+intros safe cmp. induction I; simpl in *; aomega.
+destruct (n=?0) eqn:n0.
+- apply Nat.eqb_eq in n0. omega.
+- simpl. destruct m. auto. apply inst_insert_under; omega.
 Qed.
 
 
-Lemma inst_insert_above I n m v:
+Fixpoint inst_insert_above I n m v {struct I}:
   n <= inst_len I -> S m > n ->
   get_inst_val (inst_insert I n v) (S m) = get_inst_val I m.
 Proof.
-revert n m. induction I; intros n m safe cmp; simpl in *.
+intros safe cmp. induction I; simpl in *; aomega.
 + destruct (n=?0); simpl; auto.
 + destruct (n=?0) eqn:n0; simpl.
   - destruct m; auto.
   - destruct n; simpl.
     * apply Nat.eqb_neq in n0. destruct n0. auto.
-    * assert (n-0=n) by omega. rewrite H.
-      destruct m. omega. apply IHI; omega.
+    * assert (n-0=n) as same by omega. rewrite same.
+      destruct m. omega. apply inst_insert_above; omega.
 Qed.

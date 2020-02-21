@@ -175,8 +175,8 @@ intros vseq ctxs clen. destruct orig. destruct H2.
     apply WfTyFun. all: inv H0; auto.
   eapply heq_case_extend_structural; eauto.
   all: try rewrite v_shift_shift, v_shift_shift in H4; simpl in *.
-  - apply negshift_find_None. apply sub_find_None. assumption.
-  - apply negshift_find_None. apply sub_find_None. assumption.
+  - apply negshift_get_case_None. apply sub_get_case_None. assumption.
+  - apply negshift_get_case_None. apply sub_get_case_None. assumption.
   - rewrite v_shift_comm. inv H4. auto. omega.
   - rewrite v_shift_comm. inv H4. auto. omega.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). assumption. all: omega.

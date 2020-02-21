@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 Require Import Le.
 
@@ -22,6 +22,7 @@ Fixpoint v_shift v d cut :=
   | Handler c_ret h =>
       Handler (c_shift c_ret d (1+cut)) (h_shift h d cut)
   end
+
 with c_shift c d cut :=
   match c with
   | Ret v => Ret (v_shift v d cut)
@@ -44,16 +45,13 @@ with c_shift c d cut :=
   | Handle v c' => 
       Handle (v_shift v d cut) (c_shift c' d cut)
   end
+
 with h_shift h d cut :=
   match h with
   | CasesØ => CasesØ
   | CasesU h op c => 
       CasesU (h_shift h d cut) op (c_shift c d (2+cut))
   end.
-
-
-Definition sub_shift (sub : nat * val) d :=
-  let (db_i, v_s) := sub in (d + db_i, v_shift v_s d 0).
 
 
 Fixpoint v_negshift v d cut :=
@@ -63,13 +61,17 @@ Fixpoint v_negshift v d cut :=
   | Int n => Int n
   | Inl v' => Inl (v_negshift v' d cut)
   | Inr v' => Inr (v_negshift v' d cut)
-  | Pair v1 v2 => Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
+  | Pair v1 v2 => 
+      Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
   | ListNil => ListNil
-  | ListCons v vs => ListCons (v_negshift v d cut) (v_negshift vs d cut)
-  | Fun c => Fun (c_negshift c d (1+cut))
+  | ListCons v vs =>
+      ListCons (v_negshift v d cut) (v_negshift vs d cut)
+  | Fun c =>
+      Fun (c_negshift c d (1+cut))
   | Handler c_ret h =>
       Handler (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
   end
+
 with c_negshift c d cut :=
   match c with
   | Ret v => Ret (v_negshift v d cut)
@@ -93,11 +95,16 @@ with c_negshift c d cut :=
   | Handle v c' => 
       Handle (v_negshift v d cut) (c_negshift c' d cut)
   end
+
 with h_negshift h d cut :=
   match h with
   | CasesØ => CasesØ
   | CasesU h op c => CasesU (h_negshift h d cut) op (c_negshift c d (2+cut))
   end.
+
+
+Definition sub_shift (sub : nat * val) d :=
+  let (db_i, v_s) := sub in (d + db_i, v_shift v_s d 0).
 
 
 Fixpoint v_sub v (sub : nat * val) :=
@@ -118,6 +125,7 @@ let (db_i, v_s) := sub in
   | Handler c_ret h =>
       Handler (c_sub c_ret (sub_shift sub 1)) (h_sub h sub)
   end
+
 with c_sub c (sub : nat * val) :=
   match c with
   | Ret v => Ret (v_sub v sub)
@@ -141,6 +149,7 @@ with c_sub c (sub : nat * val) :=
   | Handle v c' => 
       Handle (v_sub v sub) (c_sub c' sub)
   end
+
 with h_sub h (sub : nat * val) :=
   match h with
   | CasesØ => CasesØ
@@ -148,26 +157,24 @@ with h_sub h (sub : nat * val) :=
       CasesU (h_sub h sub) op (c_sub c (sub_shift sub 2))
   end.
 
+(* ==================== Complete Substitution ==================== *)
 
-(* ==================== Complete substitution ==================== *)
+Definition v_subs v i vs :=
+  v_negshift (v_sub v (i, (v_shift vs 1 i))) 1 i.
 
-Definition v_subs (v:val) i (v_s:val) :=
-  v_negshift (v_sub v (i, (v_shift v_s 1 i))) 1 i.
+Definition c_subs c i vs :=
+  c_negshift (c_sub c (i, (v_shift vs 1 i))) 1 i.
 
-Definition c_subs (c:comp) i (v_s:val) :=
-  c_negshift (c_sub c (i, (v_shift v_s 1 i))) 1 i.
+Definition h_subs h i vs :=
+  h_negshift (h_sub h (i, (v_shift vs 1 i))) 1 i.
 
-Definition h_subs (h:hcases) i (v_s:val) :=
-  h_negshift (h_sub h (i, (v_shift v_s 1 i))) 1 i.
+Definition v_subs_out v vs := v_subs v 0 vs.
 
-Definition v_subs_out (v:val) (v_s:val) := v_subs v 0 v_s.
+Definition c_subs_out c vs := c_subs c 0 vs.
 
-Definition c_subs_out (c:comp) (v_s:val) := c_subs c 0 v_s.
+Definition h_subs_out h vs := h_subs h 0 vs.
 
-Definition h_subs_out (h:hcases) (v_s:val) := h_subs h 0 v_s.
-
-Definition c_subs2_out (c:comp) v1 v0 :=
-  (* 1 -> v1, 0 -> v0 *)
+Definition c_subs2_out c v1 v0 := (* 1 -> v1, 0 -> v0 *)
   c_subs_out (c_subs_out c (v_shift v0 1 0)) v1.
 
 
@@ -179,11 +186,13 @@ Fixpoint inst_shift I d cut :=
   | InstU I' v => InstU (inst_shift I' d cut) (v_shift v d cut)
   end.
 
+
 Fixpoint inst_negshift I d cut :=
   match I with
   | InstØ => InstØ
   | InstU I' v => InstU (inst_negshift I' d cut) (v_negshift v d cut)
   end.
+
 
 Fixpoint inst_sub I sub :=
   match I with
@@ -191,25 +200,20 @@ Fixpoint inst_sub I sub :=
   | InstU I' v => InstU (inst_sub I' sub) (v_sub v sub)
   end.
 
+
 Fixpoint inst_subs I i vs :=
   match I with
   | InstØ => InstØ
   | InstU I' v => InstU (inst_subs I' i vs) (v_subs v i vs)
   end.
 
-Set Implicit Arguments.
-Function f_opt (A B:Type) (opt : option A) (f : A -> option B) := 
-  match opt with
-  | Some x => f x
-  | None => None
-  end.
 
 Fixpoint v_inst v I:=
   match v with
   | Var n => 
       match get_inst_val I n with
       | Some v' => v'
-      | None => Unit (* This is the naughty branch *)
+      | None => Unit (* This is the naughty branch! *)
       end
   | Unit => Unit
   | Int n => Int n
@@ -227,6 +231,7 @@ Fixpoint v_inst v I:=
         (c_inst c_ret (InstU (inst_shift I 1 0) (Var 0))) 
         (h_inst h I)
   end
+
 with c_inst c I :=
   match c with
   | Ret v => Ret (v_inst v I)
@@ -259,19 +264,20 @@ with c_inst c I :=
   | Handle v c' => 
       Handle (v_inst v I) (c_inst c' I)
   end
+
 with h_inst h I :=
   match h with
   | CasesØ => CasesØ
   | CasesU h op c => 
       CasesU (h_inst h I) op
-        (c_inst c 
-          (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
+        (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   end.
 
 
-Fixpoint join_insts I I' :=
-  (* This is just an auxiliary function for doing proofs *)
-  match I' with
-  | InstØ => InstØ
-  | InstU I'' v => InstU (join_insts I I'') (v_inst v I)
+Set Implicit Arguments.
+(* Useful for stating certain lemmas *)
+Function f_opt (A B:Type) (opt : option A) (f : A -> option B) := 
+  match opt with
+  | Some x => f x
+  | None => None
   end.

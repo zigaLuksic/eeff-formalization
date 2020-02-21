@@ -7,11 +7,6 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 
 Require Export declarational wf_lemmas.
 
-
-Ltac inv H := inversion H; clear H; subst.
-Ltac aconstructor := constructor; auto.
-
-
 (* ==================== Sig and Eqs Properties ==================== *)
 
 Lemma sig_subtype_get_Some Σ Σ' op A B :
@@ -1089,7 +1084,7 @@ Qed.
 Lemma h_has_case Γ h Σ D op A_op B_op:
   has_htype Γ h Σ D ->
   get_op_type Σ op = Some (A_op, B_op) ->
-  exists c_op, find_case h op = Some c_op.
+  exists c_op, get_case h op = Some c_op.
 Proof.
 revert Γ Σ. induction h; intros Γ Σ typed gets; inv typed; inv H2.
 + simpl in gets. discriminate.
@@ -1098,7 +1093,7 @@ Qed.
 
 Lemma case_has_type Γ h Σ D op Aop Bop c_op:
   has_htype Γ h Σ D -> get_op_type Σ op = Some (Aop, Bop) ->
-  find_case h op = Some c_op ->
+  get_case h op = Some c_op ->
   has_ctype (CtxU (CtxU Γ (TyFun Bop D)) Aop) c_op D.
 Proof.
 revert Σ. induction h; intros Σ tys gets finds.

@@ -1,8 +1,13 @@
 Require Export Bool ZArith String.
 
-(* ==================== Variable Type Definitions ==================== *)
+(* ==================== Custom Tactics ==================== *)
 
-Definition var_id := nat.
+Ltac inv H := inversion H; clear H; subst.
+Ltac aomega := (omega || auto).
+Ltac eaomega := (omega || eauto).
+Ltac aconstructor := constructor; auto.
+
+(* ==================== Variable Type Definitions ==================== *)
 
 Definition op_id := string.
 Notation "x == y" := (string_dec x y) (at level 75, no associativity).
@@ -12,7 +17,7 @@ Definition int := Z.t.
 (* ==================== Syntax Definitions ==================== *)
 
 Inductive val : Type :=
-| Var : var_id -> val
+| Var : nat -> val
 | Unit : val
 | Int : Z.t -> val
 | Inl : val -> val
@@ -65,7 +70,7 @@ with tctx : Type :=
 | TCtxU : tctx -> vtype -> tctx
 
 with tmpl : Type :=
-| TApp : var_id -> val -> tmpl
+| TApp : nat -> val -> tmpl
 | TAbsurd : val -> tmpl
 | TΠMatch : val -> tmpl -> tmpl
 | TΣMatch : val -> tmpl -> tmpl -> tmpl
@@ -103,11 +108,11 @@ Fixpoint get_op_type Σ op :=
   end.
 
 
-Fixpoint find_case h op : option comp :=
+Fixpoint get_case h op : option comp :=
   match h with
   | CasesØ => None
   | CasesU h' op' c_op =>
-      if op == op' then Some c_op else find_case h' op
+      if op == op' then Some c_op else get_case h' op
   end.
 
 
@@ -119,33 +124,11 @@ Fixpoint has_eq E Γ Z T1 T2 :=
   end.
 
 
-Fixpoint ctx_remove (Γ:ctx) (i:nat) :=
-  match i, Γ with
-  | _, CtxØ => CtxØ
-  | 0, CtxU Γ' A' => Γ'
-  | S i', CtxU Γ' A' => CtxU (ctx_remove Γ' i') A'
-  end.
-
-
-Fixpoint ctx_insert (Γ:ctx) A (i:nat) :=
+Fixpoint ctx_insert Γ i A :=
   match i, Γ with
   | 0, Γ' => CtxU Γ' A
   | _, CtxØ => CtxØ
-  | S i', CtxU Γ' A' => CtxU (ctx_insert Γ' A i') A'
-  end.
-
-
-Fixpoint ctx_len Γ :=
-  match Γ with
-  | CtxØ => 0
-  | CtxU Γ _ => 1 + (ctx_len Γ)
-  end.
-
-
-Fixpoint tctx_len Z :=
-  match Z with
-  | TCtxØ => 0
-  | TCtxU Z _ => 1 + (tctx_len Z)
+  | S i', CtxU Γ' A' => CtxU (ctx_insert Γ' i' A) A'
   end.
 
 
@@ -155,111 +138,12 @@ Fixpoint tctx_to_ctx Z D :=
   | TCtxU Z A => CtxU (tctx_to_ctx Z D) (TyFun A D)
   end.
 
+
 Fixpoint join_ctxs Γ1 Γ2 :=
   match Γ2 with
   | CtxØ => Γ1
   | CtxU Γ2' A => CtxU (join_ctxs Γ1 Γ2') A
   end.
-
-(* ==================== Term Properties ==================== *)
-
-Fixpoint v_no_var (v:val) (j:nat) :=
-  match v with
-  | Var dbi => not (j = dbi)
-  | Unit => True
-  | Int j => True
-  | Inl v' => v_no_var v' j
-  | Inr v' => v_no_var v' j
-  | Pair v1 v2 => (v_no_var v1 j) /\ (v_no_var v2 j)
-  | ListNil => True
-  | ListCons v vs => (v_no_var v j) /\ (v_no_var vs j)
-  | Fun c => c_no_var c (1+j)
-  | Handler c_ret h => (c_no_var c_ret (1+j)) /\ (h_no_var h j)
-  end
-
-with c_no_var (c:comp) (j:nat) :=
-  match c with
-  | Ret v => v_no_var v j
-  | Absurd v => v_no_var v j 
-  | ΠMatch v c => (v_no_var v j) /\ c_no_var c (2+j)
-  | ΣMatch v c1 c2 =>
-      (v_no_var v j) /\ (c_no_var c1 (1+j)) /\ (c_no_var c2 (1+j))
-  | ListMatch v c1 c2 =>
-      (v_no_var v j) /\ (c_no_var c1 j) /\ (c_no_var c2 (2+j))
-  | App v1 v2 => (v_no_var v1 j) /\ (v_no_var v2 j)
-  | Op op v_arg c => (v_no_var v_arg j) /\ (c_no_var c (1+j))
-  | LetRec c1 c2 => (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
-  | DoBind c1 c2 => (c_no_var c1 j) /\ (c_no_var c2 (1+j))
-  | Handle v c' => (v_no_var v j) /\ (c_no_var c' j)
-  end
-
-with h_no_var (h:hcases) (j:nat) :=
-  match h with
-  | CasesØ => True
-  | CasesU h op c => (h_no_var h j) /\ (c_no_var c (2+j))
-  end.
-
-
-Fixpoint v_under_var (v:val) (j:nat) :=
-  match v with
-  | Var dbi => dbi < j
-  | Unit => True
-  | Int j => True
-  | Inl v' => v_under_var v' j
-  | Inr v' => v_under_var v' j
-  | Pair v1 v2 => (v_under_var v1 j) /\ (v_under_var v2 j)
-  | ListNil => True
-  | ListCons v vs => (v_under_var v j) /\ (v_under_var vs j)
-  | Fun c => c_under_var c (1+j)
-  | Handler c_ret h => (c_under_var c_ret (1+j)) /\ (h_under_var h j)
-  end
-
-with c_under_var (c:comp) (j:nat) :=
-  match c with
-  | Ret v => v_under_var v j
-  | Absurd v => v_under_var v j 
-  | ΠMatch v c => (v_under_var v j) /\ c_under_var c (2+j)
-  | ΣMatch v c1 c2 =>
-      (v_under_var v j) /\ (c_under_var c1 (1+j)) /\ (c_under_var c2 (1+j))
-  | ListMatch v c1 c2 =>
-      (v_under_var v j) /\ (c_under_var c1 j) /\ (c_under_var c2 (2+j))
-  | App v1 v2 => (v_under_var v1 j) /\ (v_under_var v2 j)
-  | Op op v c => (v_under_var v j) /\ (c_under_var c (1+j))
-  | LetRec c1 c2 => (c_under_var c1 (2+j)) /\ (c_under_var c2 (1+j))
-  | DoBind c1 c2 => (c_under_var c1 j) /\ (c_under_var c2 (1+j))
-  | Handle v c' => (v_under_var v j) /\ (c_under_var c' j)
-  end
-
-with h_under_var h j :=
-  match h with
-  | CasesØ => True
-  | CasesU h op c => (h_under_var h j) /\ (c_under_var c (2+j))
-  end.
-
-
-Fixpoint t_under_var T j :=
-  match T with
-  | TApp zi v => v_under_var v j
-  | TAbsurd v => v_under_var v j
-  | TΠMatch v T => v_under_var v j /\ t_under_var T (2+j)
-  | TΣMatch v T1 T2 =>
-      (v_under_var v j) /\ (t_under_var T1 (1+j)) /\ (t_under_var T2 (1+j))
-  | TListMatch v T1 T2 =>
-      (v_under_var v j) /\ (t_under_var T1 j) /\ (t_under_var T2 (2+j))
-  | TOp op v T => (v_under_var v j) /\ (t_under_var T (1+j))
-  end.
-
-
-Fixpoint t_under_tvar T j :=
-  match T with
-  | TApp zi v => zi < j
-  | TAbsurd v => True
-  | TΠMatch v T => t_under_tvar T j
-  | TΣMatch v T1 T2 => (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
-  | TListMatch v T1 T2 => (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
-  | TOp op v T => (t_under_tvar T j)
-  end.
-
 
 (* ==================== Instantiation ==================== *)
 
@@ -275,27 +159,172 @@ Fixpoint get_inst_val I i :=
   | InstU I' v, S i' =>  get_inst_val I' i'
   end.
 
+
+Fixpoint inst_insert I n v :=
+  if n =? 0 then InstU I v else
+  match I with
+  | InstØ => InstØ
+  | InstU I' v' => InstU (inst_insert I' (n-1) v) v'
+  end.
+
+(* ==================== Lengths ==================== *)
+
+Fixpoint ctx_len Γ :=
+  match Γ with
+  | CtxØ => 0
+  | CtxU Γ _ => 1 + (ctx_len Γ)
+  end.
+
+
+Fixpoint tctx_len Z :=
+  match Z with
+  | TCtxØ => 0
+  | TCtxU Z _ => 1 + (tctx_len Z)
+  end.
+
+
+Fixpoint inst_len I :=
+  match I with
+  | InstØ => 0
+  | InstU I' _ => 1 + (inst_len I')
+  end.
+
+(* ==================== Term Properties ==================== *)
+
+Fixpoint v_no_var v j :=
+  match v with
+  | Var dbi => not (j = dbi)
+  | Unit => True
+  | Int j => True
+  | Inl v' => v_no_var v' j
+  | Inr v' => v_no_var v' j
+  | Pair v1 v2 =>
+      (v_no_var v1 j) /\ (v_no_var v2 j)
+  | ListNil => True
+  | ListCons v vs =>
+      (v_no_var v j) /\ (v_no_var vs j)
+  | Fun c => 
+      c_no_var c (1+j)
+  | Handler c_ret h =>
+      (c_no_var c_ret (1+j)) /\ (h_no_var h j)
+  end
+
+with c_no_var c j :=
+  match c with
+  | Ret v => v_no_var v j
+  | Absurd v => v_no_var v j 
+  | ΠMatch v c => 
+      (v_no_var v j) /\ c_no_var c (2+j)
+  | ΣMatch v c1 c2 =>
+      (v_no_var v j) /\ (c_no_var c1 (1+j)) /\ (c_no_var c2 (1+j))
+  | ListMatch v c1 c2 =>
+      (v_no_var v j) /\ (c_no_var c1 j) /\ (c_no_var c2 (2+j))
+  | App v1 v2 => 
+      (v_no_var v1 j) /\ (v_no_var v2 j)
+  | Op op v_arg c =>
+      (v_no_var v_arg j) /\ (c_no_var c (1+j))
+  | LetRec c1 c2 =>
+      (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
+  | DoBind c1 c2 =>
+      (c_no_var c1 j) /\ (c_no_var c2 (1+j))
+  | Handle v c' =>
+      (v_no_var v j) /\ (c_no_var c' j)
+  end
+
+with h_no_var h j :=
+  match h with
+  | CasesØ => True
+  | CasesU h op c =>
+      (h_no_var h j) /\ (c_no_var c (2+j))
+  end.
+
+
+Fixpoint v_under_var v j :=
+  match v with
+  | Var dbi => dbi < j
+  | Unit => True
+  | Int j => True
+  | Inl v' => v_under_var v' j
+  | Inr v' => v_under_var v' j
+  | Pair v1 v2 =>
+      (v_under_var v1 j) /\ (v_under_var v2 j)
+  | ListNil => True
+  | ListCons v vs =>
+      (v_under_var v j) /\ (v_under_var vs j)
+  | Fun c =>
+      c_under_var c (1+j)
+  | Handler c_ret h =>
+      (c_under_var c_ret (1+j)) /\ (h_under_var h j)
+  end
+
+with c_under_var c j :=
+  match c with
+  | Ret v => v_under_var v j
+  | Absurd v => v_under_var v j 
+  | ΠMatch v c => 
+      (v_under_var v j) /\ c_under_var c (2+j)
+  | ΣMatch v c1 c2 =>
+      (v_under_var v j) /\ (c_under_var c1 (1+j)) /\ (c_under_var c2 (1+j))
+  | ListMatch v c1 c2 =>
+      (v_under_var v j) /\ (c_under_var c1 j) /\ (c_under_var c2 (2+j))
+  | App v1 v2 =>
+      (v_under_var v1 j) /\ (v_under_var v2 j)
+  | Op op v c =>
+      (v_under_var v j) /\ (c_under_var c (1+j))
+  | LetRec c1 c2 =>
+      (c_under_var c1 (2+j)) /\ (c_under_var c2 (1+j))
+  | DoBind c1 c2 =>
+      (c_under_var c1 j) /\ (c_under_var c2 (1+j))
+  | Handle v c' =>
+      (v_under_var v j) /\ (c_under_var c' j)
+  end
+
+with h_under_var h j :=
+  match h with
+  | CasesØ => True
+  | CasesU h op c =>
+      (h_under_var h j) /\ (c_under_var c (2+j))
+  end.
+
+
+Fixpoint t_under_var T j :=
+  match T with
+  | TApp zi v => v_under_var v j
+  | TAbsurd v => v_under_var v j
+  | TΠMatch v T =>
+      v_under_var v j /\ t_under_var T (2+j)
+  | TΣMatch v T1 T2 =>
+      (v_under_var v j) /\ (t_under_var T1 (1+j)) /\ (t_under_var T2 (1+j))
+  | TListMatch v T1 T2 =>
+      (v_under_var v j) /\ (t_under_var T1 j) /\ (t_under_var T2 (2+j))
+  | TOp op v T =>
+      (v_under_var v j) /\ (t_under_var T (1+j))
+  end.
+
+
+Fixpoint t_under_tvar T j :=
+  match T with
+  | TApp zi v => zi < j
+  | TAbsurd v => True
+  | TΠMatch v T => t_under_tvar T j
+  | TΣMatch v T1 T2 =>
+      (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
+  | TListMatch v T1 T2 =>
+      (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
+  | TOp op v T =>
+      t_under_tvar T j
+  end.
+
+
 Fixpoint inst_no_var I i :=
   match I with
   | InstØ => True
   | InstU I' v => v_no_var v i /\ inst_no_var I' i
   end.
 
+
 Fixpoint inst_under_var I i :=
   match I with
   | InstØ => True
   | InstU I' v => v_no_var v i /\ inst_under_var I' i
   end.
-
-Fixpoint inst_insert I n v:=
-if n =? 0 then InstU I v else
-match I with
-| InstØ => InstØ
-| InstU I' v' => InstU (inst_insert I' (n-1) v) v'
-end.
-
-Fixpoint inst_len I :=
-match I with
-| InstØ => 0
-| InstU I' _ => 1+(inst_len I')
-end.

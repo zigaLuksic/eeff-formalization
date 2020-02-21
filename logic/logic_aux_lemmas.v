@@ -9,8 +9,8 @@ Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
 
 Lemma heq_cases_ceq Σ D Γ h1 h2 op A B c1 c2 :
   heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
-  find_case h1 op = Some c1 ->
-  find_case h2 op = Some c2 ->
+  get_case h1 op = Some c1 ->
+  get_case h2 op = Some c2 ->
   ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2.
 Proof.
 intros eqs gets finds1 finds2.
@@ -145,7 +145,7 @@ Qed.
 
 
 Lemma heq_case_extend_trivial Σ D Γ h1 h2 op A1 A2 B1 B2 c1 c2:
-  heq Σ D Γ h1 h2 -> find_case h1 op = None -> find_case h2 op = None ->
+  heq Σ D Γ h1 h2 -> get_case h1 op = None -> get_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
   heq Σ D Γ (CasesU h1 op c1) (CasesU h2 op c2).
@@ -189,7 +189,7 @@ Qed.
 
 
 Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B c1 c2:
-  heq Σ D Γ h1 h2 -> find_case h1 op = None -> find_case h2 op = None ->
+  heq Σ D Γ h1 h2 -> get_case h1 op = None -> get_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D ->
   ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
@@ -270,7 +270,7 @@ apply sig_subtype_refl. inv orig. assumption.
 assumption. assumption.
 destruct orig. destruct H2.
 + eapply HeqSigØ.
-+ assert (find_case (CasesU h op c_op) op = Some c_op).
++ assert (get_case (CasesU h op c_op) op = Some c_op).
   { simpl. destruct (op==op). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
   eapply heq_case_extend_trivial; eauto; inv H0; assumption.

@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export syntax_lemmas declarational substitution_lemmas.
 
@@ -12,42 +12,34 @@ Lemma get_vtype_wf Γ num A :
     wf_ctx Γ -> get_vtype Γ num = Some A -> wf_vtype A.
 Proof.
 intros wf. revert num. induction wf; intros num gets; simpl in *.
-discriminate. destruct num.
-- inv gets. assumption.
-- eapply IHwf. exact gets.
++ discriminate.
++ destruct num. inv gets. auto. eauto.
 Qed.
 
 
 Lemma wf_ctx_insert Γ A i:
-  wf_ctx Γ -> wf_vtype A -> wf_ctx (ctx_insert Γ A i).
+  wf_ctx Γ -> wf_vtype A -> wf_ctx (ctx_insert Γ i A).
 Proof.
-revert i A; induction Γ; intros i A orig wfv; induction i; simpl.
+revert i A. induction Γ; intros i A orig wfv; induction i; simpl.
 all: (try inv orig); apply WfCtxU || apply WfCtxØ; auto.
 all: apply WfCtxU || apply WfCtxØ; auto.
 Qed.
 
+
 Lemma wf_ctx_insert_rev Γ A i:
-  wf_ctx (ctx_insert Γ A i) -> wf_ctx Γ.
+  wf_ctx (ctx_insert Γ i A) -> wf_ctx Γ.
 Proof.
 revert i A. induction Γ; intros i A orig. apply WfCtxØ.
-destruct i; simpl in *; inv orig. assumption. apply WfCtxU; eauto.
+destruct i; simpl in *; inv orig. auto. apply WfCtxU; eauto.
 Qed.
 
 
 Lemma wf_ctx_insert_vtype Γ A i:
-  wf_ctx (ctx_insert Γ A i) -> i <= ctx_len Γ -> wf_vtype A.
+  wf_ctx (ctx_insert Γ i A) -> i <= ctx_len Γ -> wf_vtype A.
 Proof.
 revert i. induction Γ; intros i wf safe; simpl in *.
 + destruct i. inv wf. auto. omega.
 + destruct i. inv wf. auto. inv wf. eapply IHΓ; eauto. omega.
-Qed.
-
-
-Lemma wf_ctx_remove Γ i:
-  wf_ctx Γ -> wf_ctx (ctx_remove Γ i).
-Proof.
-revert i; induction Γ; intros i orig; induction i; simpl.
-all: apply WfCtxØ || (inv orig; apply WfCtxU || auto); auto.
 Qed.
 
 
@@ -97,11 +89,10 @@ Lemma has_eq_wf_parts E Σ Γ Z T1 T2:
   wf_eqs E Σ -> has_eq E Γ Z T1 T2 ->
   wf_ctx Γ /\ wf_tctx Z /\ wf_t Γ Z T1 Σ /\ wf_t Γ Z T2 Σ.
 Proof.
-intros wf_eqs has. induction wf_eqs; inv has.
-- destruct H4 as [a [b [c d]]]. subst. 
-  constructor. 2:constructor. 3:constructor. all: auto.
-- auto.
+intros wf_eqs has. induction wf_eqs; inv has; auto.
+destruct H4 as [a [b [c d]]]. subst. do 3 aconstructor.  
 Qed.
+
 
 Lemma wf_inst_wf_ctx Γ' I Γ:
   wf_inst Γ' I Γ -> wf_ctx Γ.
@@ -109,13 +100,4 @@ Proof.
 revert Γ' I. induction Γ; intros Γ' I orig.
 + apply WfCtxØ.
 + inv orig. inv H3. apply WfCtxU; eauto.
-Qed.
-
-Lemma wf_sig_get_op Σ op A_op B_op:
-  wf_sig Σ -> get_op_type Σ op = Some (A_op, B_op) ->
-  wf_vtype A_op /\ wf_vtype B_op.
-Proof.
-intros wfs gets. induction Σ; simpl in *. discriminate.
-destruct (op==o). inv gets. inv wfs. auto.
-apply IHΣ. inv wfs. auto. auto.
 Qed.

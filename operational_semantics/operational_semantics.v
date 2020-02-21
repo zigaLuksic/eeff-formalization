@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Require Export syntax substitution.
 
 Inductive step : comp -> comp -> Prop :=
@@ -48,7 +48,7 @@ Inductive step : comp -> comp -> Prop :=
       (Handle (Handler c_r h) (Ret v))
       (c_subs_out c_r v)
 | Step_Handle_Op c_r h op v c_k c_op :
-    find_case h op = Some c_op ->
+    get_case h op = Some c_op ->
     step
       (Handle (Handler c_r h) (Op op v c_k))
       (c_subs2_out c_op

@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Require Export syntax subtyping substitution.
 
 (* ==================== Template Handling ==================== *)
@@ -24,11 +24,10 @@ Fixpoint handle_t Γ_len Z_len h T :=
         (handle_t Γ_len Z_len h T1)
         (handle_t (2+Γ_len) Z_len h T2)
   | TOp op v T =>
-      match find_case h op with 
-      | Some c_op => c_subs2_out
-            (c_shift c_op (Γ_len + Z_len) 2) 
-              (Fun (handle_t (1+Γ_len) Z_len h T)) 
-              v
+      match get_case h op with 
+      | Some c_op =>
+          c_subs2_out (c_shift c_op (Γ_len + Z_len) 2) 
+              (Fun (handle_t (1+Γ_len) Z_len h T)) v
       | None => 
           (* You shouldn't be here *)
           Op op v (handle_t (1+Γ_len) Z_len h T) 
@@ -54,7 +53,6 @@ Fixpoint tmpl_to_comp Γ_len T :=
       Op op v (tmpl_to_comp (1+Γ_len) T)
   end.
 
-
 (* ==================== Wellformed Judgements ==================== *)
 
 Inductive wf_vtype : vtype -> Prop :=
@@ -74,7 +72,8 @@ with wf_sig : sig -> Prop :=
 | WfSigØ : wf_sig SigØ
 | WfSigU Σ op Aop Bop: 
     wf_sig Σ -> get_op_type Σ op = None ->
-    wf_vtype Aop -> wf_vtype Bop -> wf_sig (SigU Σ op Aop Bop)
+    wf_vtype Aop -> wf_vtype Bop ->
+    wf_sig (SigU Σ op Aop Bop)
 
 with wf_ctx : ctx -> Prop :=
 | WfCtxØ : wf_ctx CtxØ
@@ -102,9 +101,9 @@ with wf_t : ctx -> tctx -> tmpl -> sig -> Prop :=
     has_vtype Γ v (TyList A) -> 
     wf_t Γ Z T1 Σ -> wf_t (CtxU (CtxU Γ A) (TyList A)) Z T2 Σ ->  
     wf_t Γ Z (TListMatch v T1 T2) Σ
-| WfTOp Γ Z op v T A_op B_op Σ :
-    get_op_type Σ op = Some (A_op, B_op) -> has_vtype Γ v A_op ->
-    wf_t (CtxU Γ B_op) Z T Σ ->
+| WfTOp Γ Z op v T Aop Bop Σ :
+    get_op_type Σ op = Some (Aop, Bop) -> has_vtype Γ v Aop ->
+    wf_t (CtxU Γ Bop) Z T Σ ->
     wf_t Γ Z (TOp op v T) Σ
 
 with wf_eqs : eqs -> sig -> Prop :=
@@ -117,11 +116,16 @@ with wf_eqs : eqs -> sig -> Prop :=
 (* ==================== Type Judgements ==================== *)
 
 with has_vtype : ctx -> val -> vtype -> Prop :=
-| TypeV Γ v A : wf_ctx Γ ->  wf_vtype A -> has_vtype' Γ v A -> has_vtype Γ v A
+| TypeV Γ v A : 
+    wf_ctx Γ ->  wf_vtype A ->
+    has_vtype' Γ v A ->
+    has_vtype Γ v A
 
 with has_vtype' : ctx -> val -> vtype -> Prop :=
-| TypeUnit Γ : has_vtype' Γ Unit TyUnit 
-| TypeInt Γ n : has_vtype' Γ (Int n) TyInt
+| TypeUnit Γ : 
+    has_vtype' Γ Unit TyUnit 
+| TypeInt Γ n : 
+    has_vtype' Γ (Int n) TyInt
 | TypeVar Γ n A :
     get_vtype Γ n = Some A ->
     has_vtype' Γ (Var n) A
@@ -138,31 +142,35 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
 | TypeListNil Γ A :
     has_vtype' Γ ListNil (TyList A)
 | TypeListCons Γ v vs A :
-    has_vtype Γ v A -> 
+    has_vtype Γ v A ->
     has_vtype Γ vs (TyList A) ->
     has_vtype' Γ (ListCons v vs) (TyList A)
 | TypeFun Γ c A C :
     has_ctype (CtxU Γ A) c C ->
     has_vtype' Γ (Fun c) (TyFun A C)
-| TypeHandler Γ c_ret h A Σ E D :
-    has_ctype (CtxU Γ A) c_ret D ->
+| TypeHandler Γ cr h A Σ E D :
+    has_ctype (CtxU Γ A) cr D ->
     has_htype Γ h Σ D -> 
     respects Γ h Σ D E ->
-    has_vtype' Γ (Handler c_ret h) (TyHandler (CTy A Σ E) D)
+    has_vtype' Γ (Handler cr h) (TyHandler (CTy A Σ E) D)
 | TypeVSubtype Γ v A A' :
-    has_vtype Γ v A -> 
+    has_vtype Γ v A ->
     vsubtype A A' -> 
     has_vtype' Γ v A'
 
 with has_ctype : ctx -> comp -> ctype -> Prop :=
-| TypeC Γ c C : wf_ctx Γ -> wf_ctype C -> has_ctype' Γ c C -> has_ctype Γ c C
+| TypeC Γ c C :
+    wf_ctx Γ -> wf_ctype C ->
+    has_ctype' Γ c C ->
+    has_ctype Γ c C
 
 with has_ctype' : ctx -> comp -> ctype -> Prop :=
 | TypeRet Γ v A : 
     has_vtype Γ v A ->
     has_ctype' Γ (Ret v) (CTy A SigØ EqsØ)
 | TypeAbsurd Γ v C :
-    has_vtype Γ v TyØ -> has_ctype' Γ (Absurd v) C
+    has_vtype Γ v TyØ -> 
+    has_ctype' Γ (Absurd v) C
 | TypeΠMatch Γ v A B c C :
     has_vtype Γ v (TyΠ A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
@@ -193,10 +201,10 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     has_ctype (CtxU Γ (TyFun A C)) c2 D ->
     has_ctype' Γ (LetRec c1 c2) D
-| TypeOp Γ op v c A_op B_op A Σ E :
-    get_op_type Σ op = Some (A_op, B_op) ->
-    has_vtype Γ v A_op ->
-    has_ctype (CtxU Γ B_op) c (CTy A Σ E) ->
+| TypeOp Γ op v c Aop Bop A Σ E :
+    get_op_type Σ op = Some (Aop, Bop) ->
+    has_vtype Γ v Aop ->
+    has_ctype (CtxU Γ Bop) c (CTy A Σ E) ->
     has_ctype' Γ (Op op v c) (CTy A Σ E)
 | TypeCSubtype Γ c C C' :
     has_ctype Γ c C -> 
@@ -205,16 +213,17 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
 
 with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeH Γ h Σ D : 
-    wf_ctx Γ -> wf_sig Σ -> wf_ctype D -> has_htype' Γ h Σ D -> 
+    wf_ctx Γ -> wf_sig Σ -> wf_ctype D ->
+    has_htype' Γ h Σ D -> 
     has_htype Γ h Σ D
 
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
-| TypeCasesU Γ h op  c_op A_op B_op Σ D :
-    find_case h op = None ->
+| TypeCasesU Γ h op cop Aop Bop Σ D :
+    get_case h op = None ->
     has_htype Γ h Σ D ->
-    has_ctype (CtxU (CtxU Γ (TyFun B_op D)) A_op) c_op D ->
-    has_htype' Γ (CasesU h op c_op) (SigU Σ op A_op B_op) D
+    has_ctype (CtxU (CtxU Γ (TyFun Bop D)) Aop) cop D ->
+    has_htype' Γ (CasesU h op cop) (SigU Σ op Aop Bop) D
 
 (* ==================== Logic Judgements ==================== *)
 
@@ -235,7 +244,8 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 
 with veq : vtype -> ctx -> val -> val -> Prop := 
 | Veq A Γ v1 v2 : 
-  has_vtype Γ v1 A -> has_vtype Γ v2 A -> veq' A Γ v1 v2 -> 
+  has_vtype Γ v1 A -> has_vtype Γ v2 A ->
+  veq' A Γ v1 v2 -> 
   veq A Γ v1 v2
 
 with veq': vtype -> ctx -> val -> val -> Prop :=
@@ -246,14 +256,16 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     veq A Γ v1 v2 -> veq A Γ v2 v3 -> 
     veq' A Γ v1 v3
 | VeqVar i A A' Γ :
-    get_vtype Γ i = Some A' -> vsubtype A' A ->
+    get_vtype Γ i = Some A' ->
+    vsubtype A' A ->
     veq' A Γ (Var i) (Var i)
 | VeqUnit Γ:
     veq' TyUnit Γ Unit Unit
 | VeqInt Γ n:
     veq' TyInt Γ (Int n) (Int n)
 | VeqPair A B Γ v1 v1' v2 v2' :
-    veq A Γ v1 v1' -> veq B Γ v2 v2' -> 
+    veq A Γ v1 v1' ->
+    veq B Γ v2 v2' -> 
     veq' (TyΠ A B) Γ (Pair v1 v2) (Pair v1' v2')
 | VeqInl A B Γ v v' :
     veq A Γ v v' ->
@@ -272,7 +284,8 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     veq' (TyFun A C) Γ (Fun c) (Fun c')
 | VeqHandler A Σ E D D' Γ c c' h h':
     ceq D (CtxU Γ A) c c' ->
-    heq Σ D' Γ h h' -> csubtype D' D ->
+    heq Σ D' Γ h h' ->
+    csubtype D' D ->
     veq' (TyHandler (CTy A Σ E) D) Γ (Handler c h) (Handler c' h')
 | ηUnit Γ v:
     veq' TyUnit Γ v Unit
@@ -282,7 +295,8 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
 
 with ceq : ctype -> ctx -> comp -> comp -> Prop := 
 | Ceq C Γ c1 c2 : 
-    has_ctype Γ c1 C -> has_ctype Γ c2 C -> ceq' C Γ c1 c2 -> 
+    has_ctype Γ c1 C -> has_ctype Γ c2 C ->
+    ceq' C Γ c1 c2 -> 
     ceq C Γ c1 c2
 
 with ceq' : ctype -> ctx -> comp -> comp -> Prop := 
@@ -290,7 +304,8 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     ceq C Γ c1 c2 -> 
     ceq' C Γ c2 c1
 | CeqTrans C Γ c1 c2 c3 : 
-    ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> 
+    ceq C Γ c1 c2 ->
+    ceq C Γ c2 c3 -> 
     ceq' C Γ c1 c3
 | CeqRet A Σ E Γ v v' : 
     veq A Γ v v' -> 
@@ -328,10 +343,10 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     ceq C (CtxU (CtxU Γ A) (TyFun A C)) c1 c1' ->
     ceq D (CtxU Γ (TyFun A C)) c2 c2' ->
     ceq' D Γ (LetRec c1 c2) (LetRec c1' c2')
-| CeqOp Γ op v v' c c' A_op B_op A Σ E:
-    get_op_type Σ op = Some (A_op, B_op) ->
-    veq A_op Γ v v' ->
-    ceq (CTy A Σ E) (CtxU Γ B_op) c c' ->
+| CeqOp Γ op v v' c c' Aop Bop A Σ E:
+    get_op_type Σ op = Some (Aop, Bop) ->
+    veq Aop Γ v v' ->
+    ceq (CTy A Σ E) (CtxU Γ Bop) c c' ->
     ceq' (CTy A Σ E) Γ (Op op v c) (Op op v' c')
 | OOTB A Σ E Γ' I Γ Z T1 T2 c1 c2:
     has_eq E Γ Z T1 T2 ->
@@ -376,18 +391,20 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
       (Handle (Handler c_r h) (Ret v))
       (c_subs_out c_r v)
 | βHandle_Op c_r h op v c_k c_op C Γ:
-    find_case h op = Some c_op ->
+    get_case h op = Some c_op ->
     ceq' C Γ
       (Handle (Handler c_r h) (Op op v c_k))
       (c_subs2_out c_op
         (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k))
         v )
 | ηPair Γ v n c C A B:
-    n <= ctx_len Γ -> has_ctype (ctx_insert Γ (TyΠ A B) n) c C ->
+    n <= ctx_len Γ ->
+    has_ctype (ctx_insert Γ n (TyΠ A B)) c C ->
     ceq' C Γ (c_subs c n v)
       (ΠMatch v (c_subs (c_shift c 2 0) (2+n) (Pair (Var 1) (Var 0))))
 | ηSum Γ v n c C A B:
-    n <= ctx_len Γ -> has_ctype (ctx_insert Γ (TyΣ A B) n) c C ->
+    n <= ctx_len Γ ->
+    has_ctype (ctx_insert Γ n (TyΣ A B)) c C ->
     ceq' C Γ (c_subs c n v) 
       (ΣMatch v 
         (c_subs (c_shift c 1 0) (1+n) (Inl (Var 0))) 
@@ -398,15 +415,16 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 with heq : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | Heq Σ Σ1 Σ2 D Γ h1 h2 : 
     wf_sig Σ -> sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
-    has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D -> heq' Σ D Γ h1 h2 -> 
+    has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D ->
+    heq' Σ D Γ h1 h2 -> 
     heq Σ D Γ h1 h2
     
 with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 | HeqSigØ D Γ h1 h2: 
     heq' SigØ D Γ h1 h2
 | HeqSigU Σ op A B D Γ h1 c1 h2 c2:
-    find_case h1 op = Some c1 ->
-    find_case h2 op = Some c2 ->
+    get_case h1 op = Some c1 ->
+    get_case h2 op = Some c2 ->
     ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
     heq Σ D Γ h1 h2 ->
     heq' (SigU Σ op A B) D Γ h1 h2
@@ -414,6 +432,7 @@ with heq' : sig -> ctype -> ctx -> hcases -> hcases -> Prop :=
 with wf_inst : ctx -> instantiation -> ctx -> Prop :=
 | WfInstØ Γcheck : wf_ctx Γcheck -> wf_inst Γcheck InstØ CtxØ
 | WfInstU Γcheck I v Γ A : 
-  has_vtype Γcheck v A -> wf_inst Γcheck I Γ ->
+  has_vtype Γcheck v A ->
+  wf_inst Γcheck I Γ ->
   wf_inst Γcheck (InstU I v) (CtxU Γ A) 
 .
