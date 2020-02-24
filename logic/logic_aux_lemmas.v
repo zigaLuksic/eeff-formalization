@@ -5,7 +5,8 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 (* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
 
-Require Export syntax_lemmas substitution_lemmas subtyping_lemmas.
+Require Export subtyping_lemmas.
+
 
 Lemma heq_cases_ceq Σ D Γ h1 h2 op A B c1 c2 :
   heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
@@ -16,11 +17,13 @@ Proof.
 intros eqs gets finds1 finds2.
 induction Σ. simpl in gets. discriminate.
 simpl in *. destruct (op==o).
-+ inv gets. inv eqs. inv H4. 
-  rewrite H9 in finds1. rewrite H14 in finds2. inv finds1. inv finds2. auto.
++ inv gets. inv eqs. inv H4.
+  rewrite H9 in finds1. rewrite H14 in finds2.
+  inv finds1. inv finds2. auto.
 + inv eqs. inv H4. eauto.
 Qed.
 
+(* ==================== Logic Subtyping ==================== *)
 
 Lemma heq_subtype Σ Σ' D Γ h1 h2 (orig : heq Σ D Γ h1 h2) :
   wf_sig Σ' -> sig_subtype Σ' Σ -> heq Σ' D Γ h1 h2.
@@ -46,9 +49,9 @@ intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
   - eapply heq_cases_ceq. 2: eauto.
     eapply Heq. 2: exact H0. all: eauto.
   - eapply ctx_subtype_ceq; eauto.
-    inv H2. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
-    apply SubtypeCtxU. apply SubtypeCtxU. 2: apply SubtypeTyFun. all: auto.
-    all: inv H2. apply ctx_subtype_refl. auto. apply csubtype_refl. auto.
+    * inv H2. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
+    * apply SubtypeCtxU. apply SubtypeCtxU. 2: apply SubtypeTyFun. all: auto.
+      all: inv H2; (apply ctx_subtype_refl || apply csubtype_refl); auto.
 Qed.
 
 
@@ -143,9 +146,11 @@ apply Ceq; auto. destruct H3.
 }
 Qed.
 
+(* ==================== Structural Rules for Cases ==================== *)
 
 Lemma heq_case_extend_trivial Σ D Γ h1 h2 op A1 A2 B1 B2 c1 c2:
-  heq Σ D Γ h1 h2 -> get_case h1 op = None -> get_case h2 op = None ->
+  heq Σ D Γ h1 h2 ->
+  get_case h1 op = None -> get_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
   heq Σ D Γ (CasesU h1 op c1) (CasesU h2 op c2).
@@ -189,7 +194,8 @@ Qed.
 
 
 Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B c1 c2:
-  heq Σ D Γ h1 h2 -> get_case h1 op = None -> get_case h2 op = None ->
+  heq Σ D Γ h1 h2 ->
+  get_case h1 op = None -> get_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D ->
   ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
@@ -231,9 +237,10 @@ eapply Heq. apply WfSigU; auto. exact ss1. exact ss2.
   * eapply heq_case_extend_trivial; eauto. eapply Heq. 2:exact H0. all: eauto.
 Qed.
 
+(* ================== Reflexivity, Symmetry, Transitivity ================== *)
 
-Lemma veq_refl Γ v A : has_vtype Γ v A -> veq A Γ v v
-with  ceq_refl Γ c C : has_ctype Γ c C -> ceq C Γ c c
+Lemma veq_refl Γ v A   : has_vtype Γ v A -> veq A Γ v v
+with  ceq_refl Γ c C   : has_ctype Γ c C -> ceq C Γ c c
 with  heq_refl Γ h Σ D : has_htype Γ h Σ D -> heq Σ D Γ h h.
 Proof.
 all: intros orig.
@@ -270,7 +277,7 @@ apply sig_subtype_refl. inv orig. assumption.
 assumption. assumption.
 destruct orig. destruct H2.
 + eapply HeqSigØ.
-+ assert (get_case (CasesU h op c_op) op = Some c_op).
++ assert (get_case (CasesU h op cop) op = Some cop).
   { simpl. destruct (op==op). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
   eapply heq_case_extend_trivial; eauto; inv H0; assumption.
@@ -278,12 +285,9 @@ destruct orig. destruct H2.
 Qed.
 
 
-Lemma veq_sym A Γ v1 v2:
-  veq A Γ v1 v2 -> veq A Γ v2 v1
-with ceq_sym C Γ c1 c2:
-  ceq C Γ c1 c2 -> ceq C Γ c2 c1
-with heq_sym Σ D Γ h1 h2:
-  heq Σ D Γ h1 h2 -> heq Σ D Γ h1 h2.
+Lemma veq_sym A Γ v1 v2   : veq A Γ v1 v2 -> veq A Γ v2 v1
+with  ceq_sym C Γ c1 c2   : ceq C Γ c1 c2 -> ceq C Γ c2 c1
+with  heq_sym Σ D Γ h1 h2 : heq Σ D Γ h1 h2 -> heq Σ D Γ h1 h2.
 Proof.
 {
 intro orig. apply Veq. all: try (inv orig; assumption). apply VeqSym. auto.
@@ -300,10 +304,13 @@ Qed.
 
 Lemma veq_trans A Γ v1 v2 v3:
   veq A Γ v1 v2 -> veq A Γ v2 v3 -> veq A Γ v1 v3
+
 with  ceq_trans C Γ c1 c2 c3:
   ceq C Γ c1 c2 -> ceq C Γ c2 c3 -> ceq C Γ c1 c3
+
 with  heq_trans Σ D Γ h1 h2 h3:
   heq Σ D Γ h1 h2 -> heq Σ D Γ h2 h3 -> heq Σ D Γ h1 h3.
+
 Proof.
 {
 intros veq1 veq2. apply Veq. inv veq1. auto. inv veq2. auto.

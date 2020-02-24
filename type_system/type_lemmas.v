@@ -55,15 +55,15 @@ induction step; intros C orig.
   all: eauto. inv H0. apply v_shift_typesafe; auto.
 + unfold c_subs2_out. apply shape_summatch in orig.
   destruct orig as [A [B [vty [inl _]]]].
-  eapply c_subs_out_typesafe. exact inl. apply shape_sum_inl in vty. auto.
+  eapply c_subs_out_typesafe. exact inl. apply shape_inl in vty. auto.
 + unfold c_subs2_out. apply shape_summatch in orig.
   destruct orig as [A [B [vty [_ inr]]]].
-  eapply c_subs_out_typesafe. exact inr. apply shape_sum_inr in vty. auto.
+  eapply c_subs_out_typesafe. exact inr. apply shape_inr in vty. auto.
 + apply shape_listmatch in orig.
   destruct orig as [A[_[ty1 _]]]. auto.
 + unfold c_subs2_out. 
   apply shape_listmatch in orig. destruct orig as [A[vty[_ ty2]]]. 
-  apply shape_list_cons in vty. destruct vty as [vty vsty].  
+  apply shape_cons in vty. destruct vty as [vty vsty].  
   eapply c_subs_out_typesafe; eauto. eapply c_subs_out_typesafe; eauto.
   eapply v_shift_typesafe; eauto. inv vty. auto.
 + apply shape_app in orig. destruct orig as [A [f]].

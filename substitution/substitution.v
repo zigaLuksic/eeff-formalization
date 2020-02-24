@@ -1,7 +1,6 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
 Require Export syntax.
-Require Import Le.
 
 (* ==================== Shifts and Subs ==================== *)
 
