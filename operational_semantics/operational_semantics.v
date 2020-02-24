@@ -1,7 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
+Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
+(* Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
 Require Export syntax substitution.
 
 Inductive step : comp -> comp -> Prop :=

@@ -93,6 +93,7 @@ intros wf_eqs has. induction wf_eqs; inv has; auto.
 destruct H4 as [a [b [c d]]]. subst. do 3 aconstructor.  
 Qed.
 
+(* ==================== Instantiations ==================== *)
 
 Lemma wf_inst_wf_ctx Γ' I Γ:
   wf_inst Γ' I Γ -> wf_ctx Γ.
@@ -100,4 +101,23 @@ Proof.
 revert Γ' I. induction Γ; intros Γ' I orig.
 + apply WfCtxØ.
 + inv orig. inv H3. apply WfCtxU; eauto.
+Qed.
+
+
+Lemma wf_inst_ctx_len_same Γ' I Γ:
+  wf_inst Γ' I Γ -> inst_len I = ctx_len Γ.
+Proof.
+intros orig. induction orig; simpl; auto.
+Qed.
+
+
+Lemma wf_inst_get_Some Γ I Γ' n A:
+  wf_inst Γ I Γ' -> get_vtype Γ' n = Some A ->
+  exists v, get_inst_val I n = Some v /\ has_vtype Γ v A.
+Proof.
+intros wf. revert n A. induction wf; intros n A' gets.
++ simpl in gets. discriminate.
++ simpl in gets. destruct n.
+  - inv gets. exists v. eauto.
+  - apply IHwf. auto.
 Qed.

@@ -31,6 +31,15 @@ all: destruct (op==o) eqn:cmp; try discriminate; auto.
 Qed.
 
 
+Lemma inst_get_case_None I h op:
+  get_case h op = None -> get_case (h_inst h I) op = None.
+Proof.
+revert I op. induction h; intros I op orig.
++ simpl. auto.
++ simpl in *. destruct (op==o). discriminate. auto.
+Qed.
+
+
 Lemma shift_get_case_Some h op i cut c :
   get_case h op = Some c -> 
   get_case (h_shift h i cut) op = Some (c_shift c i (2+cut)).
@@ -56,6 +65,18 @@ Proof.
 intros gets; induction h; simpl in *. discriminate.
 destruct (op==o) eqn:cmp. inv gets. all: auto.
 Qed.
+
+
+Fixpoint inst_get_case_Some I I' h op c_op {struct h}:
+  get_case h op = Some c_op -> 
+  I' = InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0) ->
+  get_case (h_inst h I) op = Some (c_inst c_op I').
+Proof.
+intros finds same. destruct h; subst; simpl in *.
++ discriminate.
++ destruct (op==o). inv finds. auto. apply inst_get_case_Some; auto.
+Qed.
+
 
 (* ==================== Shift Arithmetic ==================== *)
 
@@ -1239,12 +1260,12 @@ Proof.
 revert i j. induction I; intros; simpl; f_equal; auto.
 Qed.
 
-Lemma get_inst_val_shift I n d c :
-    get_inst_val (inst_shift I d c) n 
-  = f_opt (get_inst_val I n) (fun v => Some (v_shift v d c)).
+
+Fixpoint get_inst_val_shift I m k c {struct I}:
+  get_inst_val (inst_shift I k c) m 
+  = f_opt (get_inst_val I m) (fun v => Some (v_shift v k c)).
 Proof.
-revert n d c. induction I; intros; simpl in *. auto. 
-destruct n; simpl; auto.
+destruct I; simpl. auto. destruct m; simpl; auto.
 Qed.
 
 

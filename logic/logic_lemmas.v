@@ -41,20 +41,21 @@ all: assumption || (inv tys; assumption) || auto.
 + eapply βHandle_Op. eauto.
 Qed.
 
+(* ==================== Substitution is Safe in Logic ==================== *)
 
 Fixpoint veq_subs_logicsafe_weak
   Γ Γ' A v i v_s v_s' A_s (orig: has_vtype Γ' v A) {struct orig} :
-  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   veq A Γ (v_subs v i v_s) (v_subs v i v_s')
 
 with ceq_subs_logicsafe_weak
   Γ Γ' C c i v_s v_s' A_s (orig: has_ctype Γ' c C) {struct orig} :
-  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   ceq C Γ (c_subs c i v_s) (c_subs c i v_s')
 
 with heq_subs_logicsafe_weak
   Γ Γ' Σ D h i v_s v_s' A_s (orig: has_htype Γ' h Σ D) {struct orig} :
-  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   heq Σ D Γ (h_subs h i v_s) (h_subs h i v_s').
 
 Proof.
@@ -166,7 +167,7 @@ intros vseq ctxs clen. destruct orig. destruct H2.
   all: unfold h_subs; simpl. apply HeqSigØ.
 + unfold h_subs in *. unfold c_subs in *. simpl.
   eapply HEQ in H3; eauto. eapply CEQ in H4. all: clear VEQ CEQ HEQ.
-  4: instantiate (2:=CtxU (CtxU Γ (TyFun B_op D)) A_op).
+  4: instantiate (2:=CtxU (CtxU Γ (TyFun Bop D)) Aop).
   Focus 3. 
     erewrite <-ctx_insert_extend. f_equal. erewrite <-ctx_insert_extend.
     f_equal. eauto.
@@ -187,17 +188,17 @@ Qed.
 
 Fixpoint veq_subs_logicsafe
   Γ Γ' A v1 v2 i v_s v_s' A_s (orig: veq A Γ' v1 v2) {struct orig} :
-  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   veq A Γ (v_subs v1 i v_s) (v_subs v2 i v_s')
 
 with ceq_subs_logicsafe
   Γ Γ' C c1 c2 i v_s v_s' A_s (orig: ceq C Γ' c1 c2) {struct orig} :
-  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   ceq C Γ (c_subs c1 i v_s) (c_subs c2 i v_s')
 
 with heq_subs_logicsafe
   Γ Γ' Σ D h1 h2 i v_s v_s' A_s (orig: heq Σ D Γ' h1 h2) {struct orig} :
-  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ A_s i -> ctx_len Γ >= i ->
+  veq A_s Γ v_s v_s' -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   heq Σ D Γ (h_subs h1 i v_s) (h_subs h2 i v_s').
 Proof.
 all: intros vseq ctxs clen.
@@ -219,6 +220,8 @@ eapply Heq. 2: exact H0. all:eauto. inv vseq. assumption.
 Qed.
 
 
+(* ==================== Context Modification ==================== *)
+
 Fixpoint veq_join_ctxs Γ Γ' v1 v2 A:
   wf_ctx Γ' -> veq A Γ v1 v2 -> veq A (join_ctxs Γ' Γ) v1 v2
 with ceq_join_ctxs Γ Γ' c1 c2 C:
@@ -228,24 +231,24 @@ with heq_join_ctxs Γ Γ' h1 h2 Σ D:
 Proof.
 all: intros wfc' orig.
 + destruct Γ'.
-  - rewrite join_ctxs_left_unit. auto.
-  - rewrite join_ctxs_left_step. auto. 
+  - rewrite join_ctxs_CtxØ. auto.
+  - rewrite join_ctxs_CtxU. auto. 
     apply veq_join_ctxs. inv wfc'. eauto.
     rewrite <-(v_shift_too_high v1 1 (ctx_len Γ)).
     rewrite <-(v_shift_too_high v2 1 (ctx_len Γ)).
     apply veq_insert_typesafe. auto. inv wfc'. auto. 
     all: eapply has_vtype_is_under_ctx; inv orig; eauto.
 + destruct Γ'.
-  - rewrite join_ctxs_left_unit. auto.
-  - rewrite join_ctxs_left_step. auto. 
+  - rewrite join_ctxs_CtxØ. auto.
+  - rewrite join_ctxs_CtxU. auto. 
     apply ceq_join_ctxs. inv wfc'. eauto.
     rewrite <-(c_shift_too_high c1 1 (ctx_len Γ)).
     rewrite <-(c_shift_too_high c2 1 (ctx_len Γ)).
     apply ceq_insert_typesafe. auto. inv wfc'. auto. 
     all: eapply has_ctype_is_under_ctx; inv orig; eauto.
 + destruct Γ'.
-  - rewrite join_ctxs_left_unit. auto.
-  - rewrite join_ctxs_left_step. auto. 
+  - rewrite join_ctxs_CtxØ. auto.
+  - rewrite join_ctxs_CtxU. auto. 
     apply heq_join_ctxs. inv wfc'. eauto.
     rewrite <-(h_shift_too_high h1 1 (ctx_len Γ)).
     rewrite <-(h_shift_too_high h2 1 (ctx_len Γ)).

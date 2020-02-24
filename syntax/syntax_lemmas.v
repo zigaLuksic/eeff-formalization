@@ -102,7 +102,7 @@ Proof.
 induction Γ'; simpl. auto. f_equal. auto.
 Qed.
 
-(* ==================== Ctx Length ==================== *)
+(* ==================== Length ==================== *)
 
 Lemma len_join_ctxs Γ Γ':
   ctx_len (join_ctxs Γ Γ') = ctx_len Γ + ctx_len Γ'.
@@ -132,6 +132,18 @@ Fixpoint ctx_len_insert Γ i A {struct Γ}:
 Proof.
 intros safe. destruct Γ; simpl; destruct i; simpl in *; aomega.
 specialize (ctx_len_insert Γ i A). omega.
+Qed.
+
+
+Lemma inst_len_insert I i v:
+  i <= inst_len I -> 
+  inst_len (inst_insert I i v) = 1 + inst_len I.
+Proof.
+revert i v. induction I; intros; simpl.
++ destruct i. simpl. auto. simpl in H. omega.
++ destruct i. auto.
+  assert (S i=?0=false) by (apply Nat.eqb_neq; omega). 
+  rewrite H0. simpl. rewrite IHI. omega. simpl in H. omega.
 Qed.
 
 (* ==================== Ctx Length Guarantees ==================== *)

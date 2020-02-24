@@ -9,7 +9,7 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 (* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics". *)
 (* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
 
-Require Export syntax_lemmas substitution_lemmas type_lemmas logic_lemmas String.
+Require Export type_lemmas logic_lemmas.
 Open Scope string_scope.
 
 Ltac obvious := 
@@ -28,7 +28,9 @@ Ltac obvious_vtype := ((apply TypeV; ((apply TypeUnit; obvious)
   || obvious))
   || obvious).
 
+
 Example sig := (SigU (SigØ) ("choose") TyUnit (TyΣ TyUnit TyUnit)).
+
 
 Lemma sig_wf:
   wf_sig sig.
@@ -36,13 +38,13 @@ Proof.
 unfold sig. obvious.
 Qed.
 
+
 Example eq_idem := (EqsU (EqsØ) CtxØ (TCtxU TCtxØ TyUnit)
-  (TApp ("z", 0) Unit)
-  (TOp "choose" Unit "y" 
-    (TΣMatch (Var ("y", 0)) 
-      "_" (TApp ("z", 0) Unit)
-      "_" (TApp ("z", 0) Unit)))
+  (TApp 0 Unit)
+  (TOp "choose" Unit 
+    (TΣMatch (Var 0) (TApp 0 Unit) (TApp 0 Unit)))
 ).
+
 
 Lemma eq_idem_wf:
   wf_eqs eq_idem sig.
@@ -59,13 +61,17 @@ unfold eq_idem. apply WfEqsU; obvious.
     * eapply WfTApp. obvious_vtype. simpl. auto.
 Qed.
 
+
 Example handler :=
-  Handler "x" (Ret (Var ("x", 0)))
+  Handler (Ret (Var 0))
   (CasesU CasesØ
-    "choose" "k" "x" (App (Var ("k", 1)) (Inl Unit))).
+    "choose" (App (Var 1) (Inl Unit))).
+
 
 Lemma handler_types:
-  has_vtype CtxØ handler (TyHandler (CTy TyInt sig eq_idem) (CTy TyInt SigØ EqsØ))
+  has_vtype 
+    CtxØ handler 
+    (TyHandler (CTy TyInt sig eq_idem) (CTy TyInt SigØ EqsØ))
 .
 specialize eq_idem_wf as eqwf.
 apply TypeV; obvious. apply WfTyHandler; obvious.
