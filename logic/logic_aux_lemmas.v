@@ -202,12 +202,14 @@ Qed.
 Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B c1 c2:
   heq Σ D Γ h1 h2 ->
   get_case h1 op = None -> get_case h2 op = None ->
-  has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D ->
-  has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D ->
   ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
   heq (SigU Σ op A B) D Γ (CasesU h1 op c1) (CasesU h2 op c2).
 Proof.
-intros orig f1 f2 tys1 tys2 ceq12.
+intros orig f1 f2 ceq12.
+assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D) as tys1 
+by (inv ceq12; auto).
+assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D) as tys2 
+by (inv ceq12; auto).
 assert (wf_vtype A) as wfa by (inv tys1; inv H; auto).
 assert (wf_vtype B) as wfb by (inv tys1; inv H; inv H4; inv H6; auto).
 assert (wf_ctype D) as wfd by (inv tys1; auto).
