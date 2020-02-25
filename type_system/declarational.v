@@ -327,10 +327,10 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     ceq C Γ c1 c1' ->
     ceq C (CtxU (CtxU Γ A) (TyList A)) c2 c2' ->
     ceq' C Γ (ListMatch v c1 c2) (ListMatch v' c1' c2')
-| CeqDoBind C B Σ E Γ c1 c1' c2 c2':
-    ceq (CTy B Σ E) Γ c1 c1' ->
-    ceq C (CtxU Γ B) c2 c2' ->
-    ceq' C Γ (DoBind c1 c2) (DoBind c1' c2')
+| CeqDoBind A B Σ E Γ c1 c1' c2 c2':
+    ceq (CTy A Σ E) Γ c1 c1' ->
+    ceq (CTy B Σ E) (CtxU Γ A) c2 c2' ->
+    ceq' (CTy B Σ E) Γ (DoBind c1 c2) (DoBind c1' c2')
 | CeqApp Γ v1 v1' v2 v2' A C:
     veq (TyFun A C) Γ v1 v1' ->
     veq A Γ v2 v2' ->

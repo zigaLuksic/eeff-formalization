@@ -106,7 +106,13 @@ apply Ceq; auto. destruct H3.
 + eapply CeqΠMatch; eauto.
 + eapply CeqΣMatch; eauto.
 + eapply CeqListMatch; eauto.
-+ eapply CeqDoBind; eauto.
++ inv H0. rename A' into B'. 
+  assert (wf_vtype A) by (inv H3; inv H0; inv H7; auto). 
+  eapply CeqDoBind.
+  - eapply ceq_subtype. eauto. 
+    apply WfCTy; eauto; inv H; auto.
+    apply SubtypeCTy; auto. apply vsubtype_refl. auto.
+  - eapply ceq_subtype; eauto. apply SubtypeCTy; auto.
 + eapply CeqApp; eauto. eapply veq_subtype; eauto; inv H3; inv H5; inv H8.
   - apply WfTyFun; assumption.
   - apply SubtypeTyFun. apply vsubtype_refl. all: auto.

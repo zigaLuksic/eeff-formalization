@@ -1644,10 +1644,10 @@ destruct orig. destruct H1.
   unfold c_subs. simpl. eapply CeqListMatch; eauto.
   rewrite v_shift_comm, <-(v_shift_shift 1 1). apply IHc2.
   simpl. do 2 f_equal. assumption. simpl. omega. omega.
-+ assert (wf_vtype B) as wfb by (inv H1; inv H4; inv H6; auto).
-  specialize (v_shift_typesafe _ _ B _ tyvs wfb) as tyvsb.
++ assert (wf_vtype A) as wfa by (inv H1; inv H4; inv H6; auto).
+  specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvsa.
   specialize (CEL _ _ _ _ _ i _ _ H1 tyvs) as IHc1.
-  specialize (CEL _ _ _ _ _ (S i) _ _ H2 tyvsb) as IHc2.
+  specialize (CEL _ _ _ _ _ (S i) _ _ H2 tyvsa) as IHc2.
   clear VL CL HL RL VEL CEL HEL WF.
   unfold c_subs. simpl. eapply CeqDoBind. eauto.
   rewrite v_shift_comm. apply IHc2. simpl.  f_equal. assumption.
