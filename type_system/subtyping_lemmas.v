@@ -522,6 +522,14 @@ all: clear HL HEL.
   - apply wf_ctx_insert; eauto.
   - eapply ctx_subtype_insert. auto.
     apply vsubtype_refl. auto.
++ eapply ηList. 
+  apply ctx_subtype_len in ctxsty. omega.
+  assert (wf_vtype (TyList A)). 
+  { inv H2. apply wf_ctx_insert_vtype in H3; auto. }
+  eapply CL; eauto. 
+  - apply wf_ctx_insert; eauto.
+  - eapply ctx_subtype_insert. auto.
+    apply vsubtype_refl. auto.
 + eapply ηDoBind.
 }{
 intros wf ctxsty.

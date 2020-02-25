@@ -409,6 +409,13 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
       (ΣMatch v 
         (c_subs (c_shift c 1 0) (1+n) (Inl (Var 0))) 
         (c_subs (c_shift c 1 0) (1+n) (Inr (Var 0))))
+| ηList Γ v n c C A:
+    n <= ctx_len Γ ->
+    has_ctype (ctx_insert Γ n (TyList A)) c C ->
+    ceq' C Γ (c_subs c n v) 
+      (ListMatch v 
+        (c_subs c n ListNil) 
+        (c_subs (c_shift c 2 0) (2+n) (ListCons (Var 1) (Var 0))))
 | ηDoBind Γ c C:
     ceq' C Γ (DoBind c (Ret (Var 0))) c
 

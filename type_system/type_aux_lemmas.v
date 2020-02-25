@@ -655,7 +655,7 @@ inv orig. destruct H1.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. destruct (n<=?i) eqn:ni.
   - apply leb_complete in ni.
-    rewrite c_shift_subs. rewrite c_shift_subs. simpl.
+    rewrite c_shift_subs, c_shift_subs. simpl.
     assert (S(S(S i))=2+(S i)) as same by omega.
     rewrite same, <-c_shift_comm. all: try omega.
     eapply ηPair. specialize (ctx_len_insert_trivial Γ i A_ins) as triv. omega.
@@ -680,7 +680,23 @@ inv orig. destruct H1.
     rewrite c_shift_subs_alt, c_shift_subs_alt, c_shift_subs_alt. simpl.
     rewrite <-c_shift_comm. all: aomega.
     eapply ηSum. rewrite ctx_len_insert; omega.
-    rewrite ctx_insert_comm; aomega. 
+    rewrite ctx_insert_comm; aomega.
++ specialize (CL _ _ _ H2) as IHc.
+  clear VL CL HL RL VEL CEL HEL WF.
+  simpl. destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_shift_subs, c_shift_subs, c_shift_subs. simpl.
+    assert (S(S(S i))=2+(S i)) as same by omega.
+    rewrite same, <-c_shift_comm. all: try omega.
+    eapply ηList. specialize (ctx_len_insert_trivial Γ i A_ins) as triv. omega.
+    rewrite <-ctx_insert_comm; try omega. auto.  
+  - apply leb_complete_conv in ni.
+    rewrite c_shift_subs_alt, c_shift_subs_alt, c_shift_subs_alt.
+    assert (S(S i)=2+i) as samei by omega.
+    assert (1+S(S n)=2+(S n)) as samen by omega.
+    rewrite samei, samen, <-c_shift_comm. all: try omega.
+    eapply ηList. rewrite ctx_len_insert; omega.
+    rewrite ctx_insert_comm; try omega. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply ηDoBind.
 }{
@@ -1213,6 +1229,28 @@ inv orig. destruct H1.
     rewrite c_sub_subs_alt, c_sub_subs_alt, c_sub_subs_alt. simpl.
     rewrite <-v_shift_comm, <-c_shift_sub. all: aomega.
     eapply ηSum. omega. eapply IHc.
+    * erewrite <-get_ctx_insert_unchanged. eauto. omega.
+    * apply v_insert_typesafe; auto. inv H2. 
+      apply wf_ctx_insert_vtype in H3. auto. omega.
++ specialize (CL _ _ _ H2) as IHc.
+  clear VL CL HL RL VEL CEL HEL WF. simpl.
+  destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_sub_subs, c_sub_subs, c_sub_subs; aomega. simpl.
+    assert (S(S i)=2+i) as samei by omega.
+    assert (S(2+i)=2+(S i)) as sameii by omega.
+    assert (S(S n)=2+n) as samen by omega.
+    rewrite samei, samen, <-v_shift_comm, sameii, <-c_shift_sub; aomega.
+    eapply ηList. auto. eapply IHc.
+    * erewrite <-get_ctx_insert_changed. eauto. omega.
+    * apply v_insert_typesafe; auto. inv H2. 
+      apply wf_ctx_insert_vtype in H3. auto. omega.
+  - apply leb_complete_conv in ni.
+    rewrite c_sub_subs_alt, c_sub_subs_alt, c_sub_subs_alt. simpl.
+    assert (S(S i)=2+i) as samei by omega.
+    assert (S(S n)=2+n) as samen by omega.
+    rewrite samei, samen, <-v_shift_comm, <-c_shift_sub. all: aomega.
+    eapply ηList. omega. eapply IHc.
     * erewrite <-get_ctx_insert_unchanged. eauto. omega.
     * apply v_insert_typesafe; auto. inv H2. 
       apply wf_ctx_insert_vtype in H3. auto. omega.
@@ -1898,6 +1936,53 @@ destruct orig. destruct H1.
     assert (S n - 1 = n) as n0 by omega. rewrite n0 in *.
     apply IHc. subst. rewrite ctx_insert_comm; aomega.
     specialize (ctx_len_insert_trivial Γ n (TyΣ A B)) as triv. omega.
++ assert (wf_vtype (TyList A)) as wfla.
+  { inv H2. apply wf_ctx_insert_vtype in H3. auto. auto. }
+  specialize (v_insert_typesafe _ _ _ tyvs (TyList A) n wfla) as tyvsla.
+  specialize (CL _ _ c _ (1+i) _ _ H2 tyvsla) as IHcp.
+  specialize (v_insert_typesafe _ _ _ tyvs (TyList A) (n-1) wfla) as tyvslam.
+  specialize (CL _ _ c _ (i) _ _ H2 tyvslam) as IHc.
+  clear VL CL HL RL VEL CEL HEL WF. simpl.
+  assert (forall c1 c2, c_subs (ListMatch v c1 c2) i v_s 
+    = ListMatch (v_subs v i v_s) 
+        (c_subs c1 i v_s) (c_subs c2 (2+i) (v_shift v_s 2 0))).
+  { intros c1' c2'. unfold c_subs. simpl. rewrite v_shift_comm; aomega. }
+  rewrite H3. clear H3.
+  destruct (n<=?i) eqn:ni.
+  - clear IHc.
+    apply leb_complete in ni.
+    rewrite c_subs_subs, (c_subs_subs _ n), (c_subs_subs _ (2+n)). simpl.
+    specialize ηList as rule.
+    assert (S(S n)=2+n) as samen by omega.
+    assert (S(S(S i))=1+(1+(S i))) as samei by omega.
+    rewrite samei, samen, <-v_shift_comm.
+    rewrite <-(v_shift_shift 1 1), <-(c_shift_shift 1 1).
+    rewrite <-c_shift_subs_alt, <-c_shift_subs_alt, c_shift_shift.
+    assert (v_subs (ListCons (Var 1) (Var 0)) (S(S i)) (v_shift v_s 2 0) 
+      = (ListCons (Var 1) (Var 0))).
+    { unfold v_subs. simpl. reflexivity. }
+    rewrite H3. clear H3. eapply ηList. all: aomega.
+    apply IHcp. subst. rewrite ctx_insert_comm. all: aomega.
+    rewrite ctx_len_insert; omega.
+  - clear IHcp.
+    apply leb_complete_conv in ni.
+    destruct n. omega.
+    rewrite (c_subs_subs_alt _ n), (c_subs_subs_alt _ n), (c_subs_subs_alt _ ).
+    all: aomega. simpl.
+    specialize ηList as rule.
+    assert (v_subs (ListCons (Var 1) (Var 0)) (S (S i)) (v_shift v_s 2 0)
+      = (ListCons (Var 1) (Var 0))).
+    { unfold v_subs. simpl. reflexivity. }
+    rewrite H3. clear H3. 
+    assert (S(S n)=2+n) as samen by omega.
+    rewrite samen, <-v_shift_comm.
+    rewrite <-(v_shift_shift 1 1), <-(c_shift_shift 1 1).
+    rewrite <-c_shift_subs_alt, <-c_shift_subs_alt, c_shift_shift.
+    eapply ηList. all: aomega.
+    subst. rewrite ctx_len_insert in H1. omega. omega.
+    assert (S n - 1 = n) as n0 by omega. rewrite n0 in *.
+    apply IHc. subst. rewrite ctx_insert_comm; aomega.
+    specialize (ctx_len_insert_trivial Γ n (TyList A)) as triv. omega.
 + clear VL CL HL RL VEL CEL HEL WF. simpl. apply ηDoBind.
 }{
 intros tyvs geq len.

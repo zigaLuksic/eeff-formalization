@@ -148,6 +148,8 @@ apply Ceq; auto. destruct H3.
   apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
 + eapply ηSum. omega.
   apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
++ eapply ηList. omega.
+  apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
 + eapply ηDoBind.
 }
 Qed.
