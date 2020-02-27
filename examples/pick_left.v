@@ -85,6 +85,8 @@ unfold eq_idem_assoc. apply WfEqsU; obvious. apply eq_idem_wf.
 Qed.
 
 
+(* ========================================================================== *)
+
 Example cases :=
   (CasesU CasesØ
     "choose" (App (Var 1) (Inl Unit))).
