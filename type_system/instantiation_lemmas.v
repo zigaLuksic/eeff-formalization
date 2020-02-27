@@ -557,6 +557,9 @@ all: assert (forall x y, x+(S y) = S (x+y)) as comm by (intros; omega).
   eapply inst_handle_t in H6. simpl in H6. rewrite <-H6.
   eapply inst_handle_t in H7. simpl in H7. rewrite <-H7.
   rewrite comm, comm. simpl. rewrite inst_shift_shift. all: aomega.
++ erewrite c_inst_pad_same; eauto.
+  eapply inst_handle_t in H5. simpl in H5. rewrite <-H5.
+  rewrite comm. simpl. all: aomega.
 + destruct (get_case h o) eqn: finds.
   - eapply inst_get_case_Some in finds as findss; eauto. rewrite findss.
     rewrite c_inst_subs2_out. unfold c_subs2_out. unfold c_subs_out. simpl.
@@ -712,53 +715,6 @@ erewrite shift_smush; eauto. erewrite <-c_smush_is_sequencing; eauto; simpl.
 rewrite inst_shift_shift; eauto.
 all: inv H4; inv H5; auto; inv H9; auto.
 }
-Qed.
-
-
-Fixpoint tmpl_to_comp_has_ctype Γ Z T A Σ E (orig: wf_t Γ Z T Σ):
-  wf_ctype (CTy A Σ E) -> wf_ctx Γ -> wf_tctx Z ->
-  has_ctype 
-    (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) 
-    (tmpl_to_comp (ctx_len Γ) T) 
-    (CTy A Σ E).
-Proof.
-intros wfd wfg wfz.
-assert (wf_ctx (tctx_to_ctx Z (CTy A Σ E))).
-{ apply wf_tctx_to_ctx; auto. }
-assert (wf_ctx (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ)).
-{ apply wf_join_ctxs; auto. }
-destruct orig; simpl; apply TypeC; eauto.
-+ eapply TypeApp.
-  - apply TypeV; eauto. apply WfTyFun; inv H1; eauto.
-    apply TypeVar. erewrite <-get_join_ctxs_left.
-    apply get_tctx_to_ctx. auto.
-  - apply v_join_ctxs_typesafe_right; auto.
-+ eapply TypeAbsurd. apply v_join_ctxs_typesafe_right; auto.
-+ eapply TypeΠMatch.
-  - apply v_join_ctxs_typesafe_right; eauto.
-  - eapply tmpl_to_comp_has_ctype in orig; eauto.
-    simpl in orig. auto.
-    apply WfCtxU. apply WfCtxU. all: inv H1; inv H3; auto.
-+ eapply TypeΣMatch.
-  - apply v_join_ctxs_typesafe_right; eauto.
-  - eapply tmpl_to_comp_has_ctype in orig1; eauto.
-    simpl in orig1. auto.
-    apply WfCtxU. auto. inv H1. inv H3. auto.
-  - eapply tmpl_to_comp_has_ctype in orig2; eauto.
-    simpl in orig2. auto.
-    apply WfCtxU. auto. inv H1. inv H3. auto.
-+ eapply TypeListMatch.
-  - apply v_join_ctxs_typesafe_right; eauto.
-  - eapply tmpl_to_comp_has_ctype in orig1; eauto.
-  - eapply tmpl_to_comp_has_ctype in orig2; eauto.
-    simpl in orig2. auto.
-    apply WfCtxU. apply WfCtxU. all: inv H1; auto; inv H3; auto.
-+ eapply TypeOp; eauto.
-  - apply v_join_ctxs_typesafe_right; eauto.
-  - eapply tmpl_to_comp_has_ctype in orig; eauto.
-    simpl in orig. auto.
-    apply WfCtxU. auto. inv wfd. apply get_op_type_wf in H1.
-    destruct H1. auto. auto.
 Qed.
 
 
@@ -1425,6 +1381,56 @@ destruct orig. destruct H2; simpl.
     rewrite ctx_len_insert in H3. simpl in H3. auto. all: omega.
   - apply has_vtype_is_under_ctx in tyv. auto.
   - assert (ctx_insert Γ 0 (TyΣ A B) = CtxU Γ (TyΣ A B)) as same.
+    { destruct Γ; simpl; auto. }
+    rewrite same. apply wf_inst_insert. 
+    inv H3. apply wf_ctx_insert_vtype in H4. all: aomega.
++ eapply CL in H0 as tys1; eauto.
+  eapply CL in H1 as tys2; eauto.
+  eapply CL in H3 as tys3; eauto.
+  clear VL CL HL RL VEL CEL HEL WS.
+  apply wf_inst_ctx_len_same in wfinst as same_len.
+  apply shape_listmatch in H1 as parts.
+  destruct parts as [A'[tyv[tyc1 tyc2]]].
+  simpl in *. apply Ceq; auto.
+  erewrite (c_inst_subs 0), (c_inst_subs 0), (c_inst_subs 2).
+  specialize (ηList Γ (v_inst v I) 0
+    (c_inst c (inst_insert (inst_shift I 1 0) n (Var 0))) C A
+  ) as rule.
+  rewrite c_shift_inst, inst_shift_insert in rule. simpl in *.
+  assert (c_inst (c_shift c 2 0)
+    (InstU (InstU (inst_insert (inst_shift (inst_shift I 2 0) 1 2) (n - 0)
+      (Var 2)) (Var 1)) (Var 0))
+    = c_inst c (inst_insert (inst_shift (inst_shift I 1 0) 2 0) n (Var 2))).
+  { rewrite <-(c_shift_shift 1), InstU_is_insert, c_inst_no_var_same.
+    rewrite c_negshift_shift, c_shift_0, InstU_is_insert, c_inst_no_var_same.
+    rewrite c_negshift_shift, c_shift_0. do 2 f_equal.
+    rewrite (inst_shift_comm 1). all: aomega.
+    + apply c_shift_makes_no_var.
+    + apply c_under_var_shift; omega || simpl.
+      rewrite inst_len_insert, inst_len_shift, inst_len_shift, same_len.
+      apply has_ctype_is_under_ctx in H3.
+      rewrite ctx_len_insert in H3. simpl in H3. auto. omega.
+      rewrite inst_len_shift, inst_len_shift. omega.
+    + apply c_shift_makes_no_var.
+    + simpl. apply c_under_var_shift. apply c_under_var_shift.
+      rewrite inst_len_insert, inst_len_shift, inst_len_shift, same_len.
+      apply has_ctype_is_under_ctx in H3.
+      rewrite ctx_len_insert in H3. simpl in H3. auto. 
+      all: try omega. rewrite inst_len_shift, inst_len_shift, same_len. omega.
+  }
+  rewrite H4. eapply rule. omega. exact tys3.
+  all: try clear rule; simpl; aomega.
+  all: try rewrite inst_len_shift; try rewrite same_len. omega.
+  - assert (S (S (S (ctx_len Γ0))) = 2+S (ctx_len Γ0)) as same by omega.
+    rewrite same. apply c_under_var_shift.
+    apply has_ctype_is_under_ctx in H3.
+    rewrite ctx_len_insert in H3. simpl in H3. auto. all: omega.
+  - apply has_ctype_is_under_ctx in H3.
+    rewrite ctx_len_insert in H3. simpl in H3. auto. omega.
+  - apply has_ctype_is_under_ctx in H3.
+    rewrite ctx_len_insert in H3. simpl in H3. auto. omega.
+  - apply has_vtype_is_under_ctx in tyv. auto.
+  - assert (ctx_insert Γ 0 (TyList A) = CtxU Γ (TyList A)) as same.
     { destruct Γ; simpl; auto. }
     rewrite same. apply wf_inst_insert. 
     inv H3. apply wf_ctx_insert_vtype in H4. all: aomega.

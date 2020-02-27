@@ -23,6 +23,8 @@ Fixpoint handle_t Γ_len Z_len h T :=
       ListMatch v
         (handle_t Γ_len Z_len h T1)
         (handle_t (2+Γ_len) Z_len h T2)
+  | TLetBind c T =>
+      DoBind c (handle_t (1+Γ_len) Z_len h T)
   | TOp op v T =>
       match get_case h op with 
       | Some c_op =>
@@ -49,6 +51,8 @@ Fixpoint tmpl_to_comp Γ_len T :=
       ListMatch v
         (tmpl_to_comp Γ_len T1) 
         (tmpl_to_comp (2+Γ_len) T2)
+  | TLetBind c T =>
+      DoBind c (tmpl_to_comp (1+Γ_len) T)
   | TOp op v T =>
       Op op v (tmpl_to_comp (1+Γ_len) T)
   end.
@@ -101,6 +105,10 @@ with wf_t : ctx -> tctx -> tmpl -> sig -> Prop :=
     has_vtype Γ v (TyList A) -> 
     wf_t Γ Z T1 Σ -> wf_t (CtxU (CtxU Γ A) (TyList A)) Z T2 Σ ->  
     wf_t Γ Z (TListMatch v T1 T2) Σ
+| WfTLetBind Γ Z c T A Σ :
+    has_ctype Γ c (CTy A SigØ EqsØ) ->
+    wf_t (CtxU Γ A) Z T Σ ->
+    wf_t  Γ Z (TLetBind c T) Σ
 | WfTOp Γ Z op v T Aop Bop Σ :
     get_op_type Σ op = Some (Aop, Bop) -> has_vtype Γ v Aop ->
     wf_t (CtxU Γ Bop) Z T Σ ->

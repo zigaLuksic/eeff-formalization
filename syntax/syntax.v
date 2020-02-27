@@ -75,6 +75,7 @@ with tmpl : Type :=
 | TΠMatch : val -> tmpl -> tmpl
 | TΣMatch : val -> tmpl -> tmpl -> tmpl
 | TListMatch : val -> tmpl -> tmpl -> tmpl
+| TLetBind : comp -> tmpl -> tmpl
 | TOp : op_id -> val -> tmpl -> tmpl
 
 with eqs : Type := 
@@ -297,6 +298,8 @@ Fixpoint t_under_var T j :=
       (v_under_var v j) /\ (t_under_var T1 (1+j)) /\ (t_under_var T2 (1+j))
   | TListMatch v T1 T2 =>
       (v_under_var v j) /\ (t_under_var T1 j) /\ (t_under_var T2 (2+j))
+  | TLetBind c T =>
+      (c_under_var c j) /\ (t_under_var T (1+j))
   | TOp op v T =>
       (v_under_var v j) /\ (t_under_var T (1+j))
   end.
@@ -311,6 +314,8 @@ Fixpoint t_under_tvar T j :=
       (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
   | TListMatch v T1 T2 =>
       (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
+  | TLetBind c T =>
+      (t_under_tvar T j)
   | TOp op v T =>
       t_under_tvar T j
   end.

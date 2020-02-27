@@ -713,6 +713,11 @@ intros orig. revert Γ'. induction orig; intros Γ' sty cty wfs wfc.
   all: apply IHorig1 || apply IHorig2; auto.
   all: do 2 (try (apply SubtypeCtxU || apply WfCtxU)); auto.
   all: try apply vsubtype_refl; auto || inv H1; auto.
++ eapply WfTLetBind. eapply ctx_subtype_ctype; eauto.
+  assert (wf_vtype A) by (inv H; inv H1; auto).
+  apply IHorig; eauto.
+  apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
+  apply WfCtxU; auto.
 + eapply sig_subtype_get_Some in H. 2: exact sty.
   destruct H as [A'[B'[gets'[Asty Bsty]]]].
   eapply WfTOp. eauto.

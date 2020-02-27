@@ -57,6 +57,9 @@ revert Γ. induction T; intros Γ wf.
   all: apply IHT1 in H6 as IH1; destruct IH1; auto.
   all: apply IHT2 in H7 as IH2; destruct IH2; auto.
 + inv wf. simpl. constructor. constructor.
+  eapply has_ctype_is_under_ctx. eauto.
+  all: apply IHT in H5; destruct H5; auto.
++ inv wf. simpl. constructor. constructor.
   eapply has_vtype_is_under_ctx. eauto.
   all: apply IHT in H7; destruct H7; assumption.
 Qed.
@@ -87,7 +90,10 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   - rewrite slen, (sctx B). auto. 
 + inv H0. constructor. 2: aconstructor.
   - eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. all: eaomega.
-  - rewrite slen, slen, (sctx A), (sctx (TyList A)). auto. 
+  - rewrite slen, slen, (sctx A), (sctx (TyList A)). auto.
++ inv H0. constructor.
+  - eapply c_under_var_no_var. eapply has_ctype_is_under_ctx. all: eaomega.
+  - rewrite slen, (sctx A). auto.
 + destruct (get_case h o) eqn:finds; inv H0.
   - unfold c_subs2_out. unfold c_subs_out. 
     apply c_no_var_subs. apply c_no_var_subs. all: omega || simpl.
@@ -101,6 +107,7 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     * eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. all: eaomega.
     * rewrite slen, (sctx Bop). eauto.
 Qed.
+
 
 Lemma handle_t_under_var h i Γ Z T Σ:
   h_under_var h i -> wf_t Γ Z T Σ ->
@@ -126,7 +133,10 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   - rewrite slen, (sctx B). auto. 
 + inv H0. constructor. 2: aconstructor.
   - eapply v_under_var_weaken. eapply has_vtype_is_under_ctx. eauto. omega.
-  - rewrite slen, slen, (sctx A), (sctx (TyList A)). auto. 
+  - rewrite slen, slen, (sctx A), (sctx (TyList A)). auto.
++ inv H0. constructor.
+  - eapply c_under_var_weaken. eapply has_ctype_is_under_ctx. all: eaomega.
+  - rewrite slen, (sctx A). auto.
 + destruct (get_case h o) eqn:finds; inv H0.
   - apply c_under_var_subs. apply c_under_var_subs. all: omega || simpl.
     * eapply get_case_under_var in finds; eauto.
@@ -174,12 +184,17 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     eapply v_under_var_weaken; eaomega.
   - rewrite slen, (sctx A). auto.
   - rewrite slen, (sctx B). auto.
-  + f_equal.
++ f_equal.
   - rewrite v_shift_too_high. auto.
     apply has_vtype_is_under_ctx in H4.
     eapply v_under_var_weaken; eaomega.
   - auto.
   - rewrite slen, slen, (sctx A), (sctx (TyList A)). auto.
++ f_equal.
+  - rewrite c_shift_too_high. auto.
+    apply has_ctype_is_under_ctx in H3.
+    eapply c_under_var_weaken; eaomega.
+  - rewrite slen, (sctx A). auto.
 + eapply h_has_case in H4 as find. 2: exact types.
   destruct find as [cop find].
   erewrite shift_get_case_Some, find; eauto.
@@ -228,12 +243,17 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     eapply v_under_var_weaken; eaomega.
   - rewrite slen, (sctx A). auto.
   - rewrite slen, (sctx B). auto.
-  + f_equal.
++ f_equal.
   - rewrite v_negshift_too_high. auto.
     apply has_vtype_is_under_ctx in H4.
     eapply v_under_var_weaken; eaomega.
   - auto.
   - rewrite slen, slen, (sctx A), (sctx (TyList A)). auto.
++ f_equal.
+  - rewrite c_negshift_too_high. auto.
+    apply has_ctype_is_under_ctx in H3.
+    eapply c_under_var_weaken; eaomega.
+  - rewrite slen, (sctx A). auto.
 + eapply h_has_case in H4 as find. 2: exact types.
   destruct find as [cop find].
   assert (S(S(i+tctx_len Z+ctx_len Γ))=(ctx_len Γ+tctx_len Z)+S(S i))
@@ -303,6 +323,13 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   - assert (tctx_len Z + ctx_len Γ + 2 = tctx_len Z + S(S(ctx_len Γ))) as same.
     omega. rewrite v_shift_shift, same.
     rewrite slen, slen, (sctx A), (sctx (TyList A)). auto.
++ f_equal.
+  - rewrite c_sub_too_high. auto.
+    apply has_ctype_is_under_ctx in H3.
+    eapply c_under_var_weaken; eaomega.
+  - assert (tctx_len Z + ctx_len Γ + 1 = tctx_len Z + S(ctx_len Γ)) as same.
+    omega. rewrite v_shift_shift, same.
+    rewrite slen, (sctx A). auto.
 + eapply h_has_case in H4 as find. 2: exact types.
   destruct find as [cop find].
   erewrite sub_get_case_Some, find; eauto.
@@ -810,6 +837,20 @@ intros; destruct Γ'; simpl.
   rewrite <-(v_shift_too_high _ 1 (ctx_len Γ)).
   apply v_insert_typesafe. auto. inv H0. auto.
   eapply has_vtype_is_under_ctx. eauto. inv H0. auto.
+Qed.
+
+
+Fixpoint c_join_ctxs_typesafe_right Γ Γ' c C {struct Γ'}:
+  has_ctype Γ c C -> wf_ctx Γ' -> 
+  has_ctype (join_ctxs Γ' Γ) c C.
+Proof.
+intros; destruct Γ'; simpl.
++ rewrite join_ctxs_CtxØ. assumption.
++ rewrite join_ctxs_CtxU.
+  apply c_join_ctxs_typesafe_right. 
+  rewrite <-(c_shift_too_high _ 1 (ctx_len Γ)).
+  apply c_insert_typesafe. auto. inv H0. auto.
+  eapply has_ctype_is_under_ctx. eauto. inv H0. auto.
 Qed.
 
 
@@ -2019,6 +2060,64 @@ intros tyvs geq len. destruct orig.
 }
 Qed.
 
+(* ==================== Templates as Terms ==================== *)
+
+Fixpoint tmpl_to_comp_has_ctype Γ Z T A Σ E (orig: wf_t Γ Z T Σ):
+  wf_ctype (CTy A Σ E) -> wf_ctx Γ -> wf_tctx Z ->
+  has_ctype 
+    (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) 
+    (tmpl_to_comp (ctx_len Γ) T) 
+    (CTy A Σ E).
+Proof.
+intros wfd wfg wfz.
+assert (wf_ctx (tctx_to_ctx Z (CTy A Σ E))).
+{ apply wf_tctx_to_ctx; auto. }
+assert (wf_ctx (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ)).
+{ apply wf_join_ctxs; auto. }
+destruct orig; simpl; apply TypeC; eauto.
++ eapply TypeApp.
+  - apply TypeV; eauto. apply WfTyFun; inv H1; eauto.
+    apply TypeVar. erewrite <-get_join_ctxs_left.
+    apply get_tctx_to_ctx. auto.
+  - apply v_join_ctxs_typesafe_right; auto.
++ eapply TypeAbsurd. apply v_join_ctxs_typesafe_right; auto.
++ eapply TypeΠMatch.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - eapply tmpl_to_comp_has_ctype in orig; eauto.
+    simpl in orig. auto.
+    apply WfCtxU. apply WfCtxU. all: inv H1; inv H3; auto.
++ eapply TypeΣMatch.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - eapply tmpl_to_comp_has_ctype in orig1; eauto.
+    simpl in orig1. auto.
+    apply WfCtxU. auto. inv H1. inv H3. auto.
+  - eapply tmpl_to_comp_has_ctype in orig2; eauto.
+    simpl in orig2. auto.
+    apply WfCtxU. auto. inv H1. inv H3. auto.
++ eapply TypeListMatch.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - eapply tmpl_to_comp_has_ctype in orig1; eauto.
+  - eapply tmpl_to_comp_has_ctype in orig2; eauto.
+    simpl in orig2. auto.
+    apply WfCtxU. apply WfCtxU. all: inv H1; auto; inv H3; auto.
++ assert (wf_vtype A0) as wfa by (inv H1; inv H3; auto). 
+  eapply TypeDoBind; eauto. instantiate (1:=A0).
+  - apply c_join_ctxs_typesafe_right; auto. apply TypeC; auto.
+    apply WfCTy; inv wfd; auto.
+    eapply TypeCSubtype; eauto. apply SubtypeCTy.
+    * apply vsubtype_refl. auto.
+    * apply SubtypeSigØ.
+    * apply SubtypeEqsØ.
+  - eapply tmpl_to_comp_has_ctype in orig; eauto.
+    simpl in *. auto. apply WfCtxU; auto.
++ eapply TypeOp; eauto.
+  - apply v_join_ctxs_typesafe_right; eauto.
+  - eapply tmpl_to_comp_has_ctype in orig; eauto.
+    simpl in orig. auto.
+    apply WfCtxU. auto. inv wfd. apply get_op_type_wf in H1.
+    destruct H1. auto. auto.
+Qed.
+
 
 (* ==================== Handling templates ==================== *)
 
@@ -2110,6 +2209,20 @@ destruct orig; simpl.
     { simpl. reflexivity. }
     rewrite H1, H2. eapply handle_t_types; eauto.
     apply WfCtxU. apply WfCtxU. auto. all: inv H0; auto; inv H4; auto.
++ apply TypeC; auto.
+  assert (wf_vtype A) as wfa by (inv H0; inv H2; auto). 
+  destruct D as [B Σ' E'].  
+  eapply TypeDoBind; eauto. instantiate (1:=A).
+  - apply c_join_ctxs_typesafe_right; auto. apply TypeC; auto.
+    apply WfCTy; inv H; auto.
+    eapply TypeCSubtype; eauto. apply SubtypeCTy.
+    * apply vsubtype_refl. auto.
+    * apply SubtypeSigØ.
+    * apply SubtypeEqsØ.
+  - assert (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z (CTy B Σ' E'))) Γ) A
+      = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z (CTy B Σ' E'))) (CtxU Γ A)). 
+    { simpl. reflexivity. }
+    rewrite H1. eapply handle_t_types; eauto. apply WfCtxU; auto.
 + specialize (h_has_case Γ' h Σ D op Aop Bop tys H0) as has.
   destruct has as [cop finds].
   eapply case_has_type in finds as coptys; eauto. rewrite finds.
