@@ -168,6 +168,7 @@ instantiate (1:=
           (DoBind (App (Fun (App (Var 5) Unit)) Unit)
              (App (Var 0) (Var 4)))))) (App (Var 0) (Var 2)) ).
 eapply (letbind_reduce (TyFun TyInt (CTy A Σ E))).
+
 { apply Ceq; obvious. 3: apply βApp.
   { ctype_step. 2:obvious_vtype. vtype_step. ctype_step.
     vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
@@ -178,5 +179,31 @@ eapply (letbind_reduce (TyFun TyInt (CTy A Σ E))).
     + ctype_step. instantiate (1:=TyInt). all: obvious_vtype. } }
 { ctype_step. instantiate (1:=TyInt). all: obvious_vtype. }
 
+eapply ceq_trans. apply Ceq; obvious. 3: apply βDoBind_Ret.
 
+{ eapply letbind_ctype. instantiate (1:= (TyFun TyInt (CTy A Σ E))).
+  ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. 
+  ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype.
+  ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype. }
+{ simpl_c_subs. ctype_step. instantiate (1:= TyInt). 2:obvious_vtype.
+  vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  ctype_step. vtype_step. obvious_ctype. obvious_vtype.
+  ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype. }
+
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp. all: simpl_c_subs.
+
+{ ctype_step. instantiate (1:=TyInt). 2: obvious_vtype.
+  vtype_step.  eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  ctype_step. vtype_step. obvious_ctype. obvious_vtype.
+  ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype. }
+{ eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  ctype_step. vtype_step. obvious_ctype. obvious_vtype.
+  ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype.  }
+
+apply ceq_refl. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+ctype_step. vtype_step. obvious_ctype. obvious_vtype.
+ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype.
+
+Qed.
 
