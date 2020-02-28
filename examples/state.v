@@ -80,14 +80,7 @@ Example state_cases := (CasesU (CasesU (CasesØ)
       DoBind (App (Var 2) Unit)
         (App (Var 0) (Var 2)))) )).
 
-
-Example eq_set_set := (EqsU (EqsØ)
-  (CtxU (CtxU (CtxØ) TyInt) TyInt)
-  (TCtxU (TCtxØ) TyUnit)
-    (TOp "set" (Var 0) (TOp "set" (Var 2) (TApp 0 Unit)))
-    (TOp "set" (Var 1) (TApp 0 Unit)) ).
-
-
+  
 Lemma has_htype_state_cases D :
   wf_ctype D ->
   has_htype CtxØ state_cases sig (CTy (TyFun TyInt D) SigØ EqsØ).
@@ -108,6 +101,20 @@ apply TypeH; obvious. apply TypeCasesU; obvious.
   ctype_step. instantiate (1:=TyInt). obvious_vtype. obvious_vtype.
 Qed.
 
+(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+Example eq_set_set := (EqsU (EqsØ)
+  (CtxU (CtxU (CtxØ) TyInt) TyInt)
+  (TCtxU (TCtxØ) TyUnit)
+    (TOp "set" (Var 0) (TOp "set" (Var 2) (TApp 0 Unit)))
+    (TOp "set" (Var 1) (TApp 0 Unit)) ).
+
+Example eq_get_get := (EqsU (EqsØ)
+  CtxØ
+  (TCtxU (TCtxØ) (TyΠ TyInt TyInt))
+    (TOp "get" Unit (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 1)))))
+    (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 0)))) ).
+
 
 Lemma wf_eq_set_set:
   wf_eqs eq_set_set sig.
@@ -121,89 +128,147 @@ apply WfEqsU; obvious.
   eapply WfTApp. obvious_vtype. simpl. auto.
 Qed.
 
+Lemma wf_eq_get_get:
+  wf_eqs eq_get_get sig.
+Proof.
+unfold eq_get_get. unfold sig.
+apply WfEqsU; obvious.
++ eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
+Qed.
+
 (* ========================================================================== *)
 
-Lemma respects_set_set D:
-  wf_ctype D ->
-  respects CtxØ state_cases sig (CTy (TyFun TyInt D) SigØ EqsØ) eq_set_set.
+Lemma respects_set_set A:
+  wf_vtype A ->
+  respects
+    CtxØ state_cases
+    sig (CTy (TyFun TyInt (CTy A SigØ EqsØ)) SigØ EqsØ) eq_set_set.
 Proof.
-intros wfd.
+intros wfa.
 unfold state_cases. unfold sig. unfold eq_set_set.
 apply Respects; obvious. apply wf_eq_set_set.
 apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
 simpl. simpl_c_subs. apply Ceq; obvious.
 
 { ctype_step. vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyInt D)).
+  instantiate (1:=(TyFun TyInt (CTy A SigØ EqsØ))).
   Focus 2. apply TypeC; obvious. eapply TypeApp.
     instantiate (1:=TyInt). obvious_vtype. obvious_vtype.
   ctype_step. 2: obvious_vtype. vtype_step. ctype_step. vtype_step.
-  eapply letbind_ctype. instantiate (1:= (TyFun TyInt D)).
+  eapply letbind_ctype. instantiate (1:= (TyFun TyInt (CTy A SigØ EqsØ))).
   + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
   + ctype_step. instantiate (1:=TyInt). all: obvious_vtype. }
 { ctype_step. vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyInt D)).
+  instantiate (1:=(TyFun TyInt (CTy A SigØ EqsØ))).
   Focus 2. ctype_step. instantiate (1:=TyInt). obvious_vtype. obvious_vtype.
   ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. }
 
 apply CeqRet. apply Veq; obvious.
 
 { vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyInt D)).
+  instantiate (1:=(TyFun TyInt (CTy A SigØ EqsØ))).
   Focus 2. apply TypeC; obvious. eapply TypeApp.
     instantiate (1:=TyInt). obvious_vtype. obvious_vtype.
   ctype_step. 2: obvious_vtype. vtype_step. ctype_step. vtype_step.
-  eapply letbind_ctype. instantiate (1:= (TyFun TyInt D)).
+  eapply letbind_ctype. instantiate (1:= (TyFun TyInt (CTy A SigØ EqsØ))).
   + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
   + ctype_step. instantiate (1:=TyInt). all: obvious_vtype. }
 { vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyInt D)).
+  instantiate (1:=(TyFun TyInt (CTy A SigØ EqsØ))).
   Focus 2. ctype_step. instantiate (1:=TyInt). obvious_vtype. obvious_vtype.
   ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. }
 
-apply VeqFun. destruct D as [A Σ E]. inv wfd.
-eapply ceq_trans.
+apply VeqFun. eapply ceq_trans.
 instantiate (1:=
   (DoBind (Ret (Fun
           (DoBind (App (Fun (App (Var 5) Unit)) Unit)
              (App (Var 0) (Var 4)))))) (App (Var 0) (Var 2)) ).
-eapply (letbind_reduce (TyFun TyInt (CTy A Σ E))).
+eapply (letbind_reduce (TyFun TyInt (CTy A SigØ EqsØ))).
 
 { apply Ceq; obvious. 3: apply βApp.
   { ctype_step. 2:obvious_vtype. vtype_step. ctype_step.
-    vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+    vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
     + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
     + ctype_step. instantiate (1:=TyInt). all: obvious_vtype. }
-  { ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  { ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
     + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
     + ctype_step. instantiate (1:=TyInt). all: obvious_vtype. } }
 { ctype_step. instantiate (1:=TyInt). all: obvious_vtype. }
 
 eapply ceq_trans. apply Ceq; obvious. 3: apply βDoBind_Ret.
 
-{ eapply letbind_ctype. instantiate (1:= (TyFun TyInt (CTy A Σ E))).
-  ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+{ eapply letbind_ctype. instantiate (1:= (TyFun TyInt (CTy A SigØ EqsØ))).
+  ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
   ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. 
   ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype.
   ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype. }
 { simpl_c_subs. ctype_step. instantiate (1:= TyInt). 2:obvious_vtype.
-  vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  vtype_step. eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
   ctype_step. vtype_step. obvious_ctype. obvious_vtype.
   ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype. }
 
 simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp. all: simpl_c_subs.
 
 { ctype_step. instantiate (1:=TyInt). 2: obvious_vtype.
-  vtype_step.  eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+  vtype_step.  eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
   ctype_step. vtype_step. obvious_ctype. obvious_vtype.
   ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype. }
-{ eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+{ eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
   ctype_step. vtype_step. obvious_ctype. obvious_vtype.
   ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype.  }
 
-apply ceq_refl. eapply (letbind_ctype (TyFun TyInt (CTy A Σ E))).
+apply ceq_refl. eapply (letbind_ctype (TyFun TyInt (CTy A SigØ EqsØ))).
 ctype_step. vtype_step. obvious_ctype. obvious_vtype.
 ctype_step. instantiate (1:= TyInt). obvious_vtype. obvious_vtype.
 
 Qed.
 
+(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+Lemma respects_get_get A:
+  wf_vtype A ->
+  respects 
+    CtxØ state_cases 
+    sig (CTy (TyFun TyInt (CTy A SigØ EqsØ)) SigØ EqsØ) eq_get_get.
+Proof.
+intros wfa.
+unfold state_cases. unfold sig. unfold eq_get_get.
+apply Respects; obvious. apply wf_eq_get_get.
+apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
+simpl. simpl_c_subs.
+apply Ceq; obvious.
+{ admit. }
+{ admit. }
+apply CeqRet. apply Veq; obvious.
+{ admit. }
+{ admit. }
+apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDoBind.
+{ admit. }
+{ admit. }
+2: apply ceq_refl; admit. apply Ceq. 3: apply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoBind_Ret.
+{ admit. }
+{ admit. }
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. apply Ceq. 3: eapply CeqDoBind. 
+3: instantiate (1:=(TyFun TyInt (CTy A SigØ EqsØ))).
+{ admit. }
+{ admit. }
+2: apply ceq_refl; admit.
+eapply ceq_trans. apply Ceq. 3: eapply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. apply ceq_sym.
+eapply ceq_trans. apply Ceq. 3: eapply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. eapply ceq_refl. admit.
+Admitted.
