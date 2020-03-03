@@ -308,14 +308,14 @@ with ctx_subtype_htype Γ Γ' h Σ D (types : has_htype Γ h Σ D) {struct types
 with ctx_subtype_respects Γ Γ' h Σ D E (r : respects Γ h Σ D E) {struct r}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> respects Γ' h Σ D E
 
-with ctx_subtype_veq Γ Γ' A v1 v2 (equals : veq A Γ v1 v2) {struct equals}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> veq A Γ' v1 v2
+with ctx_subtype_form Γ Γ' Ψ judg (orig: form Γ Ψ judg) {struct orig}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> form Γ' Ψ judg
 
-with ctx_subtype_ceq Γ Γ' C c1 c2 (equals : ceq C Γ c1 c2) {struct equals}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> ceq C Γ' c1 c2
+with ctx_subtype_wf_judgement Γ Γ' judg (wf : wf_judgement Γ judg) {struct wf}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_judgement Γ' judg
 
-with ctx_subtype_heq Γ Γ' Σ D h1 h2 (equals : heq Σ D Γ h1 h2) {struct equals}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> heq Σ D Γ' h1 h2
+with ctx_subtype_wf_hypotheses Γ Γ' Ψ (wf : wf_hypotheses Γ Ψ) {struct wf}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_hypotheses Γ' Ψ
 
 with ctx_subtype_wf_inst Γ Γ' I Γi (wf : wf_inst Γ I Γi) {struct wf}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_inst Γ' I Γi.
@@ -325,12 +325,12 @@ all: rename ctx_subtype_vtype into VL.
 all: rename ctx_subtype_ctype into CL.
 all: rename ctx_subtype_htype into HL.
 all: rename ctx_subtype_respects into RL.
-all: rename ctx_subtype_veq into VEL.
-all: rename ctx_subtype_ceq into CEL.
-all: rename ctx_subtype_heq into HEL.
-all: rename ctx_subtype_wf_inst into WFL.
+all: rename ctx_subtype_form into FL.
+all: rename ctx_subtype_wf_judgement into WFJL.
+all: rename ctx_subtype_wf_hypotheses into WFHL.
+all: rename ctx_subtype_wf_inst into WFIL.
 {
-clear VEL CEL HEL WFL.
+clear FL WFJL WFHL WFIL.
 intros wf ctxsty.
 destruct types. induction H1; apply TypeV; eauto.
 + apply TypeUnit.
@@ -353,7 +353,7 @@ destruct types. induction H1; apply TypeV; eauto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeVSubtype; eauto.
 }{
-clear WFL RL VEL CEL HEL.
+clear WFJL WFHL WFIL RL FL.
 intros wf ctxsty.
 destruct types. induction H1; apply TypeC; eauto.
 + apply TypeRet. eauto.
@@ -400,7 +400,7 @@ destruct types. induction H1; apply TypeC; eauto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeCSubtype; eauto.
 }{
-clear VL RL VEL CEL HEL WFL.
+clear VL RL FL WFJL WFHL WFIL.
 intros wf ctxsty.
 destruct types. induction H2; apply TypeH; eauto.
 + eapply TypeCasesØ.
@@ -412,12 +412,12 @@ destruct types. induction H2; apply TypeH; eauto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
 }{
-clear VL CL HL VEL HEL.
+clear VL CL HL WFJL WFHL WFIL.
 intros wf ctxsty.
 inv r. eapply Respects; auto. destruct H3.
 + eapply RespectEqsØ.
 + eapply RespectEqsU; eauto.
-  eapply CEL; eauto; inv H2.
+  eapply FL; eauto; inv H2.
   - apply wf_join_ctxs. apply wf_join_ctxs. auto.
     apply wf_tctx_to_ctx. all: auto.
   - apply ctx_subtype_join_ctxs. apply ctx_subtype_join_ctxs. 
@@ -425,8 +425,10 @@ inv r. eapply Respects; auto. destruct H3.
     apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
-inv equals. destruct H1; apply Veq; eauto.
-all: clear VL CL HL.
+inv orig.
+{
+destruct H1; apply FVeq; eauto.
+all: clear VL CL HL WFJL WFHL.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
 + eapply ctx_subtype_get_rev in ctxsty as cget; eauto.
@@ -439,12 +441,12 @@ all: clear VL CL HL.
 + eapply VeqInr; eauto.
 + eapply VeqListNil.
 + eapply VeqListCons; eauto.
-+ eapply VeqFun. eapply CEL. eauto.
-  all: inv H; inv H3.
++ eapply VeqFun. eapply FL. eauto.
+  all: inv H; inv H5; inv H2. 
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
-+ eapply VeqHandler. eapply CEL;
-  inv H; inv H5; inv H8. all: eauto.
++ eapply VeqHandler. eapply FL.
+  all: inv H; inv H9; inv H4; inv H9; eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + apply ηUnit.
