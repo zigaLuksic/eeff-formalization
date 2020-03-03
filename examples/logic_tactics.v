@@ -19,7 +19,8 @@ Ltac obvious :=
    apply WfCtxØ || (apply WfCtxU; obvious) 
 || apply WfTCtxØ  || (apply WfTCtxU; obvious) 
 || apply WfEqsØ || apply WfSigØ || (apply WfSigU; obvious)
-|| apply WfTyUnit || apply WfTyInt || (apply WfTyHandler; obvious)
+|| apply WfTyUnit || apply WfTyInt || apply WfTyEmpty
+|| (apply WfTyHandler; obvious)
 || (apply WfTyFun; obvious) || (apply WfTyΣ; obvious)
 || (apply WfTyΠ; obvious) || (apply WfCTy; obvious)
 || auto.
@@ -44,6 +45,7 @@ Ltac vtype_step := (
 || (apply TypeInr; obvious)
 || (apply TypePair; obvious)
 || (apply TypeFun; obvious)
+|| (apply TypeHandler; obvious)
 || (apply TypeVar; simpl in *; obvious)
 || obvious)
 )
@@ -54,7 +56,9 @@ Ltac obvious_ctype := (
 (apply TypeC; (
   (apply TypeRet; obvious_vtype)
 || (eapply TypeApp; obvious_vtype)
-|| (eapply TypeΣMatch; obvious_vtype)
+|| (eapply TypeΣMatch; obvious_vtype; obvious_ctype)
+|| (eapply TypeΠMatch; obvious_vtype; obvious_ctype)
+|| (eapply TypeListMatch; obvious_vtype; obvious_ctype)
 || obvious)
 )
 || obvious).
@@ -64,6 +68,19 @@ Ltac ctype_step := (
   (apply TypeRet; obvious)
 || (eapply TypeApp; obvious)
 || (eapply TypeΣMatch; obvious)
+|| (eapply TypeΠMatch; obvious)
+|| (eapply TypeListMatch; obvious)
+|| (eapply TypeDoBind; obvious)
+|| (eapply TypeLetRec; obvious)
 || obvious)
 )
+|| obvious).
+
+Ltac wft_step := (
+   (eapply WfTApp; obvious)
+|| (eapply WfTΣMatch; obvious)
+|| (eapply WfTΠMatch; obvious)
+|| (eapply WfTListMatch; obvious)
+|| (eapply WfTLetBind; obvious)
+|| (eapply WfTOp; obvious)
 || obvious).
