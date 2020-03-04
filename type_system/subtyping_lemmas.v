@@ -425,10 +425,8 @@ inv r. eapply Respects; auto. destruct H3.
     apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
-inv orig.
-{
-destruct H1; apply FVeq; eauto.
-all: clear VL CL HL WFJL WFHL.
+inv orig. apply WfForm; eauto. clear VL HL WFJL WFHL.
+destruct H1.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
 + eapply ctx_subtype_get_rev in ctxsty as cget; eauto.
@@ -451,50 +449,46 @@ all: clear VL CL HL WFJL WFHL.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + apply ηUnit.
 + apply ηFun.
-}{
-intros wf ctxsty.
-inv equals. destruct H1; apply Ceq; eauto.
-all: clear HL HEL.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 + eapply CeqRet; eauto.
 + eapply CeqAbsurd; eauto.
 + eapply CeqΠMatch; eauto.
-  eapply CEL. eauto.
-  all: inv H1; inv H3; inv H6.
+  eapply FL. eauto.
+  all: inv H1; inv H3; inv H8; inv H3.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
 + eapply CeqΣMatch; eauto; 
-  eapply CEL; eauto.
-  all: inv H1; inv H4; inv H7.
+  eapply FL; eauto.
+  all: inv H1; inv H4; inv H9; inv H4.
   all: apply WfCtxU || apply SubtypeCtxU; auto.
   all: apply vsubtype_refl; auto.
 + eapply CeqListMatch; eauto.
-  eapply CEL; eauto. 
-  all: inv H1; inv H4.
-  - apply WfCtxU. apply WfCtxU. all: auto. inv H7. auto.
+  eapply FL; eauto. 
+  all: inv H1; inv H4; inv H9.
+  - apply WfCtxU. apply WfCtxU. all: auto. inv H4. auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
-    all: apply vsubtype_refl. inv H7. all: auto.
-+ eapply CeqDoBind; eauto. eapply CEL; eauto.
-  all: inv H1; inv H3; inv H6.
+    all: apply vsubtype_refl. inv H4. all: auto.
++ eapply CeqDoBind; eauto. eapply FL; eauto.
+  all: inv H1; inv H3; inv H8; inv H3. 
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec.
-  - eapply CEL; eauto.
-    all: inv H2; inv H4; inv H2.
-    * apply WfCtxU. apply WfCtxU. 2: inv H10. all: eauto.
+  - eapply FL; eauto. instantiate (1:=A).
+    all: inv H2; inv H3; inv H8; inv H2.
+    * apply WfCtxU. apply WfCtxU. 2: inv H11. all: eauto.
     * apply SubtypeCtxU. apply SubtypeCtxU. auto.
-      all: apply vsubtype_refl. inv H10. all: auto.
-  - eapply CEL; eauto.
-    all: inv H2; inv H4; inv H2.
+      all: apply vsubtype_refl. inv H11. all: auto.
+  - eapply FL; eauto.
+    all: inv H2; inv H3; inv H8; inv H2.
     * apply WfCtxU; auto.
     * apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqOp; eauto.
-  eapply CEL; eauto.
-  all: inv H3; inv H5; inv H3.
+  eapply FL; eauto.
+  all: inv H3; inv H4; inv H9; inv H3.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply OOTB; eauto.
@@ -533,25 +527,29 @@ all: clear HL HEL.
   - eapply ctx_subtype_insert. auto.
     apply vsubtype_refl. auto.
 + eapply ηDoBind.
++ apply HeqSigØ.
++ eapply HeqSigU; eauto.
+  eapply FL; eauto.
+  all: inv H3; inv H5; inv H10; inv H3; inv H11.
+  - apply WfCtxU. apply WfCtxU. all: auto.
+  - apply SubtypeCtxU. apply SubtypeCtxU. auto.
+    all: apply vsubtype_refl; auto.
 }{
-intros wf ctxsty.
-inv equals. destruct H4.
-all: clear VL CL.
-all: clear VEL WFL.
-+ eapply Heq. auto. exact H0. exact H1. all: eauto. eapply HeqSigØ.
-+ eapply Heq. exact H. exact H0. all: eauto.
-  eapply HeqSigU; eauto.
-  eapply CEL; eauto; inv H6; inv H8; inv H6; inv H14.
-  - apply WfCtxU. apply WfCtxU. all: assumption.
-  - apply SubtypeCtxU. apply SubtypeCtxU. assumption.
-    all: apply vsubtype_refl; assumption.
-}{
-clear HL CL VEL CEL.
-clear RL HEL.
 intros wfc ctxsty.
-destruct wf.
-+ eapply WfInstØ. auto.
-+ eapply WfInstU; eauto.
+inv wf.
++ apply WfVeq; eauto.
++ apply WfCeq; eauto.
++ eapply WfHeq. 2: exact H0. 2: exact H1. all: eauto.
+}{
+intros wfc ctxsty.
+inv wf.
++ apply WfHypØ. auto.
++ apply WfHypU; eauto.
+}{
+intros wfc ctxsty.
+inv wf.
++ apply WfInstØ. auto.
++ apply WfInstU; eauto.
 }
 Qed.
 
@@ -746,9 +744,10 @@ Qed.
 
 Lemma has_eq_respects Γ h Σ D E Γ' Z T1 T2:
   respects Γ' h Σ D E -> has_eq E Γ Z T1 T2 ->
-  ceq D (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
-    (handle_t (ctx_len Γ) (tctx_len Z) h T1) 
-    (handle_t (ctx_len Γ) (tctx_len Z) h T2) .
+  form (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) HypØ
+    (Ceq D
+      (handle_t (ctx_len Γ) (tctx_len Z) h T1) 
+      (handle_t (ctx_len Γ) (tctx_len Z) h T2) ).
 Proof.
 intros r c. induction E; simpl in c; destruct c.
 - destruct H as [a[b[c]]]. subst. inv r. inv H3. assumption.

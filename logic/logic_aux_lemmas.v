@@ -8,149 +8,236 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 Require Export subtyping_lemmas.
 
 
-Lemma heq_cases_ceq Σ D Γ h1 h2 op A B c1 c2 :
-  heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
+Lemma heq_cases_ceq Σ D Γ Ψ h1 h2 op A B c1 c2 :
+  form Γ Ψ (Heq Σ D h1 h2) -> get_op_type Σ op = Some (A, B) ->
   get_case h1 op = Some c1 ->
   get_case h2 op = Some c2 ->
-  ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2.
+  form (CtxU (CtxU Γ (TyFun B D)) A) Ψ (Ceq D c1 c2).
 Proof.
 intros eqs gets finds1 finds2.
 induction Σ. simpl in gets. discriminate.
 simpl in *. destruct (op==o).
-+ inv gets. inv eqs. inv H4.
-  rewrite H9 in finds1. rewrite H14 in finds2.
++ inv gets. inv eqs. inv H1.
+  rewrite H8 in finds1. rewrite H12 in finds2.
   inv finds1. inv finds2. auto.
-+ inv eqs. inv H4. eauto.
++ inv eqs. inv H1. eauto.
 Qed.
 
 (* ==================== Logic Subtyping ==================== *)
 
-Lemma heq_subtype Σ Σ' D Γ h1 h2 (orig : heq Σ D Γ h1 h2) :
-  wf_sig Σ' -> sig_subtype Σ' Σ -> heq Σ' D Γ h1 h2.
+Lemma heq_subtype Σ Σ' D Γ Ψ h1 h2 (orig : form Γ Ψ (Heq Σ D h1 h2)) :
+  wf_sig Σ' -> sig_subtype Σ' Σ -> form Γ Ψ (Heq Σ' D h1 h2).
 Proof.
 intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
-+ inv orig. eapply Heq. auto. 3: exact H2. 3: exact H3.
++ inv orig. inv H. eapply WfForm; auto.
+  eapply WfHeq. 4: exact H10. 4: exact H11. auto.
   apply SubtypeSigØ. apply SubtypeSigØ. apply HeqSigØ.
-+ inv orig. eapply Heq. auto. 3: exact H2. 3: exact H3.
++ inv orig. inv H. eapply WfForm; auto.
+  eapply WfHeq. auto. 3: exact H10. 3: exact H11.
   { eapply sig_subtype_trans; eauto. }
   { eapply sig_subtype_trans; eauto. }
   inv sty. inv wf.
-  eapply sig_subtype_get_Some in H0 as g1; eauto.
-  eapply sig_subtype_get_Some in H1 as g2; eauto.
+  eapply sig_subtype_get_Some in H8 as g1; eauto.
+  eapply sig_subtype_get_Some in H9 as g2; eauto.
   destruct g1 as [A1[B1[get1[_ _]]]].
   destruct g2 as [A2[B2[get2[_ _]]]].
-  eapply h_has_case in H2 as case1; eauto.
-  eapply h_has_case in H3 as case2; eauto.
+  eapply h_has_case in H10 as case1; eauto.
+  eapply h_has_case in H11 as case2; eauto.
   destruct case1 as [c1 find1].
   destruct case2 as [c2 find2].
   clear A1 B1 get1 A2 B2 get2.
   eapply HeqSigU; eauto.
-  assert (ceq D (CtxU (CtxU Γ (TyFun B'0 D)) A'0) c1 c2).
-  - eapply heq_cases_ceq. 2: eauto.
-    eapply Heq. 2: exact H0. all: eauto.
-  - eapply ctx_subtype_ceq; eauto.
-    * inv H2. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
+  assert (form (CtxU (CtxU Γ (TyFun B'0 D)) A'0) Ψ (Ceq D c1 c2)).
+  - eapply heq_cases_ceq. 2: eauto. all: eauto.
+    eapply WfForm; eauto. eapply WfHeq. 2: exact H8. all: eauto.
+  - eapply ctx_subtype_form; eauto.
+    * inv H10. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
     * apply SubtypeCtxU. apply SubtypeCtxU. 2: apply SubtypeTyFun. all: auto.
-      all: inv H2; (apply ctx_subtype_refl || apply csubtype_refl); auto.
+      all: inv H10; (apply ctx_subtype_refl || apply csubtype_refl); auto.
 Qed.
 
 
-Fixpoint veq_subtype A A' Γ v1 v2 (orig : veq A Γ v1 v2) {struct orig} :
-  wf_vtype A' -> vsubtype A A' -> veq A' Γ v1 v2
-with ceq_subtype C C' Γ c1 c2 (orig : ceq C Γ c1 c2) {struct orig} :
-  wf_ctype C' -> csubtype C C' -> ceq C' Γ c1 c2.
+Fixpoint veq_subtype A A' Γ Ψ v1 v2 
+  (orig: form Γ Ψ (Veq A v1 v2)) {struct orig} :
+  wf_vtype A' -> vsubtype A A' -> 
+  form Γ Ψ (Veq A' v1 v2)
+with ceq_subtype C C' Γ Ψ c1 c2 
+  (orig: form Γ Ψ (Ceq C c1 c2)) {struct orig} :
+  wf_ctype C' -> csubtype C C' -> 
+  form Γ Ψ (Ceq C' c1 c2).
 Proof.
 { 
-intros. inv orig.
+intros wfa' stya. inv orig. inv H.
+assert (wf_ctx Γ) as wfctx by (inv H5; assumption).
 assert (has_vtype Γ v1 A') as ty1.
-{ apply TypeV; auto. inv H1. auto. eapply TypeVSubtype; eauto. }
+{ apply TypeV; auto. eapply TypeVSubtype; eauto. }
 assert (has_vtype Γ v2 A') as ty2.
-{ apply TypeV; auto. inv H1. auto. eapply TypeVSubtype; eauto. }
-destruct H3; apply Veq; auto.
-+ apply VeqSym. eauto.
-+ eapply VeqTrans; eauto.
-+ eapply VeqVar; eauto. eapply vsubtype_trans; eauto.
-+ inv H0. apply VeqUnit; eauto.
-+ inv H0. apply VeqInt; eauto.
-+ inv H0. inv H. eapply VeqPair; eapply veq_subtype; eauto.
-+ inv H0. eapply VeqInl. eapply veq_subtype; eauto. inv H. auto.
-+ inv H0. eapply VeqInr. eapply veq_subtype; eauto. inv H. auto.
-+ inv H0. eapply VeqListNil.
-+ inv H0. eapply VeqListCons; eapply veq_subtype; eauto. inv H. auto.
+{ apply TypeV; auto. eapply TypeVSubtype; eauto. }
+apply WfForm; auto. apply WfVeq; auto.
+inv H1.
++ specialize (veq_subtype _ A' _ _ _ _ H4) as IH.
+  clear veq_subtype ceq_subtype.
+  apply VeqSym. eauto.
++ specialize (veq_subtype _ A' _ _ _ _ H6) as IH1.
+  specialize (veq_subtype _ A' _ _ _ _ H9) as IH2.
+  clear veq_subtype ceq_subtype.
+  eapply VeqTrans; eauto.
++ clear veq_subtype ceq_subtype.
+  eapply VeqVar; eauto. eapply vsubtype_trans; eauto.
++ clear veq_subtype ceq_subtype. 
+  inv stya. apply VeqUnit; eauto.
++ clear veq_subtype ceq_subtype. 
+  inv stya. apply VeqInt; eauto.
++ inv stya.
+  specialize (veq_subtype _ A'0 _ _ _ _ H6) as IH1.
+  specialize (veq_subtype _ B' _ _ _ _ H9) as IH2.
+  clear veq_subtype ceq_subtype.
+  inv wfa'. eapply VeqPair; eauto.
++ inv stya. 
+  specialize (veq_subtype _ A'0 _ _ _ _ H4) as IH2.
+  clear veq_subtype ceq_subtype.
+  inv wfa'. eapply VeqInl; eauto.
++ inv stya.
+  specialize (veq_subtype _ B' _ _ _ _ H4) as IH2.
+  clear veq_subtype ceq_subtype.
+  inv wfa'. eapply VeqInr; eauto.
++ clear veq_subtype ceq_subtype. 
+  inv stya. eapply VeqListNil.
++ inv stya. 
+  specialize (veq_subtype _ A'0 _ _ _ _ H6) as IH1.
+  specialize (veq_subtype _ (TyList A'0) _ _ _ _ H9) as IH2.
+  clear veq_subtype ceq_subtype.
+  inv wfa'. eapply VeqListCons; eauto. apply IH2.
+  apply WfTyList. auto.
   apply SubtypeTyList. auto.
-+ inv H0. apply VeqFun. inv H. eapply ceq_subtype in H3; eauto.
-  eapply ctx_subtype_ceq. eauto.
-  - apply WfCtxU; auto. inv H1. auto.
-  - apply SubtypeCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-+ inv H0. inv H8. eapply VeqHandler. eapply ceq_subtype in H3; eauto.
-  eapply ctx_subtype_ceq. eauto. all: inv H; inv H7.
-  - apply WfCtxU; auto. inv H1. assumption.
-  - apply SubtypeCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-  - assumption.
++ inv stya.
+  specialize (ceq_subtype _ C' _ _ _ _ H4) as IH.
+  clear veq_subtype ceq_subtype.
+  inv wfa'. apply VeqFun.
+  eapply ctx_subtype_form. eauto.
+  - apply WfCtxU; auto.
+  - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
++ inv stya.
+  specialize (ceq_subtype _ D'0 _ _ _ _ H8) as IH.
+  clear veq_subtype ceq_subtype.
+  inv wfa'. inv H2. inv H3. eapply VeqHandler.
+  eapply ctx_subtype_form. eauto. all: inv H8.
+  - apply WfCtxU; auto.
+  - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
   - eapply heq_subtype; eauto.
   - eapply csubtype_trans; eauto.
-+ inv H0. apply ηUnit.
-+ inv H0. apply ηFun.
++ clear veq_subtype ceq_subtype. inv stya. apply ηUnit.
++ clear veq_subtype ceq_subtype. inv stya. apply ηFun.
 }{
-intros. inv orig.
-assert (wf_ctx Γ) as wfctx by (inv H1; assumption).
+intros wfc' styc. inv orig. inv H.
+assert (wf_ctx Γ) as wfctx by (inv H5; assumption).
 assert (has_ctype Γ c1 C') as ty1.
 { apply TypeC; auto. eapply TypeCSubtype; eauto. }
 assert (has_ctype Γ c2 C') as ty2.
 { apply TypeC; auto. eapply TypeCSubtype; eauto. }
-apply Ceq; auto. destruct H3.
-+ apply CeqSym. eauto.
-+ eapply CeqTrans; eauto.
-+ inv H0. inv H. eapply CeqRet; eauto.
-+ eapply CeqAbsurd; eauto.
-+ eapply CeqΠMatch; eauto.
-+ eapply CeqΣMatch; eauto.
-+ eapply CeqListMatch; eauto.
-+ inv H0. rename A' into B'. 
-  assert (wf_vtype A) by (inv H3; inv H0; inv H7; auto). 
+apply WfForm; auto. apply WfCeq; auto.
+inv H1.
++ specialize (ceq_subtype _ C' _ _ _ _ H4) as IH.
+  clear veq_subtype ceq_subtype.
+  apply CeqSym. eauto.
++ specialize (ceq_subtype _ C' _ _ _ _ H6) as IH1.
+  specialize (ceq_subtype _ C' _ _ _ _ H9) as IH2.
+  clear veq_subtype ceq_subtype.
+  eapply CeqTrans; eauto.
++ inv styc.
+  specialize (veq_subtype _ A' _ _ _ _ H4) as IH.
+  clear veq_subtype ceq_subtype.
+  inv wfc'. eapply CeqRet; eauto.
++ clear veq_subtype ceq_subtype.
+  eapply CeqAbsurd; eauto.
++ specialize (ceq_subtype _ C' _ _ _ _ H9) as IH.
+  clear veq_subtype ceq_subtype.
+  eapply CeqΠMatch; eauto.
++ specialize (ceq_subtype _ C' _ _ _ _ H9) as IH1.
+  specialize (ceq_subtype _ C' _ _ _ _ H10) as IH2.
+  clear veq_subtype ceq_subtype.
+  eapply CeqΣMatch; eauto.
++ specialize (ceq_subtype _ C' _ _ _ _ H9) as IH1.
+  specialize (ceq_subtype _ C' _ _ _ _ H10) as IH2.
+  clear veq_subtype ceq_subtype.
+  eapply CeqListMatch; eauto.
++ inv styc. rename A' into B'.
+  specialize (ceq_subtype _ (CTy A Σ' E') _ _ _ _ H6) as IH1.
+  specialize (ceq_subtype _ (CTy B' Σ' E') _ _ _ _ H9) as IH2.
+  clear veq_subtype ceq_subtype.
+  assert (wf_vtype A) by (inv H6; inv H; inv H12; inv H4; inv H1; auto).
   eapply CeqDoBind.
-  - eapply ceq_subtype. eauto. 
-    apply WfCTy; eauto; inv H; auto.
+  - apply IH1. apply WfCTy; eauto; inv wfc'; auto.
     apply SubtypeCTy; auto. apply vsubtype_refl. auto.
-  - eapply ceq_subtype; eauto. apply SubtypeCTy; auto.
-+ eapply CeqApp; eauto. eapply veq_subtype; eauto; inv H3; inv H5; inv H8.
+  - apply IH2; eauto. apply SubtypeCTy; auto.
++ specialize (veq_subtype _ (TyFun A C') _ _ _ _ H6) as IH.
+  clear veq_subtype ceq_subtype.
+  assert (wf_vtype A) by (inv H6; inv H; inv H8; inv H3; inv H1; auto).
+  eapply CeqApp; eauto. apply IH.
   - apply WfTyFun; assumption.
   - apply SubtypeTyFun. apply vsubtype_refl. all: auto.
-+ eapply CeqHandle; eauto. eapply veq_subtype; eauto; inv H3; inv H5; inv H8.
++ rename C' into D'.
+  specialize (veq_subtype _ (TyHandler C0 D') _ _ _ _ H6) as IH.
+  clear veq_subtype ceq_subtype.
+  assert (wf_ctype C0) by (inv H6; inv H; inv H8; inv H3; inv H1; auto).
+  eapply CeqHandle; eauto. apply IH.
   - apply WfTyHandler; assumption.
   - apply SubtypeTyHandler. apply csubtype_refl. all: auto.
-+ eapply CeqLetRec; eauto.
-+ inv H0. eapply sig_subtype_get_Some in H3; eauto.
-  destruct H3 as [A_op'[B_op'[gets[asty bsty]]]].
-  eapply CeqOp; eauto.
-  - eapply veq_subtype; eauto.
-    eapply get_op_type_wf in gets. destruct gets. auto. inv H. auto.
-  - eapply ctx_subtype_ceq; eauto.
-    * eapply ceq_subtype; eauto. apply SubtypeCTy; auto.
++ rename C' into D'.
+  specialize (ceq_subtype _ D' _ _ _ _ H9) as IH.
+  clear veq_subtype ceq_subtype.
+  eapply CeqLetRec; eauto.
++ inv styc.
+  eapply sig_subtype_get_Some in H6 as getop; eauto.
+  destruct getop as [A_op'[B_op'[gets[asty bsty]]]].
+  specialize (veq_subtype _ A_op' _ _ _ _ H9) as IH1.
+  specialize (ceq_subtype _ (CTy A' Σ' E') _ _ _ _ H10) as IH2.
+  clear veq_subtype ceq_subtype.
+  eapply CeqOp; eauto; inv wfc'.
+  - apply IH1.
+    eapply get_op_type_wf in gets. destruct gets. all: auto.
+  - eapply ctx_subtype_form; eauto.
+    * apply IH2. apply WfCTy; eauto. apply SubtypeCTy; auto.
     * apply WfCtxU. auto. 
-      eapply get_op_type_wf in gets. destruct gets. auto. inv H. auto.
+      eapply get_op_type_wf in gets. destruct gets. all: auto.
     * eapply SubtypeCtxU. apply ctx_subtype_refl. all: auto.
-+ inv H0. eapply OOTB; eauto. eapply eqs_subtype_contains; eauto.
++ clear veq_subtype ceq_subtype.
+  inv styc. eapply OOTB; eauto. eapply eqs_subtype_contains; eauto.
   eapply wf_inst_tctx_subtype; eauto.
   apply SubtypeCTy; auto.
-+ eapply βΠMatch.
-+ eapply βΣMatch_Inl.
-+ eapply βΣMatch_Inr.
-+ eapply βListMatch_Nil.
-+ eapply βListMatch_Cons.
-+ eapply βApp.
-+ eapply βLetRec.
-+ eapply βDoBind_Ret.
-+ eapply βDoBind_Op.
-+ eapply βHandle_Ret.
-+ eapply βHandle_Op. eauto.
-+ eapply ηPair. omega.
-  apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
-+ eapply ηSum. omega.
-  apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
-+ eapply ηList. omega.
-  apply TypeC. inv H4. eauto. auto. eapply TypeCSubtype; eauto.
-+ eapply ηDoBind.
++ clear veq_subtype ceq_subtype.
+  eapply βΠMatch.
++ clear veq_subtype ceq_subtype.
+  eapply βΣMatch_Inl.
++ clear veq_subtype ceq_subtype.
+  eapply βΣMatch_Inr.
++ clear veq_subtype ceq_subtype.
+  eapply βListMatch_Nil.
++ clear veq_subtype ceq_subtype.
+  eapply βListMatch_Cons.
++ clear veq_subtype ceq_subtype.
+  eapply βApp.
++ clear veq_subtype ceq_subtype.
+  eapply βLetRec.
++ clear veq_subtype ceq_subtype.
+  eapply βDoBind_Ret.
++ clear veq_subtype ceq_subtype.
+  eapply βDoBind_Op.
++ clear veq_subtype ceq_subtype.
+  eapply βHandle_Ret.
++ clear veq_subtype ceq_subtype.
+  eapply βHandle_Op. eauto.
++ clear veq_subtype ceq_subtype.
+  eapply ηPair. omega.
+  apply TypeC. inv H9. eauto. auto. eapply TypeCSubtype; eauto.
++ clear veq_subtype ceq_subtype.
+  eapply ηSum. omega.
+  apply TypeC. inv H9. eauto. auto. eapply TypeCSubtype; eauto.
++ clear veq_subtype ceq_subtype.
+  eapply ηList. omega.
+  apply TypeC. inv H9. eauto. auto. eapply TypeCSubtype; eauto.
++ clear veq_subtype ceq_subtype.
+  eapply ηDoBind.
 }
 Qed.
 

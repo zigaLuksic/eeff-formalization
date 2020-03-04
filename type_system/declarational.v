@@ -134,17 +134,19 @@ with wf_eqs : eqs -> sig -> Prop :=
 
 with wf_judgement : ctx -> judgement -> Prop :=
 | WfVeq Γ A v1 v2 :
-  has_vtype Γ v1 A -> has_vtype Γ v2 A ->
-  wf_judgement Γ (Veq A v1 v2)
+    has_vtype Γ v1 A -> has_vtype Γ v2 A ->
+    wf_judgement Γ (Veq A v1 v2)
 | WfCeq Γ C c1 c2 :
-  has_ctype Γ c1 C -> has_ctype Γ c2 C ->
-  wf_judgement Γ (Ceq C c1 c2)
-| WfHeq Γ Σ D h1 h2 :
-  has_htype Γ h1 Σ D -> has_htype Γ h2 Σ D ->
-  wf_judgement Γ (Heq Σ D h1 h2)
+    has_ctype Γ c1 C -> has_ctype Γ c2 C ->
+    wf_judgement Γ (Ceq C c1 c2)
+| WfHeq Γ Σ Σ1 Σ2 D h1 h2 :
+    wf_sig Σ -> sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
+    has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D ->
+    wf_judgement Γ (Heq Σ D h1 h2)
 
 with wf_hypotheses : ctx -> hypotheses -> Prop :=
 | WfHypØ Γ:
+    wf_ctx Γ ->
     wf_hypotheses Γ HypØ
 | WfHypU Γ Ψ j:
     wf_hypotheses Γ Ψ ->
@@ -281,200 +283,195 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
         (handle_t (ctx_len Γ) (tctx_len Z) h T2) ) ->
     respects' Γ' h Σ D (EqsU E Γ Z T1 T2)
 
-
 with form : ctx -> hypotheses -> judgement -> Prop :=
-| FVeq Γ Ψ A v1 v2 :
-    wf_judgement Γ (Veq A v1 v2) ->
+| WfForm Γ Ψ judg :
+    wf_judgement Γ judg ->
     wf_hypotheses Γ Ψ ->
-    veq Γ Ψ A v1 v2 ->
-    form Γ Ψ (Veq A v1 v2)
-| FCeq Γ Ψ C c1 c2 :
-    wf_judgement Γ (Ceq C c1 c2) ->
-    wf_hypotheses Γ Ψ ->
-    ceq Γ Ψ C c1 c2 ->
-    form Γ Ψ (Ceq C c1 c2)
-| FHeq Γ Ψ Σ D h1 h2 :
-    wf_judgement Γ (Heq Σ D h1 h2) ->
-    wf_hypotheses Γ Ψ ->
-    heq Γ Ψ Σ D h1 h2 ->
-    form Γ Ψ (Heq Σ D h1 h2)
+    form' Γ Ψ judg ->
+    form Γ Ψ judg
 
-with veq: ctx -> hypotheses -> vtype -> val -> val -> Prop :=
+with form' : ctx -> hypotheses -> judgement -> Prop :=
+
 | VeqSym Γ Ψ A v1 v2 : 
     form Γ Ψ (Veq A v1 v2) -> 
-    veq Γ Ψ A v2 v1
+    form' Γ Ψ (Veq A v2 v1)
 | VeqTrans Γ Ψ A v1 v2 v3 : 
     form Γ Ψ (Veq A v1 v2) -> 
     form Γ Ψ (Veq A v2 v3) -> 
-    veq Γ Ψ A v1 v3
+    form' Γ Ψ (Veq A v1 v3)
 | VeqVar i A A' Γ Ψ :
     get_vtype Γ i = Some A' ->
     vsubtype A' A ->
-    veq Γ Ψ A (Var i) (Var i)
+    form' Γ Ψ (Veq A (Var i) (Var i))
 | VeqUnit Γ Ψ:
-    veq Γ Ψ TyUnit Unit Unit
+    form' Γ Ψ (Veq TyUnit Unit Unit)
 | VeqInt Γ Ψ n:
-    veq Γ Ψ TyInt (Int n) (Int n)
+    form' Γ Ψ (Veq TyInt (Int n) (Int n))
 | VeqPair A B Γ Ψ v1 v1' v2 v2' :
     form Γ Ψ (Veq A v1 v1') ->
     form Γ Ψ (Veq B v2 v2') -> 
-    veq Γ Ψ (TyΠ A B) (Pair v1 v2) (Pair v1' v2')
+    form' Γ Ψ (Veq (TyΠ A B) (Pair v1 v2) (Pair v1' v2'))
 | VeqInl A B Γ Ψ v v' :
     form Γ Ψ (Veq A v v') ->
-    veq Γ Ψ (TyΣ A B) (Inl v) (Inl v')
+    form' Γ Ψ (Veq (TyΣ A B) (Inl v) (Inl v'))
 | VeqInr A B Γ Ψ v v' :
     form Γ Ψ (Veq B v v') ->
-    veq Γ Ψ (TyΣ A B) (Inr v) (Inr v')
+    form' Γ Ψ (Veq (TyΣ A B) (Inr v) (Inr v'))
 | VeqListNil A Γ Ψ :
-    veq Γ Ψ (TyList A) ListNil ListNil
+    form' Γ Ψ (Veq (TyList A) ListNil ListNil)
 | VeqListCons A Γ Ψ v v' vs vs':
     form Γ Ψ (Veq A v v') ->
     form Γ Ψ (Veq (TyList A) vs vs') ->
-    veq Γ Ψ (TyList A) (ListCons v vs) (ListCons v' vs')
+    form' Γ Ψ (Veq (TyList A) (ListCons v vs) (ListCons v' vs'))
 | VeqFun A C Γ Ψ c c':
     form (CtxU Γ A) Ψ (Ceq C c c') ->
-    veq Γ Ψ (TyFun A C) (Fun c) (Fun c')
+    form' Γ Ψ (Veq (TyFun A C) (Fun c) (Fun c'))
 | VeqHandler A Σ E D D' Γ Ψ c c' h h':
     form (CtxU Γ A) Ψ (Ceq D c c') ->
     form Γ Ψ (Heq Σ D' h h') ->
     csubtype D' D ->
-    veq Γ Ψ (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h')
+    form' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h'))
 | ηUnit Γ Ψ v:
-    veq Γ Ψ TyUnit v Unit
+    form' Γ Ψ (Veq TyUnit v Unit)
 | ηFun A C Γ Ψ f:
-    veq Γ Ψ (TyFun A C) (Fun (App (v_shift f 1 0) (Var 0))) f
+    form' Γ Ψ (Veq (TyFun A C) (Fun (App (v_shift f 1 0) (Var 0))) f)
 
-with ceq : ctx -> hypotheses -> ctype -> comp -> comp -> Prop := 
 | CeqSym Γ Ψ C c1 c2 : 
     form Γ Ψ (Ceq C c1 c2) -> 
-    ceq Γ Ψ C c2 c1
+    form' Γ Ψ (Ceq C c2 c1)
 | CeqTrans Γ Ψ C c1 c2 c3 : 
     form Γ Ψ (Ceq C c1 c2) ->
     form Γ Ψ (Ceq C c2 c3) -> 
-    ceq Γ Ψ C c1 c3
+    form' Γ Ψ (Ceq C c1 c3)
 | CeqRet A Σ E Γ Ψ v v' : 
     form Γ Ψ (Veq A v v') -> 
-    ceq Γ Ψ (CTy A Σ E) (Ret v) (Ret v')
+    form' Γ Ψ (Ceq (CTy A Σ E) (Ret v) (Ret v'))
 | CeqAbsurd Γ Ψ C v v' :
     form Γ Ψ (Veq TyØ v v') ->
-    ceq Γ Ψ C (Absurd v) (Absurd v')
+    form' Γ Ψ (Ceq C (Absurd v) (Absurd v'))
 | CeqΠMatch Γ Ψ C v v' A B c c':
     form Γ Ψ (Veq (TyΠ A B) v v') ->
     form (CtxU (CtxU Γ A) B) Ψ (Ceq C c c') ->
-    ceq Γ Ψ C (ΠMatch v c) (ΠMatch v' c')
-(*
-| CeqΣMatch Γ C v v' A B c1 c1' c2 c2':
-    veq (TyΣ A B) Γ v v' ->
-    ceq C (CtxU Γ A) c1 c1' ->
-    ceq C (CtxU Γ B) c2 c2' ->
-    ceq Γ C (ΣMatch v c1 c2) (ΣMatch v' c1' c2')
-| CeqListMatch Γ C v v' A c1 c1' c2 c2':
-    veq (TyList A) Γ v v' ->
-    ceq Γ C c1 c1' ->
-    ceq C (CtxU (CtxU Γ A) (TyList A)) c2 c2' ->
-    ceq Γ C (ListMatch v c1 c2) (ListMatch v' c1' c2')
-| CeqDoBind A B Σ E Γ c1 c1' c2 c2':
-    ceq (CTy A Σ E) Γ c1 c1' ->
-    ceq (CTy B Σ E) (CtxU Γ A) c2 c2' ->
-    ceq (CTy B Σ E) Γ (DoBind c1 c2) (DoBind c1' c2')
-| CeqApp Γ v1 v1' v2 v2' A C:
-    veq (TyFun A C) Γ v1 v1' ->
-    veq A Γ v2 v2' ->
-    ceq Γ C (App v1 v2) (App v1' v2')
-| CeqHandle Γ v v' c c' C D:
-    veq (TyHandler C D) Γ v v' ->
-    ceq Γ C c c' ->
-    ceq D Γ (Handle v c) (Handle v' c')
-| CeqLetRec Γ c1 c1' c2 c2' A C D:
-    ceq C (CtxU (CtxU Γ A) (TyFun A C)) c1 c1' ->
-    ceq D (CtxU Γ (TyFun A C)) c2 c2' ->
-    ceq D Γ (LetRec c1 c2) (LetRec c1' c2')
-| CeqOp Γ op v v' c c' Aop Bop A Σ E:
+    form' Γ Ψ (Ceq C (ΠMatch v c) (ΠMatch v' c'))
+| CeqΣMatch Γ Ψ C v v' A B c1 c1' c2 c2':
+    form Γ Ψ (Veq (TyΣ A B) v v') ->
+    form (CtxU Γ A) Ψ (Ceq C c1 c1') ->
+    form (CtxU Γ B) Ψ (Ceq C c2 c2') ->
+    form' Γ Ψ (Ceq C (ΣMatch v c1 c2) (ΣMatch v' c1' c2'))
+| CeqListMatch Γ Ψ C v v' A c1 c1' c2 c2':
+    form Γ Ψ (Veq (TyList A) v v') ->
+    form Γ Ψ (Ceq C c1 c1') ->
+    form (CtxU (CtxU Γ A) (TyList A)) Ψ (Ceq C c2 c2') ->
+    form' Γ Ψ (Ceq C (ListMatch v c1 c2) (ListMatch v' c1' c2'))
+| CeqDoBind A B Σ E Γ Ψ c1 c1' c2 c2':
+    form Γ Ψ (Ceq (CTy A Σ E) c1 c1') ->
+    form (CtxU Γ A) Ψ (Ceq (CTy B Σ E) c2 c2') ->
+    form' Γ Ψ (Ceq (CTy B Σ E) (DoBind c1 c2) (DoBind c1' c2'))
+| CeqApp Γ Ψ v1 v1' v2 v2' A C:
+    form Γ Ψ (Veq (TyFun A C) v1 v1') ->
+    form Γ Ψ (Veq A v2 v2') ->
+    form' Γ Ψ (Ceq C (App v1 v2) (App v1' v2'))
+| CeqHandle Γ Ψ v v' c c' C D:
+    form Γ Ψ (Veq (TyHandler C D) v v') ->
+    form Γ Ψ (Ceq C c c') ->
+    form' Γ Ψ (Ceq D (Handle v c) (Handle v' c'))
+| CeqLetRec Γ Ψ c1 c1' c2 c2' A C D:
+    form (CtxU (CtxU Γ A) (TyFun A C)) Ψ (Ceq C c1 c1') ->
+    form (CtxU Γ (TyFun A C)) Ψ (Ceq D c2 c2') ->
+    form' Γ Ψ (Ceq D (LetRec c1 c2) (LetRec c1' c2'))
+| CeqOp Γ Ψ op v v' c c' Aop Bop A Σ E:
     get_op_type Σ op = Some (Aop, Bop) ->
-    veq Aop Γ v v' ->
-    ceq (CTy A Σ E) (CtxU Γ Bop) c c' ->
-    ceq (CTy A Σ E) Γ (Op op v c) (Op op v' c')
-| OOTB A Σ E Γ' I Γ Z T1 T2 c1 c2:
+    form Γ Ψ (Veq Aop v v') ->
+    form (CtxU Γ Bop) Ψ (Ceq (CTy A Σ E) c c') ->
+    form' Γ Ψ (Ceq (CTy A Σ E) (Op op v c) (Op op v' c'))
+| OOTB A Σ E Γ' Ψ I Γ Z T1 T2 c1 c2:
     has_eq E Γ Z T1 T2 ->
     wf_inst Γ' I (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
     c_inst (tmpl_to_comp (ctx_len Γ) T1) I = c1 ->
     c_inst (tmpl_to_comp (ctx_len Γ) T2) I = c2 ->
-    ceq (CTy A Σ E) Γ' c1 c2
-| βΠMatch v1 v2 c C Γ: 
-    ceq C Γ
+    form' Γ' Ψ (Ceq (CTy A Σ E) c1 c2)
+| βΠMatch v1 v2 c C Γ Ψ: 
+    form' Γ Ψ 
+    (Ceq  C
       (ΠMatch (Pair v1 v2) c) 
-      (c_subs2_out c v1 v2)
-| βΣMatch_Inl v c1 c2 C Γ:
-    ceq C Γ
+      (c_subs2_out c v1 v2) )
+| βΣMatch_Inl v c1 c2 C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (ΣMatch (Inl v) c1 c2)
-      (c_subs_out c1 v)
-| βΣMatch_Inr v c1 c2 C Γ:
-    ceq C Γ 
+      (c_subs_out c1 v) )
+| βΣMatch_Inr v c1 c2 C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (ΣMatch (Inr v) c1 c2)
-      (c_subs_out c2 v)
-| βListMatch_Nil c1 c2 C Γ:
-    ceq C Γ
+      (c_subs_out c2 v) )
+| βListMatch_Nil c1 c2 C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (ListMatch ListNil c1 c2)
-      c1
-| βListMatch_Cons v vs c1 c2 C Γ:
-    ceq C Γ
+      c1 )
+| βListMatch_Cons v vs c1 c2 C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (ListMatch (ListCons v vs) c1 c2)
-      (c_subs2_out c2 v vs)
-| βApp c v C Γ:
-    ceq C Γ (App (Fun c) v) (c_subs_out c v)
-| βLetRec c1 c2 C Γ:
-    ceq C Γ
+      (c_subs2_out c2 v vs) )
+| βApp c v C Γ Ψ:
+    form' Γ Ψ (Ceq C (App (Fun c) v) (c_subs_out c v))
+| βLetRec c1 c2 C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (LetRec c1 c2)
-      (c_subs_out c2 (Fun (LetRec (c_shift c1 1 2) c1)))
-| βDoBind_Ret v c C Γ:
-    ceq C Γ (DoBind (Ret v) c) (c_subs_out c v)
-| βDoBind_Op op v c1 c2 C Γ:
-    ceq C Γ
+      (c_subs_out c2 (Fun (LetRec (c_shift c1 1 2) c1))) )
+| βDoBind_Ret v c C Γ Ψ:
+    form' Γ Ψ (Ceq C (DoBind (Ret v) c) (c_subs_out c v))
+| βDoBind_Op op v c1 c2 C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (DoBind (Op op v c1) c2)
-      (Op op v (DoBind c1 (c_shift c2 1 1)))
-| βHandle_Ret c_r h v C Γ:
-    ceq C Γ
+      (Op op v (DoBind c1 (c_shift c2 1 1))) )
+| βHandle_Ret c_r h v C Γ Ψ:
+    form' Γ Ψ 
+    (Ceq C
       (Handle (Handler c_r h) (Ret v))
-      (c_subs_out c_r v)
-| βHandle_Op c_r h op v c_k c_op C Γ:
+      (c_subs_out c_r v) )
+| βHandle_Op c_r h op v c_k c_op C Γ Ψ:
     get_case h op = Some c_op ->
-    ceq C Γ
+    form' Γ Ψ 
+    (Ceq C
       (Handle (Handler c_r h) (Op op v c_k))
       (c_subs2_out c_op
         (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k))
-        v )
-| ηPair Γ v n c C A B:
+        v ) )
+| ηPair Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyΠ A B)) c C ->
-    ceq C Γ (c_subs c n v)
-      (ΠMatch v (c_subs (c_shift c 2 0) (2+n) (Pair (Var 1) (Var 0))))
-| ηSum Γ v n c C A B:
+    form' Γ Ψ (Ceq C (c_subs c n v)
+      (ΠMatch v (c_subs (c_shift c 2 0) (2+n) (Pair (Var 1) (Var 0)))) )
+| ηSum Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyΣ A B)) c C ->
-    ceq C Γ (c_subs c n v) 
+    form' Γ Ψ (Ceq C (c_subs c n v)
       (ΣMatch v 
         (c_subs (c_shift c 1 0) (1+n) (Inl (Var 0))) 
-        (c_subs (c_shift c 1 0) (1+n) (Inr (Var 0))))
-| ηList Γ v n c C A:
+        (c_subs (c_shift c 1 0) (1+n) (Inr (Var 0)))) )
+| ηList Γ Ψ v n c C A:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyList A)) c C ->
-    ceq C Γ (c_subs c n v) 
+    form' Γ Ψ (Ceq C (c_subs c n v)
       (ListMatch v 
         (c_subs c n ListNil) 
-        (c_subs (c_shift c 2 0) (2+n) (ListCons (Var 1) (Var 0))))
-| ηDoBind Γ c C:
-    ceq C Γ (DoBind c (Ret (Var 0))) c *)
+        (c_subs (c_shift c 2 0) (2+n) (ListCons (Var 1) (Var 0)))) )
+| ηDoBind Γ Ψ c C:
+    form' Γ Ψ (Ceq C (DoBind c (Ret (Var 0))) c)
 
-with heq : ctx -> hypotheses -> sig -> ctype -> hcases -> hcases -> Prop :=
 | HeqSigØ D Γ Ψ h1 h2: 
-    heq Γ Ψ SigØ D h1 h2
-(*
-| HeqSigU Σ op A B D Γ h1 c1 h2 c2:
+    form' Γ Ψ (Heq SigØ D h1 h2)
+| HeqSigU Σ op A B D Γ Ψ h1 c1 h2 c2:
     get_case h1 op = Some c1 ->
     get_case h2 op = Some c2 ->
-    ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
-    heq Σ D Γ h1 h2 ->
-    heq' (SigU Σ op A B) D Γ h1 h2 *)
+    form (CtxU (CtxU Γ (TyFun B D)) A) Ψ (Ceq D c1 c2) ->
+    form Γ Ψ (Heq Σ D h1 h2) ->
+    form' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
 
 with wf_inst : ctx -> instantiation -> ctx -> Prop :=
 | WfInstØ Γcheck : wf_ctx Γcheck -> wf_inst Γcheck InstØ CtxØ
