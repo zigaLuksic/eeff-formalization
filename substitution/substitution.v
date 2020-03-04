@@ -156,7 +156,9 @@ with h_sub h (sub : nat * val) :=
       CasesU (h_sub h sub) op (c_sub c (sub_shift sub 2))
   end.
 
+
 (* ==================== Complete Substitution ==================== *)
+
 
 Definition v_subs v i vs :=
   v_negshift (v_sub v (i, (v_shift vs 1 i))) 1 i.
@@ -167,15 +169,72 @@ Definition c_subs c i vs :=
 Definition h_subs h i vs :=
   h_negshift (h_sub h (i, (v_shift vs 1 i))) 1 i.
 
+
 Definition v_subs_out v vs := v_subs v 0 vs.
 
 Definition c_subs_out c vs := c_subs c 0 vs.
 
 Definition h_subs_out h vs := h_subs h 0 vs.
 
+
 Definition c_subs2_out c v1 v0 := (* 1 -> v1, 0 -> v0 *)
   c_subs_out (c_subs_out c (v_shift v0 1 0)) v1.
 
+
+(* ==================== Judgements and Hypotheses ==================== *)
+
+Fixpoint judg_shift judg d cut :=
+  match judg with
+  | Veq A v1 v2 => Veq A (v_shift v1 d cut) (v_shift v1 d cut) 
+  | Ceq C c1 c2 => Ceq C (c_shift c1 d cut) (c_shift c1 d cut) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_shift h1 d cut) (h_shift h1 d cut) 
+  end.
+
+Fixpoint hyp_shift Ψ d cut :=
+  match Ψ with
+  | HypØ => HypØ
+  | HypU Ψ' judg => HypU (hyp_shift Ψ' d cut) (judg_shift judg d cut)
+  end.
+
+
+Fixpoint judg_negshift judg d cut :=
+  match judg with
+  | Veq A v1 v2 => Veq A (v_negshift v1 d cut) (v_negshift v1 d cut) 
+  | Ceq C c1 c2 => Ceq C (c_negshift c1 d cut) (c_negshift c1 d cut) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_negshift h1 d cut) (h_negshift h1 d cut) 
+  end.
+
+Fixpoint hyp_negshift Ψ d cut :=
+  match Ψ with
+  | HypØ => HypØ
+  | HypU Ψ' judg => HypU (hyp_negshift Ψ' d cut) (judg_negshift judg d cut)
+  end.
+
+Fixpoint judg_sub judg sub :=
+  match judg with
+  | Veq A v1 v2 => Veq A (v_sub v1 sub) (v_sub v1 sub) 
+  | Ceq C c1 c2 => Ceq C (c_sub c1 sub) (c_sub c1 sub) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_sub h1 sub) (h_sub h1 sub) 
+  end.
+
+Fixpoint hyp_sub Ψ sub :=
+  match Ψ with
+  | HypØ => HypØ
+  | HypU Ψ' judg => HypU (hyp_sub Ψ' sub) (judg_sub judg sub)
+  end.
+
+Fixpoint judg_subs judg i vs :=
+  match judg with
+  | Veq A v1 v2 => Veq A (v_subs v1 i vs) (v_subs v1 i vs) 
+  | Ceq C c1 c2 => Ceq C (c_subs c1 i vs) (c_subs c1 i vs) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_subs h1 i vs) (h_subs h1 i vs) 
+  end.
+
+Fixpoint hyp_subs Ψ i vs :=
+  match Ψ with
+  | HypØ => HypØ
+  | HypU Ψ' judg => HypU (hyp_subs Ψ' i vs) (judg_subs judg i vs)
+  end.
 
 (* ==================== Instantiation ==================== *)
 

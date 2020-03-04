@@ -121,3 +121,42 @@ intros wf. revert n A. induction wf; intros n A' gets.
   - inv gets. exists v. eauto.
   - apply IHwf. auto.
 Qed.
+
+(* ==================== Hypotheses ==================== *)
+
+Lemma wf_hyp_ctx Γ Ψ:
+  wf_hypotheses Γ Ψ -> wf_ctx Γ.
+Proof.
+intros wf. induction wf; auto.
+Qed.
+
+
+Lemma wf_has_hypothesis Γ Ψ φ:
+  wf_hypotheses Γ Ψ -> has_hypothesis Ψ φ ->
+  wf_judgement Γ φ.
+Proof.
+intros wfhy has.
+induction wfhy; simpl in has; destruct has.
+subst. auto. auto.
+Qed.
+
+
+Lemma hyp_subset_has_hypothesis Ψ Ψ' φ:
+  has_hypothesis Ψ φ -> hyp_subset Ψ Ψ' ->
+  has_hypothesis Ψ' φ.
+Proof.
+intros has subset. induction subset; simpl in has; destruct has.
+subst. auto. auto.
+Qed.
+
+
+Lemma wf_subset Γ Ψ Ψ':
+  wf_hypotheses Γ Ψ' -> hyp_subset Ψ Ψ' ->
+  wf_hypotheses Γ Ψ.
+Proof.
+intros wf' subset.
+induction subset.
+- apply WfHypØ. eapply wf_hyp_ctx. eauto.
+- apply WfHypU; auto. eapply wf_has_hypothesis; eauto.
+  eapply hyp_subset_has_hypothesis; eauto.
+Qed.

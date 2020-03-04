@@ -6,17 +6,6 @@ Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalizati
 (* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
 Require Export syntax subtyping substitution.
 
-(* ==================== Trying to implement formulae ==================== *)
-
-Inductive judgement : Type :=
-  | Veq : vtype -> val -> val -> judgement
-  | Ceq : ctype -> comp -> comp -> judgement
-  | Heq : sig -> ctype -> hcases -> hcases -> judgement.
-
-Inductive hypotheses : Type :=
-  | HypØ : hypotheses
-  | HypU : hypotheses -> judgement -> hypotheses.
-
 (* ==================== Template Handling ==================== *)
 
 (* We increase context length so that we don't have to shift h. *)
@@ -324,10 +313,10 @@ with form' : ctx -> hypotheses -> judgement -> Prop :=
     form Γ Ψ (Veq (TyList A) vs vs') ->
     form' Γ Ψ (Veq (TyList A) (ListCons v vs) (ListCons v' vs'))
 | VeqFun A C Γ Ψ c c':
-    form (CtxU Γ A) Ψ (Ceq C c c') ->
+    form (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c c') ->
     form' Γ Ψ (Veq (TyFun A C) (Fun c) (Fun c'))
 | VeqHandler A Σ E D D' Γ Ψ c c' h h':
-    form (CtxU Γ A) Ψ (Ceq D c c') ->
+    form (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq D c c') ->
     form Γ Ψ (Heq Σ D' h h') ->
     csubtype D' D ->
     form' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h'))
@@ -351,21 +340,21 @@ with form' : ctx -> hypotheses -> judgement -> Prop :=
     form' Γ Ψ (Ceq C (Absurd v) (Absurd v'))
 | CeqΠMatch Γ Ψ C v v' A B c c':
     form Γ Ψ (Veq (TyΠ A B) v v') ->
-    form (CtxU (CtxU Γ A) B) Ψ (Ceq C c c') ->
+    form (CtxU (CtxU Γ A) B) (hyp_shift Ψ 2 0) (Ceq C c c') ->
     form' Γ Ψ (Ceq C (ΠMatch v c) (ΠMatch v' c'))
 | CeqΣMatch Γ Ψ C v v' A B c1 c1' c2 c2':
     form Γ Ψ (Veq (TyΣ A B) v v') ->
-    form (CtxU Γ A) Ψ (Ceq C c1 c1') ->
-    form (CtxU Γ B) Ψ (Ceq C c2 c2') ->
+    form (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c1 c1') ->
+    form (CtxU Γ B) (hyp_shift Ψ 1 0) (Ceq C c2 c2') ->
     form' Γ Ψ (Ceq C (ΣMatch v c1 c2) (ΣMatch v' c1' c2'))
 | CeqListMatch Γ Ψ C v v' A c1 c1' c2 c2':
     form Γ Ψ (Veq (TyList A) v v') ->
     form Γ Ψ (Ceq C c1 c1') ->
-    form (CtxU (CtxU Γ A) (TyList A)) Ψ (Ceq C c2 c2') ->
+    form (CtxU (CtxU Γ A) (TyList A)) (hyp_shift Ψ 2 0) (Ceq C c2 c2') ->
     form' Γ Ψ (Ceq C (ListMatch v c1 c2) (ListMatch v' c1' c2'))
 | CeqDoBind A B Σ E Γ Ψ c1 c1' c2 c2':
     form Γ Ψ (Ceq (CTy A Σ E) c1 c1') ->
-    form (CtxU Γ A) Ψ (Ceq (CTy B Σ E) c2 c2') ->
+    form (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq (CTy B Σ E) c2 c2') ->
     form' Γ Ψ (Ceq (CTy B Σ E) (DoBind c1 c2) (DoBind c1' c2'))
 | CeqApp Γ Ψ v1 v1' v2 v2' A C:
     form Γ Ψ (Veq (TyFun A C) v1 v1') ->
@@ -376,13 +365,13 @@ with form' : ctx -> hypotheses -> judgement -> Prop :=
     form Γ Ψ (Ceq C c c') ->
     form' Γ Ψ (Ceq D (Handle v c) (Handle v' c'))
 | CeqLetRec Γ Ψ c1 c1' c2 c2' A C D:
-    form (CtxU (CtxU Γ A) (TyFun A C)) Ψ (Ceq C c1 c1') ->
-    form (CtxU Γ (TyFun A C)) Ψ (Ceq D c2 c2') ->
+    form (CtxU (CtxU Γ A) (TyFun A C)) (hyp_shift Ψ 2 0) (Ceq C c1 c1') ->
+    form (CtxU Γ (TyFun A C)) (hyp_shift Ψ 1 0) (Ceq D c2 c2') ->
     form' Γ Ψ (Ceq D (LetRec c1 c2) (LetRec c1' c2'))
 | CeqOp Γ Ψ op v v' c c' Aop Bop A Σ E:
     get_op_type Σ op = Some (Aop, Bop) ->
     form Γ Ψ (Veq Aop v v') ->
-    form (CtxU Γ Bop) Ψ (Ceq (CTy A Σ E) c c') ->
+    form (CtxU Γ Bop) (hyp_shift Ψ 1 0) (Ceq (CTy A Σ E) c c') ->
     form' Γ Ψ (Ceq (CTy A Σ E) (Op op v c) (Op op v' c'))
 | OOTB A Σ E Γ' Ψ I Γ Z T1 T2 c1 c2:
     has_eq E Γ Z T1 T2 ->
@@ -469,7 +458,7 @@ with form' : ctx -> hypotheses -> judgement -> Prop :=
 | HeqSigU Σ op A B D Γ Ψ h1 c1 h2 c2:
     get_case h1 op = Some c1 ->
     get_case h2 op = Some c2 ->
-    form (CtxU (CtxU Γ (TyFun B D)) A) Ψ (Ceq D c1 c2) ->
+    form (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     form Γ Ψ (Heq Σ D h1 h2) ->
     form' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
 

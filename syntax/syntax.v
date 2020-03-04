@@ -146,6 +146,23 @@ Fixpoint join_ctxs Γ1 Γ2 :=
   | CtxU Γ2' A => CtxU (join_ctxs Γ1 Γ2') A
   end.
 
+(* ==================== Judgements and Hypotheses ==================== *)
+
+Inductive judgement : Type :=
+  | Veq : vtype -> val -> val -> judgement
+  | Ceq : ctype -> comp -> comp -> judgement
+  | Heq : sig -> ctype -> hcases -> hcases -> judgement.
+
+Inductive hypotheses : Type :=
+  | HypØ : hypotheses
+  | HypU : hypotheses -> judgement -> hypotheses.
+
+Fixpoint has_hypothesis Ψ φ :=
+  match Ψ with
+  | HypØ => False
+  | HypU Ψ' φ' => φ = φ' \/ has_hypothesis Ψ' φ
+  end.
+
 (* ==================== Instantiation ==================== *)
 
 Inductive instantiation : Type :=
