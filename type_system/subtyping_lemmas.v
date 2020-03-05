@@ -308,11 +308,11 @@ with ctx_subtype_htype Γ Γ' h Σ D (types : has_htype Γ h Σ D) {struct types
 with ctx_subtype_respects Γ Γ' h Σ D E (r : respects Γ h Σ D E) {struct r}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> respects Γ' h Σ D E
 
-with ctx_subtype_form Γ Γ' Ψ judg (orig: form Γ Ψ judg) {struct orig}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> form Γ' Ψ judg
+with ctx_subtype_judg Γ Γ' Ψ φ (orig: judg Γ Ψ φ) {struct orig}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> judg Γ' Ψ φ
 
-with ctx_subtype_wf_judgement Γ Γ' judg (wf : wf_judgement Γ judg) {struct wf}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_judgement Γ' judg
+with ctx_subtype_wf_formula Γ Γ' φ (wf : wf_formula Γ φ) {struct wf}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_formula Γ' φ
 
 with ctx_subtype_wf_hypotheses Γ Γ' Ψ (wf : wf_hypotheses Γ Ψ) {struct wf}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_hypotheses Γ' Ψ
@@ -325,12 +325,12 @@ all: rename ctx_subtype_vtype into VL.
 all: rename ctx_subtype_ctype into CL.
 all: rename ctx_subtype_htype into HL.
 all: rename ctx_subtype_respects into RL.
-all: rename ctx_subtype_form into FL.
-all: rename ctx_subtype_wf_judgement into WFJL.
+all: rename ctx_subtype_judg into JL.
+all: rename ctx_subtype_wf_formula into WFFL.
 all: rename ctx_subtype_wf_hypotheses into WFHL.
 all: rename ctx_subtype_wf_inst into WFIL.
 {
-clear FL WFJL WFHL WFIL.
+clear JL WFFL WFHL WFIL.
 intros wf ctxsty.
 destruct types. induction H1; apply TypeV; eauto.
 + apply TypeUnit.
@@ -353,7 +353,7 @@ destruct types. induction H1; apply TypeV; eauto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeVSubtype; eauto.
 }{
-clear WFJL WFHL WFIL RL FL.
+clear WFFL WFHL WFIL RL JL.
 intros wf ctxsty.
 destruct types. induction H1; apply TypeC; eauto.
 + apply TypeRet. eauto.
@@ -400,7 +400,7 @@ destruct types. induction H1; apply TypeC; eauto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeCSubtype; eauto.
 }{
-clear VL RL FL WFJL WFHL WFIL.
+clear VL RL JL WFFL WFHL WFIL.
 intros wf ctxsty.
 destruct types. induction H2; apply TypeH; eauto.
 + eapply TypeCasesØ.
@@ -412,12 +412,12 @@ destruct types. induction H2; apply TypeH; eauto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
 }{
-clear VL CL HL WFJL WFHL WFIL.
+clear VL CL HL WFFL WFHL WFIL.
 intros wf ctxsty.
 inv r. eapply Respects; auto. destruct H3.
 + eapply RespectEqsØ.
 + eapply RespectEqsU; eauto.
-  eapply FL; eauto; inv H2.
+  eapply JL; eauto; inv H2.
   - apply wf_join_ctxs. apply wf_join_ctxs. auto.
     apply wf_tctx_to_ctx. all: auto.
   - apply ctx_subtype_join_ctxs. apply ctx_subtype_join_ctxs. 
@@ -425,7 +425,7 @@ inv r. eapply Respects; auto. destruct H3.
     apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
-inv orig. apply WfForm; eauto. clear VL HL WFJL WFHL.
+inv orig. apply WfJudg; eauto. clear VL HL WFFL WFHL.
 destruct H1.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
@@ -439,11 +439,11 @@ destruct H1.
 + eapply VeqInr; eauto.
 + eapply VeqListNil.
 + eapply VeqListCons; eauto.
-+ eapply VeqFun. eapply FL. eauto.
++ eapply VeqFun. eapply JL. eauto.
   all: inv H; inv H5; inv H2. 
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
-+ eapply VeqHandler. eapply FL.
++ eapply VeqHandler. eapply JL.
   all: inv H; inv H9; inv H4; inv H9; eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
@@ -454,40 +454,40 @@ destruct H1.
 + eapply CeqRet; eauto.
 + eapply CeqAbsurd; eauto.
 + eapply CeqΠMatch; eauto.
-  eapply FL. eauto.
+  eapply JL. eauto.
   all: inv H1; inv H3; inv H8; inv H3.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
 + eapply CeqΣMatch; eauto; 
-  eapply FL; eauto.
+  eapply JL; eauto.
   all: inv H1; inv H4; inv H9; inv H4.
   all: apply WfCtxU || apply SubtypeCtxU; auto.
   all: apply vsubtype_refl; auto.
 + eapply CeqListMatch; eauto.
-  eapply FL; eauto. 
+  eapply JL; eauto. 
   all: inv H1; inv H4; inv H9.
   - apply WfCtxU. apply WfCtxU. all: auto. inv H4. auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl. inv H4. all: auto.
-+ eapply CeqDoBind; eauto. eapply FL; eauto.
++ eapply CeqDoBind; eauto. eapply JL; eauto.
   all: inv H1; inv H3; inv H8; inv H3. 
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec.
-  - eapply FL; eauto. instantiate (1:=A).
+  - eapply JL; eauto. instantiate (1:=A).
     all: inv H2; inv H3; inv H8; inv H2.
     * apply WfCtxU. apply WfCtxU. 2: inv H11. all: eauto.
     * apply SubtypeCtxU. apply SubtypeCtxU. auto.
       all: apply vsubtype_refl. inv H11. all: auto.
-  - eapply FL; eauto.
+  - eapply JL; eauto.
     all: inv H2; inv H3; inv H8; inv H2.
     * apply WfCtxU; auto.
     * apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqOp; eauto.
-  eapply FL; eauto.
+  eapply JL; eauto.
   all: inv H3; inv H4; inv H9; inv H3.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
@@ -529,7 +529,7 @@ destruct H1.
 + eapply ηDoBind.
 + apply HeqSigØ.
 + eapply HeqSigU; eauto.
-  eapply FL; eauto.
+  eapply JL; eauto.
   all: inv H3; inv H5; inv H10; inv H3; inv H11.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
@@ -744,7 +744,7 @@ Qed.
 
 Lemma has_eq_respects Γ h Σ D E Γ' Z T1 T2:
   respects Γ' h Σ D E -> has_eq E Γ Z T1 T2 ->
-  form (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) HypØ
+  judg (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) HypØ
     (Ceq D
       (handle_t (ctx_len Γ) (tctx_len Z) h T1) 
       (handle_t (ctx_len Γ) (tctx_len Z) h T2) ).
@@ -1422,4 +1422,23 @@ Fixpoint shape_op Γ op v c A Σ E :
     has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E).
 Proof.  
 intro orig. eapply (shape_op_full _ _ _ op v c A Σ E) in orig; auto.
+Qed.
+
+
+(* ==================== Sig and Eqs Properties ==================== *)
+
+Lemma has_hypothesis_shift Ψ φ n c:
+  has_hypothesis Ψ φ -> has_hypothesis (hyp_shift Ψ n c) (form_shift φ n c).
+Proof.
+intros orig. induction Ψ; simpl in orig; destruct orig.
++ simpl. left. subst. auto.
++ simpl. right. auto.
+Qed.
+
+Lemma hyp_subset_shift Ψ Ψ' n c:
+  hyp_subset Ψ Ψ' -> hyp_subset (hyp_shift Ψ n c) (hyp_shift Ψ' n c).
+Proof.
+intro orig. induction orig; simpl.
++ apply SubsetHypØ.
++ apply SubsetHypU. auto. apply has_hypothesis_shift. auto.
 Qed.

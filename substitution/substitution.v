@@ -183,57 +183,57 @@ Definition c_subs2_out c v1 v0 := (* 1 -> v1, 0 -> v0 *)
 
 (* ==================== Judgements and Hypotheses ==================== *)
 
-Fixpoint judg_shift judg d cut :=
-  match judg with
-  | Veq A v1 v2 => Veq A (v_shift v1 d cut) (v_shift v1 d cut) 
-  | Ceq C c1 c2 => Ceq C (c_shift c1 d cut) (c_shift c1 d cut) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_shift h1 d cut) (h_shift h1 d cut) 
+Fixpoint form_shift φ d cut :=
+  match φ with
+  | Veq A v1 v2 => Veq A (v_shift v1 d cut) (v_shift v2 d cut) 
+  | Ceq C c1 c2 => Ceq C (c_shift c1 d cut) (c_shift c2 d cut) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_shift h1 d cut) (h_shift h2 d cut) 
   end.
 
 Fixpoint hyp_shift Ψ d cut :=
   match Ψ with
   | HypØ => HypØ
-  | HypU Ψ' judg => HypU (hyp_shift Ψ' d cut) (judg_shift judg d cut)
+  | HypU Ψ' φ => HypU (hyp_shift Ψ' d cut) (form_shift φ d cut)
   end.
 
 
-Fixpoint judg_negshift judg d cut :=
-  match judg with
-  | Veq A v1 v2 => Veq A (v_negshift v1 d cut) (v_negshift v1 d cut) 
-  | Ceq C c1 c2 => Ceq C (c_negshift c1 d cut) (c_negshift c1 d cut) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_negshift h1 d cut) (h_negshift h1 d cut) 
+Fixpoint form_negshift φ d cut :=
+  match φ with
+  | Veq A v1 v2 => Veq A (v_negshift v1 d cut) (v_negshift v2 d cut) 
+  | Ceq C c1 c2 => Ceq C (c_negshift c1 d cut) (c_negshift c2 d cut) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_negshift h1 d cut) (h_negshift h2 d cut) 
   end.
 
 Fixpoint hyp_negshift Ψ d cut :=
   match Ψ with
   | HypØ => HypØ
-  | HypU Ψ' judg => HypU (hyp_negshift Ψ' d cut) (judg_negshift judg d cut)
+  | HypU Ψ' φ => HypU (hyp_negshift Ψ' d cut) (form_negshift φ d cut)
   end.
 
-Fixpoint judg_sub judg sub :=
-  match judg with
-  | Veq A v1 v2 => Veq A (v_sub v1 sub) (v_sub v1 sub) 
-  | Ceq C c1 c2 => Ceq C (c_sub c1 sub) (c_sub c1 sub) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_sub h1 sub) (h_sub h1 sub) 
+Fixpoint form_sub φ sub :=
+  match φ with
+  | Veq A v1 v2 => Veq A (v_sub v1 sub) (v_sub v2 sub) 
+  | Ceq C c1 c2 => Ceq C (c_sub c1 sub) (c_sub c2 sub) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_sub h1 sub) (h_sub h2 sub) 
   end.
 
 Fixpoint hyp_sub Ψ sub :=
   match Ψ with
   | HypØ => HypØ
-  | HypU Ψ' judg => HypU (hyp_sub Ψ' sub) (judg_sub judg sub)
+  | HypU Ψ' φ => HypU (hyp_sub Ψ' sub) (form_sub φ sub)
   end.
 
-Fixpoint judg_subs judg i vs :=
-  match judg with
-  | Veq A v1 v2 => Veq A (v_subs v1 i vs) (v_subs v1 i vs) 
-  | Ceq C c1 c2 => Ceq C (c_subs c1 i vs) (c_subs c1 i vs) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_subs h1 i vs) (h_subs h1 i vs) 
+Fixpoint form_subs φ i vs :=
+  match φ with
+  | Veq A v1 v2 => Veq A (v_subs v1 i vs) (v_subs v2 i vs) 
+  | Ceq C c1 c2 => Ceq C (c_subs c1 i vs) (c_subs c2 i vs) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_subs h1 i vs) (h_subs h2 i vs) 
   end.
 
 Fixpoint hyp_subs Ψ i vs :=
   match Ψ with
   | HypØ => HypØ
-  | HypU Ψ' judg => HypU (hyp_subs Ψ' i vs) (judg_subs judg i vs)
+  | HypU Ψ' φ => HypU (hyp_subs Ψ' i vs) (form_subs φ i vs)
   end.
 
 (* ==================== Instantiation ==================== *)

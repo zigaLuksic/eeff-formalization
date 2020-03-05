@@ -148,14 +148,14 @@ Fixpoint join_ctxs Γ1 Γ2 :=
 
 (* ==================== Judgements and Hypotheses ==================== *)
 
-Inductive judgement : Type :=
-  | Veq : vtype -> val -> val -> judgement
-  | Ceq : ctype -> comp -> comp -> judgement
-  | Heq : sig -> ctype -> hcases -> hcases -> judgement.
+Inductive formula : Type :=
+  | Veq : vtype -> val -> val -> formula
+  | Ceq : ctype -> comp -> comp -> formula
+  | Heq : sig -> ctype -> hcases -> hcases -> formula.
 
 Inductive hypotheses : Type :=
   | HypØ : hypotheses
-  | HypU : hypotheses -> judgement -> hypotheses.
+  | HypU : hypotheses -> formula -> hypotheses.
 
 Fixpoint has_hypothesis Ψ φ :=
   match Ψ with

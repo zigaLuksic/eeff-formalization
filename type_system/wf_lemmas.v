@@ -133,7 +133,7 @@ Qed.
 
 Lemma wf_has_hypothesis Γ Ψ φ:
   wf_hypotheses Γ Ψ -> has_hypothesis Ψ φ ->
-  wf_judgement Γ φ.
+  wf_formula Γ φ.
 Proof.
 intros wfhy has.
 induction wfhy; simpl in has; destruct has.

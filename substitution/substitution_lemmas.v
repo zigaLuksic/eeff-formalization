@@ -119,6 +119,20 @@ Proof.
 induction I; simpl; f_equal; auto. apply v_shift_shift.
 Qed.
 
+Lemma form_shift_shift n m cut φ :
+  form_shift (form_shift φ n cut) m cut = form_shift φ (n+m) cut.
+Proof.
+destruct φ; simpl; f_equal.
+all: rewrite v_shift_shift || rewrite c_shift_shift || rewrite h_shift_shift.
+all: auto.
+Qed.
+
+Lemma hyp_shift_shift n m cut Ψ :
+  hyp_shift (hyp_shift Ψ n cut) m cut = hyp_shift Ψ (n+m) cut.
+Proof.
+induction Ψ; simpl; f_equal; auto. apply form_shift_shift.
+Qed.
+
 
 Fixpoint v_negshift_shift n m cut v {struct v}:
   (m <= n) ->
@@ -195,6 +209,22 @@ Lemma inst_shift_comm n i j d I:
   inst_shift (inst_shift I n i) d j = inst_shift (inst_shift I d j) n (d+i).
 Proof.
 intros. induction I; simpl; f_equal; auto. apply v_shift_comm. omega.
+Qed.
+
+Lemma form_shift_comm n i j d φ:
+  i>=j ->
+  form_shift (form_shift φ n i) d j = form_shift (form_shift φ d j) n (d+i).
+Proof.
+intros. destruct φ; simpl; f_equal.
+all: rewrite v_shift_comm || rewrite c_shift_comm || rewrite h_shift_comm.
+all: aomega.
+Qed.
+
+Lemma hyp_shift_comm n i j d Ψ:
+  i>=j ->
+  hyp_shift (hyp_shift Ψ n i) d j = hyp_shift (hyp_shift Ψ d j) n (d+i).
+Proof.
+intros. induction Ψ; simpl; f_equal; auto. apply form_shift_comm. omega.
 Qed.
 
 
@@ -602,6 +632,25 @@ Fixpoint inst_shift_sub I v' i cut j {struct I}:
 Proof.
 destruct I; intros; simpl; f_equal; auto.
 apply v_shift_sub. omega.
+Qed.
+
+Fixpoint form_shift_sub φ v' i cut j {struct φ}:
+  cut <= j ->
+    form_shift (form_sub φ (j, v')) i cut 
+  = form_sub (form_shift φ i cut) (i+j, v_shift v' i cut).
+Proof.
+intros safe. destruct φ; simpl; f_equal.
+all: rewrite v_shift_sub || rewrite c_shift_sub || rewrite h_shift_sub.
+all: aomega.
+Qed.
+
+Fixpoint hyp_shift_sub Ψ v' i cut j {struct Ψ}:
+  cut <= j ->
+    hyp_shift (hyp_sub Ψ (j, v')) i cut 
+  = hyp_sub (hyp_shift Ψ i cut) (i+j, v_shift v' i cut).
+Proof.
+destruct Ψ; intros; simpl; f_equal; auto.
+apply form_shift_sub. omega.
 Qed.
 
 

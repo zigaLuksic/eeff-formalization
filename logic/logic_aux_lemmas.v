@@ -9,10 +9,10 @@ Require Export subtyping_lemmas.
 
 
 Lemma heq_cases_ceq Σ D Γ Ψ h1 h2 op A B c1 c2 :
-  form Γ Ψ (Heq Σ D h1 h2) -> get_op_type Σ op = Some (A, B) ->
+  judg Γ Ψ (Heq Σ D h1 h2) -> get_op_type Σ op = Some (A, B) ->
   get_case h1 op = Some c1 ->
   get_case h2 op = Some c2 ->
-  form (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2).
+  judg (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2).
 Proof.
 intros eqs gets finds1 finds2.
 induction Σ. simpl in gets. discriminate.
@@ -25,14 +25,14 @@ Qed.
 
 (* ==================== Logic Subtyping ==================== *)
 
-Lemma heq_subtype Σ Σ' D Γ Ψ h1 h2 (orig : form Γ Ψ (Heq Σ D h1 h2)) :
-  wf_sig Σ' -> sig_subtype Σ' Σ -> form Γ Ψ (Heq Σ' D h1 h2).
+Lemma heq_subtype Σ Σ' D Γ Ψ h1 h2 (orig : judg Γ Ψ (Heq Σ D h1 h2)) :
+  wf_sig Σ' -> sig_subtype Σ' Σ -> judg Γ Ψ (Heq Σ' D h1 h2).
 Proof.
 intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
-+ inv orig. inv H. eapply WfForm; auto.
++ inv orig. inv H. eapply WfJudg; auto.
   eapply WfHeq. 4: exact H10. 4: exact H11. auto.
   apply SubtypeSigØ. apply SubtypeSigØ. apply HeqSigØ.
-+ inv orig. inv H. eapply WfForm; auto.
++ inv orig. inv H. eapply WfJudg; auto.
   eapply WfHeq. auto. 3: exact H10. 3: exact H11.
   { eapply sig_subtype_trans; eauto. }
   { eapply sig_subtype_trans; eauto. }
@@ -48,10 +48,10 @@ intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
   clear A1 B1 get1 A2 B2 get2.
   eapply HeqSigU; eauto.
   assert 
-    (form (CtxU (CtxU Γ (TyFun B'0 D)) A'0) (hyp_shift Ψ 2 0) (Ceq D c1 c2)).
+    (judg (CtxU (CtxU Γ (TyFun B'0 D)) A'0) (hyp_shift Ψ 2 0) (Ceq D c1 c2)).
   - eapply heq_cases_ceq. 2: eauto. all: eauto.
-    eapply WfForm; eauto. eapply WfHeq. 2: exact H8. all: eauto.
-  - eapply ctx_subtype_form; eauto.
+    eapply WfJudg; eauto. eapply WfHeq. 2: exact H8. all: eauto.
+  - eapply ctx_subtype_judg; eauto.
     * inv H10. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
     * apply SubtypeCtxU. apply SubtypeCtxU. 2: apply SubtypeTyFun. all: auto.
       all: inv H10; (apply ctx_subtype_refl || apply csubtype_refl); auto.
@@ -59,14 +59,14 @@ Qed.
 
 (* This formulation is needed so that the termination
    checker doesnt run forever. *)
-Fixpoint veq_subtype Γ Ψ judg (orig: form Γ Ψ judg) A A' v1 v2 {struct orig} :
-  judg = Veq A v1 v2 ->
+Fixpoint veq_subtype Γ Ψ φ (orig: judg Γ Ψ φ) A A' v1 v2 {struct orig} :
+  φ = Veq A v1 v2 ->
   wf_vtype A' -> vsubtype A A' -> 
-  form Γ Ψ (Veq A' v1 v2)
-with ceq_subtype Γ Ψ judg (orig: form Γ Ψ judg) C C' c1 c2 {struct orig} :
-  judg = Ceq C c1 c2 ->
+  judg Γ Ψ (Veq A' v1 v2)
+with ceq_subtype Γ Ψ φ (orig: judg Γ Ψ φ) C C' c1 c2 {struct orig} :
+  φ = Ceq C c1 c2 ->
   wf_ctype C' -> csubtype C C' -> 
-  form Γ Ψ (Ceq C' c1 c2).
+  judg Γ Ψ (Ceq C' c1 c2).
 Proof.
 { 
 intros same wfa' stya.
@@ -78,7 +78,7 @@ assert (has_vtype Γ v1 A') as ty1.
 assert (has_vtype Γ v2 A') as ty2.
 { clear veq_subtype ceq_subtype. inv orig. inv H.
   apply TypeV; auto. eapply TypeVSubtype; eauto. }
-apply WfForm; auto. apply WfVeq; auto.
+apply WfJudg; auto. apply WfVeq; auto.
 { clear veq_subtype ceq_subtype. inv orig. auto. }
 destruct orig. destruct H1; inv same.
 + specialize (veq_subtype _ _ _ H1) as IH.
@@ -121,14 +121,14 @@ destruct orig. destruct H1; inv same.
   specialize (ceq_subtype _ _ _ H1) as IH.
   clear veq_subtype ceq_subtype.
   inv wfa'. apply VeqFun.
-  eapply ctx_subtype_form. eauto.
+  eapply ctx_subtype_judg. eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
 + inv stya.
   specialize (ceq_subtype _ _ _ H1) as IH.
   clear veq_subtype ceq_subtype.
   inv wfa'. inv H6. inv H7. eapply VeqHandler.
-  eapply ctx_subtype_form. eauto.
+  eapply ctx_subtype_judg. eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU; auto. apply ctx_subtype_refl. auto.
   - eapply heq_subtype; eauto.
@@ -145,7 +145,7 @@ assert (has_ctype Γ c1 C') as ty1.
 assert (has_ctype Γ c2 C') as ty2.
 { clear veq_subtype ceq_subtype. inv orig. inv H.
   apply TypeC; auto. eapply TypeCSubtype; eauto. }
-apply WfForm; auto. apply WfCeq; auto.
+apply WfJudg; auto. apply WfCeq; auto.
 { clear veq_subtype ceq_subtype. inv orig. auto. }
 destruct orig. destruct H1; inv same.
 + specialize (ceq_subtype _ _ _ H1) as IH.
@@ -210,7 +210,7 @@ destruct orig. destruct H1; inv same.
   eapply CeqOp; eauto; inv wfc'.
   - eapply IH1. eauto.
     eapply get_op_type_wf in gets. destruct gets. all: auto.
-  - eapply ctx_subtype_form; eauto.
+  - eapply ctx_subtype_judg; eauto.
     * eapply IH2. eauto. apply WfCTy; eauto. apply SubtypeCTy; auto.
     * apply WfCtxU. auto. 
       eapply get_op_type_wf in gets. destruct gets. all: auto.
@@ -258,11 +258,11 @@ Qed.
 (* ==================== Structural Rules for Cases ==================== *)
 
 Lemma heq_case_extend_trivial Σ D Γ Ψ h1 h2 op A1 A2 B1 B2 c1 c2:
-  form Γ Ψ (Heq Σ D h1 h2) ->
+  judg Γ Ψ (Heq Σ D h1 h2) ->
   get_case h1 op = None -> get_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
   has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
-  form Γ Ψ (Heq Σ D (CasesU h1 op c1) (CasesU h2 op c2)).
+  judg Γ Ψ (Heq Σ D (CasesU h1 op c1) (CasesU h2 op c2)).
 Proof.
 intros orig f1 f2 tys1 tys2.
 assert (wf_vtype A1) as wfa1 by (inv tys1; inv H; auto).
@@ -285,11 +285,11 @@ assert (sig_subtype Σ (SigU Σ1 op A1 B1)) as ss1.
 assert (sig_subtype Σ (SigU Σ2 op A2 B2)) as ss2.
 { apply sig_subtype_extend. auto. apply WfSigU; auto. inv H11. assumption. }
 induction Σ as [ | Σ IH o A B].
-+ eapply WfForm; auto. eapply WfHeq. auto. exact ss1. exact ss2.
++ eapply WfJudg; auto. eapply WfHeq. auto. exact ss1. exact ss2.
   - apply TypeH. 2:apply WfSigU. 2:inv H10. 7:apply TypeCasesU. all: auto.
   - apply TypeH. 2:apply WfSigU. 2:inv H11. 7:apply TypeCasesU. all: auto.
   - apply HeqSigØ.
-+ eapply WfForm; auto. eapply WfHeq. auto. exact ss1. exact ss2.
++ eapply WfJudg; auto. eapply WfHeq. auto. exact ss1. exact ss2.
   - apply TypeH. 2:apply WfSigU. 2:inv H10. 7:apply TypeCasesU. all: auto.
   - apply TypeH. 2:apply WfSigU. 2:inv H11. 7:apply TypeCasesU. all: auto.
   - inv H1. eapply HeqSigU.
@@ -304,10 +304,10 @@ Qed.
 
 
 Lemma heq_case_extend_structural Σ D Γ Ψ h1 h2 op A B c1 c2:
-  form Γ Ψ (Heq Σ D h1 h2) ->
+  judg Γ Ψ (Heq Σ D h1 h2) ->
   get_case h1 op = None -> get_case h2 op = None ->
-  form (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
-  form Γ Ψ (Heq (SigU Σ op A B) D (CasesU h1 op c1) (CasesU h2 op c2)).
+  judg (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
+  judg Γ Ψ (Heq (SigU Σ op A B) D (CasesU h1 op c1) (CasesU h2 op c2)).
 Proof.
 intros orig f1 f2 ceq12.
 assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D) as tys1.
@@ -339,7 +339,7 @@ assert (get_op_type Σ op = None) as sgetnone.
 { destruct (get_op_type Σ op) eqn: gs; auto. destruct p.
   eapply sig_subtype_get_Some in H8; eauto. destruct H8 as [a[b[g]]]. 
   rewrite g in getn1. discriminate. }
-eapply WfForm; auto. eapply WfHeq. apply WfSigU; auto. exact ss1. exact ss2.
+eapply WfJudg; auto. eapply WfHeq. apply WfSigU; auto. exact ss1. exact ss2.
 - apply TypeH. 2:apply WfSigU. 2:inv H10. 7:apply TypeCasesU. all: auto.
 - apply TypeH. 2:apply WfSigU. 2:inv H11. 7:apply TypeCasesU. all: auto.
 - eapply HeqSigU.
@@ -347,21 +347,22 @@ eapply WfForm; auto. eapply WfHeq. apply WfSigU; auto. exact ss1. exact ss2.
   * simpl. destruct (op==op). reflexivity. destruct n. auto.
   * assumption.
   * eapply heq_case_extend_trivial; eauto. 
-    eapply WfForm. eapply WfHeq. 2:exact H8. all: eauto.
+    eapply WfJudg. eapply WfHeq. 2:exact H8. all: eauto.
 Qed.
 
 (* ================== Reflexivity, Symmetry, Transitivity ================== *)
 
-Lemma veq_refl Γ v A : 
-  has_vtype Γ v A -> form Γ HypØ (Veq A v v)
-with ceq_refl Γ c C : 
-  has_ctype Γ c C -> form Γ HypØ (Ceq C c c)
-with heq_refl Γ h Σ D : 
-  has_htype Γ h Σ D -> form Γ HypØ (Heq Σ D h h).
+(* We 'upgrade' it to arbitrary hypotheses in aux_type_lemmas *)
+Lemma veq_refl_raw Γ v A : 
+  has_vtype Γ v A -> judg Γ HypØ (Veq A v v)
+with ceq_refl_raw Γ c C : 
+  has_ctype Γ c C -> judg Γ HypØ (Ceq C c c)
+with heq_refl_raw Γ h Σ D : 
+  has_htype Γ h Σ D -> judg Γ HypØ (Heq Σ D h h).
 Proof.
 all: intros orig.
 {
-apply WfForm. apply WfVeq; auto. apply WfHypØ. inv orig. auto.
+apply WfJudg. apply WfVeq; auto. apply WfHypØ. inv orig. auto.
 destruct orig. destruct H1.
 + apply VeqUnit.
 + apply VeqInt. 
@@ -373,9 +374,9 @@ destruct orig. destruct H1.
 + apply VeqListCons; eauto.
 + apply VeqFun; eauto. 
 + eapply VeqHandler; eauto. apply csubtype_refl. inv H2. assumption.
-+ apply veq_refl in H1. eapply veq_subtype in H1; eauto. inv H1. assumption.
++ apply veq_refl_raw in H1. eapply veq_subtype in H1; eauto. inv H1. assumption.
 }{
-apply WfForm. apply WfCeq; auto. apply WfHypØ. inv orig. auto.
+apply WfJudg. apply WfCeq; auto. apply WfHypØ. inv orig. auto.
 destruct orig. destruct H1.
 + apply CeqRet. auto.
 + apply CeqAbsurd. auto.
@@ -387,9 +388,9 @@ destruct orig. destruct H1.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec; eauto.
 + eapply CeqOp; eauto.
-+ apply ceq_refl in H1. eapply ceq_subtype in H1; eauto. inv H1. assumption.
++ apply ceq_refl_raw in H1. eapply ceq_subtype in H1; eauto. inv H1. assumption.
 }{
-apply WfForm. eapply WfHeq; auto.
+apply WfJudg. eapply WfHeq; auto.
 inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
@@ -405,24 +406,24 @@ Qed.
 
 
 Lemma veq_sym A Γ Ψ v1 v2 : 
-  form Γ Ψ (Veq A v1 v2) -> form Γ Ψ (Veq A v2 v1)
+  judg Γ Ψ (Veq A v1 v2) -> judg Γ Ψ (Veq A v2 v1)
 with ceq_sym C Γ Ψ c1 c2 : 
-  form Γ Ψ (Ceq C c1 c2) -> form Γ Ψ (Ceq C c2 c1).
+  judg Γ Ψ (Ceq C c1 c2) -> judg Γ Ψ (Ceq C c2 c1).
 Proof.
 {
-intro orig. apply WfForm. apply WfVeq. all: try (inv orig; inv H; assumption).
+intro orig. apply WfJudg. apply WfVeq. all: try (inv orig; inv H; assumption).
 apply VeqSym. auto.
 }{
-intro orig. apply WfForm. apply WfCeq. all: try (inv orig; inv H; assumption).
+intro orig. apply WfJudg. apply WfCeq. all: try (inv orig; inv H; assumption).
 apply CeqSym. auto.
 }
 Qed.
 
 Lemma heq_sym Σ D Γ Ψ h1 h2 : 
-  form Γ Ψ (Heq Σ D h1 h2) -> form Γ Ψ (Heq Σ D h2 h1).
+  judg Γ Ψ (Heq Σ D h1 h2) -> judg Γ Ψ (Heq Σ D h2 h1).
 Proof.
 induction Σ; intros orig.
-all: apply WfForm; try (inv orig; assumption).
+all: apply WfJudg; try (inv orig; assumption).
 + inv orig. inv H. eapply WfHeq. auto.
   exact H9. exact H8. all: eauto.
 + apply HeqSigØ.
@@ -434,20 +435,20 @@ Qed.
 
     
 Lemma veq_trans A Γ Ψ v1 v2 v3:
-  form Γ Ψ (Veq A v1 v2) -> form Γ Ψ (Veq A v2 v3) -> form Γ Ψ (Veq A v1 v3)
+  judg Γ Ψ (Veq A v1 v2) -> judg Γ Ψ (Veq A v2 v3) -> judg Γ Ψ (Veq A v1 v3)
 
 with  ceq_trans C Γ Ψ c1 c2 c3:
-  form Γ Ψ (Ceq C c1 c2) -> form Γ Ψ (Ceq C c2 c3) -> form Γ Ψ (Ceq C c1 c3).
+  judg Γ Ψ (Ceq C c1 c2) -> judg Γ Ψ (Ceq C c2 c3) -> judg Γ Ψ (Ceq C c1 c3).
 
 Proof.
 {
-intros veq1 veq2. apply WfForm. apply WfVeq. 
+intros veq1 veq2. apply WfJudg. apply WfVeq. 
 + inv veq1. inv H. auto.
 + inv veq2. inv H. auto.
 + inv veq1. auto.
 + eapply VeqTrans; eauto.
 }{
-intros ceq1 ceq2. apply WfForm. apply WfCeq. 
+intros ceq1 ceq2. apply WfJudg. apply WfCeq. 
 + inv ceq1. inv H. auto.
 + inv ceq2. inv H. auto.
 + inv ceq1. auto.
@@ -457,13 +458,13 @@ Qed.
 
 
 Lemma heq_trans Σ D Γ Ψ h1 h2 h3:
-  form Γ Ψ (Heq Σ D h1 h2) -> form Γ Ψ (Heq Σ D h2 h3) -> 
-  form Γ Ψ (Heq Σ D h1 h3).
+  judg Γ Ψ (Heq Σ D h1 h2) -> judg Γ Ψ (Heq Σ D h2 h3) -> 
+  judg Γ Ψ (Heq Σ D h1 h3).
 {
 intros heq1 heq2. induction Σ.
-+ inv heq1. inv heq2. inv H. inv H2. eapply WfForm. eapply WfHeq.
++ inv heq1. inv heq2. inv H. inv H2. eapply WfJudg. eapply WfHeq.
   2: exact H11. 2: exact H16. all: eauto. apply HeqSigØ.
-+ inv heq1. inv heq2. inv H. inv H2. eapply WfForm. eapply WfHeq.
++ inv heq1. inv heq2. inv H. inv H2. eapply WfJudg. eapply WfHeq.
   2: exact H11. 2: exact H16. all: eauto. 
   inv H1. inv H4. eapply HeqSigU; eauto.
   rewrite H10 in H23. inv H23.
