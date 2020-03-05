@@ -1,7 +1,7 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export substitution syntax_lemmas.
 Require Import Le Arith.
 
@@ -950,6 +950,24 @@ rewrite (v_shift_comm 1 (S j)), (v_shift_comm 1 i); aomega.
 }
 Qed.
 
+Fixpoint form_shift_subs_alt φ v' i j (safe: i <= j) {struct φ}:
+    form_shift (form_subs φ j v') 1 i 
+  = form_subs (form_shift φ 1 i) (1+j) (v_shift v' 1 i).
+Proof.
+destruct φ; simpl; f_equal.
+all: rewrite v_shift_subs_alt || rewrite c_shift_subs_alt 
+  || rewrite h_shift_subs_alt.
+all: aomega.
+Qed.
+
+Fixpoint hyp_shift_subs_alt Ψ v' i j (safe: i <= j) {struct Ψ}:
+    hyp_shift (hyp_subs Ψ j v') 1 i 
+  = hyp_subs (hyp_shift Ψ 1 i) (1+j) (v_shift v' 1 i).
+Proof.
+destruct Ψ; intros; simpl; f_equal; auto.
+apply form_shift_subs_alt. omega.
+Qed.
+
 
 Lemma v_negshift_subs v v' i j (safe: j <= i): 
   v_no_var v (1+i) -> v_no_var v' i ->
@@ -1360,6 +1378,22 @@ all: f_equal; eauto.
 all: rewrite inst_shift_comm; simpl; eaomega.
 all: apply c_shift_inst; auto.
 }
+Qed.
+
+
+Lemma form_shift_inst I φ d cut :
+  form_shift (form_inst φ I) d cut = form_inst φ (inst_shift I d cut).
+Proof.
+destruct φ; simpl; f_equal.
+all: rewrite v_shift_inst || rewrite c_shift_inst || rewrite h_shift_inst.
+all: auto.
+Qed.
+
+
+Lemma hyp_shift_inst I Ψ d cut :
+  hyp_shift (hyp_inst Ψ I) d cut = hyp_inst Ψ (inst_shift I d cut).
+Proof.
+induction Ψ; simpl; f_equal; auto. apply form_shift_inst.
 Qed.
 
 

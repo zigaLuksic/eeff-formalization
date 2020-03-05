@@ -1,5 +1,5 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Require Export syntax.
 
 (* ==================== Shifts and Subs ==================== *)
@@ -329,6 +329,20 @@ with h_inst h I :=
   | CasesU h op c => 
       CasesU (h_inst h I) op
         (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
+  end.
+
+
+Fixpoint form_inst φ I :=
+  match φ with
+  | Veq A v1 v2 => Veq A (v_inst v1 I) (v_inst v2 I) 
+  | Ceq C c1 c2 => Ceq C (c_inst c1 I) (c_inst c2 I) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_inst h1 I) (h_inst h2 I) 
+  end.
+
+Fixpoint hyp_inst Ψ I :=
+  match Ψ with
+  | HypØ => HypØ
+  | HypU Ψ' φ => HypU (hyp_inst Ψ' I) (form_inst φ I)
   end.
 
 

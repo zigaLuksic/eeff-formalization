@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export declarational wf_lemmas.
 
@@ -311,11 +311,11 @@ with ctx_subtype_respects Γ Γ' h Σ D E (r : respects Γ h Σ D E) {struct r}:
 with ctx_subtype_judg Γ Γ' Ψ φ (orig: judg Γ Ψ φ) {struct orig}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> judg Γ' Ψ φ
 
-with ctx_subtype_wf_formula Γ Γ' φ (wf : wf_formula Γ φ) {struct wf}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_formula Γ' φ
+with ctx_subtype_wf_form Γ Γ' φ (wf : wf_form Γ φ) {struct wf}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_form Γ' φ
 
-with ctx_subtype_wf_hypotheses Γ Γ' Ψ (wf : wf_hypotheses Γ Ψ) {struct wf}:
-  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_hypotheses Γ' Ψ
+with ctx_subtype_wf_hyp Γ Γ' Ψ (wf : wf_hyp Γ Ψ) {struct wf}:
+  wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_hyp Γ' Ψ
 
 with ctx_subtype_wf_inst Γ Γ' I Γi (wf : wf_inst Γ I Γi) {struct wf}:
   wf_ctx Γ' -> ctx_subtype Γ' Γ -> wf_inst Γ' I Γi.
@@ -326,8 +326,8 @@ all: rename ctx_subtype_ctype into CL.
 all: rename ctx_subtype_htype into HL.
 all: rename ctx_subtype_respects into RL.
 all: rename ctx_subtype_judg into JL.
-all: rename ctx_subtype_wf_formula into WFFL.
-all: rename ctx_subtype_wf_hypotheses into WFHL.
+all: rename ctx_subtype_wf_form into WFFL.
+all: rename ctx_subtype_wf_hyp into WFHL.
 all: rename ctx_subtype_wf_inst into WFIL.
 {
 clear JL WFFL WFHL WFIL.

@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export syntax_lemmas declarational.
 
@@ -125,15 +125,15 @@ Qed.
 (* ==================== Hypotheses ==================== *)
 
 Lemma wf_hyp_ctx Γ Ψ:
-  wf_hypotheses Γ Ψ -> wf_ctx Γ.
+  wf_hyp Γ Ψ -> wf_ctx Γ.
 Proof.
 intros wf. induction wf; auto.
 Qed.
 
 
 Lemma wf_has_hypothesis Γ Ψ φ:
-  wf_hypotheses Γ Ψ -> has_hypothesis Ψ φ ->
-  wf_formula Γ φ.
+  wf_hyp Γ Ψ -> has_hypothesis Ψ φ ->
+  wf_form Γ φ.
 Proof.
 intros wfhy has.
 induction wfhy; simpl in has; destruct has.
@@ -151,8 +151,8 @@ Qed.
 
 
 Lemma wf_subset Γ Ψ Ψ':
-  wf_hypotheses Γ Ψ' -> hyp_subset Ψ Ψ' ->
-  wf_hypotheses Γ Ψ.
+  wf_hyp Γ Ψ' -> hyp_subset Ψ Ψ' ->
+  wf_hyp Γ Ψ.
 Proof.
 intros wf' subset.
 induction subset.

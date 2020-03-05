@@ -1,9 +1,9 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Require Export syntax subtyping substitution.
 
 (* ==================== Template Handling ==================== *)
@@ -121,26 +121,26 @@ with wf_eqs : eqs -> sig -> Prop :=
     wf_t Γ Z T1 Σ -> wf_t Γ Z T2 Σ -> 
     wf_eqs (EqsU E Γ Z T1 T2) Σ
 
-with wf_formula : ctx -> formula -> Prop :=
+with wf_form : ctx -> formula -> Prop :=
 | WfVeq Γ A v1 v2 :
     has_vtype Γ v1 A -> has_vtype Γ v2 A ->
-    wf_formula Γ (Veq A v1 v2)
+    wf_form Γ (Veq A v1 v2)
 | WfCeq Γ C c1 c2 :
     has_ctype Γ c1 C -> has_ctype Γ c2 C ->
-    wf_formula Γ (Ceq C c1 c2)
+    wf_form Γ (Ceq C c1 c2)
 | WfHeq Γ Σ Σ1 Σ2 D h1 h2 :
     wf_sig Σ -> sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
     has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D ->
-    wf_formula Γ (Heq Σ D h1 h2)
+    wf_form Γ (Heq Σ D h1 h2)
 
-with wf_hypotheses : ctx -> hypotheses -> Prop :=
+with wf_hyp : ctx -> hypotheses -> Prop :=
 | WfHypØ Γ:
     wf_ctx Γ ->
-    wf_hypotheses Γ HypØ
+    wf_hyp Γ HypØ
 | WfHypU Γ Ψ j:
-    wf_hypotheses Γ Ψ ->
-    wf_formula Γ j ->
-    wf_hypotheses Γ (HypU Ψ j)
+    wf_hyp Γ Ψ ->
+    wf_form Γ j ->
+    wf_hyp Γ (HypU Ψ j)
 
 (* ==================== Type Judgements ==================== *)
 
@@ -274,8 +274,8 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 
 with judg : ctx -> hypotheses -> formula -> Prop :=
 | WfJudg Γ Ψ φ :
-    wf_formula Γ φ ->
-    wf_hypotheses Γ Ψ ->
+    wf_form Γ φ ->
+    wf_hyp Γ Ψ ->
     judg' Γ Ψ φ ->
     judg Γ Ψ φ
 

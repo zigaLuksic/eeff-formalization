@@ -1,23 +1,24 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 
 Require Export syntax_lemmas substitution_lemmas type_lemmas.
 
 
 Lemma operational_in_logic Γ c c' C:
-  has_ctype Γ c C -> step c c'-> ceq C Γ c c'. 
+  has_ctype Γ c C -> step c c'-> judg Γ HypØ (Ceq C c c'). 
 Proof.
 intros tys steps.
 assert (has_ctype Γ c' C) as tys' by (eapply preservation; eauto).
-revert C tys tys'. induction steps; intros C tys tys'; apply Ceq.
+revert C tys tys'. induction steps; intros C tys tys'; apply WfJudg.
+all: apply WfCeq || apply WfHypØ || auto.
 all: assumption || (inv tys; assumption) || auto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
@@ -30,12 +31,14 @@ all: assumption || (inv tys; assumption) || auto.
   3: reflexivity. 2: reflexivity. destruct tys as [A' [ty1 ty2]].
   eapply CeqDoBind.
   - eapply IHsteps. eauto. eapply preservation; eauto.
-  - apply ceq_refl. auto.
+  - apply ceq_refl. auto. 
+    apply wf_hyp_shift_typesafe. apply WfHypØ.
+    inv ty1. auto. inv ty2. inv H. auto.
 + eapply βDoBind_Ret.
 + eapply βDoBind_Op. 
 + eapply shape_handle in tys. destruct tys as [C' [tyh tyc]].
   eapply CeqHandle. 
-  - apply veq_refl. eauto.
+  - apply veq_refl. eauto. apply WfHypØ. inv tyc. auto.
   - apply IHsteps. assumption. eapply preservation; eauto.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
