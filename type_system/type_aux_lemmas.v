@@ -1276,46 +1276,60 @@ destruct orig. destruct H1.
   specialize (JL _ _ _ H2) as IHc1.
   specialize (JL _ _ _ H3) as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqΣMatch. eauto. all: inv H1; inv H4.
-  - eapply IHc1. simpl. eauto. inv H7. apply v_shift_typesafe; assumption.
-  - eapply IHc2. simpl. eauto. inv H7. apply v_shift_typesafe; assumption.
+  simpl. eapply CeqΣMatch. eapply IHv; eauto.
+  - rewrite hyp_shift_sub. eapply IHc1. simpl. eauto. 
+    apply v_shift_typesafe. auto. 
+    inv H2. apply wf_hyp_ctx in H5; inv H5. auto. omega.
+  - rewrite hyp_shift_sub. eapply IHc2. simpl. eauto.
+    apply v_shift_typesafe. auto.
+    inv H3. apply wf_hyp_ctx in H5; inv H5. auto. omega.
 + specialize (JL _ _ _ H1) as IHv.
   specialize (JL _ _ _ H2) as IHc1.
   specialize (JL _ _ _ H3) as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqListMatch. eauto.
+  simpl. eapply CeqListMatch. eapply IHv; eauto.
   - eapply IHc1; eauto.
-  - eapply IHc2. simpl. eauto. rewrite <-(v_shift_shift 1 1).
+  - rewrite hyp_shift_sub. eapply IHc2. simpl. eauto. 
+    rewrite <-(v_shift_shift 1 1).
     apply v_shift_typesafe. apply v_shift_typesafe. auto.
-    all: inv H1; inv H4. inv H7. auto. auto.
+    all: inv H3; apply wf_hyp_ctx in H5; inv H5. inv H9. all: aomega.
 + specialize (JL _ _ _ H1) as IHc1.
   specialize (JL _ _ _ H2) as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqDoBind. eauto. eapply IHc2.
+  simpl. eapply CeqDoBind. eapply IHc1; eauto.
+  rewrite hyp_shift_sub. eapply IHc2.
   - simpl. eauto.
-  - inv H1. inv H3. inv H6. apply v_shift_typesafe; assumption.
+  - apply v_shift_typesafe. auto. 
+    inv H2; apply wf_hyp_ctx in H4. inv H4. auto.
+  - omega.
 + specialize (JL _ _ _ H1) as IHv1.
   specialize (JL _ _ _ H2) as IHv2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqApp; eauto.
+  simpl. eapply CeqApp. eapply IHv1; eauto. eapply IHv2; eauto.
 + specialize (JL _ _ _ H1) as IHv.
   specialize (JL _ _ _ H2) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqHandle; eauto.
+  simpl. eapply CeqHandle. eapply IHv; eauto. eapply IHc; eauto.
 + specialize (JL _ _ _ H1) as IHc1.
   specialize (JL _ _ _ H2) as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. inv H2. inv H4. eapply CeqLetRec.
-  - eapply IHc1. simpl. eauto. rewrite <-(v_shift_shift 1 1).
-    inv H2. apply v_shift_typesafe; auto. inv H10. apply v_shift_typesafe; auto.
-  - eapply IHc2. simpl. eauto. inv H2. apply v_shift_typesafe; assumption.
+  simpl. eapply CeqLetRec.
+  - rewrite hyp_shift_sub. eapply IHc1. simpl. eauto.
+    rewrite <-(v_shift_shift 1 1). apply v_shift_typesafe; auto.
+    apply v_shift_typesafe; auto.
+    all: inv H2; apply wf_hyp_ctx in H4; inv H4. inv H8. all: aomega.
+  - rewrite hyp_shift_sub. eapply IHc2. simpl. eauto.
+    apply v_shift_typesafe. auto.
+    inv H2. apply wf_hyp_ctx in H4. inv H4. all: aomega.
 + specialize (JL _ _ _ H2) as IHv.
   specialize (JL _ _ _ H3) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply CeqOp; eauto.
-  eapply IHc. simpl. eauto. apply v_shift_typesafe. assumption.
-  apply get_op_type_wf in H1. destruct H1. assumption. inv H. inv H5. auto.
-+ specialize (WF _ _ _ H2) as IHwf.
+  rewrite hyp_shift_sub. eapply IHc. simpl. eauto.
+  apply v_shift_typesafe. assumption.
+  apply get_op_type_wf in H1. destruct H1. assumption.
+  inv H. inv H7. inv H4. auto. omega.
++ specialize (WFIL _ _ _ H2) as IHwf.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   clear H2. eapply OOTB; eauto.
   rewrite <-c_sub_inst. rewrite H3. simpl. auto.
@@ -1430,35 +1444,50 @@ destruct orig. destruct H1.
     * apply v_insert_typesafe; auto. inv H2. 
       apply wf_ctx_insert_vtype in H3. auto. omega.
 + clear VL CL HL RL JL WFHL WFFL WFIL. simpl. apply ηDoBind.
-}{
-intros gets vtys.
-inv orig. destruct H4.
-+ specialize (HL _ _ _ _ H2) as IH1.
-  specialize (HL _ _ _ _ H3) as IH2.
++ clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply HeqSigØ. 
++ specialize (JL _ _ _ H3) as IHc.
+  specialize (JL _ _ _ H4) as IHh.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  eapply Heq. 2: exact H0. all: eauto. apply HeqSigØ. 
-+ specialize (HL _ _ _ _ H2) as IH1.
-  specialize (HL _ _ _ _ H3) as IH2.
-  specialize (JL _ _ _ H6) as IHc.
-  specialize (JL _ _ _ H7) as IHh.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  eapply Heq. 2: exact H0. all: eauto. eapply HeqSigU.
-  - eapply sub_get_case_Some in H4. eauto.
-  - eapply sub_get_case_Some in H5. eauto.
-  - eapply IHc. simpl. eauto. rewrite <-(v_shift_shift 1 1). 
+  eapply HeqSigU.
+  - eapply sub_get_case_Some in H1. eauto.
+  - eapply sub_get_case_Some in H2. eauto.
+  - rewrite hyp_shift_sub. eapply IHc. simpl. eauto.
+    rewrite <-(v_shift_shift 1 1). 
     apply v_shift_typesafe. apply v_shift_typesafe; auto.
-    all: inv H6; inv H8; inv H6. inv H14. all: auto.
+    all: inv H3; apply wf_hyp_ctx in H6; inv H6. inv H9. all: aomega.
   - eauto.
+}{
+intros gets vtys. inv orig.
++ clear VL CL HL RL JL WFHL WFFL WFIL. apply WfHypØ. auto.
++ specialize (WFHL _ _ H) as IHhy.
+  specialize (WFFL _ _ H0) as IHf.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. apply WfHypU; eauto.
+}{
+intros gets vtys. inv orig.
++ specialize (VL _ _ _ H) as IHv1.
+  specialize (VL _ _ _ H0) as IHv2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  apply WfVeq; eauto.
++ specialize (CL _ _ _ H) as IHc1.
+  specialize (CL _ _ _ H0) as IHc2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  apply WfCeq; eauto.
++ specialize (HL _ _ _ _ H2) as IHh1.
+  specialize (HL _ _ _ _ H3) as IHh2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply WfHeq. 2: exact H0. all: eauto.
 }{
 intros gets vtys. destruct orig.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply WfInstØ. auto.
 + specialize (VL _ _ _ H) as IHv.
-  specialize (WF _ _ _ orig) as IHwf.
+  specialize (WFIL _ _ _ orig) as IHwf.
   clear VL CL HL RL JL WFHL WFFL WFIL. 
   simpl. apply WfInstU; eauto.
 }
-Admitted.
+Qed.
 
 
 (* ==================== Safety and Subs. ==================== *)
