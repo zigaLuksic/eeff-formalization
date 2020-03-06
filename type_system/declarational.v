@@ -301,7 +301,7 @@ with judg : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ φ
 
 with judg' : ctx -> hypotheses -> formula -> Prop :=
-
+(* - - - - - - - - - - - - - - -  Values - - - - - - - - - - - - - - -  *)
 | VeqSym Γ Ψ A v1 v2 : 
     judg Γ Ψ (Veq A v1 v2) -> 
     judg' Γ Ψ (Veq A v2 v1)
@@ -345,7 +345,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Veq TyUnit v Unit)
 | ηFun A C Γ Ψ f:
     judg' Γ Ψ (Veq (TyFun A C) (Fun (App (v_shift f 1 0) (Var 0))) f)
-
+(* - - - - - - - - - - - - - - -  Computations - - - - - - - - - - - - - - -  *)
 | CeqSym Γ Ψ C c1 c2 : 
     judg Γ Ψ (Ceq C c1 c2) -> 
     judg' Γ Ψ (Ceq C c2 c1)
@@ -472,7 +472,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
         (c_subs (c_shift c 2 0) (2+n) (ListCons (Var 1) (Var 0)))) )
 | ηDoBind Γ Ψ c C:
     judg' Γ Ψ (Ceq C (DoBind c (Ret (Var 0))) c)
-
+(* - - - - - - - - - - - - - - -  Cases - - - - - - - - - - - - - - -  *)
 | HeqSigØ D Γ Ψ h1 h2: 
     judg' Γ Ψ (Heq SigØ D h1 h2)
 | HeqSigU Σ op A B D Γ Ψ h1 c1 h2 c2:
@@ -481,6 +481,59 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg Γ Ψ (Heq Σ D h1 h2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
+(* - - - - - - - - - - - - - - -  General - - - - - - - - - - - - - - -  *)
+| IsHyp Γ Ψ φ:
+    has_hypothesis Ψ φ ->
+    judg' Γ Ψ φ
+| TruthIn Γ Ψ :
+    judg' Γ Ψ Truth
+| FalsityEl Γ Ψ φ:
+    judg Γ Ψ Falsity ->
+    judg' Γ Ψ φ
+| AndIn Γ Ψ φ1 φ2:
+    judg Γ Ψ φ1 ->
+    judg Γ Ψ φ2 ->
+    judg' Γ Ψ (And φ1 φ2)
+| AndElLeft Γ Ψ φ1 φ2:
+    judg Γ Ψ (And φ1 φ2) ->
+    judg' Γ Ψ φ1
+| AndElRight Γ Ψ φ1 φ2:
+    judg Γ Ψ (And φ1 φ2) ->
+    judg' Γ Ψ φ2
+| OrInLeft Γ Ψ φ1 φ2:
+    judg Γ Ψ φ1 ->
+    judg' Γ Ψ (Or φ1 φ2)
+| OrInRight Γ Ψ φ1 φ2:
+    judg Γ Ψ φ1 ->
+    judg' Γ Ψ (Or φ1 φ2)
+| OrEl Γ Ψ φ1 φ2 Φ:
+    judg Γ Ψ (Or φ1 φ2) ->
+    judg Γ Ψ (Implies φ1 Φ) ->
+    judg Γ Ψ (Implies φ2 Φ) ->
+    judg' Γ Ψ (Implies (Or φ1 φ2) Φ)
+| ImpliesIn Γ Ψ φ1 φ2:
+    judg Γ (HypU Ψ φ1) φ2 ->
+    judg' Γ Ψ (Implies φ1 φ2)
+| ImpliesEl Γ Ψ φ1 φ2:
+    judg Γ Ψ φ1 ->
+    judg Γ Ψ (Implies φ1 φ2) ->
+    judg' Γ Ψ φ2
+| ForallIn Γ Ψ φ A:
+    judg (CtxU Γ A) (hyp_shift Ψ 1 0) φ ->
+    judg' Γ Ψ (Forall A φ)
+| ForallEl Γ Ψ φ v A:
+    judg Γ Ψ (Forall A φ) ->
+    has_vtype Γ v A ->
+    judg' Γ Ψ (form_subs φ 0 v)
+| ExistsIn Γ Ψ φ v A:
+    has_vtype Γ v A ->
+    judg Γ Ψ (form_subs φ 0 v) ->
+    judg' Γ Ψ (Exists A φ)
+| ExistsEl Γ Ψ φ Φ A:
+    judg Γ Ψ (Exists A φ) ->
+    judg (CtxU Γ A) (HypU (hyp_shift Ψ 1 0) φ) Φ ->
+    judg' Γ Ψ Φ
+
 
 with wf_inst : ctx -> instantiation -> ctx -> Prop :=
 | WfInstØ Γcheck : wf_ctx Γcheck -> wf_inst Γcheck InstØ CtxØ

@@ -425,7 +425,7 @@ inv r. eapply Respects; auto. destruct H3.
     apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
-inv orig. apply WfJudg; eauto. clear VL HL WFFL WFHL.
+inv orig. apply WfJudg; eauto. clear HL WFFL WFHL.
 destruct H1.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
@@ -534,6 +534,27 @@ destruct H1.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
++ eapply IsHyp. auto.
++ eapply TruthIn.
++ eapply FalsityEl. eauto.
++ eapply AndIn; eauto.
++ eapply AndElLeft. eauto.
++ eapply AndElRight. eauto.
++ eapply OrInLeft. eauto.
++ eapply OrInRight. eauto.
++ eapply OrEl; eauto.
++ eapply ImpliesIn; eauto.
++ eapply ImpliesEl. instantiate (1:=φ1). all:eauto.
++ eapply ForallIn. eapply JL. eauto.
+  - apply WfCtxU; auto. inv H1. apply wf_hyp_ctx in H3. inv H3. auto.
+  - apply SubtypeCtxU. auto. apply vsubtype_refl.
+    inv H1. apply wf_hyp_ctx in H3. inv H3. auto. 
++ eapply ForallEl; eauto.
++ eapply ExistsIn; eauto.
++ eapply ExistsEl; eauto. eapply JL. eauto.
+  - apply WfCtxU; auto. inv H2. apply wf_hyp_ctx in H4. inv H4. auto.
+  - apply SubtypeCtxU. auto. apply vsubtype_refl.
+    inv H2. apply wf_hyp_ctx in H4. inv H4. auto.
 }{
 intros wfc ctxsty.
 inv wf.
