@@ -187,7 +187,14 @@ Fixpoint form_shift φ d cut :=
   match φ with
   | Veq A v1 v2 => Veq A (v_shift v1 d cut) (v_shift v2 d cut) 
   | Ceq C c1 c2 => Ceq C (c_shift c1 d cut) (c_shift c2 d cut) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_shift h1 d cut) (h_shift h2 d cut) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_shift h1 d cut) (h_shift h2 d cut)
+  | Truth => Truth
+  | Falsity => Falsity
+  | And φ1 φ2 => And (form_shift φ1 d cut) (form_shift φ2 d cut)
+  | Or φ1 φ2 => Or (form_shift φ1 d cut) (form_shift φ2 d cut)
+  | Implies φ1 φ2 => Implies (form_shift φ1 d cut) (form_shift φ2 d cut)
+  | Forall A φ => Forall A (form_shift φ d (1+cut))
+  | Exists A φ => Exists A (form_shift φ d (1+cut))
   end.
 
 Fixpoint hyp_shift Ψ d cut :=
@@ -202,6 +209,13 @@ Fixpoint form_negshift φ d cut :=
   | Veq A v1 v2 => Veq A (v_negshift v1 d cut) (v_negshift v2 d cut) 
   | Ceq C c1 c2 => Ceq C (c_negshift c1 d cut) (c_negshift c2 d cut) 
   | Heq Σ D h1 h2 => Heq Σ D (h_negshift h1 d cut) (h_negshift h2 d cut) 
+  | Truth => Truth
+  | Falsity => Falsity
+  | And φ1 φ2 => And (form_negshift φ1 d cut) (form_negshift φ2 d cut)
+  | Or φ1 φ2 => Or (form_negshift φ1 d cut) (form_negshift φ2 d cut)
+  | Implies φ1 φ2 => Implies (form_negshift φ1 d cut) (form_negshift φ2 d cut)
+  | Forall A φ => Forall A (form_negshift φ d (1+cut))
+  | Exists A φ => Exists A (form_negshift φ d (1+cut))
   end.
 
 Fixpoint hyp_negshift Ψ d cut :=
@@ -214,7 +228,14 @@ Fixpoint form_sub φ sub :=
   match φ with
   | Veq A v1 v2 => Veq A (v_sub v1 sub) (v_sub v2 sub) 
   | Ceq C c1 c2 => Ceq C (c_sub c1 sub) (c_sub c2 sub) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_sub h1 sub) (h_sub h2 sub) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_sub h1 sub) (h_sub h2 sub)
+  | Truth => Truth
+  | Falsity => Falsity
+  | And φ1 φ2 => And (form_sub φ1 sub) (form_sub φ2 sub)
+  | Or φ1 φ2 => Or (form_sub φ1 sub) (form_sub φ2 sub)
+  | Implies φ1 φ2 => Implies (form_sub φ1 sub) (form_sub φ2 sub)
+  | Forall A φ => Forall A (form_sub φ (sub_shift sub 1))
+  | Exists A φ => Exists A (form_sub φ (sub_shift sub 1))
   end.
 
 Fixpoint hyp_sub Ψ sub :=
@@ -227,7 +248,14 @@ Fixpoint form_subs φ i vs :=
   match φ with
   | Veq A v1 v2 => Veq A (v_subs v1 i vs) (v_subs v2 i vs) 
   | Ceq C c1 c2 => Ceq C (c_subs c1 i vs) (c_subs c2 i vs) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_subs h1 i vs) (h_subs h2 i vs) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_subs h1 i vs) (h_subs h2 i vs)
+  | Truth => Truth
+  | Falsity => Falsity
+  | And φ1 φ2 => And (form_subs φ1 i vs) (form_subs φ2 i vs)
+  | Or φ1 φ2 => Or (form_subs φ1 i vs) (form_subs φ2 i vs)
+  | Implies φ1 φ2 => Implies (form_subs φ1 i vs) (form_subs φ2 i vs)
+  | Forall A φ => Forall A (form_subs φ (1+i) (v_shift vs 1 0))
+  | Exists A φ => Exists A (form_subs φ (1+i) (v_shift vs 1 0))
   end.
 
 Fixpoint hyp_subs Ψ i vs :=
@@ -336,7 +364,14 @@ Fixpoint form_inst φ I :=
   match φ with
   | Veq A v1 v2 => Veq A (v_inst v1 I) (v_inst v2 I) 
   | Ceq C c1 c2 => Ceq C (c_inst c1 I) (c_inst c2 I) 
-  | Heq Σ D h1 h2 => Heq Σ D (h_inst h1 I) (h_inst h2 I) 
+  | Heq Σ D h1 h2 => Heq Σ D (h_inst h1 I) (h_inst h2 I)
+  | Truth => Truth
+  | Falsity => Falsity
+  | And φ1 φ2 => And (form_inst φ1 I) (form_inst φ2 I)
+  | Or φ1 φ2 => Or (form_inst φ1 I) (form_inst φ2 I)
+  | Implies φ1 φ2 => Implies (form_inst φ1 I) (form_inst φ2 I)
+  | Forall A φ => Forall A (form_inst φ (InstU (inst_shift I 1 0) (Var 0)))
+  | Exists A φ => Exists A (form_inst φ (InstU (inst_shift I 1 0) (Var 0)))
   end.
 
 Fixpoint hyp_inst Ψ I :=

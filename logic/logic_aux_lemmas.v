@@ -12,7 +12,7 @@ Lemma heq_cases_ceq Σ D Γ Ψ h1 h2 op A B c1 c2 :
   judg Γ Ψ (Heq Σ D h1 h2) -> get_op_type Σ op = Some (A, B) ->
   get_case h1 op = Some c1 ->
   get_case h2 op = Some c2 ->
-  judg (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2).
+  judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2).
 Proof.
 intros eqs gets finds1 finds2.
 induction Σ. simpl in gets. discriminate.
@@ -48,12 +48,12 @@ intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
   clear A1 B1 get1 A2 B2 get2.
   eapply HeqSigU; eauto.
   assert 
-    (judg (CtxU (CtxU Γ (TyFun B'0 D)) A'0) (hyp_shift Ψ 2 0) (Ceq D c1 c2)).
+    (judg (CtxU (CtxU Γ A'0) (TyFun B'0 D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2)).
   - eapply heq_cases_ceq. 2: eauto. all: eauto.
     eapply WfJudg; eauto. eapply WfHeq. 2: exact H8. all: eauto.
   - eapply ctx_subtype_judg; eauto.
-    * inv H10. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
-    * apply SubtypeCtxU. apply SubtypeCtxU. 2: apply SubtypeTyFun. all: auto.
+    * inv H10. apply WfCtxU. apply WfCtxU. 3: apply WfTyFun. all: auto.
+    * apply SubtypeCtxU. apply SubtypeCtxU. 3: apply SubtypeTyFun. all: auto.
       all: inv H10; (apply ctx_subtype_refl || apply csubtype_refl); auto.
 Qed.
 
@@ -260,15 +260,15 @@ Qed.
 Lemma heq_case_extend_trivial Σ D Γ Ψ h1 h2 op A1 A2 B1 B2 c1 c2:
   judg Γ Ψ (Heq Σ D h1 h2) ->
   get_case h1 op = None -> get_case h2 op = None ->
-  has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
-  has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
+  has_ctype (CtxU (CtxU Γ A1) (TyFun B1 D)) c1 D ->
+  has_ctype (CtxU (CtxU Γ A2) (TyFun B2 D)) c2 D ->
   judg Γ Ψ (Heq Σ D (CasesU h1 op c1) (CasesU h2 op c2)).
 Proof.
 intros orig f1 f2 tys1 tys2.
-assert (wf_vtype A1) as wfa1 by (inv tys1; inv H; auto).
-assert (wf_vtype A2) as wfa2 by (inv tys2; inv H; auto).
-assert (wf_vtype B1) as wfb1 by (inv tys1; inv H; inv H4; inv H6; auto).
-assert (wf_vtype B2) as wfb2 by (inv tys2; inv H; inv H4; inv H6; auto).
+assert (wf_vtype A1) as wfa1 by (inv tys1; inv H; inv H4; auto).
+assert (wf_vtype A2) as wfa2 by (inv tys2; inv H; inv H4; auto).
+assert (wf_vtype B1) as wfb1 by (inv tys1; inv H; inv H5; auto).
+assert (wf_vtype B2) as wfb2 by (inv tys2; inv H; inv H5; auto).
 assert (wf_ctype D) as wfd by (inv tys1; auto).
 assert (wf_ctx Γ) as wfctx by (inv orig; inv H; inv H10; auto).
 inv orig. inv H.
@@ -306,16 +306,16 @@ Qed.
 Lemma heq_case_extend_structural Σ D Γ Ψ h1 h2 op A B c1 c2:
   judg Γ Ψ (Heq Σ D h1 h2) ->
   get_case h1 op = None -> get_case h2 op = None ->
-  judg (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
+  judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
   judg Γ Ψ (Heq (SigU Σ op A B) D (CasesU h1 op c1) (CasesU h2 op c2)).
 Proof.
 intros orig f1 f2 ceq12.
-assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D) as tys1.
+assert (has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c1 D) as tys1.
 { inv ceq12. inv H. auto. }
-assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D) as tys2.
+assert (has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c2 D) as tys2.
 { inv ceq12. inv H. auto. }
-assert (wf_vtype A) as wfa by (inv tys1; inv H; auto).
-assert (wf_vtype B) as wfb by (inv tys1; inv H; inv H4; inv H6; auto).
+assert (wf_vtype A) as wfa by (inv tys1; inv H; inv H4; auto).
+assert (wf_vtype B) as wfb by (inv tys1; inv H; inv H5; auto).
 assert (wf_ctype D) as wfd by (inv tys1; auto).
 assert (wf_ctx Γ) as wfctx by (inv orig; inv H; inv H10; auto).
 inv orig. inv H.

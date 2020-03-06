@@ -42,7 +42,7 @@ with comp : Type :=
 
 with hcases : Type :=
 | CasesØ : hcases
-| CasesU : hcases -> op_id -> comp -> hcases (* x~0 k~1 *)
+| CasesU : hcases -> op_id -> comp -> hcases (* x~1 k~0 *)
 
 with vtype : Type :=
 | TyUnit : vtype
@@ -151,7 +151,14 @@ Fixpoint join_ctxs Γ1 Γ2 :=
 Inductive formula : Type :=
   | Veq : vtype -> val -> val -> formula
   | Ceq : ctype -> comp -> comp -> formula
-  | Heq : sig -> ctype -> hcases -> hcases -> formula.
+  | Heq : sig -> ctype -> hcases -> hcases -> formula
+  | Truth : formula
+  | Falsity : formula
+  | And : formula -> formula -> formula
+  | Or : formula -> formula -> formula
+  | Implies : formula -> formula -> formula
+  | Forall : vtype -> formula -> formula
+  | Exists : vtype -> formula -> formula.
 
 Inductive hypotheses : Type :=
   | HypØ : hypotheses

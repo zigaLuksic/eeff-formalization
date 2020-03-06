@@ -51,7 +51,6 @@ Inductive step : comp -> comp -> Prop :=
     get_case h op = Some c_op ->
     step
       (Handle (Handler c_r h) (Op op v c_k))
-      (c_subs2_out c_op
-        (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k))
-        v )
+      (c_subs2_out c_op v
+        (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) )
 .

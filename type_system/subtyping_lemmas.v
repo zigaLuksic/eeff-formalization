@@ -540,6 +540,15 @@ inv wf.
 + apply WfVeq; eauto.
 + apply WfCeq; eauto.
 + eapply WfHeq. 2: exact H0. 2: exact H1. all: eauto.
++ apply WfTruth. auto.
++ apply WfFalsity. auto.
++ apply WfAnd; eauto.
++ apply WfOr; eauto.
++ apply WfImplies; eauto.
++ apply WfForall; eauto. eapply WFFL; eauto.
+  apply WfCtxU; auto. apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
++ apply WfExists; eauto. eapply WFFL; eauto.
+  apply WfCtxU; auto. apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
 }{
 intros wfc ctxsty.
 inv wf.
@@ -1147,7 +1156,7 @@ Qed.
 Lemma case_has_type Γ h Σ D op A B c:
   has_htype Γ h Σ D -> get_op_type Σ op = Some (A, B) ->
   get_case h op = Some c ->
-  has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c D.
+  has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c D.
 Proof.
 revert Σ. induction h; intros Σ tys gets finds.
 simpl in finds. discriminate.

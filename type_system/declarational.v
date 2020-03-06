@@ -29,7 +29,7 @@ Fixpoint handle_t Γ_len Z_len h T :=
       match get_case h op with 
       | Some c_op =>
           c_subs2_out (c_shift c_op (Γ_len + Z_len) 2) 
-              (Fun (handle_t (1+Γ_len) Z_len h T)) v
+            v (Fun (handle_t (1+Γ_len) Z_len h T))
       | None => 
           (* You shouldn't be here *)
           Op op v (handle_t (1+Γ_len) Z_len h T) 
@@ -132,6 +132,27 @@ with wf_form : ctx -> formula -> Prop :=
     wf_sig Σ -> sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
     has_htype Γ h1 Σ1 D -> has_htype Γ h2 Σ2 D ->
     wf_form Γ (Heq Σ D h1 h2)
+| WfTruth Γ : 
+    wf_ctx Γ ->
+    wf_form Γ Truth
+| WfFalsity Γ :
+    wf_ctx Γ ->
+    wf_form Γ Truth
+| WfAnd φ1 φ2 Γ : 
+    wf_form Γ φ1 -> wf_form Γ φ2 ->
+    wf_form Γ (And φ1 φ2)
+| WfOr φ1 φ2 Γ :
+    wf_form Γ φ1 -> wf_form Γ φ2 ->
+    wf_form Γ (Or φ1 φ2)
+| WfImplies φ1 φ2 Γ :
+    wf_form Γ φ1 -> wf_form Γ φ2 ->
+    wf_form Γ (Implies φ1 φ2)
+| WfForall A φ Γ :
+    wf_vtype A -> wf_form (CtxU Γ A) φ ->
+    wf_form Γ (Forall A φ)
+| WfExists A φ Γ :
+    wf_vtype A -> wf_form (CtxU Γ A) φ ->
+    wf_form Γ (Exists A φ)
 
 with wf_hyp : ctx -> hypotheses -> Prop :=
 | WfHypØ Γ:
@@ -251,7 +272,7 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesU Γ h op cop Aop Bop Σ D :
     get_case h op = None ->
     has_htype Γ h Σ D ->
-    has_ctype (CtxU (CtxU Γ (TyFun Bop D)) Aop) cop D ->
+    has_ctype (CtxU (CtxU Γ Aop) (TyFun Bop D)) cop D ->
     has_htype' Γ (CasesU h op cop) (SigU Σ op Aop Bop) D
 
 (* ==================== Logic Judgements ==================== *)
@@ -429,8 +450,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     (Ceq C
       (Handle (Handler c_r h) (Op op v c_k))
       (c_subs2_out c_op
-        (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k))
-        v ) )
+        v (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) ) )
 | ηPair Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyΠ A B)) c C ->
@@ -458,7 +478,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | HeqSigU Σ op A B D Γ Ψ h1 c1 h2 c2:
     get_case h1 op = Some c1 ->
     get_case h2 op = Some c2 ->
-    judg (CtxU (CtxU Γ (TyFun B D)) A) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
+    judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg Γ Ψ (Heq Σ D h1 h2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
 

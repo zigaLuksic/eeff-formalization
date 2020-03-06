@@ -119,12 +119,12 @@ Proof.
 induction I; simpl; f_equal; auto. apply v_shift_shift.
 Qed.
 
-Lemma form_shift_shift n m cut φ :
+Fixpoint form_shift_shift n m cut φ :
   form_shift (form_shift φ n cut) m cut = form_shift φ (n+m) cut.
 Proof.
-destruct φ; simpl; f_equal.
+destruct φ; simpl; f_equal; auto.
 all: rewrite v_shift_shift || rewrite c_shift_shift || rewrite h_shift_shift.
-all: auto.
+all: aomega.
 Qed.
 
 Lemma hyp_shift_shift n m cut Ψ :
@@ -211,12 +211,13 @@ Proof.
 intros. induction I; simpl; f_equal; auto. apply v_shift_comm. omega.
 Qed.
 
-Lemma form_shift_comm n i j d φ:
+Fixpoint form_shift_comm n i j d φ:
   i>=j ->
   form_shift (form_shift φ n i) d j = form_shift (form_shift φ d j) n (d+i).
 Proof.
-intros. destruct φ; simpl; f_equal.
-all: rewrite v_shift_comm || rewrite c_shift_comm || rewrite h_shift_comm.
+intros. destruct φ; simpl; f_equal; auto.
+all: rewrite v_shift_comm || rewrite c_shift_comm || rewrite h_shift_comm 
+  || rewrite form_shift_comm.
 all: aomega.
 Qed.
 
@@ -639,9 +640,11 @@ Fixpoint form_shift_sub φ v' i cut j {struct φ}:
     form_shift (form_sub φ (j, v')) i cut 
   = form_sub (form_shift φ i cut) (i+j, v_shift v' i cut).
 Proof.
-intros safe. destruct φ; simpl; f_equal.
-all: rewrite v_shift_sub || rewrite c_shift_sub || rewrite h_shift_sub.
+intros safe. destruct φ; simpl; f_equal; auto.
+all: rewrite v_shift_sub || rewrite c_shift_sub || rewrite h_shift_sub
+|| rewrite form_shift_sub.
 all: aomega.
+all: rewrite (v_shift_comm i); try do 2 f_equal; aomega.
 Qed.
 
 Fixpoint hyp_shift_sub Ψ v' i cut j {struct Ψ}:
@@ -954,10 +957,11 @@ Fixpoint form_shift_subs_alt φ v' i j (safe: i <= j) {struct φ}:
     form_shift (form_subs φ j v') 1 i 
   = form_subs (form_shift φ 1 i) (1+j) (v_shift v' 1 i).
 Proof.
-destruct φ; simpl; f_equal.
+destruct φ; simpl; f_equal; auto.
 all: rewrite v_shift_subs_alt || rewrite c_shift_subs_alt 
-  || rewrite h_shift_subs_alt.
+  || rewrite h_shift_subs_alt || rewrite form_shift_subs_alt.
 all: aomega.
+all: rewrite (v_shift_comm 1 i); try do 2 f_equal; aomega.
 Qed.
 
 Fixpoint hyp_shift_subs_alt Ψ v' i j (safe: i <= j) {struct Ψ}:
@@ -1381,12 +1385,13 @@ all: apply c_shift_inst; auto.
 Qed.
 
 
-Lemma form_shift_inst I φ d cut :
+Fixpoint form_shift_inst I φ d cut :
   form_shift (form_inst φ I) d cut = form_inst φ (inst_shift I d cut).
 Proof.
-destruct φ; simpl; f_equal.
-all: rewrite v_shift_inst || rewrite c_shift_inst || rewrite h_shift_inst.
-all: auto.
+destruct φ; simpl; f_equal; auto.
+all: rewrite v_shift_inst || rewrite c_shift_inst || rewrite h_shift_inst
+  || rewrite form_shift_inst.
+all: aomega; simpl; rewrite (inst_shift_comm d); try do 2 f_equal; aomega.
 Qed.
 
 

@@ -116,20 +116,18 @@ all: try unfold c_subs2_out.
   assert (wf_vtype Bop) by (inv H5; inv H6; auto).
   assert (wf_ctype D') by (inv hcty; auto).
   eapply c_subs_out_typesafe.
-  instantiate (1:= TyFun Bop D').
-  eapply c_subs_out_typesafe.
   instantiate (1:= Aop).
+  eapply c_subs_out_typesafe.
+  instantiate (1:= TyFun Bop D').
   - eapply sig_subtype_get_Some in gets; eauto.
     destruct gets as [A'[B'[gets']]]. inv H8.
     eapply ctx_subtype_ctype. eapply case_has_type; eauto.
-    * apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
+    * apply WfCtxU. apply WfCtxU. 3: apply WfTyFun. all: auto.
     * apply SubtypeCtxU. apply SubtypeCtxU.
-      apply ctx_subtype_refl; auto. apply SubtypeTyFun; auto.
-      apply csubtype_refl. all: auto.
-  - assert (CtxU Γ (TyFun Bop D') = ctx_insert Γ 0 (TyFun Bop D')).
-    { destruct Γ; simpl; reflexivity. }
-    rewrite H8. eapply v_insert_typesafe. auto. apply WfTyFun; auto.
-  - apply TypeV. auto. apply WfTyFun; auto.
+      apply ctx_subtype_refl; auto. auto.
+      apply SubtypeTyFun; auto. apply csubtype_refl. all: auto.
+  - apply v_shift_typesafe. 2: (inv H4; auto).
+    apply TypeV. auto. apply WfTyFun; auto.
     eapply TypeFun. apply TypeC. apply WfCtxU. all: auto.
     eapply TypeHandle. 2: exact H5.
     assert (CtxU Γ Bop = ctx_insert Γ 0 Bop) by (destruct Γ; simpl; auto).
@@ -144,6 +142,7 @@ all: try unfold c_subs2_out.
       apply vsubtype_refl. inv H5. inv H10. auto.
       eapply eqs_subtype_refl. inv H5. inv H10. eauto.
       apply csubtype_refl. auto.
+  - auto.
 Qed.
 
 (* ==================== Progress ==================== *)
