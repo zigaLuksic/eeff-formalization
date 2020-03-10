@@ -341,6 +341,10 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Heq Σ D' h h') ->
     csubtype D' D ->
     judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h'))
+| VeqSubtype Γ Ψ A A' v1 v2 :
+    judg Γ Ψ (Veq A v1 v2) ->
+    vsubtype A A' ->
+    judg' Γ Ψ (Veq A' v1 v2)
 | ηUnit Γ Ψ v:
     judg' Γ Ψ (Veq TyUnit v Unit)
 | ηFun A C Γ Ψ f:
@@ -394,6 +398,10 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Veq Aop v v') ->
     judg (CtxU Γ Bop) (hyp_shift Ψ 1 0) (Ceq (CTy A Σ E) c c') ->
     judg' Γ Ψ (Ceq (CTy A Σ E) (Op op v c) (Op op v' c'))
+| CeqSubtype Γ Ψ C C' c1 c2 :
+    judg Γ Ψ (Ceq C c1 c2) ->
+    csubtype C C' ->
+    judg' Γ Ψ (Ceq C' c1 c2)
 | OOTB A Σ E Γ' Ψ I Γ Z T1 T2 c1 c2:
     has_eq E Γ Z T1 T2 ->
     wf_inst Γ' I (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
@@ -473,6 +481,13 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | ηDoBind Γ Ψ c C:
     judg' Γ Ψ (Ceq C (DoBind c (Ret (Var 0))) c)
 (* - - - - - - - - - - - - - - -  Cases - - - - - - - - - - - - - - -  *)
+| HeqSym Γ Ψ Σ D h1 h2 : 
+    judg Γ Ψ (Heq Σ D h1 h2) -> 
+    judg' Γ Ψ (Heq Σ D h2 h1)
+| HeqTrans Γ Ψ Σ D h1 h2 h3 : 
+    judg Γ Ψ (Heq Σ D h1 h2) ->
+    judg Γ Ψ (Heq Σ D h2 h3) -> 
+    judg' Γ Ψ (Heq Σ D h1 h3)
 | HeqSigØ D Γ Ψ h1 h2: 
     judg' Γ Ψ (Heq SigØ D h1 h2)
 | HeqSigU Σ op A B D Γ Ψ h1 c1 h2 c2:
@@ -481,6 +496,15 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg Γ Ψ (Heq Σ D h1 h2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
+| HeqExtend Γ Ψ op h1 h2 c1 c2 A B Σ D:
+    judg Γ Ψ (Heq Σ D h1 h2) ->
+    get_case h1 op = None -> get_case h2 op = None ->
+    judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
+    judg' Γ Ψ (Heq (SigU Σ op A B) D (CasesU h1 op c1) (CasesU h2 op c2))
+| HeqSubtype Γ Ψ Σ Σ' D D' h1 h2 :
+    judg Γ Ψ (Heq Σ D h1 h2) ->
+    sig_subtype Σ' Σ -> csubtype D D' ->
+    judg' Γ Ψ (Heq Σ' D' h1 h2)
 (* - - - - - - - - - - - - - - -  General - - - - - - - - - - - - - - -  *)
 | IsHyp Γ Ψ φ:
     has_hypothesis Ψ φ ->

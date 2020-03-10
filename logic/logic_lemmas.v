@@ -111,8 +111,7 @@ destruct orig. destruct H1.
     apply vseq_ext. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
-+ assert (judg Γ Ψ (Veq A' (v_subs v i v_s) (v_subs v i v_s'))).
-  eapply veq_subtype. 2: reflexivity. all: eauto. inv H3. assumption.
++ eapply VeqSubtype; eauto.
 }{
 assert (forall A B, wf_vtype A -> wf_vtype B -> 
 judg (CtxU (CtxU Γ B) A) (hyp_shift Ψ 2 0) 
@@ -171,34 +170,36 @@ destruct orig. destruct H1.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
   apply vseq_ext. inv H3. inv H4. assumption.
   subst. apply ctx_insert_extend. simpl. all: omega.
-+ assert (judg Γ Ψ (Ceq C' (c_subs c i v_s) (c_subs c i v_s'))).
-  eapply ceq_subtype. 2: reflexivity. all: eauto. inv H3. assumption.
++ eapply CeqSubtype; eauto.
 }{
 (* Delaying the WfJudg allows us to use the heq_case_extend_structural. *)
+apply WfJudg. eapply WfHeq.
+{ inv orig. auto. }
+{ apply sig_subtype_refl. inv orig. auto. }
+{ apply sig_subtype_refl. inv orig. auto. }
+{ inv vseq. inv H. eapply h_subs_typesafe; eauto. }
+{ inv vseq. inv H. eapply h_subs_typesafe; eauto. }
+{ inv vseq. auto. }
 destruct orig. destruct H2.
 + clear VEQ CEQ HEQ. 
-  unfold h_subs; simpl.
-  apply WfJudg. eapply WfHeq. auto.
-  all: apply HeqSigØ || apply TypeH || apply sig_subtype_refl || auto.
-  all: apply WfSigØ || apply TypeCasesØ || inv vseq; auto.
-  all: inv H2; inv H8; auto.
-+ unfold h_subs in *. unfold c_subs in *. simpl.
-  eapply HEQ in H3; eauto. eapply CEQ in H4. all: clear VEQ CEQ HEQ.
+  unfold h_subs; simpl. apply HeqSigØ.
++ unfold h_subs in *. unfold c_subs in *. simpl in *.
+  eapply HEQ in H3; eauto. eapply CEQ in H4.
+  all: clear VEQ CEQ HEQ.
   4: instantiate (2:=CtxU (CtxU Γ Aop) (TyFun Bop D)).
-  Focus 3. 
+  Focus 3.
     erewrite <-ctx_insert_extend. f_equal. erewrite <-ctx_insert_extend.
     f_equal. eauto.
   Focus 2.
     eapply judg_shift_typesafe in vseq. eapply judg_shift_typesafe in vseq.
     simpl in vseq. eauto. apply WfTyFun. all: inv H0; auto.
-  simpl in H4.
-  eapply heq_case_extend_structural; auto.
-  all: try rewrite v_shift_shift, v_shift_shift in H4; simpl in *.
-  - apply negshift_get_case_None. apply sub_get_case_None. assumption.
-  - apply negshift_get_case_None. apply sub_get_case_None. assumption.
-  - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). 
-    rewrite hyp_shift_shift in H4. assumption. all: omega.
-  - omega.
+  apply HeqExtend; eauto.
+  - apply negshift_get_case_None. apply sub_get_case_None. auto.
+  - apply negshift_get_case_None. apply sub_get_case_None. auto.
+  - rewrite v_shift_comm, (v_shift_comm 1 i).
+    rewrite v_shift_shift, v_shift_shift, hyp_shift_shift in H4.
+    simpl in *. all: eaomega.
+  - simpl. omega.
 }
 Qed.
 

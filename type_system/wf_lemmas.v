@@ -158,5 +158,4 @@ intros wf' subset.
 induction subset.
 - apply WfHypØ. eapply wf_hyp_ctx. eauto.
 - apply WfHypU; auto. eapply wf_has_hypothesis; eauto.
-  eapply hyp_subset_has_hypothesis; eauto.
 Qed.

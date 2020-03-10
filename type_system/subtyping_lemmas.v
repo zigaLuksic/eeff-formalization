@@ -65,6 +65,16 @@ intros subty eq. induction subty.
 auto. subst. simpl in H. destruct H.
 Qed.
 
+
+Lemma hyp_subset_extend Ψ Ψ' φ :
+  hyp_subset Ψ Ψ' -> hyp_subset Ψ (HypU Ψ' φ).
+Proof.
+intros. induction Ψ.
++ apply SubsetHypØ.
++ eapply SubsetHypU; eauto. inv H. auto. 
+  simpl. right. inv H. auto.
+Qed.
+
 (* ==================== Reflexivity and Transitivity ==================== *)
 
 Lemma vsubtype_refl v : wf_vtype v -> vsubtype v v
@@ -447,6 +457,7 @@ destruct H1.
   all: inv H; inv H9; inv H4; inv H9; eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
++ eapply VeqSubtype; eauto.
 + apply ηUnit.
 + apply ηFun.
 + apply CeqSym. eauto.
@@ -491,6 +502,7 @@ destruct H1.
   all: inv H3; inv H4; inv H9; inv H3.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
++ eapply CeqSubtype; eauto.
 + eapply OOTB; eauto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
@@ -527,6 +539,8 @@ destruct H1.
   - eapply ctx_subtype_insert. auto.
     apply vsubtype_refl. auto.
 + eapply ηDoBind.
++ apply HeqSym. eauto.
++ eapply HeqTrans; eauto.
 + apply HeqSigØ.
 + eapply HeqSigU; eauto.
   eapply JL; eauto.
@@ -534,6 +548,13 @@ destruct H1.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
++ eapply HeqExtend; eauto.
+  eapply JL; eauto.
+  all: inv H4; apply wf_hyp_ctx in H6; inv H6; inv H9.
+  - apply WfCtxU. apply WfCtxU. all: auto.
+  - apply SubtypeCtxU. apply SubtypeCtxU. auto.
+    all: apply vsubtype_refl; auto.
++ eapply HeqSubtype; eauto.
 + eapply IsHyp. auto.
 + eapply TruthIn.
 + eapply FalsityEl. eauto.

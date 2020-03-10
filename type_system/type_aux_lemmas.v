@@ -578,6 +578,9 @@ simpl. eapply VeqListNil.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply VeqHandler; eauto.
   rewrite ctx_insert_extend, hyp_shift_comm; eaomega.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in IH. eapply VeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply ηUnit.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -636,6 +639,9 @@ simpl. eapply VeqListNil.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply CeqOp; eauto.
   rewrite ctx_insert_extend, hyp_shift_comm; eaomega.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in IH. eapply CeqSubtype; eauto.
 + specialize (WFIL _ _ _ H2) as IHwf.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   eapply OOTB; eauto.
@@ -736,6 +742,13 @@ simpl. eapply VeqListNil.
     rewrite ctx_insert_comm; try omega. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply ηDoBind.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  apply HeqSym. eauto.
++ specialize (JL _ _ _ H1) as IH1.
+  specialize (JL _ _ _ H2) as IH2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply HeqTrans; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   eapply HeqSigØ. 
 + specialize (JL _ _ _ H3) as IHc.
@@ -746,6 +759,15 @@ simpl. eapply VeqListNil.
   - eapply shift_get_case_Some in H2. eauto.
   - rewrite ctx_insert_extend, ctx_insert_extend, hyp_shift_comm; eaomega.
   - eauto.
++ specialize (JL _ _ _ H1) as IH1.
+  specialize (JL _ _ _ H4 A_ins (2+i)) as IH2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. eapply HeqExtend; eauto.
+  all: try apply shift_get_case_None; auto.
+  rewrite hyp_shift_comm; aomega.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in IH. eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply IsHyp. apply has_hypothesis_shift. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1006,6 +1028,7 @@ destruct orig. destruct H1.
   - apply wf_hyp_shift_typesafe; auto.
     inv H1. apply wf_hyp_ctx in H5. inv H5. auto.
   - apply hyp_subset_shift. auto.
++ eapply VeqSubtype; eauto.
 + apply ηUnit.
 + apply ηFun.
 + apply CeqSym. eauto.
@@ -1057,6 +1080,7 @@ destruct orig. destruct H1.
   - apply wf_hyp_shift_typesafe; auto.
     inv H3. apply wf_hyp_ctx in H5. inv H5. auto.
   - apply hyp_subset_shift. auto.
++ eapply CeqSubtype; eauto.
 + eapply OOTB; eauto.
 + eapply βΠMatch.
 + eapply βΣMatch_Inl.
@@ -1073,6 +1097,8 @@ destruct orig. destruct H1.
 + eapply ηSum; eauto.
 + eapply ηList; eauto.
 + eapply ηDoBind; eauto.
++ eapply HeqSym; eauto.
++ eapply HeqTrans; eauto.
 + eapply HeqSigØ.
 + eapply HeqSigU; eauto.
   eapply hypotheses_weakening; eauto.
@@ -1081,6 +1107,13 @@ destruct orig. destruct H1.
     apply wf_hyp_shift_typesafe; auto.
     all: inv H3; apply wf_hyp_ctx in H6; inv H6. inv H9. auto. auto.
   - apply hyp_subset_shift. auto.
++ eapply HeqExtend; eauto.  eapply hypotheses_weakening; eauto.
+  - rewrite <-(hyp_shift_shift 1).
+    apply wf_hyp_shift_typesafe; auto.
+    apply wf_hyp_shift_typesafe; auto.
+    all: inv H; inv H9; inv H13; auto. apply WfTyFun; auto. 
+  - apply hyp_subset_shift. auto.
++ eapply HeqSubtype; eauto.
 + apply IsHyp. eapply hyp_subset_has_hypothesis; eauto.
 + apply TruthIn.
 + apply FalsityEl. eauto.
@@ -1091,16 +1124,21 @@ destruct orig. destruct H1.
 + apply OrInRight. eauto.
 + apply OrEl; eauto.
 + apply ImpliesIn. eapply hypotheses_weakening; eauto. 
-  apply WfHypU. auto. inv H. auto.
-  admit.
+  apply WfHypU. auto. inv H. auto. apply SubsetHypU.
+  apply hyp_subset_extend. auto. simpl. left. auto.
 + eapply ImpliesEl. 2: eauto. eauto.
 + apply ForallIn. eapply hypotheses_weakening; eauto.
-  admit. admit.
+  apply wf_hyp_shift_typesafe; auto. inv H. auto.
+  apply hyp_subset_shift. auto.
 + eapply ForallEl; eauto.
 + eapply ExistsIn; eauto.
 + eapply ExistsEl. eauto. eapply hypotheses_weakening; eauto.
-  apply WfHypU. admit. inv H1. inv H3. auto. admit. 
-Admitted.
+  - apply WfHypU. apply wf_hyp_shift_typesafe; auto. 
+    all: inv H1; inv H3; auto.
+  - apply SubsetHypU. apply hyp_subset_extend.
+    apply hyp_subset_shift. auto.
+    simpl. left. auto. 
+Qed.
 
 (* ==================== Better Logic Reflexivity. ==================== *)
 
@@ -1314,10 +1352,7 @@ destruct orig. destruct H1.
   destruct (i0 =? i) eqn:cmp.
   - apply (veq_refl _ (hyp_sub Ψ (i, v_s))) in tyvs; auto.
     inv H1. apply Nat.eqb_eq in cmp. subst. rewrite gets in H4.
-    inv H4. admit.
-    (* eapply veq_subtype in tyvs; eauto. inv tyvs. assumption. *)
-    (* inv H. inv H5. auto.  *)
-    eauto.
+    inv H4. eapply VeqSubtype; eauto. eauto.
   - eapply VeqVar; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply VeqUnit.
@@ -1352,6 +1387,9 @@ destruct orig. destruct H1.
   - simpl. eauto.
   - apply v_shift_typesafe; auto. inv H. inv H7. inv H4. inv H8. auto.
   - omega.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. eapply VeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply ηUnit.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1436,6 +1474,9 @@ destruct orig. destruct H1.
   apply v_shift_typesafe. assumption.
   apply get_op_type_wf in H1. destruct H1. assumption.
   inv H. inv H7. inv H4. auto. omega.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. eapply CeqSubtype; eauto.
 + specialize (WFIL _ _ _ H2) as IHwf.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   clear H2. eapply OOTB; eauto.
@@ -1553,7 +1594,15 @@ destruct orig. destruct H1.
     * erewrite <-get_ctx_insert_unchanged. eauto. omega.
     * apply v_insert_typesafe; auto. inv H2. 
       apply wf_ctx_insert_vtype in H3. auto. omega.
-+ clear VL CL HL RL JL WFHL WFFL WFIL. simpl. apply ηDoBind.
++ clear VL CL HL RL JL WFHL WFFL WFIL. 
+  simpl. apply ηDoBind.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply HeqSym; eauto.
++ specialize (JL _ _ _ H1) as IH1.
+  specialize (JL _ _ _ H2) as IH2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. eapply HeqTrans; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   eapply HeqSigØ. 
 + specialize (JL _ _ _ H3) as IHc.
@@ -1567,6 +1616,19 @@ destruct orig. destruct H1.
     apply v_shift_typesafe. apply v_shift_typesafe; auto.
     all: inv H3; apply wf_hyp_ctx in H6; inv H6. inv H9. all: aomega.
   - eauto.
++ specialize (JL _ _ _ H1) as IHh.
+  specialize (JL _ _ _ H4 (2+i)) as IHc.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. apply HeqExtend; eauto.
+  - apply sub_get_case_None. auto.
+  - apply sub_get_case_None. auto.
+  - rewrite hyp_shift_sub; aomega. simpl. eapply IHc. eauto.
+    rewrite <-(v_shift_shift 1). 
+    apply v_shift_typesafe. apply v_shift_typesafe. auto.
+    all: inv H4; apply wf_hyp_ctx in H6; inv H6; inv H9; auto.
++ specialize (JL _ _ _ H1) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply IsHyp. apply has_hypothesis_sub. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1678,7 +1740,7 @@ intros gets vtys. destruct orig.
   clear VL CL HL RL JL WFHL WFFL WFIL. 
   simpl. apply WfInstU; eauto.
 }
-Admitted.
+Qed.
 
 
 (* ==================== Safety and Subs. ==================== *)
@@ -1983,10 +2045,7 @@ destruct orig. destruct H1.
     eapply (veq_refl _ (hyp_subs Ψ i v_s)) in tyvs.
     apply Nat.eqb_eq in cmp. subst. 
     erewrite get_ctx_insert_new in H1. inv H1.
-    admit. 
-    (* eapply veq_subtype in tyvs; eauto. inv tyvs.  *)
-    all: eaomega.
-    (* inv H. inv H5. auto. *)
+    eapply VeqSubtype; eauto. all: eaomega.
   - simpl. destruct (i<=?j) eqn:ilj;
     eapply VeqVar; eaomega.
     * apply Nat.eqb_neq in cmp. apply leb_complete in ilj.
@@ -2033,12 +2092,15 @@ unfold v_subs. simpl. apply VeqListNil; auto.
   rewrite v_shift_comm, hyp_shift_subs_alt. 
   apply IHc. simpl. f_equal. auto.
   all: simpl; omega.
++ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply VeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   unfold v_subs. simpl. apply ηUnit.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. unfold v_subs. simpl.
   rewrite <-v_shift_sub, <-v_shift_negshift_comm; aomega. apply ηFun.
-  apply v_sub_makes_no_var. apply v_shift_makes_no_var. 
+  apply v_sub_makes_no_var. apply v_shift_makes_no_var.
 + specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   apply CeqSym. eauto.
@@ -2138,6 +2200,9 @@ unfold v_subs. simpl. apply VeqListNil; auto.
   simpl. unfold c_subs. simpl. eapply CeqOp; eauto.
   rewrite v_shift_comm, hyp_shift_subs_alt.
   apply IHc. simpl. f_equal. all: simpl; aomega.
++ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply CeqSubtype; eauto.
 + specialize (WFIL _ _ _ _ i _ _ H2 tyvs) as IHwf.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   eapply OOTB; eauto.
@@ -2410,7 +2475,15 @@ unfold v_subs. simpl. apply VeqListNil; auto.
     assert (S n - 1 = n) as n0 by omega. rewrite n0 in *.
     apply IHc. subst. rewrite ctx_insert_comm; aomega.
     specialize (ctx_len_insert_trivial Γ n (TyList A)) as triv. omega.
-+ clear VL CL HL RL JL WFHL WFFL WFIL. simpl. apply ηDoBind.
++ clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. apply ηDoBind.
++ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  apply HeqSym. eauto.
++ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH1.
+  specialize (JL _ _ _ _ H2 i _ _ tyvs) as IH2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply HeqTrans; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL. apply HeqSigØ.
 + assert (wf_vtype A) as wfa.
   { inv H3. apply wf_hyp_ctx in H6. inv H6. inv H9. auto. }
@@ -2429,6 +2502,25 @@ unfold v_subs. simpl. apply VeqListNil; auto.
   - rewrite v_shift_comm, <-(v_shift_shift 1 1), <-(hyp_shift_shift 1).
     rewrite hyp_shift_subs_alt, hyp_shift_subs_alt, hyp_shift_shift.
     apply IH1. simpl. do 2 f_equal. all: simpl; aomega.
++ assert (wf_vtype A) as wfa.
+  { inv H4. apply wf_hyp_ctx in H6. inv H6. inv H9. auto. }
+  assert (wf_vtype (TyFun B D)) as wff.
+  { inv H4. apply wf_hyp_ctx in H6. inv H6. auto. }
+  specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
+  specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs' wff) as tyvs''.
+  specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH1.
+  specialize (JL _ _ _ _ H4 (2+i) _ _ tyvs'') as IH2.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. unfold h_subs. simpl. apply HeqExtend; eauto.
+  - apply negshift_get_case_None. apply sub_get_case_None. auto.
+  - apply negshift_get_case_None. apply sub_get_case_None. auto.
+  - rewrite <-(hyp_shift_shift 1), hyp_shift_subs_alt, hyp_shift_subs_alt.
+    rewrite hyp_shift_shift, (v_shift_comm 1 i), <-(v_shift_shift 1 1).
+    unfold c_subs in *. apply IH2. all: aomega.
+    do 2 f_equal. auto.
++ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply IsHyp. apply has_hypothesis_subs. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -2541,7 +2633,7 @@ intros tyvs geq len. destruct orig.
   clear VL CL HL RL JL WFHL WFFL WFIL. simpl.
   apply WfInstU; eauto.
 }
-Admitted.
+Qed.
 
 (* ==================== Templates as Terms ==================== *)
 

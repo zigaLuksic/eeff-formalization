@@ -54,5 +54,5 @@ Inductive hyp_subset : hypotheses -> hypotheses -> Prop :=
 | SubsetHypØ Ψ : hyp_subset HypØ Ψ
 | SubsetHypU Ψ φ Ψ' : 
     hyp_subset Ψ Ψ' ->
-    has_hypothesis Ψ φ ->
+    has_hypothesis Ψ' φ ->
     hyp_subset (HypU Ψ φ) Ψ'. 
