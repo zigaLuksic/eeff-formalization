@@ -7,7 +7,7 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
 Require Export subtyping_lemmas.
 
-
+(* 
 Lemma heq_cases_ceq Σ D Γ Ψ h1 h2 op A B c1 c2 :
   judg Γ Ψ (Heq Σ D h1 h2) -> get_op_type Σ op = Some (A, B) ->
   get_case h1 op = Some c1 ->
@@ -21,10 +21,10 @@ simpl in *. destruct (op==o).
   rewrite H8 in finds1. rewrite H12 in finds2.
   inv finds1. inv finds2. auto.
 + inv eqs. inv H1. eauto.
-Qed.
+Qed. *)
 
 (* ==================== Logic Subtyping ==================== *)
-
+(* 
 Lemma heq_subtype Σ Σ' D Γ Ψ h1 h2 (orig : judg Γ Ψ (Heq Σ D h1 h2)) :
   wf_sig Σ' -> sig_subtype Σ' Σ -> judg Γ Ψ (Heq Σ' D h1 h2).
 Proof.
@@ -55,11 +55,11 @@ intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
     * inv H10. apply WfCtxU. apply WfCtxU. 3: apply WfTyFun. all: auto.
     * apply SubtypeCtxU. apply SubtypeCtxU. 3: apply SubtypeTyFun. all: auto.
       all: inv H10; (apply ctx_subtype_refl || apply csubtype_refl); auto.
-Qed.
+Qed. *)
 
 (* This formulation is needed so that the termination
    checker doesnt run forever. *)
-Fixpoint veq_subtype Γ Ψ φ (orig: judg Γ Ψ φ) A A' v1 v2 {struct orig} :
+(* Fixpoint veq_subtype Γ Ψ φ (orig: judg Γ Ψ φ) A A' v1 v2 {struct orig} :
   φ = Veq A v1 v2 ->
   wf_vtype A' -> vsubtype A A' -> 
   judg Γ Ψ (Veq A' v1 v2)
@@ -253,11 +253,11 @@ destruct orig. destruct H1; inv same.
 + clear veq_subtype ceq_subtype.
   eapply ηDoBind.
 }
-Qed.
+Qed. *)
 
 (* ==================== Structural Rules for Cases ==================== *)
 
-Lemma heq_case_extend_trivial Σ D Γ Ψ h1 h2 op A1 A2 B1 B2 c1 c2:
+(* Lemma heq_case_extend_trivial Σ D Γ Ψ h1 h2 op A1 A2 B1 B2 c1 c2:
   judg Γ Ψ (Heq Σ D h1 h2) ->
   get_case h1 op = None -> get_case h2 op = None ->
   has_ctype (CtxU (CtxU Γ A1) (TyFun B1 D)) c1 D ->
@@ -300,10 +300,10 @@ induction Σ as [ | Σ IH o A B].
       apply IH; auto. 
       all: apply sig_subtype_extend; auto.
       all: apply WfSigU; auto. inv H10. auto. inv H11. auto.
-Qed.
+Qed. *)
 
 
-Lemma heq_case_extend_structural Σ D Γ Ψ h1 h2 op A B c1 c2:
+(* Lemma heq_case_extend_structural Σ D Γ Ψ h1 h2 op A B c1 c2:
   judg Γ Ψ (Heq Σ D h1 h2) ->
   get_case h1 op = None -> get_case h2 op = None ->
   judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
@@ -348,7 +348,7 @@ eapply WfJudg; auto. eapply WfHeq. apply WfSigU; auto. exact ss1. exact ss2.
   * assumption.
   * eapply heq_case_extend_trivial; eauto. 
     eapply WfJudg. eapply WfHeq. 2:exact H8. all: eauto.
-Qed.
+Qed. *)
 
 (* ================== Reflexivity, Symmetry, Transitivity ================== *)
 
@@ -374,7 +374,8 @@ destruct orig. destruct H1.
 + apply VeqListCons; eauto.
 + apply VeqFun; eauto. 
 + eapply VeqHandler; eauto. apply csubtype_refl. inv H2. assumption.
-+ apply veq_refl_raw in H1. eapply veq_subtype in H1; eauto. inv H1. assumption.
++ apply veq_refl_raw in H1. admit.
+   (* eapply veq_subtype in H1; eauto. inv H1. assumption. *)
 }{
 apply WfJudg. apply WfCeq; auto. apply WfHypØ. inv orig. auto.
 destruct orig. destruct H1.
@@ -388,9 +389,11 @@ destruct orig. destruct H1.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec; eauto.
 + eapply CeqOp; eauto.
-+ apply ceq_refl_raw in H1. eapply ceq_subtype in H1; eauto. inv H1. assumption.
++ apply ceq_refl_raw in H1. admit.
+  (* eapply ceq_subtype in H1; eauto. inv H1. assumption. *)
 }{
-apply WfJudg. eapply WfHeq; auto.
+  admit.
+(* apply WfJudg. eapply WfHeq; auto.
 inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
@@ -400,9 +403,9 @@ destruct orig. destruct H2.
 + assert (get_case (CasesU h op cop) op = Some cop).
   { simpl. destruct (op==op). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
-  eapply heq_case_extend_trivial; eauto; inv H0; assumption.
+  eapply heq_case_extend_trivial; eauto; inv H0; assumption. *)
 }
-Qed.
+Admitted.
 
 
 Lemma veq_sym A Γ Ψ v1 v2 : 
@@ -418,7 +421,7 @@ intro orig. apply WfJudg. apply WfCeq. all: try (inv orig; inv H; assumption).
 apply CeqSym. auto.
 }
 Qed.
-
+(* 
 Lemma heq_sym Σ D Γ Ψ h1 h2 : 
   judg Γ Ψ (Heq Σ D h1 h2) -> judg Γ Ψ (Heq Σ D h2 h1).
 Proof.
@@ -431,7 +434,7 @@ all: apply WfJudg; try (inv orig; assumption).
   exact H9. exact H8. all: eauto. 
 + inv orig. inv H1. eapply HeqSigU; eauto.
   apply ceq_sym. auto.
-Qed.
+Qed. *)
 
     
 Lemma veq_trans A Γ Ψ v1 v2 v3:
@@ -456,7 +459,7 @@ intros ceq1 ceq2. apply WfJudg. apply WfCeq.
 }
 Qed.
 
-
+(* 
 Lemma heq_trans Σ D Γ Ψ h1 h2 h3:
   judg Γ Ψ (Heq Σ D h1 h2) -> judg Γ Ψ (Heq Σ D h2 h3) -> 
   judg Γ Ψ (Heq Σ D h1 h3).
@@ -470,4 +473,4 @@ intros heq1 heq2. induction Σ.
   rewrite H10 in H23. inv H23.
   eapply ceq_trans; eauto.
 }
-Qed.
+Qed. *)

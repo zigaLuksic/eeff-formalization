@@ -532,14 +532,18 @@ rewrite caux. auto.
 }
 Qed.
 
-Lemma form_inst_shift_move_to_inst k n φ I :
+
+Fixpoint form_inst_shift_move_to_inst k n φ I {struct φ}:
     form_inst (form_shift φ n k) (inst_pad_by_n I (k + n))
   = form_inst φ (inst_pad_by_n (inst_shift I n 0) k).
 Proof.
 destruct φ; simpl; f_equal.
 all: rewrite v_inst_shift_move_to_inst || rewrite c_inst_shift_move_to_inst 
-  || rewrite h_inst_shift_move_to_inst.
+  || rewrite h_inst_shift_move_to_inst || auto.
 all: auto.
+all: assert (InstU (inst_shift (inst_pad_by_n I (k + n)) 1 0) (Var 0)
+  = inst_pad_by_n I (1+k+n)) as same by (simpl; auto).
+all: rewrite same, form_inst_shift_move_to_inst; auto.
 Qed.
 
 
@@ -548,6 +552,33 @@ Lemma hyp_inst_shift_move_to_inst k n Ψ I :
   = hyp_inst Ψ (inst_pad_by_n (inst_shift I n 0) k).
 Proof.
 induction Ψ; simpl; f_equal; auto. apply form_inst_shift_move_to_inst.
+Qed.
+
+
+
+Fixpoint form_inst_subs k φ vs n I {struct φ}:
+  n <= inst_len I -> 
+  form_under_var φ (1+inst_len I) -> v_under_var vs (inst_len I) ->
+    form_inst (form_subs φ n vs) I =
+    form_subs (form_inst φ (inst_insert (inst_shift I 1 k) n (Var k)))
+      k (v_inst vs I).
+Proof.
+intros safe un1 un2.
+destruct φ; simpl; f_equal; auto; simpl in un1; try destruct un1.
+all: erewrite v_inst_subs || erewrite c_inst_subs || erewrite h_inst_subs
+  || erewrite form_inst_subs || auto; simpl; aomega.
+all: try rewrite inst_len_shift; aomega.
+all: f_equal || apply v_under_var_shift; aomega.
++ do 2 f_equal. rewrite inst_shift_insert, <-inst_shift_comm.
+  simpl. f_equal. all: omega.
++  assert (InstU (inst_shift I 1 0) (Var 0) = inst_pad_by_n I 1) 
+    as same by (simpl; auto).
+  rewrite v_shift_inst, same, v_inst_shift_move_to_inst. simpl. auto.
++ do 2 f_equal. rewrite inst_shift_insert, <-inst_shift_comm.
+  simpl. f_equal. all: omega.
++  assert (InstU (inst_shift I 1 0) (Var 0) = inst_pad_by_n I 1) 
+    as same by (simpl; auto).
+  rewrite v_shift_inst, same, v_inst_shift_move_to_inst. simpl. auto.
 Qed.
 
 
@@ -595,9 +626,10 @@ all: assert (forall x y, x+(S y) = S (x+y)) as comm by (intros; omega).
       simpl. rewrite inst_shift_shift. rewrite (inst_shift_comm _ _ 0).
       auto. omega. rewrite H0.
       rewrite <-c_inst_shift_move_to_inst. do 2 f_equal. omega.
-    * erewrite v_inst_shift_pad; eauto. omega.
     * f_equal. eapply inst_handle_t in H7. simpl in H7. rewrite <-H7.
-      f_equal. rewrite comm. all: aomega.
+      rewrite c_shift_inst. f_equal. rewrite comm, inst_shift_comm. simpl.
+      all: aomega.
+    * eapply v_inst_pad_same; eauto. omega.
     * rewrite inst_len_pad_by_n. simpl.
       assert (S (S (inst_len I + (tctx_len Z + ctx_len Γ))) 
         = (ctx_len Γ + tctx_len Z) + (S (S (inst_len I)))) by omega.
@@ -606,9 +638,12 @@ all: assert (forall x y, x+(S y) = S (x+y)) as comm by (intros; omega).
     * simpl. eapply handle_t_under_var in under as under'; eauto.
       simpl in under'. rewrite inst_len_pad_by_n. simpl.
       assert (forall x y z, x+(y+z)=x+y+z) as assoc by (intros; omega).
-      rewrite comm, <-assoc in under'. auto.
-    * rewrite inst_len_pad_by_n. apply has_vtype_is_under_ctx in H6.
+      rewrite comm, <-assoc in under'. apply has_vtype_is_under_ctx in H6.
       eapply v_under_var_weaken; eauto. omega.
+    * rewrite inst_len_pad_by_n. simpl. eapply handle_t_under_var in H7; eauto.
+      simpl in H7. simpl. rewrite comm in H7. auto.
+      assert (forall x y z, x+(y+z)=x+y+z) as same by (intros; omega).
+      rewrite same. auto.
   - eapply inst_get_case_None in finds as findss. rewrite findss. simpl.
     f_equal. erewrite v_inst_pad_same; eauto. omega.
     eapply inst_handle_t in H7; eauto. simpl in H7. rewrite comm in H7.
@@ -925,8 +960,9 @@ destruct orig. apply WfJudg; eauto. destruct H2.
   eapply wf_inst_get_Some in H2; eauto.
   destruct H2 as [v'[gets tys]].
   simpl. rewrite gets. eapply (veq_refl _ (hyp_inst Ψ I)) in tys.
-  eapply veq_subtype in tys; eauto. inv tys. auto.
-  inv H0. inv H6. auto. auto.
+  admit. auto.
+  (* eapply veq_subtype in tys; eauto. inv tys. auto. *)
+  (* inv H0. inv H6. auto. auto. *)
 + clear VL CL HL RL JL WFHL WFFL WS.
   apply VeqUnit.
 + clear VL CL HL RL JL WFHL WFFL WS.
@@ -1221,7 +1257,7 @@ destruct orig. apply WfJudg; eauto. destruct H2.
   eapply inst_get_case_Some in H2 as finds. 2: reflexivity.
   inv H0. apply shape_handle in H6 as parts.
   destruct parts as [C'[tyh tyc]].
-  simpl in *. 
+  simpl in *.
   specialize (βHandle_Op
     (c_inst c_r (InstU (inst_shift I 1 0) (Var 0)))
     (h_inst h I) op (v_inst v I)
@@ -1232,37 +1268,52 @@ destruct orig. apply WfJudg; eauto. destruct H2.
   simpl in *.
   unfold c_subs2_out in rule. unfold c_subs_out in rule.
   rewrite c_inst_subs2_out. rewrite c_shift_inst in rule. simpl in *.
-  assert (
-    InstU (InstU (inst_shift (inst_shift I 1 0) 1 0) (Var 1)) (Var 0) =
-    inst_insert (InstU (inst_shift (inst_shift I 1 0) 1 0) (Var 0)) 1 (Var 1)).
-  { simpl. destruct I; auto. }
-  assert (
-    (InstU (inst_shift I 1 0) (Var 0)) =
-    inst_insert (inst_shift I 1 0) 0 (Var 0)).
-  { simpl. destruct I; auto. }
-  rewrite H0, c_inst_no_var_same.
-  rewrite H3, h_inst_no_var_same, <-H3.
+  assert (forall I',
+    InstU (InstU I' (Var 1)) (Var 0) =
+    inst_insert (InstU I' (Var 0)) 1 (Var 1)) as insert1.
+  { intros. simpl. destruct I'; auto. }
+  assert (forall I',
+    (InstU I' (Var 0)) =
+    inst_insert I' 0 (Var 0)) as insert0.
+  { intros. simpl. destruct I'; auto. }
+  rewrite (insert1 (inst_shift (inst_shift (inst_shift I 1 0) 1 0) 1 0)).
+  rewrite c_inst_no_var_same.
+  rewrite (insert0 (inst_shift (inst_shift I 1 0) 1 0)).
+  rewrite h_inst_no_var_same, <-insert0. clear insert1 insert0.
+  rewrite c_shift_inst, h_shift_inst in rule. simpl in rule.
+  rewrite c_shift_inst, h_shift_inst in rule. simpl in rule.
   rewrite c_negshift_shift, c_shift_0, h_negshift_shift, h_shift_0. simpl.
-  rewrite inst_shift_comm. rewrite v_shift_inst, h_shift_inst in rule.
-  apply rule. 
+  assert (
+      (inst_shift (inst_shift (inst_shift I 1 0) 1 0) 1 0)
+    = (inst_shift (inst_shift (inst_shift I 1 0) 1 1) 1 2)
+    ) as sameshift3.
+  { rewrite (inst_shift_comm 1 0 0 1 I), (inst_shift_comm). f_equal.
+    rewrite inst_shift_comm. all: aomega. }
+  assert (
+      (inst_shift (inst_shift I 1 0) 1 0) = (inst_shift (inst_shift I 1 0) 1 1)
+    ) as sameshift2.
+  { rewrite inst_shift_comm. all: aomega. }
+  rewrite sameshift3, sameshift2.
+  apply rule.
   all: simpl; aomega; try clear rule.
   all: try rewrite inst_len_shift; try rewrite inst_len_shift.
   all: try rewrite same_len.
   all: destruct C' as [A Σ E]; apply shape_handler in tyh;
        destruct tyh as [Σ'[D'[tycr[tyh[res[sty csty]]]]]].
   all: eapply shape_op in tyc; destruct tyc as [Aop[Bop[gets[tyv tyck]]]].
-  6: constructor. 6: constructor.
+  7: constructor. 7: constructor.
   - apply h_shift_makes_no_var.
   - apply h_under_var_shift. eapply has_htype_is_under_ctx. eauto. omega.
   - apply c_shift_makes_no_var.
-  - apply c_under_var_shift. apply has_ctype_is_under_ctx in tycr. auto. omega.
+  - apply c_under_var_shift. apply has_ctype_is_under_ctx in tycr. 
+    rewrite inst_len_shift, same_len. auto. omega.
   - eapply sig_subtype_get_Some in sty; eauto. destruct sty as [A'[B'[g _]]].
     eapply case_has_type in H2; eauto.
     eapply has_ctype_is_under_ctx in H2. auto.
+  - apply has_vtype_is_under_ctx in tyv. auto.
   - apply c_under_var_shift. apply has_ctype_is_under_ctx in tycr. auto. omega.
   - apply h_under_var_shift. eapply has_htype_is_under_ctx. eauto. omega.
   - apply has_ctype_is_under_ctx in tyck. auto.
-  - eapply has_vtype_is_under_ctx. eauto.
 + eapply CL in H3 as tys3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply wf_inst_ctx_len_same in wfinst as same_len.
@@ -1411,6 +1462,78 @@ destruct orig. apply WfJudg; eauto. destruct H2.
     rewrite hyp_shift_inst, <-pad, <-(inst_shift_shift 1 1). eauto.
   - inv H4. apply wf_hyp_ctx in H7. inv H7. auto.
   - inv H4. apply wf_hyp_ctx in H7. inv H7. inv H10. auto.
++ clear VL CL HL RL JL WFHL WFFL WS.
+  apply IsHyp. apply has_hypothesis_inst. auto.
++ clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply TruthIn.
++ eapply JL in H2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  apply FalsityEl. simpl in H2. eauto.
++ eapply JL in H2; eauto.
+  eapply JL in H3; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply AndIn; eauto.
++ eapply JL in H2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. eapply AndElLeft. eauto.
++ eapply JL in H2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. eapply AndElRight. eauto.
++ eapply JL in H2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply OrInLeft. eauto.
++ eapply JL in H2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply OrInRight. eauto.
++ eapply JL in H2; eauto.
+  eapply JL in H3; eauto.
+  eapply JL in H4; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. apply OrEl; eauto.
++ eapply JL in H2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. apply ImpliesIn. eauto.
++ eapply JL in H2; eauto.
+  eapply JL in H3; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. eapply ImpliesEl. exact H2. eauto.
++ eapply JL in H2.
+  all: clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. apply ForallIn. rewrite hyp_shift_inst.
+  2: instantiate (2:=(CtxU Γ A)).
+  2: instantiate (1:= inst_pad_by_n I 1).
+  rewrite hyp_inst_shift_move_to_inst in H2. simpl in H2. auto.
+  simpl. apply wf_inst_InstU. 
+  inv H2. apply wf_hyp_ctx in H4. inv H4. auto. auto.
++ eapply JL in H2 as IH1; eauto.
+  eapply VL in H3 as IH2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. erewrite form_inst_subs. rewrite InstU_is_insert in IH1.
+  eapply ForallEl; eauto. omega.
+  all: apply wf_inst_ctx_len_same in wfinst; rewrite wfinst.
+  inv H2. apply wf_form_is_under_ctx in H4. simpl in H4. auto.
+  apply has_vtype_is_under_ctx in H3. auto.
++ eapply VL in H2 as IH1; eauto.
+  eapply JL in H3 as IH2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl in *. eapply ExistsIn. eauto.
+  erewrite form_inst_subs in IH2. rewrite InstU_is_insert. eauto. omega.
+  all: apply wf_inst_ctx_len_same in wfinst; rewrite wfinst.
+  apply wf_form_is_under_ctx in H0. simpl in H0. auto.
+  apply has_vtype_is_under_ctx in H2. auto.
++ eapply JL in H2; eauto.
+  eapply JL in H3; eauto.
+  all: clear VL CL HL RL JL WFHL WFFL WS.
+  2: instantiate (2:=(CtxU Γ A)).
+  2: instantiate (1:= inst_pad_by_n I 1).
+  simpl in *. eapply ExistsEl. eauto.
+  rewrite hyp_shift_inst, form_shift_inst.
+  assert (InstU (inst_shift I 1 0) (Var 0) = inst_pad_by_n I 1) as same.
+  { simpl. auto. }
+  rewrite same, hyp_inst_shift_move_to_inst, form_inst_shift_move_to_inst in H3.
+  simpl in H3. auto.
+  simpl. apply wf_inst_InstU. 
+  inv H3. apply wf_hyp_ctx in H5. inv H5. auto. auto.
 }{
 destruct orig; simpl.
 - clear VL CL HL RL JL WFHL WFFL WS.
@@ -1433,6 +1556,30 @@ destruct orig; simpl.
   eapply HL in H4; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   eapply WfHeq. 2: exact H1. all: eauto.
+- clear VL CL HL RL JL WFHL WFFL WS.
+  apply WfTruth. auto.
+- clear VL CL HL RL JL WFHL WFFL WS.
+  apply WfFalsity. auto.
+- eapply WFFL in orig1; eauto.
+  eapply WFFL in orig2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply WfAnd; eauto.
+- eapply WFFL in orig1; eauto.
+  eapply WFFL in orig2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply WfOr; eauto.
+- eapply WFFL in orig1; eauto.
+  eapply WFFL in orig2; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply WfImplies; eauto.
+- eapply WFFL in orig; eauto.
+  all: clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply WfForall; eauto.
+  apply wf_inst_InstU; eauto.
+- eapply WFFL in orig; eauto.
+  all: clear VL CL HL RL JL WFHL WFFL WS.
+  simpl. apply WfExists; eauto.
+  apply wf_inst_InstU; eauto.
 }{
 destruct orig; simpl.
 - clear VL CL HL RL JL WFHL WFFL WS.

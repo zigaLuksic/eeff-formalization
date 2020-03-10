@@ -357,3 +357,17 @@ Fixpoint inst_under_var I i :=
   | InstØ => True
   | InstU I' v => v_no_var v i /\ inst_under_var I' i
   end.
+
+Fixpoint form_under_var φ i :=
+  match φ with
+  | Veq A v1 v2 => v_under_var v1 i /\ v_under_var v2 i
+  | Ceq C c1 c2 => c_under_var c1 i /\ c_under_var c2 i
+  | Heq Σ D h1 h2 => h_under_var h1 i /\ h_under_var h2 i
+  | Truth => True
+  | Falsity => True
+  | And φ1 φ2 => form_under_var φ1 i /\ form_under_var φ2 i
+  | Or φ1 φ2 => form_under_var φ1 i /\ form_under_var φ2 i
+  | Implies φ1 φ2 => form_under_var φ1 i /\ form_under_var φ2 i
+  | Forall A φ => form_under_var φ (1+i)
+  | Exists A φ => form_under_var φ (1+i)
+  end.

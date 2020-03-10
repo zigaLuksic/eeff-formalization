@@ -78,6 +78,57 @@ intros finds same. destruct h; subst; simpl in *.
 Qed.
 
 
+Fixpoint has_hypothesis_shift Ψ φ n cut {struct Ψ}:
+  has_hypothesis Ψ φ -> has_hypothesis (hyp_shift Ψ n cut) (form_shift φ n cut).
+Proof.
+intros orig. destruct Ψ. inv orig.
+simpl in orig. destruct orig; simpl.
++ subst. simpl. left. auto.
++ right. auto.
+Qed.
+
+
+Fixpoint has_hypothesis_negshift Ψ φ n cut {struct Ψ}:
+  has_hypothesis Ψ φ -> 
+  has_hypothesis (hyp_negshift Ψ n cut) (form_negshift φ n cut).
+Proof.
+intros orig. destruct Ψ. inv orig.
+simpl in orig. destruct orig; simpl.
++ subst. simpl. left. auto.
++ right. auto.
+Qed.
+
+
+Fixpoint has_hypothesis_sub Ψ φ sub {struct Ψ}:
+  has_hypothesis Ψ φ -> has_hypothesis (hyp_sub Ψ sub) (form_sub φ sub).
+Proof.
+intros orig. destruct Ψ. inv orig.
+simpl in orig. destruct orig; simpl.
++ subst. simpl. left. auto.
++ right. auto.
+Qed.
+
+
+Fixpoint has_hypothesis_subs Ψ φ i v {struct Ψ}:
+  has_hypothesis Ψ φ -> has_hypothesis (hyp_subs Ψ i v) (form_subs φ i v).
+Proof.
+intros orig. destruct Ψ. inv orig.
+simpl in orig. destruct orig; simpl.
++ subst. simpl. left. auto.
++ right. auto.
+Qed.
+
+
+Fixpoint has_hypothesis_inst Ψ φ I {struct Ψ}:
+  has_hypothesis Ψ φ -> has_hypothesis (hyp_inst Ψ I) (form_inst φ I).
+Proof.
+intros orig. destruct Ψ. inv orig.
+simpl in orig. destruct orig; simpl.
++ subst. simpl. left. auto.
++ right. auto.
+Qed.
+
+
 (* ==================== Shift Arithmetic ==================== *)
 
 Fixpoint v_shift_0 cut v : v_shift v 0 cut = v
@@ -891,6 +942,29 @@ rewrite (v_shift_comm 1 j), (v_shift_comm 1 i); aomega.
 Qed.
 
 
+Fixpoint form_shift_subs φ v' i j {struct φ}:
+  j <= i ->
+    form_shift (form_subs φ j v') 1 i 
+  = form_subs (form_shift φ 1 (1+i)) j (v_shift v' 1 i).
+Proof.
+intros safe. destruct φ; simpl; f_equal; auto.
+all: rewrite v_shift_subs || rewrite c_shift_subs || rewrite h_shift_subs
+|| rewrite form_shift_subs.
+all: aomega.
+all: rewrite (v_shift_comm 1 i); try do 2 f_equal; aomega.
+Qed.
+
+
+Fixpoint hyp_shift_subs Ψ v' i j (safe: j <= i) {struct Ψ}:
+    hyp_shift (hyp_subs Ψ j v') 1 i 
+  = hyp_subs (hyp_shift Ψ 1 (1+i)) j (v_shift v' 1 i).
+Proof.
+destruct Ψ; intros; simpl; f_equal; auto.
+apply form_shift_subs. omega.
+Qed.
+
+
+
 Lemma v_shift_subs_alt v v' i j (safe: i <= j): 
     v_shift (v_subs v j v') 1 i 
   = (v_subs (v_shift v 1 i) (1+j) (v_shift v' 1 i))
@@ -1192,6 +1266,21 @@ rewrite v_shift_comm; aomega. do 2 f_equal; rewrite v_shift_sub; aomega.
 Qed.
 
 
+Fixpoint form_sub_subs φ i j vi vj {struct φ}:
+  j >= i ->
+    form_sub (form_subs φ i vi) (j, vj)
+  = (form_subs (form_sub φ (1+j, v_shift vj 1 i)) i (v_sub vi (j, vj)))
+.
+Proof.
+intros safe. destruct φ; simpl; f_equal; auto.
+all: rewrite v_sub_subs || rewrite c_sub_subs || rewrite h_sub_subs
+|| rewrite form_sub_subs.
+all: aomega.
+all: rewrite (v_shift_comm 1 i); try do 2 f_equal; aomega.
+all: rewrite v_shift_sub; aomega.
+Qed.
+
+
 Fixpoint v_sub_subs_alt v i j vi vj:
   j < i ->
     v_sub (v_subs v i vi) (j, vj)
@@ -1286,6 +1375,21 @@ unfold h_subs in *. rewrite hss, hns, v_shift_comm; aomega.
 all: apply h_sub_makes_no_var || apply v_sub_makes_no_var.
 rewrite v_shift_comm; aomega. all: apply v_shift_makes_no_var.
 }
+Qed.
+
+
+Fixpoint form_subs_subs φ i j vi vj {struct φ}:
+  j >= i ->
+    form_subs (form_subs φ i vi) j vj
+  = (form_subs (form_subs φ (1+j) (v_shift vj 1 i)) i (v_subs vi j vj))
+.
+Proof.
+intros safe. destruct φ; simpl; f_equal; auto.
+all: rewrite v_subs_subs || rewrite c_subs_subs || rewrite h_subs_subs
+|| rewrite form_subs_subs.
+all: aomega.
+all: rewrite (v_shift_comm 1 i); try do 2 f_equal; aomega.
+all: rewrite v_shift_subs_alt; aomega.
 Qed.
 
 

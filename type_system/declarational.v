@@ -531,7 +531,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Exists A φ)
 | ExistsEl Γ Ψ φ Φ A:
     judg Γ Ψ (Exists A φ) ->
-    judg (CtxU Γ A) (HypU (hyp_shift Ψ 1 0) φ) Φ ->
+    judg (CtxU Γ A) (HypU (hyp_shift Ψ 1 0) φ) (form_shift Φ 1 0) ->
     judg' Γ Ψ Φ
 
 
