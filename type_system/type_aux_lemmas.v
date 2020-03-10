@@ -821,6 +821,33 @@ simpl. eapply VeqListNil.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl in *. eapply ExistsEl. eapply IH1. auto.
   rewrite hyp_shift_comm, form_shift_comm; aomega.
++ specialize (WFFL _ _ H1 A_ins (S i)) as IHwf.
+  specialize (JL _ _ _ H2 A_ins (S i)) as IH1.
+  assert (
+  forall op Aop Bop,
+     get_op_type Σ op = Some (Aop, Bop) ->
+     judg (CtxU (CtxU (ctx_insert Γ i A_ins) Aop) (TyFun Bop (CTy A Σ E)))
+       (HypU (hyp_shift (hyp_shift Ψ 2 0) 1 (S (S i)))
+          (Forall Bop
+             (form_shift
+                (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))
+                1 (3+i))))
+       (form_shift
+          (form_subs (form_shift φ 2 0) 2 
+            (Fun (Op op (Var 2) (App (Var 2) (Var 0))))) 1 (2+i))
+  ) as IH2.
+  { intros op Aop Bop gets. specialize (H3 op Aop Bop gets).
+    specialize (JL _ _ _ H3 A_ins (2+i) wfins) as IH.
+    clear VL CL HL RL JL WFHL WFFL WFIL.
+    simpl in *. auto. }
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl in *. eapply CompInduction; eauto.
+  - rewrite form_shift_subs, <-form_shift_comm, <-hyp_shift_comm in IH1.
+    simpl in IH1. all: aomega.
+  - intros op Aop Bop gets. specialize (IH2 op Aop Bop gets).
+    rewrite hyp_shift_comm. rewrite form_shift_subs in IH2.
+    rewrite form_shift_comm. simpl in *. rewrite form_shift_subs in IH2.
+    rewrite (form_shift_comm 1 (S i)). simpl in *. all: aomega.
 }{
 intros wfins. inv orig.
 + clear VL CL HL RL JL WFHL WFFL WFIL. apply WfHypØ.
@@ -1137,7 +1164,21 @@ destruct orig. destruct H1.
     all: inv H1; inv H3; auto.
   - apply SubsetHypU. apply hyp_subset_extend.
     apply hyp_subset_shift. auto.
-    simpl. left. auto. 
+    simpl. left. auto.
++ eapply CompInduction; eauto.
+  - eapply hypotheses_weakening; eauto.
+    apply wf_hyp_shift_typesafe; auto. inv H. inv H7. inv H6. auto.
+    apply hyp_subset_shift. auto.
+  - intros op Aop Bop gets. specialize (H3 op Aop Bop gets).
+    apply get_op_type_wf in gets. destruct gets.
+    eapply hypotheses_weakening; eauto.
+    * apply WfHypU. rewrite <-(hyp_shift_shift 1).
+      apply wf_hyp_shift_typesafe. apply wf_hyp_shift_typesafe. 
+      3: apply WfTyFun. all: auto. inv H. inv H9. auto.
+      inv H3. inv H7. auto.
+    * apply SubsetHypU. apply hyp_subset_extend. apply hyp_subset_shift. auto.
+      simpl. auto.
+    * inv H. inv H7. inv H6.  auto.
 Qed.
 
 (* ==================== Better Logic Reflexivity. ==================== *)
@@ -1686,6 +1727,44 @@ destruct orig. destruct H1.
   rewrite hyp_shift_sub, form_shift_sub; aomega.
   eapply IH2. eauto. apply v_shift_typesafe; auto.
   inv H1. inv H3. auto.
++ specialize (WFFL _ _ H1 (S i) (v_shift v_s 1 0) A_s gets) as IHwf.
+  specialize (JL _ _ _ H2 (S i) (v_shift v_s 1 0) A_s gets) as IH1.
+  assert (
+  forall op Aop Bop,
+     get_op_type Σ op = Some (Aop, Bop) ->
+     judg (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E)))
+       (hyp_sub
+          (HypU (hyp_shift Ψ 2 0)
+             (Forall Bop
+                (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))))
+          (2 + i, v_shift v_s 2 0))
+       (form_sub
+          (form_subs (form_shift φ 2 0) 2
+             (Fun (Op op (Var 2) (App (Var 2) (Var 0)))))
+          (2 + i, v_shift v_s 2 0))
+  ) as IH2.
+  { intros op Aop Bop gets'. specialize (H3 op Aop Bop gets').
+    specialize (JL _ _ _ H3 (2+i) (v_shift v_s 2 0)) as IH.
+    clear VL CL HL RL JL WFHL WFFL WFIL.
+    simpl in *. eapply IH; eauto. rewrite <-(v_shift_shift 1).
+    apply get_op_type_wf in gets'. destruct gets'.
+    apply v_shift_typesafe. apply v_shift_typesafe; auto. 
+    apply WfTyFun; auto. inv H. inv H9. auto. inv H. inv H7. inv H6. auto. }
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  inv H. inv H7.
+  simpl in *. eapply CompInduction; eauto.
+  - eapply IHwf. apply v_shift_typesafe. auto. apply WfTyFun; auto.
+  - clear IHwf IH2. rewrite form_sub_subs in IH1. simpl in IH1.
+    rewrite form_shift_sub, v_shift_comm, hyp_shift_sub. 
+    simpl in *. all: aomega.
+    apply IH1. apply v_shift_typesafe. auto. inv H6. auto.
+  - intros op Aop Bop gets'. specialize (IH2 op Aop Bop gets').
+    apply get_op_type_wf in gets'. destruct gets'.
+    rewrite hyp_shift_sub, form_shift_sub.
+    rewrite form_sub_subs, form_sub_subs in IH2.
+    simpl in *. rewrite v_shift_shift in IH2. simpl in IH2.
+    rewrite form_shift_sub, v_shift_comm, (v_shift_comm 1 0).
+    all: aomega. inv H6. auto.
 }{
 intros gets vtys. inv orig.
 + clear VL CL HL RL JL WFHL WFFL WFIL. apply WfHypØ. auto.
@@ -2578,6 +2657,55 @@ unfold v_subs. simpl. apply VeqListNil; auto.
   rewrite hyp_shift_subs_alt, form_shift_subs_alt; aomega.
   eapply IH2. eauto. apply v_shift_typesafe; eauto.
   inv H1. inv H3. auto. f_equal. auto. omega.
++ specialize (WFFL (CtxU Γ (TyFun TyUnit (CTy A Σ E))) _ _ H1 (S i)) as IHwf.
+  specialize (JL (CtxU Γ A) _ _ _ H2 (S i) ) as IH1.
+  assert (
+  forall op Aop Bop,
+     get_op_type Σ op = Some (Aop, Bop) ->
+     judg (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E)))
+       (hyp_subs
+          (HypU (hyp_shift Ψ 2 0)
+             (Forall Bop
+                (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))))
+          (2 + i) (v_shift v_s 2 0))
+       (form_subs
+          (form_subs (form_shift φ 2 0) 2
+             (Fun 
+              (Op op (Var 2) (App (Var 2) (Var 0))))) (2 + i) (v_shift v_s 2 0))
+  ) as IH2.
+  { intros op Aop Bop gets'. specialize (H3 op Aop Bop gets').
+    specialize 
+      (JL (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) _ _ _ H3 (2+i)) as IH.
+    all: clear VL CL HL RL JL WFHL WFFL WFIL.
+    simpl in *. eapply IH; eauto. clear IHwf IH1 IH. 
+    rewrite <-(v_shift_shift 1).
+    apply get_op_type_wf in gets'. destruct gets'.
+    apply v_shift_typesafe. apply v_shift_typesafe; eauto. 
+    apply WfTyFun; auto. inv H. inv H9. auto. inv H. inv H7. inv H6. auto.
+    do 2 f_equal. auto. omega. }
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  inv H. inv H7.
+  simpl in *. eapply CompInduction; eauto.
+  - eapply IHwf. apply v_shift_typesafe. eauto. apply WfTyFun. all: aomega.
+  - clear IHwf IH2. specialize (IH1 (v_shift v_s 1 0) A_s).
+    rewrite form_subs_subs in IH1. simpl in IH1. unfold v_subs in IH1.
+    rewrite form_shift_subs_alt, v_shift_comm, hyp_shift_subs_alt. 
+    simpl in *. all: aomega.
+    apply IH1. apply v_shift_typesafe. auto. inv H6. all: aomega.
+  - intros op Aop Bop gets'. specialize (IH2 op Aop Bop gets').
+    apply get_op_type_wf in gets'. destruct gets'.
+    rewrite <-(hyp_shift_shift 1).
+    rewrite <-(form_shift_shift 1), <-(form_shift_shift 1).
+    rewrite hyp_shift_subs_alt, hyp_shift_subs_alt, hyp_shift_shift.
+    rewrite form_shift_subs_alt, form_shift_subs_alt, form_shift_subs_alt.
+    rewrite <-(form_shift_shift 1 1), form_shift_subs_alt, form_shift_subs_alt.
+    rewrite form_shift_shift, form_shift_shift, v_shift_shift, v_shift_shift.
+    rewrite form_shift_shift, v_shift_shift, v_shift_shift. simpl.
+    rewrite form_subs_subs, v_shift_shift in IH2. simpl in IH2.
+    rewrite (form_subs_subs (form_shift φ 2 0)) in IH2.
+    rewrite <-(v_shift_comm 1 0 0 3), v_shift_shift in IH2.
+    rewrite <-(v_shift_comm 1 0 0 2), v_shift_shift in IH2.
+    unfold v_subs in IH2. simpl in *. all: aomega. inv H6. auto.
 }{
 intros tyvs geq len. destruct orig.
 + clear VL CL HL RL JL WFHL WFFL WFIL.

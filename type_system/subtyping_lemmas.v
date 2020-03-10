@@ -435,7 +435,7 @@ inv r. eapply Respects; auto. destruct H3.
     apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
-inv orig. apply WfJudg; eauto. clear HL WFFL WFHL.
+inv orig. apply WfJudg; eauto. clear HL WFHL.
 destruct H1.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
@@ -576,6 +576,20 @@ destruct H1.
   - apply WfCtxU; auto. inv H2. apply wf_hyp_ctx in H4. inv H4. auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl.
     inv H2. apply wf_hyp_ctx in H4. inv H4. auto.
++ eapply CompInduction; eauto.
+  - eapply WFFL; eauto; inv H. apply WfCtxU; auto.
+    apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
+  - eapply JL; eauto; inv H; inv H7; inv H6.
+    apply WfCtxU; auto. apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
+  - intros op Aop Bop gets.
+    eapply get_op_type_wf in gets as wfs. destruct wfs.
+    eapply JL; eauto.
+    * apply WfCtxU. apply WfCtxU; auto. apply WfTyFun. auto.
+      inv H. inv H9. auto.
+    * apply SubtypeCtxU. apply SubtypeCtxU. auto.
+      all: apply vsubtype_refl. auto.
+      apply WfTyFun. auto. inv H. inv H9. auto.
+    * inv H.  inv H7. inv H6. auto.
 }{
 intros wfc ctxsty.
 inv wf.

@@ -3,13 +3,15 @@
 (* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
 (* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
 (* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
 
-Require Export syntax_lemmas substitution_lemmas type_lemmas.
+Require Export syntax_lemmas substitution_lemmas type_lemmas logic_tactics.
 
 
 Lemma operational_in_logic Γ c c' C:
@@ -172,7 +174,6 @@ destruct orig. destruct H1.
   subst. apply ctx_insert_extend. simpl. all: omega.
 + eapply CeqSubtype; eauto.
 }{
-(* Delaying the WfJudg allows us to use the heq_case_extend_structural. *)
 apply WfJudg. eapply WfHeq.
 { inv orig. auto. }
 { apply sig_subtype_refl. inv orig. auto. }
@@ -203,3 +204,78 @@ destruct orig. destruct H2.
 }
 Qed.
 
+
+(* ==================== Sanity Check for Induction ==================== *)
+
+Lemma induction_check_base Γ A Σ E φ:
+  wf_ctype (CTy A Σ E) -> wf_ctx Γ ->
+  wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
+  wf_form (CtxU Γ A) (form_subs (form_shift φ 1 0) 1 (Fun (Ret (Var 1)))).
+Proof.
+intros wfc wfg orig. eapply wf_form_subs_typesafe; eauto; simpl.
+instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
++ apply wf_form_shift_typesafe.
+  assert (forall B, ctx_insert Γ 0 B = CtxU Γ B) as same.
+  { intros. destruct Γ; simpl; auto. }
+  rewrite same. auto. inv wfc. auto.
++ inv wfc. vtype_step. ctype_step. eapply TypeCSubtype.
+  instantiate (1:= CTy A SigØ EqsØ). ctype_step.
+  obvious_vtype. apply SubtypeCTy. apply vsubtype_refl. auto.
+  apply SubtypeSigØ. apply SubtypeEqsØ.
++ omega.
+Qed.
+
+Lemma induction_check_assumption Γ A Σ E φ op Aop Bop:
+  wf_ctype (CTy A Σ E) -> wf_ctx Γ ->
+  wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
+  get_op_type Σ op = Some (Aop, Bop) ->
+  wf_form (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) 
+    (Forall Bop (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))).
+Proof.
+intros wfc wfg orig gets. inv wfc.
+apply get_op_type_wf in gets as getss; auto. destruct getss.
+apply WfForall. auto. eapply wf_form_subs_typesafe; eauto; simpl.
+instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
++ rewrite <-(form_shift_shift 1), <-(form_shift_shift 1).
+   assert (forall B, ctx_insert Γ 0 B = CtxU Γ B) as same.
+  { intros. destruct Γ; simpl; auto. }
+  rewrite same. apply wf_form_shift_typesafe.
+  apply wf_form_shift_typesafe. apply wf_form_shift_typesafe.
+  all: obvious.
++ vtype_step. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
++ omega.
+Qed.
+
+
+Lemma induction_check_step Γ A Σ E φ op Aop Bop:
+  wf_ctype (CTy A Σ E) -> wf_ctx Γ ->
+  wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
+  get_op_type Σ op = Some (Aop, Bop) ->
+  wf_form (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) 
+    (form_subs (form_shift φ 2 0) 2 
+      (Fun (Op op (Var 2) (App (Var 2) (Var 0))))).
+Proof.
+intros wfc wfg orig gets. eapply wf_form_subs_typesafe; eauto; simpl.
+instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
++ apply get_op_type_wf in gets. destruct gets. inv wfc.
+  rewrite <-(form_shift_shift 1). apply wf_form_shift_typesafe.
+  apply wf_form_shift_typesafe.
+  assert (forall B, ctx_insert Γ 0 B = CtxU Γ B) as same.
+  { intros. destruct Γ; simpl; auto. }
+  rewrite same. all: obvious. inv wfc. auto.
++ inv wfc. apply get_op_type_wf in gets as getss. destruct getss. 
+  vtype_step. ctype_step. eapply TypeOp; eauto.
+  - vtype_step.
+  - ctype_step. instantiate (1:=Bop). 2: obvious_vtype. vtype_step.
+  - auto.
++ omega.
+Qed.
+
+    
+Lemma induction_check_conclusion Γ A Σ E φ:
+  wf_ctype (CTy A Σ E) -> wf_ctx Γ ->
+  wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
+  wf_form Γ (Forall (TyFun TyUnit (CTy A Σ E)) φ).
+Proof.
+intros wfc wfg orig. apply WfForall. inv wfc. obvious. auto.
+Qed.

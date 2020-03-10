@@ -533,6 +533,21 @@ rewrite ssnj. eapply c_under_var_shift; aomega.
 Qed.
 
 
+Fixpoint form_under_var_shift φ j n cut {struct φ}:
+  form_under_var φ j -> cut <= j -> 
+  form_under_var (form_shift φ n cut) (n+j).
+Proof.
+intros orig safe. destruct φ; simpl in *.
+all: try destruct orig; try constructor; eauto.
+all: apply v_under_var_shift || apply c_under_var_shift 
+  || apply h_under_var_shift || apply form_under_var_shift || auto.
+all: aomega.
+all: assert (S (n + j) = n + (S j)) by omega; rewrite H.
+all: apply form_under_var_shift; aomega.
+Qed.
+
+
+
 Fixpoint v_shift_too_high v n cut :
   v_under_var v cut -> v_shift v n cut = v
 with c_shift_too_high c n cut :

@@ -557,6 +557,22 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Exists A φ) ->
     judg (CtxU Γ A) (HypU (hyp_shift Ψ 1 0) φ) (form_shift Φ 1 0) ->
     judg' Γ Ψ Φ
+| CompInduction Γ Ψ A Σ E φ :
+    wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
+    judg (CtxU Γ A) (hyp_shift Ψ 1 0) 
+      (form_subs (form_shift φ 1 0) 1 (Fun (Ret (Var 1)))) ->
+    (forall op Aop Bop,
+      get_op_type Σ op = Some (Aop, Bop) ->
+      judg
+        (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) 
+        (HypU (hyp_shift Ψ 2 0)  
+          (Forall Bop 
+            (form_subs (form_shift φ 3 0) 3 
+              (Fun (App (Var 2) (Var 1))))))
+        (form_subs (form_shift φ 2 0) 2 
+          (Fun (Op op (Var 2) (App (Var 2) (Var 0)))))
+    ) ->
+    judg' Γ Ψ (Forall (TyFun TyUnit (CTy A Σ E)) φ)
 
 
 with wf_inst : ctx -> instantiation -> ctx -> Prop :=
