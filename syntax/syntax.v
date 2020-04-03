@@ -42,9 +42,9 @@ with comp : Type :=
 
 with hcases : Type :=
 | CasesØ : hcases
-| CasesU : hcases -> op_id -> comp -> hcases (* x~1 k~0 *)
+| CasesU : hcases -> op_id -> comp -> hcases (* x~1 k~0 *).
 
-with vtype : Type :=
+Inductive vtype : Type :=
 | TyUnit : vtype
 | TyInt : vtype
 | TyØ : vtype
