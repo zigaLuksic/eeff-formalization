@@ -37,7 +37,7 @@ destruct orig. destruct H1.
 apply WfJudg. apply WfCeq; auto. apply WfHypØ. inv orig. auto.
 destruct orig. destruct H1.
 + apply CeqRet. auto.
-+ apply CeqAbsurd. auto.
++ apply CeqAbsurd.
 + eapply CeqΠMatch; eauto.
 + eapply CeqΣMatch; eauto.
 + eapply CeqListMatch; eauto.

@@ -595,9 +595,8 @@ simpl. eapply VeqListNil.
 + specialize (JL _ _ _ H1) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply CeqRet. eauto.
-+ specialize (JL _ _ _ H1) as IH.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. apply CeqAbsurd. eauto.
++ clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. apply CeqAbsurd.
 + specialize (JL _ _ _ H1) as IHv.
   specialize (JL _ _ _ H2) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1445,9 +1444,8 @@ destruct orig. destruct H1.
 + specialize (JL _ _ _ H1) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply CeqRet. eauto.
-+ specialize (JL _ _ _ H1) as IH.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. apply CeqAbsurd. eauto.
++ clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. apply CeqAbsurd.
 + specialize (JL _ _ _ H1) as IHv.
   specialize (JL _ _ _ H2) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -2190,9 +2188,8 @@ unfold v_subs. simpl. apply VeqListNil; auto.
 + specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply CeqRet. auto.
-+ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. apply CeqAbsurd. auto.
++ clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. apply CeqAbsurd.
 + specialize (JL _ _ _ _ H1 i _ _ tyvs) as IHv.
   assert (wf_vtype A) as wfa.
   { inv H2. apply wf_hyp_ctx in H4. inv H4. inv H7. auto. }

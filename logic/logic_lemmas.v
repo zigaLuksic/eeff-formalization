@@ -130,7 +130,7 @@ destruct orig. destruct H1.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
   apply CeqRet. eauto.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
-  apply CeqAbsurd. eauto.
+  apply CeqAbsurd.
 + clear HEQ. unfold c_subs in *. unfold v_subs in VEQ. simpl.
   eapply CeqΠMatch. eauto.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.

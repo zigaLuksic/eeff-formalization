@@ -361,7 +361,6 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Veq A v v') -> 
     judg' Γ Ψ (Ceq (CTy A Σ E) (Ret v) (Ret v'))
 | CeqAbsurd Γ Ψ C v v' :
-    judg Γ Ψ (Veq TyØ v v') ->
     judg' Γ Ψ (Ceq C (Absurd v) (Absurd v'))
 | CeqΠMatch Γ Ψ C v v' A B c c':
     judg Γ Ψ (Veq (TyΠ A B) v v') ->

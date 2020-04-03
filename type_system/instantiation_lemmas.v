@@ -1021,9 +1021,8 @@ destruct orig. apply WfJudg; eauto. destruct H2.
 + eapply JL in H2; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply CeqRet; auto.
-+ eapply JL in H2; eauto.
-  clear VL CL HL RL JL WFHL WFFL WS.
-  apply CeqAbsurd; auto.
++ clear VL CL HL RL JL WFHL WFFL WS.
+  apply CeqAbsurd.
 + eapply wf_inst_InstU in wfinst as wfinsc.
   eapply wf_inst_InstU in wfinsc as wfinsc.
   eapply JL in H2; eauto.
