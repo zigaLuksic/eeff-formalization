@@ -1,11 +1,11 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 
 Require Export subtyping_lemmas substitution_lemmas logic_aux_lemmas.
 
@@ -583,9 +583,8 @@ inv orig. destruct H1.
 + specialize (VEL _ _ _ _ H1) as IH.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply CeqRet. auto.
-+ specialize (VEL _ _ _ _ H1) as IH.
-  clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply CeqAbsurd. auto.
++ clear VL CL HL RL VEL CEL HEL WF.
+  simpl. apply CeqAbsurd.
 + specialize (VEL _ _ _ _ H1) as IHv.
   specialize (CEL _ _ _ _ H2) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
@@ -1128,9 +1127,8 @@ inv orig. destruct H1.
 + specialize (VEL _ _ _ _ H1) as IH.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply CeqRet. eauto.
-+ specialize (VEL _ _ _ _ H1) as IH.
-  clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply CeqAbsurd. eauto.
++ clear VL CL HL RL VEL CEL HEL WF.
+  simpl. apply CeqAbsurd.
 + specialize (VEL _ _ _ _ H1) as IHv.
   specialize (CEL _ _ _ _ H2) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
@@ -1688,9 +1686,8 @@ destruct orig. destruct H1.
 + specialize (VEL _ _ _ _ _ i _ _ H1 tyvs) as IH.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply CeqRet. auto.
-+ specialize (VEL _ _ _ _ _ i _ _ H1 tyvs) as IH.
-  clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply CeqAbsurd. auto.
++ clear VL CL HL RL VEL CEL HEL WF.
+  simpl. apply CeqAbsurd.
 + specialize (VEL _ _ _ _ _ i _ _ H1 tyvs) as IHv.
   assert (wf_vtype A) as wfa by (inv H1; inv H4; inv H6; auto).
   assert (wf_vtype B) as wfb by (inv H1; inv H4; inv H6; auto).
