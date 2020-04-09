@@ -240,6 +240,53 @@ apply CompInduction.
   { ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. }
   { eapply wf_hyp_shift_typesafe in wfhyp; eauto. }
+
++ (* Nontermination case *)
+  simpl. simpl_c_subs. eapply ceq_sym. eapply ceq_trans.
+  eapply WfJudg; auto. 2: eapply βApp. simpl_c_subs. apply WfCeq.
+
+  { ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
+    instantiate (1:=(CTy A Σ E)). instantiate (2:=TyUnit). 
+    obvious_ctype. obvious_ctype. }
+  { ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (2:=TyUnit). 
+    obvious_ctype. obvious_ctype. }
+  
+  simpl_c_subs. eapply ceq_trans. eapply ceq_sym. eapply WfJudg; auto.
+  2: eapply DoLoop. instantiate (1:=(Ret (Var 0))). apply WfCeq.
+
+  { ctype_step. instantiate (1:=A). ctype_step. instantiate (1:=(CTy A Σ E)).
+    instantiate (1:=TyUnit). obvious_ctype. obvious_ctype.
+    apply unpure_ret; obvious. obvious_vtype.  }
+  { ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
+    obvious_ctype. obvious_ctype. }
+
+  eapply ceq_sym. eapply WfJudg; auto. 2: eapply CeqDoBind.
+  2: instantiate (1:=A). apply WfCeq.
+
+  { ctype_step. instantiate (1:=A). 2: apply unpure_ret; obvious_vtype.
+    ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
+    instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
+    obvious_ctype. obvious_ctype.  }
+  { ctype_step. instantiate (1:=A). 2: apply unpure_ret; obvious_vtype.
+    ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
+    obvious_ctype. obvious_ctype.  }
+
+  eapply ceq_trans. eapply WfJudg; auto. 2: eapply βApp. eapply WfCeq.
+
+  { ctype_step. instantiate (1:=TyUnit). 2: obvious_vtype.
+    ctype_step. vtype_step. ctype_step.
+    instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
+    obvious_ctype. obvious_ctype.  }
+  { simpl_c_subs. ctype_step. instantiate (1:=(CTy A Σ E)). 
+    instantiate (1:=TyUnit). obvious_ctype. obvious_ctype.  }
+  
+  simpl_c_subs. apply ceq_refl; auto. 2: apply ceq_refl.
+
+  { ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit). 
+    obvious_ctype. obvious_ctype.  }
+  { apply unpure_ret; auto. obvious_vtype. }
+  { apply wf_hyp_shift_typesafe; auto. }
+
 }{
 (* Now lets put induction to good use *)
 eapply ForallEl in H.

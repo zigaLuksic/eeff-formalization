@@ -539,6 +539,8 @@ destruct H1.
   - eapply ctx_subtype_insert. auto.
     apply vsubtype_refl. auto.
 + eapply ηDoBind.
++ eapply DoLoop.
++ eapply HandleLoop.
 + apply HeqSym. eauto.
 + eapply HeqTrans; eauto.
 + apply HeqSigØ.
@@ -579,17 +581,17 @@ destruct H1.
 + eapply CompInduction; eauto.
   - eapply WFFL; eauto; inv H. apply WfCtxU; auto.
     apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
-  - eapply JL; eauto; inv H; inv H7; inv H6.
+  - eapply JL; eauto; inv H; inv H8; inv H7.
     apply WfCtxU; auto. apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
   - intros op Aop Bop gets.
     eapply get_op_type_wf in gets as wfs. destruct wfs.
     eapply JL; eauto.
     * apply WfCtxU. apply WfCtxU; auto. apply WfTyFun. auto.
-      inv H. inv H9. auto.
+      inv H. inv H10. auto.
     * apply SubtypeCtxU. apply SubtypeCtxU. auto.
       all: apply vsubtype_refl. auto.
-      apply WfTyFun. auto. inv H. inv H9. auto.
-    * inv H.  inv H7. inv H6. auto.
+      apply WfTyFun. auto. inv H. inv H10. auto.
+    * inv H. inv H8. inv H7. auto.
 }{
 intros wfc ctxsty.
 inv wf.

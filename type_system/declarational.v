@@ -479,6 +479,14 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
         (c_subs (c_shift c 2 0) (2+n) (ListCons (Var 1) (Var 0)))) )
 | ηDoBind Γ Ψ c C:
     judg' Γ Ψ (Ceq C (DoBind c (Ret (Var 0))) c)
+| DoLoop Γ Ψ c C:
+    judg' Γ Ψ (Ceq C 
+      (DoBind (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) c) 
+      (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) )
+| HandleLoop Γ Ψ v C:
+    judg' Γ Ψ (Ceq C 
+      (Handle v (LetRec (App (Var 0) Unit) (App (Var 0) Unit))) 
+      (LetRec (App (Var 0) Unit) (App (Var 0) Unit)) )
 (* - - - - - - - - - - - - - - -  Cases - - - - - - - - - - - - - - -  *)
 | HeqSym Γ Ψ Σ D h1 h2 : 
     judg Γ Ψ (Heq Σ D h1 h2) -> 
@@ -558,8 +566,10 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ Φ
 | CompInduction Γ Ψ A Σ E φ :
     wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
+    (* Base case *)
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) 
       (form_subs (form_shift φ 1 0) 1 (Fun (Ret (Var 1)))) ->
+    (* Operation case *)
     (forall op Aop Bop,
       get_op_type Σ op = Some (Aop, Bop) ->
       judg
@@ -571,6 +581,14 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
         (form_subs (form_shift φ 2 0) 2 
           (Fun (Op op (Var 2) (App (Var 2) (Var 0)))))
     ) ->
+    (* Nontermination case *)
+    judg Γ Ψ 
+      (form_subs φ 0 
+        (Fun (LetRec 
+          (App (Var 0) Unit)
+          (App (Var 0) Unit) ))
+      ) ->
+    (* Conclusion *)
     judg' Γ Ψ (Forall (TyFun TyUnit (CTy A Σ E)) φ)
 
 

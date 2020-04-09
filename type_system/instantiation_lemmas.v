@@ -1451,6 +1451,10 @@ destruct orig. apply WfJudg; eauto. destruct H2.
     inv H3. apply wf_ctx_insert_vtype in H4. all: aomega.
 + clear VL CL HL RL JL WFHL WFFL WS.
   apply ηDoBind.
++ clear VL CL HL RL JL WFHL WFFL WS.
+  apply DoLoop.
++ clear VL CL HL RL JL WFHL WFFL WS.
+  apply HandleLoop.
 + eapply JL in H2; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply HeqSym. auto.
@@ -1582,10 +1586,13 @@ destruct orig. apply WfJudg; eauto. destruct H2.
   { intros op Aop Bop gets. specialize (H4 op Aop Bop gets).
     apply get_op_type_wf in gets. destruct gets.
     eapply JL in H4. all: clear VL CL HL RL JL WFHL WFFL WS. eauto.
-    apply wf_inst_InstU. apply WfTyFun. auto. inv H0. inv H10. auto.
-    apply wf_inst_InstU; auto. inv H0. inv H8. inv H7. auto. }
+    apply wf_inst_InstU. apply WfTyFun. auto. inv H0. inv H11. auto.
+    apply wf_inst_InstU; auto. inv H0. inv H9. inv H8. auto. }
+  eapply JL in H5 as IH3.
+  2: instantiate (2:= Γ).
+  2: instantiate (1:= I).
   all: clear VL CL HL RL JL WFHL WFFL WS.
-  inv H0. inv H8.
+  inv H0. inv H9.
   apply wf_inst_ctx_len_same in wfinst as same_len.
   simpl. eapply CompInduction; eauto.
   - clear IHwf IH2. 
@@ -1639,10 +1646,15 @@ destruct orig. apply WfJudg; eauto. destruct H2.
       apply form_under_var_shift. apply form_under_var_shift. 
       apply form_under_var_shift. apply wf_form_is_under_ctx in H2.
       rewrite inst_len_shift, same_len. simpl in H2. all: aomega.
-    * inv H4. apply wf_hyp_ctx in H5. inv H5. inv H12. inv H13. auto. 
-  - apply wf_inst_InstU; auto. inv H0. inv H8. inv H7. auto.
+    * inv H4. apply wf_hyp_ctx in H6. inv H6. inv H13. inv H14. auto.
+  - clear H4 IH1 IH2. erewrite form_inst_subs in IH3.
+    rewrite InstU_is_insert. eauto. omega.
+    * rewrite same_len. apply wf_form_is_under_ctx in H2. simpl in H2. auto.
+    * simpl. constructor; constructor; aomega.
+  - auto.
+  - apply wf_inst_InstU; auto. inv H0. inv H9. inv H8. auto.
   - simpl. apply wf_inst_InstU; auto. apply WfTyFun.
-    apply WfTyUnit. inv H0. inv H8. auto.
+    apply WfTyUnit. inv H0. inv H9. auto.
 }{
 destruct orig; simpl.
 - clear VL CL HL RL JL WFHL WFFL WS.
