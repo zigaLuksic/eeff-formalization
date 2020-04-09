@@ -1,19 +1,18 @@
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic".
-Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples".
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic". *)
-(* Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
+(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
+Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
 
 Require Export type_lemmas logic_lemmas logic_tactics.
 Open Scope string_scope.
-
 
 Lemma letbind_ctype A c1 c2 Γ D:
   has_ctype Γ c1 (CTy A SigØ EqsØ) -> has_ctype (CtxU Γ A) c2 D ->
@@ -115,6 +114,17 @@ Example eq_get_get := (EqsU (EqsØ)
     (TOp "get" Unit (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 1)))))
     (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 0)))) ).
 
+Example eq_set_get := (EqsU (EqsØ)
+  (CtxU (CtxØ) TyInt)
+  (TCtxU (TCtxØ) TyInt)
+    (TOp "set" (Var 0) (TOp "get" Unit (TApp 0 (Var 0))))
+    (TOp "set" (Var 0) (TApp 0 (Var 1))) ).
+
+Example eq_get_set := (EqsU (EqsØ)
+  CtxØ
+  (TCtxU (TCtxØ) TyUnit)
+    (TOp "get" Unit (TOp "set" (Var 0) (TApp 0 Unit)))
+    (TApp 0 Unit) ).
 
 Lemma wf_eq_set_set:
   wf_eqs eq_set_set sig.
@@ -138,6 +148,30 @@ apply WfEqsU; obvious.
   eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
 + eapply WfTOp. simpl. reflexivity. obvious_vtype.
   eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
+Qed.
+
+Lemma wf_eq_set_get:
+  wf_eqs eq_set_get sig.
+Proof.
+unfold eq_set_get. unfold sig.
+apply WfEqsU; obvious.
++ eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
+Qed.
+
+
+Lemma wf_eq_get_set:
+  wf_eqs eq_get_set sig.
+Proof.
+unfold eq_get_set. unfold sig.
+apply WfEqsU; obvious.
++ eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTOp. simpl. reflexivity. obvious_vtype.
+  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
 Qed.
 
 (* ========================================================================== *)
@@ -271,4 +305,68 @@ eapply ceq_trans. apply Ceq. 3: eapply βApp.
 { admit. }
 { admit. }
 simpl_c_subs. eapply ceq_refl. admit.
+Admitted.
+
+
+(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+Lemma respects_set_get A:
+  wf_vtype A ->
+  respects 
+    CtxØ state_cases 
+    sig (CTy (TyFun TyInt (CTy A SigØ EqsØ)) SigØ EqsØ) eq_set_get.
+Proof.
+intros wfa.
+unfold state_cases. unfold sig. unfold eq_set_get.
+apply Respects; obvious. apply wf_eq_set_get.
+apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
+simpl. simpl_c_subs.
+apply Ceq; obvious.
+{ admit. }
+{ admit. }
+apply CeqRet. apply Veq; obvious.
+{ admit. }
+{ admit. }
+apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDoBind.
+{ admit. }
+{ admit. }
+2: apply ceq_refl; admit. apply Ceq. 3: apply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoBind_Ret.
+{ admit. }
+{ admit. }
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. apply Ceq. 3: eapply CeqDoBind. 
+3: instantiate (1:=(TyFun TyInt (CTy A SigØ EqsØ))).
+{ admit. }
+{ admit. }
+2: apply ceq_refl; admit.
+eapply ceq_trans. apply Ceq. 3: eapply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. apply ceq_sym.
+eapply ceq_trans. apply Ceq. 3: eapply βApp.
+{ admit. }
+{ admit. }
+simpl_c_subs. eapply ceq_refl. admit.
+Admitted.
+
+
+(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+Lemma respects_get_set A:
+  wf_vtype A ->
+  respects 
+    CtxØ state_cases 
+    sig (CTy (TyFun TyInt (CTy A SigØ EqsØ)) SigØ EqsØ) eq_get_set.
+Proof.
+intros wfa.
+unfold state_cases. unfold sig. unfold eq_get_set.
+apply Respects; obvious. apply wf_eq_get_set.
+apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
+simpl. simpl_c_subs.
+admit.
 Admitted.
