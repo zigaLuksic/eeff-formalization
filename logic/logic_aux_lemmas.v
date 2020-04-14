@@ -24,14 +24,14 @@ apply WfJudg. apply WfVeq; auto. apply WfHypØ. inv orig. auto.
 destruct orig. destruct H1.
 + apply VeqUnit.
 + apply VeqInt. 
-+ eapply VeqVar. eauto. apply vsubtype_refl. assumption.
++ eapply VeqVar. eauto.
 + apply VeqPair; eauto.
 + apply VeqInl; eauto.
 + apply VeqInr; eauto.
 + apply VeqListNil; eauto.
 + apply VeqListCons; eauto.
 + apply VeqFun; eauto. 
-+ eapply VeqHandler; eauto. apply csubtype_refl. inv H2. assumption.
++ eapply VeqHandler; eauto.
 + apply veq_refl_raw in H1. eapply VeqSubtype; eauto.
 }{
 apply WfJudg. apply WfCeq; auto. apply WfHypØ. inv orig. auto.

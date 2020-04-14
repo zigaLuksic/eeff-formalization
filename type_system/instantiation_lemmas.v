@@ -960,7 +960,7 @@ destruct orig. apply WfJudg; eauto. destruct H2.
   eapply wf_inst_get_Some in H2; eauto.
   destruct H2 as [v'[gets tys]].
   simpl. rewrite gets. eapply (veq_refl _ (hyp_inst Ψ I)) in tys.
-  eapply VeqSubtype; eauto. auto.
+  inv tys. all: auto.
 + clear VL CL HL RL JL WFHL WFFL WS.
   apply VeqUnit.
 + clear VL CL HL RL JL WFHL WFFL WS.
@@ -995,7 +995,7 @@ destruct orig. apply WfJudg; eauto. destruct H2.
   simpl. eapply VeqHandler; eauto.
   specialize (hyp_inst_shift_move_to_inst 0 1 Ψ I) as pad. simpl in pad.
   rewrite hyp_shift_inst, <-pad. auto.
-  inv H0. inv H8. inv H5. inv H9. auto.
+  inv H0. inv H7. inv H4. inv H8. auto.
 + eapply JL in H2; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   eapply VeqSubtype; eauto.
@@ -1488,9 +1488,6 @@ destruct orig. apply WfJudg; eauto. destruct H2.
     rewrite hyp_shift_inst, <-pad, <-(inst_shift_shift 1 1). eauto.
   - inv H5. apply wf_hyp_ctx in H7. inv H7. auto.
   - inv H5. apply wf_hyp_ctx in H7. inv H7. inv H10. auto.
-+ eapply JL in H2; eauto.
-  clear VL CL HL RL JL WFHL WFFL WS.
-  eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WS.
   apply IsHyp. apply has_hypothesis_inst. auto.
 + clear VL CL HL RL JL WFHL WFFL WS.

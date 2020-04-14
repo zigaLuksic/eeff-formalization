@@ -137,7 +137,7 @@ with wf_form : ctx -> formula -> Prop :=
     wf_form Γ Truth
 | WfFalsity Γ :
     wf_ctx Γ ->
-    wf_form Γ Truth
+    wf_form Γ Falsity
 | WfAnd φ1 φ2 Γ : 
     wf_form Γ φ1 -> wf_form Γ φ2 ->
     wf_form Γ (And φ1 φ2)
@@ -309,9 +309,8 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Veq A v1 v2) -> 
     judg Γ Ψ (Veq A v2 v3) -> 
     judg' Γ Ψ (Veq A v1 v3)
-| VeqVar i A A' Γ Ψ :
-    get_vtype Γ i = Some A' ->
-    vsubtype A' A ->
+| VeqVar i A Γ Ψ :
+    get_vtype Γ i = Some A ->
     judg' Γ Ψ (Veq A (Var i) (Var i))
 | VeqUnit Γ Ψ:
     judg' Γ Ψ (Veq TyUnit Unit Unit)
@@ -336,10 +335,9 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | VeqFun A C Γ Ψ c c':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c c') ->
     judg' Γ Ψ (Veq (TyFun A C) (Fun c) (Fun c'))
-| VeqHandler A Σ E D D' Γ Ψ c c' h h':
+| VeqHandler A Σ E D Γ Ψ c c' h h':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq D c c') ->
-    judg Γ Ψ (Heq Σ D' h h') ->
-    csubtype D' D ->
+    judg Γ Ψ (Heq Σ D h h') ->
     judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h'))
 | VeqSubtype Γ Ψ A A' v1 v2 :
     judg Γ Ψ (Veq A v1 v2) ->
@@ -508,10 +506,6 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     get_case h1 op = None -> get_case h2 op = None ->
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D (CasesU h1 op c1) (CasesU h2 op c2))
-| HeqSubtype Γ Ψ Σ Σ' D D' h1 h2 :
-    judg Γ Ψ (Heq Σ D h1 h2) ->
-    sig_subtype Σ' Σ -> csubtype D D' ->
-    judg' Γ Ψ (Heq Σ' D' h1 h2)
 (* - - - - - - - - - - - - - - -  General - - - - - - - - - - - - - - -  *)
 | IsHyp Γ Ψ φ:
     has_hypothesis Ψ φ ->

@@ -435,13 +435,16 @@ inv r. eapply Respects; auto. destruct H3.
     apply wf_tctx_to_ctx; auto. auto.
 }{
 intros wf ctxsty.
-inv orig. apply WfJudg; eauto. clear HL WFHL.
+inv orig. apply WfJudg; eauto.
 destruct H1.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
 + eapply ctx_subtype_get_rev in ctxsty as cget; eauto.
-  destruct cget as [A''[gets sty]]. 
-  eapply VeqVar; eauto. eapply vsubtype_trans; eauto.
+  destruct cget as [A''[gets sty]].
+  eapply VeqSubtype; eauto. apply WfJudg; eauto. 
+  - inv H. apply get_vtype_wf in gets as wfA'; eauto.
+    apply WfVeq; apply TypeV; eauto. all: apply TypeVar; auto.
+  - apply VeqVar. auto.
 + eapply VeqUnit.
 + eapply VeqInt.
 + eapply VeqPair; eauto.
@@ -454,7 +457,7 @@ destruct H1.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler. eapply JL.
-  all: inv H; inv H9; inv H4; inv H9; eauto.
+  all: inv H; inv H8; inv H3; inv H8; eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqSubtype; eauto.
@@ -556,7 +559,6 @@ destruct H1.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
-+ eapply HeqSubtype; eauto.
 + eapply IsHyp. auto.
 + eapply TruthIn.
 + eapply FalsityEl. eauto.

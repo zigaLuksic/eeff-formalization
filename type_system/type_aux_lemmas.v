@@ -768,9 +768,6 @@ simpl. eapply VeqListNil.
   simpl in *. eapply HeqExtend; eauto.
   all: try apply shift_get_case_None; auto.
   rewrite hyp_shift_comm; aomega.
-+ specialize (JL _ _ _ H1) as IH.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl in IH. eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply IsHyp. apply has_hypothesis_shift. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1058,7 +1055,7 @@ destruct orig. destruct H1.
   - apply hyp_subset_shift. auto.
 + eapply VeqHandler; eauto. eapply hypotheses_weakening. eauto.
   - apply wf_hyp_shift_typesafe; auto.
-    inv H1. apply wf_hyp_ctx in H5. inv H5. auto.
+    inv H1. apply wf_hyp_ctx in H4. inv H4. auto.
   - apply hyp_subset_shift. auto.
 + eapply VeqSubtype; eauto.
 + apply ηUnit.
@@ -1147,7 +1144,6 @@ destruct orig. destruct H1.
     apply wf_hyp_shift_typesafe; auto.
     all: inv H; inv H9; inv H13; auto. apply WfTyFun; auto. 
   - apply hyp_subset_shift. auto.
-+ eapply HeqSubtype; eauto.
 + apply IsHyp. eapply hyp_subset_has_hypothesis; eauto.
 + apply TruthIn.
 + apply FalsityEl. eauto.
@@ -1399,8 +1395,8 @@ destruct orig. destruct H1.
   subst. simpl.
   destruct (i0 =? i) eqn:cmp.
   - apply (veq_refl _ (hyp_sub Ψ (i, v_s))) in tyvs; auto.
-    inv H1. apply Nat.eqb_eq in cmp. subst. rewrite gets in H4.
-    inv H4. eapply VeqSubtype; eauto. eauto.
+    apply Nat.eqb_eq in cmp. subst. rewrite gets in H1. inv H1.
+    inv tyvs. auto. eauto.
   - eapply VeqVar; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply VeqUnit.
@@ -1431,9 +1427,9 @@ destruct orig. destruct H1.
 + specialize (JL _ _ _ H1) as IHc.
   specialize (JL _ _ _ H2) as IHh.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply VeqHandler; eauto. 2: eauto. rewrite hyp_shift_sub. eapply IHc.
+  simpl. eapply VeqHandler; eauto. rewrite hyp_shift_sub. eapply IHc.
   - simpl. eauto.
-  - apply v_shift_typesafe; auto. inv H. inv H7. inv H4. inv H8. auto.
+  - apply v_shift_typesafe; auto. inv H. inv H6. inv H3. inv H7. auto.
   - omega.
 + specialize (JL _ _ _ H1) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1677,9 +1673,6 @@ destruct orig. destruct H1.
     rewrite <-(v_shift_shift 1). 
     apply v_shift_typesafe. apply v_shift_typesafe. auto.
     all: inv H4; apply wf_hyp_ctx in H6; inv H6; inv H9; auto.
-+ specialize (JL _ _ _ H1) as IH.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl in *. eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply IsHyp. apply has_hypothesis_sub. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -2135,13 +2128,12 @@ destruct orig. destruct H1.
   - rewrite v_negshift_shift, v_shift_0.
     eapply (veq_refl _ (hyp_subs Ψ i v_s)) in tyvs.
     apply Nat.eqb_eq in cmp. subst. 
-    erewrite get_ctx_insert_new in H1. inv H1.
-    eapply VeqSubtype; eauto. all: eaomega.
+    erewrite get_ctx_insert_new in H1. inv H1. inv tyvs. all: eaomega.
   - simpl. destruct (i<=?j) eqn:ilj;
     eapply VeqVar; eaomega.
     * apply Nat.eqb_neq in cmp. apply leb_complete in ilj.
       erewrite get_ctx_insert_changed.
-      assert (1+(j-1)=j) by omega. rewrite H3. eauto. omega. 
+      assert (1+(j-1)=j) by omega. rewrite H2. eauto. omega. 
     * apply Nat.eqb_neq in cmp. apply leb_complete_conv in ilj.
       erewrite get_ctx_insert_unchanged; eaomega.
 + clear VL CL HL RL JL WFHL WFFL WFIL. simpl.
@@ -2174,7 +2166,7 @@ unfold v_subs. simpl. apply VeqListNil; auto.
   apply IH. simpl. f_equal. auto.
   all: simpl; omega.
 + assert (wf_vtype A) as wfa.
-  { clear VL CL HL RL JL WFHL WFFL WFIL. inv H. inv H7. inv H4. inv H8. auto. }
+  { clear VL CL HL RL JL WFHL WFFL WFIL. inv H. inv H6. inv H3. inv H7. auto. }
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (JL _ _ _ _ H1 (S i) _ _ tyvs') as IHc.
   specialize (JL _ _ _ _ H2 i _ _ tyvs) as IHh.
@@ -2612,9 +2604,6 @@ unfold v_subs. simpl. apply VeqListNil; auto.
     rewrite hyp_shift_shift, (v_shift_comm 1 i), <-(v_shift_shift 1 1).
     unfold c_subs in *. apply IH2. all: aomega.
     do 2 f_equal. auto.
-+ specialize (JL _ _ _ _ H1 i _ _ tyvs) as IH.
-  clear VL CL HL RL JL WFHL WFFL WFIL.
-  eapply HeqSubtype; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply IsHyp. apply has_hypothesis_subs. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.

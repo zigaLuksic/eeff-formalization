@@ -11,7 +11,8 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
 
-Require Export syntax_lemmas substitution_lemmas type_lemmas logic_tactics.
+Require Export syntax_lemmas substitution_lemmas instantiation_lemmas 
+  type_lemmas logic_tactics.
 
 
 Lemma operational_in_logic Γ c c' C:
@@ -108,7 +109,7 @@ destruct orig. destruct H1.
   eapply CEQ; eauto. apply vseq_ext.
   inv H0. auto. subst. apply ctx_insert_extend. simpl. all: omega.
 + clear VEQ. unfold v_subs. unfold c_subs in CEQ. unfold h_subs in HEQ. simpl.
-  eapply VeqHandler. 3: apply csubtype_refl; inv H0; assumption.
+  eapply VeqHandler.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
     apply vseq_ext. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
