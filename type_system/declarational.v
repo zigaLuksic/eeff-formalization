@@ -559,7 +559,6 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU Γ A) (HypU (hyp_shift Ψ 1 0) φ) (form_shift Φ 1 0) ->
     judg' Γ Ψ Φ
 | CompInduction Γ Ψ A Σ E φ :
-    wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
     (* Base case *)
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) 
       (form_subs (form_shift φ 1 0) 1 (Fun (Ret (Var 1)))) ->

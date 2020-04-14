@@ -1559,10 +1559,7 @@ destruct orig. apply WfJudg; eauto. destruct H3.
   simpl in H4. auto.
   simpl. apply wf_inst_InstU. 
   inv H4. inv H5. auto. auto.
-+ eapply WFFL in H3 as IHwf.
-  2: instantiate (2:= (CtxU Γ (TyFun TyUnit (CTy A Σ E)))).
-  2: instantiate (1:= inst_pad_by_n I 1).
-  eapply JL in H4 as IH1.
++ eapply JL in H3 as IH1.
   2: instantiate (2:= (CtxU Γ A)).
   2: instantiate (1:= inst_pad_by_n I 1).
   assert (
@@ -1579,19 +1576,19 @@ destruct orig. apply WfJudg; eauto. destruct H3.
             (Fun (Op op (Var 2) (App (Var 2) (Var 0)))))
           (InstU (inst_shift (InstU (inst_shift I 1 0) (Var 0)) 1 0) (Var 0)))
   ) as IH2.
-  { intros op Aop Bop gets. specialize (H5 op Aop Bop gets).
+  { intros op Aop Bop gets. specialize (H4 op Aop Bop gets).
     apply get_op_type_wf in gets. destruct gets.
-    eapply JL in H5. all: clear VL CL HL RL JL WFHL WFFL WS. eauto.
-    apply wf_inst_InstU. apply WfTyFun. auto. inv H1. inv H12. auto.
-    apply wf_inst_InstU; auto. inv H1. inv H10. inv H9. auto. }
-  eapply JL in H6 as IH3.
+    eapply JL in H4. all: clear VL CL HL RL JL WFHL WFFL WS. eauto.
+    apply wf_inst_InstU. apply WfTyFun. auto. inv H1. inv H11. auto.
+    apply wf_inst_InstU; auto. inv H1. inv H9. inv H8. auto. }
+  eapply JL in H5 as IH3.
   2: instantiate (2:= Γ).
   2: instantiate (1:= I).
   all: clear VL CL HL RL JL WFHL WFFL WS.
-  inv H1. inv H10.
+  inv H1. inv H9.
   apply wf_inst_ctx_len_same in wfinst as same_len.
   simpl. eapply CompInduction; eauto.
-  - clear IHwf IH2. 
+  - clear IH2. 
     rewrite hyp_shift_inst. rewrite hyp_inst_shift_move_to_inst in IH1.
     erewrite (form_inst_subs 1) in IH1. rewrite form_shift_inst.
     simpl in *. 
@@ -1603,10 +1600,10 @@ destruct orig. apply WfJudg; eauto. destruct H3.
     rewrite H1, form_inst_shift_move_to_inst in IH1. clear H1. simpl in *.
     auto. simpl. omega.
     * apply form_under_var_shift. simpl. rewrite inst_len_shift, same_len.
-      apply wf_form_is_under_ctx in H3. simpl in H3. auto. omega.
+      apply wf_form_is_under_ctx in H10. simpl in H10. auto. omega.
     * simpl. omega.
   - intros op Aop Bop gets. specialize (IH2 op Aop Bop gets).
-    specialize (H5 op Aop Bop gets). clear IH1 IHwf.
+    specialize (H4 op Aop Bop gets). clear IH1.
     apply get_op_type_wf in gets. destruct gets. simpl in *.
     rewrite hyp_shift_inst, form_shift_inst.
     rewrite (form_inst_subs 3), (form_inst_subs 2) in IH2. simpl in IH2.
@@ -1635,22 +1632,20 @@ destruct orig. apply WfJudg; eauto. destruct H3.
     rewrite pad2, form_inst_shift_move_to_inst in IH2. auto.
     all: clear IH2; simpl; try rewrite inst_len_shift, inst_len_shift.
     all: try rewrite same_len; aomega.
-    * rewrite <-(form_shift_shift 1). apply wf_form_is_under_ctx in H3.
+    * rewrite <-(form_shift_shift 1). apply wf_form_is_under_ctx in H10.
       apply form_under_var_shift. apply form_under_var_shift. 
-      simpl in H3. all: aomega.
+      simpl in H10. all: aomega.
     * rewrite <-(form_shift_shift 1), <-(form_shift_shift 1 1).
       apply form_under_var_shift. apply form_under_var_shift. 
-      apply form_under_var_shift. apply wf_form_is_under_ctx in H3.
-      rewrite inst_len_shift, same_len. simpl in H3. all: aomega.
-    * inv H5. inv H9. auto.
+      apply form_under_var_shift. apply wf_form_is_under_ctx in H10.
+      rewrite inst_len_shift, same_len. simpl in H10. all: aomega.
+    * inv H4. inv H8. auto.
   - clear H4 IH1 IH2. erewrite form_inst_subs in IH3.
     rewrite InstU_is_insert. eauto. omega.
-    * rewrite same_len. apply wf_form_is_under_ctx in H3. simpl in H3. auto.
+    * rewrite same_len. apply wf_form_is_under_ctx in H10. simpl in H10. auto.
     * simpl. constructor; constructor; aomega.
   - auto.
-  - apply wf_inst_InstU; auto. inv H1. inv H10. inv H9. auto.
-  - simpl. apply wf_inst_InstU; auto. apply WfTyFun.
-    apply WfTyUnit. inv H1. inv H10. auto.
+  - apply wf_inst_InstU; auto. inv H1. inv H9. inv H8. auto.
 }{
 destruct orig; simpl.
 - clear VL CL HL RL JL WFHL WFFL WS.
