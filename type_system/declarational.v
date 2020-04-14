@@ -156,7 +156,6 @@ with wf_form : ctx -> formula -> Prop :=
 
 with wf_hyp : ctx -> hypotheses -> Prop :=
 | WfHypØ Γ:
-    wf_ctx Γ ->
     wf_hyp Γ HypØ
 | WfHypU Γ Ψ j:
     wf_hyp Γ Ψ ->
@@ -295,6 +294,7 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 
 with judg : ctx -> hypotheses -> formula -> Prop :=
 | WfJudg Γ Ψ φ :
+    wf_ctx Γ ->
     wf_form Γ φ ->
     wf_hyp Γ Ψ ->
     judg' Γ Ψ φ ->

@@ -20,8 +20,8 @@ with heq_refl_raw Γ h Σ D :
 Proof.
 all: intros orig.
 {
-apply WfJudg. apply WfVeq; auto. apply WfHypØ. inv orig. auto.
-destruct orig. destruct H1.
+apply WfJudg. inv orig. auto.
+apply WfVeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + apply VeqUnit.
 + apply VeqInt. 
 + eapply VeqVar. eauto.
@@ -34,8 +34,8 @@ destruct orig. destruct H1.
 + eapply VeqHandler; eauto.
 + apply veq_refl_raw in H1. eapply VeqSubtype; eauto.
 }{
-apply WfJudg. apply WfCeq; auto. apply WfHypØ. inv orig. auto.
-destruct orig. destruct H1.
+apply WfJudg. inv orig. auto.
+apply WfCeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + apply CeqRet. auto.
 + apply CeqAbsurd.
 + eapply CeqΠMatch; eauto.
@@ -48,11 +48,11 @@ destruct orig. destruct H1.
 + eapply CeqOp; eauto.
 + apply ceq_refl_raw in H1. eapply CeqSubtype; eauto.
 }{
-apply WfJudg. eapply WfHeq; auto.
+apply WfJudg. inv orig. auto. eapply WfHeq; auto.
 inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
 apply sig_subtype_refl. inv orig. assumption.
-assumption. assumption. apply WfHypØ. inv orig. assumption.
+assumption. assumption. apply WfHypØ.
 destruct orig. destruct H2.
 + eapply HeqSigØ.
 + eapply HeqExtend; eauto.
@@ -68,14 +68,17 @@ with heq_sym Σ D Γ Ψ h1 h2 :
   judg Γ Ψ (Heq Σ D h1 h2) -> judg Γ Ψ (Heq Σ D h2 h1).
 Proof.
 {
-intro orig. apply WfJudg. apply WfVeq. all: try (inv orig; inv H; assumption).
+intro orig. apply WfJudg. inv orig. auto. 
+apply WfVeq. all: try (inv orig; inv H0; assumption).
 apply VeqSym. auto.
 }{
-intro orig. apply WfJudg. apply WfCeq. all: try (inv orig; inv H; assumption).
+intro orig. apply WfJudg. inv orig. auto.
+apply WfCeq. all: try (inv orig; inv H0; assumption).
 apply CeqSym. auto.
 }{
-intro orig. apply WfJudg. inv orig. inv H.
-eapply WfHeq. 3: exact H8. all: eauto. inv orig. auto.
+intro orig. apply WfJudg. inv orig. auto. 
+inv orig. inv H0.
+eapply WfHeq. 3: exact H9. all: eauto. inv orig. auto.
 apply HeqSym. auto.
 }
 Qed.
@@ -93,20 +96,20 @@ with  heq_trans Σ D Γ Ψ h1 h2 h3:
 
 Proof.
 {
-intros veq1 veq2. apply WfJudg. apply WfVeq. 
-+ inv veq1. inv H. auto.
-+ inv veq2. inv H. auto.
+intros veq1 veq2. apply WfJudg. inv veq1. auto. apply WfVeq. 
++ inv veq1. inv H0. auto.
++ inv veq2. inv H0. auto.
 + inv veq1. auto.
 + eapply VeqTrans; eauto.
 }{
-intros ceq1 ceq2. apply WfJudg. apply WfCeq. 
-+ inv ceq1. inv H. auto.
-+ inv ceq2. inv H. auto.
+intros ceq1 ceq2. apply WfJudg. inv ceq1. auto. apply WfCeq. 
++ inv ceq1. inv H0. auto.
++ inv ceq2. inv H0. auto.
 + inv ceq1. auto.
 + eapply CeqTrans; eauto.
 }{
-intros heq1 heq2. apply WfJudg. 
-+ inv heq1. inv H. inv heq2. inv H. eapply WfHeq.
+intros heq1 heq2. apply WfJudg. inv heq1. auto.
++ inv heq1. inv H0. inv heq2. inv H3. eapply WfHeq.
   4: eauto. 4: eauto. all:eauto.
 + inv heq1. auto.
 + eapply HeqTrans; eauto.

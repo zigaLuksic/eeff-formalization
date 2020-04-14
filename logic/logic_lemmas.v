@@ -36,12 +36,12 @@ all: assumption || (inv tys; assumption) || auto.
   - eapply IHsteps. eauto. eapply preservation; eauto.
   - apply ceq_refl. auto. 
     apply wf_hyp_shift_typesafe. apply WfHypØ.
-    inv ty1. auto. inv ty2. inv H. auto.
+    inv ty1. inv H0. auto.
 + eapply βDoBind_Ret.
 + eapply βDoBind_Op. 
 + eapply shape_handle in tys. destruct tys as [C' [tyh tyc]].
   eapply CeqHandle. 
-  - apply veq_refl. eauto. apply WfHypØ. inv tyc. auto.
+  - apply veq_refl. eauto. apply WfHypØ.
   - apply IHsteps. assumption. eapply preservation; eauto.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
@@ -74,9 +74,9 @@ all: assert (forall A, wf_vtype A ->
         (Veq A_s (v_shift v_s 1 0) (v_shift v_s' 1 0)) ) as vseq_ext by
   (intros; eapply judg_shift_typesafe in vseq; simpl in vseq; eauto).
 {
-apply WfJudg. apply WfVeq.
-{ inv vseq. inv H. eapply v_subs_typesafe; eauto. }
-{ inv vseq. inv H. eapply v_subs_typesafe; eauto. }
+apply WfJudg. inv vseq. auto. apply WfVeq.
+{ inv vseq. inv H0. eapply v_subs_typesafe; eauto. }
+{ inv vseq. inv H0. eapply v_subs_typesafe; eauto. }
 { inv vseq. auto. }
 destruct orig. destruct H1.
 + clear VEQ CEQ HEQ. unfold v_subs. simpl. apply VeqUnit.
@@ -90,7 +90,7 @@ destruct orig. destruct H1.
       (if i <=? n then Var (n-1) else Var n)
       (if i <=? n then Var (n-1) else Var n))).
     apply veq_refl. apply TypeV; auto.
-    { inv vseq. inv H2. inv H8. assumption. }
+    { inv vseq. assumption. }
     destruct (i<=?n) eqn: cmp.
     * apply TypeVar. subst. erewrite get_ctx_insert_changed.
       all: apply Nat.eqb_neq in ni; apply leb_complete in cmp.
@@ -123,9 +123,9 @@ judg (CtxU (CtxU Γ B) A) (hyp_shift Ψ 2 0)
   eapply judg_shift_typesafe in vseq. 
   rewrite hyp_shift_shift, form_shift_shift in vseq. simpl in vseq.
   eauto. all: eauto. } 
-apply WfJudg. apply WfCeq.
-{ inv vseq. inv H. eapply c_subs_typesafe; eauto. }
-{ inv vseq. inv H. eapply c_subs_typesafe; eauto. }
+apply WfJudg. inv vseq. auto. apply WfCeq.
+{ inv vseq. inv H0. eapply c_subs_typesafe; eauto. }
+{ inv vseq. inv H0. eapply c_subs_typesafe; eauto. }
 { inv vseq. auto. }
 destruct orig. destruct H1.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
@@ -175,12 +175,12 @@ destruct orig. destruct H1.
   subst. apply ctx_insert_extend. simpl. all: omega.
 + eapply CeqSubtype; eauto.
 }{
-apply WfJudg. eapply WfHeq.
+apply WfJudg. inv vseq. auto. eapply WfHeq.
 { inv orig. auto. }
 { apply sig_subtype_refl. inv orig. auto. }
 { apply sig_subtype_refl. inv orig. auto. }
-{ inv vseq. inv H. eapply h_subs_typesafe; eauto. }
-{ inv vseq. inv H. eapply h_subs_typesafe; eauto. }
+{ inv vseq. inv H0. eapply h_subs_typesafe; eauto. }
+{ inv vseq. inv H0. eapply h_subs_typesafe; eauto. }
 { inv vseq. auto. }
 destruct orig. destruct H2.
 + clear VEQ CEQ HEQ. 

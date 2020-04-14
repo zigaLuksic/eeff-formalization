@@ -436,13 +436,13 @@ inv r. eapply Respects; auto. destruct H3.
 }{
 intros wf ctxsty.
 inv orig. apply WfJudg; eauto.
-destruct H1.
+destruct H2.
 + apply VeqSym. eauto.
 + eapply VeqTrans; eauto.
 + eapply ctx_subtype_get_rev in ctxsty as cget; eauto.
   destruct cget as [A''[gets sty]].
   eapply VeqSubtype; eauto. apply WfJudg; eauto. 
-  - inv H. apply get_vtype_wf in gets as wfA'; eauto.
+  - inv H0. apply get_vtype_wf in gets as wfA'; eauto.
     apply WfVeq; apply TypeV; eauto. all: apply TypeVar; auto.
   - apply VeqVar. auto.
 + eapply VeqUnit.
@@ -453,11 +453,11 @@ destruct H1.
 + eapply VeqListNil.
 + eapply VeqListCons; eauto.
 + eapply VeqFun. eapply JL. eauto.
-  all: inv H; inv H5; inv H2. 
+  all: inv H0; inv H6; inv H3. 
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler. eapply JL.
-  all: inv H; inv H8; inv H3; inv H8; eauto.
+  all: inv H0; inv H9; inv H4; inv H9; eauto.
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqSubtype; eauto.
@@ -469,33 +469,33 @@ destruct H1.
 + eapply CeqAbsurd; eauto.
 + eapply CeqΠMatch; eauto.
   eapply JL. eauto.
-  all: inv H1; inv H3; inv H8; inv H3.
+  all: inv H2; inv H5; inv H10; inv H5.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
 + eapply CeqΣMatch; eauto; 
   eapply JL; eauto.
-  all: inv H1; inv H4; inv H9; inv H4.
+  all: inv H2; inv H6; inv H11; inv H6.
   all: apply WfCtxU || apply SubtypeCtxU; auto.
   all: apply vsubtype_refl; auto.
 + eapply CeqListMatch; eauto.
   eapply JL; eauto. 
-  all: inv H1; inv H4; inv H9.
-  - apply WfCtxU. apply WfCtxU. all: auto. inv H4. auto.
+  all: inv H2; inv H6; inv H11.
+  - apply WfCtxU. apply WfCtxU. all: auto. inv H6. auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
-    all: apply vsubtype_refl. inv H4. all: auto.
+    all: apply vsubtype_refl. inv H6. all: auto.
 + eapply CeqDoBind; eauto. eapply JL; eauto.
-  all: inv H1; inv H3; inv H8; inv H3. 
+  all: inv H2; inv H5; inv H10; inv H5. 
   - apply WfCtxU; auto.
   - apply SubtypeCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec.
   - eapply JL; eauto. instantiate (1:=A).
-    all: inv H2; inv H3; inv H8; inv H2.
-    * apply WfCtxU. apply WfCtxU. 2: inv H11. all: eauto.
+    all: inv H3; inv H5; inv H10; inv H4.
+    * apply WfCtxU. apply WfCtxU. 2: inv H13. all: eauto.
     * apply SubtypeCtxU. apply SubtypeCtxU. auto.
-      all: apply vsubtype_refl. inv H11. all: auto.
+      all: apply vsubtype_refl. inv H13. all: auto.
   - eapply JL; eauto.
     all: inv H2; inv H3; inv H8; inv H2.
     * apply WfCtxU; auto.
@@ -521,14 +521,14 @@ destruct H1.
 + eapply ηPair. 
   apply ctx_subtype_len in ctxsty. omega.
   assert (wf_vtype (TyΠ A B)). 
-  { inv H2. apply wf_ctx_insert_vtype in H3; auto. }
+  { inv H3. apply wf_ctx_insert_vtype in H4; auto. }
   eapply CL; eauto. 
   - apply wf_ctx_insert; eauto.
   - eapply ctx_subtype_insert. auto.
     apply vsubtype_refl. auto.
 + eapply ηSum. apply ctx_subtype_len in ctxsty. omega.
   assert (wf_vtype (TyΣ A B)). 
-  { inv H2. apply wf_ctx_insert_vtype in H3; auto. }
+  { inv H3. apply wf_ctx_insert_vtype in H4; auto. }
   eapply CL; eauto.
   - apply wf_ctx_insert; eauto.
   - eapply ctx_subtype_insert. auto.
@@ -536,7 +536,7 @@ destruct H1.
 + eapply ηList. 
   apply ctx_subtype_len in ctxsty. omega.
   assert (wf_vtype (TyList A)). 
-  { inv H2. apply wf_ctx_insert_vtype in H3; auto. }
+  { inv H3. apply wf_ctx_insert_vtype in H4; auto. }
   eapply CL; eauto. 
   - apply wf_ctx_insert; eauto.
   - eapply ctx_subtype_insert. auto.
@@ -549,13 +549,13 @@ destruct H1.
 + apply HeqSigØ.
 + eapply HeqSigU; eauto.
   eapply JL; eauto.
-  all: inv H3; inv H5; inv H10; inv H3; inv H11.
+  all: inv H4; inv H6; inv H11.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
 + eapply HeqExtend; eauto.
   eapply JL; eauto.
-  all: inv H4; apply wf_hyp_ctx in H6; inv H6; inv H9.
+  all: inv H5; inv H6; inv H11.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.
@@ -571,29 +571,27 @@ destruct H1.
 + eapply ImpliesIn; eauto.
 + eapply ImpliesEl. instantiate (1:=φ1). all:eauto.
 + eapply ForallIn. eapply JL. eauto.
-  - apply WfCtxU; auto. inv H1. apply wf_hyp_ctx in H3. inv H3. auto.
-  - apply SubtypeCtxU. auto. apply vsubtype_refl.
-    inv H1. apply wf_hyp_ctx in H3. inv H3. auto. 
+  - apply WfCtxU; auto. inv H2. inv H3. auto.
+  - apply SubtypeCtxU. auto. apply vsubtype_refl. inv H2. inv H3. auto. 
 + eapply ForallEl; eauto.
 + eapply ExistsIn; eauto.
 + eapply ExistsEl; eauto. eapply JL. eauto.
-  - apply WfCtxU; auto. inv H2. apply wf_hyp_ctx in H4. inv H4. auto.
-  - apply SubtypeCtxU. auto. apply vsubtype_refl.
-    inv H2. apply wf_hyp_ctx in H4. inv H4. auto.
+  - apply WfCtxU; auto. inv H3. inv H4. auto.
+  - apply SubtypeCtxU. auto. apply vsubtype_refl. inv H3. inv H4. auto.
 + eapply CompInduction; eauto.
-  - eapply WFFL; eauto; inv H. apply WfCtxU; auto.
+  - eapply WFFL; eauto; inv H0. apply WfCtxU; auto.
     apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
-  - eapply JL; eauto; inv H; inv H8; inv H7.
+  - eapply JL; eauto; inv H0; inv H9; inv H8.
     apply WfCtxU; auto. apply SubtypeCtxU; auto. apply vsubtype_refl. auto.
   - intros op Aop Bop gets.
     eapply get_op_type_wf in gets as wfs. destruct wfs.
     eapply JL; eauto.
     * apply WfCtxU. apply WfCtxU; auto. apply WfTyFun. auto.
-      inv H. inv H10. auto.
+      inv H0. inv H11. auto.
     * apply SubtypeCtxU. apply SubtypeCtxU. auto.
       all: apply vsubtype_refl. auto.
-      apply WfTyFun. auto. inv H. inv H10. auto.
-    * inv H. inv H8. inv H7. auto.
+      apply WfTyFun. auto. inv H0. inv H11. auto.
+    * inv H0. inv H9. inv H8. auto.
 }{
 intros wfc ctxsty.
 inv wf.
@@ -612,7 +610,7 @@ inv wf.
 }{
 intros wfc ctxsty.
 inv wf.
-+ apply WfHypØ. auto.
++ apply WfHypØ.
 + apply WfHypU; eauto.
 }{
 intros wfc ctxsty.

@@ -124,13 +124,6 @@ Qed.
 
 (* ==================== Hypotheses ==================== *)
 
-Lemma wf_hyp_ctx Γ Ψ:
-  wf_hyp Γ Ψ -> wf_ctx Γ.
-Proof.
-intros wf. induction wf; auto.
-Qed.
-
-
 Lemma wf_has_hypothesis Γ Ψ φ:
   wf_hyp Γ Ψ -> has_hypothesis Ψ φ ->
   wf_form Γ φ.
@@ -156,6 +149,6 @@ Lemma wf_subset Γ Ψ Ψ':
 Proof.
 intros wf' subset.
 induction subset.
-- apply WfHypØ. eapply wf_hyp_ctx. eauto.
+- apply WfHypØ.
 - apply WfHypU; auto. eapply wf_has_hypothesis; eauto.
 Qed.
