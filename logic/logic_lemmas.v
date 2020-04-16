@@ -9,7 +9,8 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
 
-Require Export syntax_lemmas substitution_lemmas type_lemmas.
+Require Export syntax_lemmas substitution_lemmas 
+  type_lemmas instantiation_lemmas.
 
 
 Lemma operational_in_logic Γ c c' C:
