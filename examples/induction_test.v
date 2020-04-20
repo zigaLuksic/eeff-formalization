@@ -30,15 +30,6 @@ apply TypeC. inv tys1. auto.
   apply SubtypeSigØ. apply SubtypeEqsØ.
 Qed.
 
-Lemma unpure_ret Γ A Σ E v:
-  wf_sig Σ -> wf_eqs E Σ -> has_vtype Γ v A ->
-  has_ctype Γ (Ret v) (CTy A Σ E).
-Proof.
-intros wfs wfe vty. apply TypeC. inv vty. auto. obvious. inv vty. auto.
-eapply TypeCSubtype. instantiate (1:= (CTy A SigØ EqsØ)).
-obvious_ctype. all: inv vty; auto. apply SubtypeCTy.
-apply vsubtype_refl. auto. apply SubtypeSigØ. apply SubtypeEqsØ.
-Qed.
 
 (* ========================================================================== *)
 
@@ -58,11 +49,11 @@ assert (
 apply WfJudg; auto.
 { apply WfForall; obvious. apply WfCeq.
   + ctype_step. instantiate (1:=A). obvious_ctype.
-    apply unpure_ret; obvious_vtype.
+    apply dirty_ret; obvious_vtype.
   + obvious_ctype. }
 apply CompInduction.
 + apply WfCeq. ctype_step. instantiate (1:=A). obvious_ctype.
-  apply unpure_ret; obvious_vtype. obvious_ctype.
+  apply dirty_ret; obvious_vtype. obvious_ctype.
 + (* Base Case *)
   simpl. simpl_c_subs.
   assert (wf_hyp (CtxU Γ A) (hyp_shift Ψ 1 0)) as wfhyp.
@@ -73,29 +64,29 @@ apply CompInduction.
   apply WfCeq. 3: apply WfCeq.
 
   { ctype_step. instantiate (1:=A). ctype_step. 2: obvious_vtype.
-    vtype_step. apply unpure_ret; obvious_vtype.
-    apply unpure_ret; obvious_vtype. }
+    vtype_step. apply dirty_ret; obvious_vtype.
+    apply dirty_ret; obvious_vtype. }
   { simpl_c_subs. ctype_step. instantiate (1:=A).
-    apply unpure_ret; obvious_vtype. apply unpure_ret; obvious_vtype. }
+    apply dirty_ret; obvious_vtype. apply dirty_ret; obvious_vtype. }
   { instantiate (1:=A). ctype_step. 2:obvious_vtype.
-    vtype_step. apply unpure_ret; obvious_vtype. }
-  { simpl_c_subs. apply unpure_ret; obvious_vtype. }
-  { apply unpure_ret; obvious_vtype. }
+    vtype_step. apply dirty_ret; obvious_vtype. }
+  { simpl_c_subs. apply dirty_ret; obvious_vtype. }
+  { apply dirty_ret; obvious_vtype. }
   { apply wf_hyp_shift_typesafe; auto. }
 
   simpl_c_subs. eapply ceq_trans. apply WfJudg; auto. 2:eapply βDoBind_Ret.
   all: simpl_c_subs. apply WfCeq.
 
-  { ctype_step. instantiate (1:=A). all: apply unpure_ret; obvious_vtype. }
-  { apply unpure_ret; obvious_vtype. }
+  { ctype_step. instantiate (1:=A). all: apply dirty_ret; obvious_vtype. }
+  { apply dirty_ret; obvious_vtype. }
 
   eapply ceq_sym. eapply ceq_trans. apply WfJudg; auto. 2:eapply βApp.
   all: simpl_c_subs. apply WfCeq.
 
-  { ctype_step. vtype_step. apply unpure_ret; obvious_vtype. obvious_vtype. }
-  { apply unpure_ret; obvious_vtype. }
+  { ctype_step. vtype_step. apply dirty_ret; obvious_vtype. obvious_vtype. }
+  { apply dirty_ret; obvious_vtype. }
 
-  eapply ceq_refl. apply unpure_ret; obvious_vtype. auto.
+  eapply ceq_refl. apply dirty_ret; obvious_vtype. auto.
 
 + (* Step Case *)
   intros op Aop Bop gets.
@@ -114,7 +105,7 @@ apply CompInduction.
     + apply WfForall. obvious. apply WfCeq.
       - ctype_step. instantiate (1:=A). ctype_step. 2: obvious_vtype.
         vtype_step. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
-        apply unpure_ret; obvious_vtype.
+        apply dirty_ret; obvious_vtype.
       - ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
         instantiate (1:=Bop). all:obvious_vtype. }
   
@@ -122,11 +113,11 @@ apply CompInduction.
   3: apply ceq_refl. 2: apply WfJudg. 4: eapply βApp. all: auto.
   apply WfCeq. 3: apply WfCeq. all: simpl_c_subs.
 
-  { ctype_step. instantiate (1:=A). 2: apply unpure_ret; obvious_vtype.
+  { ctype_step. instantiate (1:=A). 2: apply dirty_ret; obvious_vtype.
     ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
     eapply TypeOp; eauto. obvious_vtype. ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. }
-  { ctype_step. instantiate (1:=A). 2: apply unpure_ret; obvious_vtype.
+  { ctype_step. instantiate (1:=A). 2: apply dirty_ret; obvious_vtype.
     ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. }
   { instantiate (1:=A). ctype_step. 2: obvious_vtype. vtype_step.
@@ -134,7 +125,7 @@ apply CompInduction.
     instantiate (1:=Bop). all: obvious_vtype. }
   { ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. }
-  { apply unpure_ret; obvious_vtype. }
+  { apply dirty_ret; obvious_vtype. }
   { eapply wf_hyp_shift_typesafe in wfhyp. simpl in wfhyp. eauto. auto. }
 
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply βDoBind_Op.
@@ -142,10 +133,10 @@ apply CompInduction.
 
   { ctype_step. instantiate (1:=A). ctype_step. eapply TypeOp; eauto.
     obvious_vtype. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
-    apply unpure_ret; obvious_vtype. }
+    apply dirty_ret; obvious_vtype. }
   { ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
     instantiate (1:=A). ctype_step. instantiate (1:=Bop). all: obvious_vtype.
-    apply unpure_ret; obvious_vtype. }
+    apply dirty_ret; obvious_vtype. }
 
   apply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2: eapply βApp.
   all: simpl_c_subs. apply WfCeq.
@@ -160,7 +151,7 @@ apply CompInduction.
 
   { ctype_step. eapply TypeOp; eauto. obvious_vtype.
     ctype_step. instantiate (1:=A). ctype_step. instantiate (1:=Bop).
-    all: obvious_vtype. apply unpure_ret; obvious_vtype. }
+    all: obvious_vtype. apply dirty_ret; obvious_vtype. }
   { ctype_step. eapply TypeOp; eauto.
     obvious_vtype. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
   { obvious_vtype. }
@@ -179,7 +170,7 @@ apply CompInduction.
   { apply WfJudg; auto.
     apply WfForall; obvious. apply WfCeq. ctype_step. instantiate (1:=A).
     ctype_step. 2:obvious_vtype. vtype_step. ctype_step. instantiate (1:=Bop).
-    all: obvious_vtype. apply unpure_ret; obvious_vtype.
+    all: obvious_vtype. apply dirty_ret; obvious_vtype.
     ctype_step. vtype_step. ctype_step. instantiate (1:=Bop).
     all: obvious_vtype.
     apply IsHyp. simpl. left. auto. }
@@ -200,15 +191,15 @@ apply CompInduction.
     3: eapply ceq_trans. 3: eapply WfJudg; auto. 4: apply βApp.
     + ctype_step. instantiate (1:=A). ctype_step. 2: obvious_vtype.
       vtype_step. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
-      apply unpure_ret; obvious_vtype.
+      apply dirty_ret; obvious_vtype.
     + ctype_step. instantiate (1:=A). ctype_step. instantiate (1:=Bop).
-      all: obvious_vtype. apply unpure_ret; obvious_vtype.
+      all: obvious_vtype. apply dirty_ret; obvious_vtype.
     + simpl_c_subs. apply WfCeq. ctype_step. 2:obvious_vtype.
       vtype_step. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
       ctype_step. instantiate (1:=Bop). all: obvious_vtype.
     + simpl_c_subs. apply ceq_refl; auto. ctype_step.
       instantiate (1:=Bop). all: obvious_vtype.
-    + apply unpure_ret; obvious_vtype.
+    + apply dirty_ret; obvious_vtype.
     + eapply wf_hyp_shift_typesafe in wfh'; eauto. }
 
   eapply ceq_sym in IH1. 
@@ -236,7 +227,7 @@ apply CompInduction.
 
   { ctype_step. instantiate (1:=A). ctype_step. 2: obvious_vtype.
     vtype_step. ctype_step. instantiate (1:=Bop). 2: obvious_vtype.
-    all: obvious_vtype. apply unpure_ret; obvious_vtype. }
+    all: obvious_vtype. apply dirty_ret; obvious_vtype. }
   { ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. }
   { eapply wf_hyp_shift_typesafe in wfhyp; eauto. }
@@ -256,18 +247,18 @@ apply CompInduction.
 
   { ctype_step. instantiate (1:=A). ctype_step. instantiate (1:=(CTy A Σ E)).
     instantiate (1:=TyUnit). obvious_ctype. obvious_ctype.
-    apply unpure_ret; obvious. obvious_vtype.  }
+    apply dirty_ret; obvious. obvious_vtype.  }
   { ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
     obvious_ctype. obvious_ctype. }
 
   eapply ceq_sym. eapply WfJudg; auto. 2: eapply CeqDoBind.
   2: instantiate (1:=A). apply WfCeq.
 
-  { ctype_step. instantiate (1:=A). 2: apply unpure_ret; obvious_vtype.
+  { ctype_step. instantiate (1:=A). 2: apply dirty_ret; obvious_vtype.
     ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
     instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
     obvious_ctype. obvious_ctype.  }
-  { ctype_step. instantiate (1:=A). 2: apply unpure_ret; obvious_vtype.
+  { ctype_step. instantiate (1:=A). 2: apply dirty_ret; obvious_vtype.
     ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit).
     obvious_ctype. obvious_ctype.  }
 
@@ -284,7 +275,7 @@ apply CompInduction.
 
   { ctype_step. instantiate (1:=(CTy A Σ E)). instantiate (1:=TyUnit). 
     obvious_ctype. obvious_ctype.  }
-  { apply unpure_ret; auto. obvious_vtype. }
+  { apply dirty_ret; auto. obvious_vtype. }
   { apply wf_hyp_shift_typesafe; auto. }
 
 }{
@@ -303,7 +294,7 @@ assert (
          (App (Fun (c_shift c 1 0)) Unit)) ) as IH.
 { apply WfJudg; auto. apply WfCeq. ctype_step. instantiate (1:=A).
   obvious_ctype. apply TypeFun. apply c_shift_typesafe; obvious.
-  apply unpure_ret; obvious_vtype. obvious_ctype. apply TypeFun.
+  apply dirty_ret; obvious_vtype. obvious_ctype. apply TypeFun.
   apply c_shift_typesafe; obvious. }
 
 assert (
@@ -315,17 +306,17 @@ assert (
   3: apply ceq_refl. 2: instantiate (2:=A). 2: apply WfJudg; auto.
   3: apply βApp. apply WfCeq. 3: apply WfCeq. 
   + ctype_step. instantiate (1:=A). obvious_ctype. apply TypeFun.
-    apply c_shift_typesafe; obvious. apply unpure_ret; obvious_vtype.
+    apply c_shift_typesafe; obvious. apply dirty_ret; obvious_vtype.
   + ctype_step. eapply c_subs_typesafe. apply c_shift_typesafe. eauto.
     2: obvious_vtype. 3: omega. obvious. destruct Γ; simpl; auto.
-    apply unpure_ret; obvious_vtype.
+    apply dirty_ret; obvious_vtype.
   + ctype_step. vtype_step. apply c_shift_typesafe. all: obvious_vtype.
   + eapply c_subs_typesafe. apply c_shift_typesafe. eauto.
     2: obvious_vtype. 3: omega. obvious. destruct Γ; simpl; auto.
-  + apply unpure_ret; obvious_vtype.
+  + apply dirty_ret; obvious_vtype.
   + apply wf_hyp_shift_typesafe; auto.
   + simpl_c_subs. rewrite c_sub_no_var_same, c_negshift_shift, c_shift_0.
-    apply ceq_refl. ctype_step. eauto. apply unpure_ret; obvious_vtype.
+    apply ceq_refl. ctype_step. eauto. apply dirty_ret; obvious_vtype.
     all: aomega. apply c_shift_makes_no_var. }
 
 assert (
