@@ -404,6 +404,10 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
       (c_subs2_out c_op
         (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k))
         v )
+| ηEmpty Γ v n c C:
+    n <= ctx_len Γ ->
+    has_ctype (ctx_insert Γ n (TyØ)) c C ->
+    ceq' C Γ (c_subs c n v) (Absurd v)
 | ηPair Γ v n c C A B:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyΠ A B)) c C ->

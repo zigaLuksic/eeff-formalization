@@ -1295,6 +1295,22 @@ destruct orig. destruct H2; simpl.
   - apply h_under_var_shift. eapply has_htype_is_under_ctx. eauto. omega.
   - apply has_ctype_is_under_ctx in tyck. auto.
   - eapply has_vtype_is_under_ctx. eauto.
++ eapply CL in H3 as tys3; eauto.
+  eapply CL in H0 as tys1; eauto.
+  eapply CL in H1 as tys2; eauto.
+  clear VL CL HL RL VEL CEL HEL WS.
+  apply wf_inst_ctx_len_same in wfinst as same_len.
+  apply shape_absurd in H1 as vtys.
+  simpl in *. apply Ceq; auto. erewrite (c_inst_subs 0).
+  apply ηEmpty. all: aomega.
+  all: try rewrite inst_len_shift; try rewrite same_len. exact tys3.
+  - apply has_ctype_is_under_ctx in H3.
+    rewrite ctx_len_insert in H3. auto. omega.
+  - apply has_vtype_is_under_ctx in vtys. auto.
+  - assert (ctx_insert Γ 0 TyØ = CtxU Γ TyØ) as same.
+    { destruct Γ; simpl; auto. }
+    rewrite same. apply wf_inst_insert. 
+    apply WfTyEmpty. auto.
 + eapply CL in H0 as tys1; eauto.
   eapply CL in H1 as tys2; eauto.
   eapply CL in H3 as tys3; eauto.
