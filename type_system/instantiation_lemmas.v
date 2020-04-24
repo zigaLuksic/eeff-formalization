@@ -1319,6 +1319,21 @@ destruct orig. apply WfJudg; eauto. destruct H3.
 + eapply CL in H4 as tys3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply wf_inst_ctx_len_same in wfinst as same_len.
+  inv H1. apply shape_absurd in H10 as vtys.
+  simpl in *.
+  erewrite (c_inst_subs 0).
+  apply ηEmpty. all: aomega.
+  all: try rewrite inst_len_shift; try rewrite same_len. exact tys3.
+  - apply has_ctype_is_under_ctx in H4.
+    rewrite ctx_len_insert in H4. auto. omega.
+  - apply has_vtype_is_under_ctx in vtys. auto.
+  - assert (ctx_insert Γ 0 TyØ = CtxU Γ TyØ) as same.
+    { destruct Γ; simpl; auto. }
+    rewrite same. apply wf_inst_insert. 
+    apply WfTyEmpty. auto.
++ eapply CL in H4 as tys3; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  apply wf_inst_ctx_len_same in wfinst as same_len.
   inv H1. apply shape_prodmatch in H10 as parts.
   destruct parts as [A'[B'[tyv tyc]]].
   simpl in *.

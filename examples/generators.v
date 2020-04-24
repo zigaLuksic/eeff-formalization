@@ -50,59 +50,17 @@ Qed.
 
 (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
 
-Example eq_set_set := (EqsU (EqsØ)
-  (CtxU (CtxU (CtxØ) TyState) TyState)
-  (TCtxU (TCtxØ) TyUnit)
-    (TOp "set" (Var 0) (TOp "set" (Var 2) (TApp 0 Unit)))
-    (TOp "set" (Var 1) (TApp 0 Unit)) ).
-
-Example eq_get_get := (EqsU (EqsØ)
-  CtxØ
-  (TCtxU (TCtxØ) (TyΠ TyState TyState))
-    (TOp "get" Unit (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 1)))))
-    (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 0)))) ).
-
 Example eq_set_get := (EqsU (EqsØ)
   (CtxU (CtxØ) TyState)
   (TCtxU (TCtxØ) TyState)
     (TOp "set" (Var 0) (TOp "get" Unit (TApp 0 (Var 0))))
     (TOp "set" (Var 0) (TApp 0 (Var 1))) ).
 
-Example eq_get_set := (EqsU (EqsØ)
-  CtxØ
-  (TCtxU (TCtxØ) TyUnit)
-    (TOp "get" Unit (TOp "set" (Var 0) (TApp 0 Unit)))
-    (TApp 0 Unit) ).
-
-Example eq_get_set_weak := (EqsU (EqsØ)
+Example eq_weak_state := (EqsU eq_set_get
   CtxØ
   (TCtxU (TCtxØ) TyState)
     (TOp "get" Unit (TOp "set" (Var 0) (TApp 0 (Var 1))))
     (TOp "get" Unit (TApp 0 (Var 0))) ).
-
-Lemma wf_eq_set_set:
-  wf_eqs eq_set_set state_sig.
-Proof.
-unfold eq_set_set. unfold state_sig.
-apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. obvious_vtype. simpl. auto.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. obvious_vtype. simpl. auto.
-Qed.
-
-Lemma wf_eq_get_get:
-  wf_eqs eq_get_get state_sig.
-Proof.
-unfold eq_get_get. unfold state_sig.
-apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-Qed.
 
 Lemma wf_eq_set_get:
   wf_eqs eq_set_get state_sig.
@@ -116,24 +74,12 @@ apply WfEqsU; obvious.
   eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
 Qed.
 
-
-Lemma wf_eq_get_set:
-  wf_eqs eq_get_set state_sig.
+Lemma wf_eq_weak_state:
+  wf_eqs eq_weak_state state_sig.
 Proof.
-unfold eq_get_set. unfold state_sig.
+unfold eq_weak_state. unfold state_sig.
 apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-+ eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-Qed.
-
-
-Lemma wf_eq_get_set_weak:
-  wf_eqs eq_get_set_weak state_sig.
-Proof.
-unfold eq_get_set_weak. unfold state_sig.
-apply WfEqsU; obvious.
++ apply wf_eq_set_get.
 + eapply WfTOp. simpl. reflexivity. obvious_vtype.
   eapply WfTOp. simpl. reflexivity. obvious_vtype.
   eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
@@ -204,10 +150,10 @@ Example generator_respects A:
   wf_vtype A ->
   respects
     CtxØ generator_cases
-    next_sig (CTy A state_sig eq_get_set_weak) eq_none_repeats.
+    next_sig (CTy A state_sig eq_weak_state) eq_none_repeats.
 Proof.
 intros wfa.
-specialize wf_eq_get_set_weak as wfe1.
+specialize wf_eq_weak_state as wfe1.
 specialize wf_eq_none_repeats as wfe2.
 specialize wf_sig_state_sig as wfsig1.
 specialize wf_sig_next_sig as wfsig2.
@@ -289,31 +235,33 @@ simpl. apply veq_refl. admit. obvious.
 
 simpl_c_subs. apply ceq_refl. admit. obvious.
 
+(* OOTB left side *)
+
 assert ( judg 
-  (CtxU CtxØ (TyFun (TyOption TyA) (CTy A state_sig eq_get_set_weak))) HypØ
-  (Ceq (CTy A state_sig eq_get_set_weak)
+  (CtxU CtxØ (TyFun (TyOption TyA) (CTy A state_sig eq_weak_state))) HypØ
+  (Ceq (CTy A state_sig eq_weak_state)
     (Op "get" Unit
       (Op "set" (Var 0)
       (App (Fun
         (ListMatch (Var 0)
           (Op "get" Unit
               (ListMatch (Var 0) (App (Var 4) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 7) (Inr (Var 4))))))
+                (Op "set" (Var 0) (App (Var 7) (Inr (Var 2))))))
           (Op "set" (Var 0)
               (Op "get" Unit
                 (ListMatch (Var 0) (App (Var 7) (Inl Unit))
-                    (Op "set" (Var 0) (App (Var 10) (Inr (Var 4)))))))))
+                    (Op "set" (Var 0) (App (Var 10) (Inr (Var 2)))))))))
         (Var 1))))
     (Op "get" Unit
       (App (Fun
         (ListMatch (Var 0)
           (Op "get" Unit
               (ListMatch (Var 0) (App (Var 3) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 6) (Inr (Var 4))))))
+                (Op "set" (Var 0) (App (Var 6) (Inr (Var 2))))))
           (Op "set" (Var 0)
               (Op "get" Unit
                 (ListMatch (Var 0) (App (Var 6) (Inl Unit))
-                    (Op "set" (Var 0) (App (Var 9) (Inr (Var 4)))))))))
+                    (Op "set" (Var 0) (App (Var 9) (Inr (Var 2)))))))))
         (Var 0))) ) ).
 { apply WfJudg; obvious. admit.
   eapply OOTB. simpl. left. eauto.
@@ -322,36 +270,121 @@ assert ( judg
     (ListMatch (Var 0)
       (Op "get" Unit
           (ListMatch (Var 0) (App (Var 2) (Inl Unit))
-            (Op "set" (Var 0) (App (Var 5) (Inr (Var 4))))))
+            (Op "set" (Var 0) (App (Var 5) (Inr (Var 2))))))
       (Op "set" (Var 0)
           (Op "get" Unit
             (ListMatch (Var 0) (App (Var 5) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 8) (Inr (Var 4)))))))))).
+                (Op "set" (Var 0) (App (Var 8) (Inr (Var 2)))))))))).
   admit. simpl. reflexivity. simpl. reflexivity. }
 
+eapply ceq_trans in H.
+Focus 2.
+  apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto.
+  apply veq_refl. obvious_vtype. obvious.
+  apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto.
+  apply veq_refl. obvious_vtype. obvious. apply ceq_sym.
+  apply WfJudg; obvious. admit. apply βApp.
+
 apply ceq_sym in H. eapply ceq_trans in H.
+Focus 2.
+  apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto.
+  apply veq_refl. obvious_vtype. obvious. apply ceq_sym.
+  apply WfJudg; obvious. admit. apply βApp.
+
+unfold c_subs_out, c_subs in H. simpl in H. eapply ceq_trans. exact H. clear H.
 
 
-specialize (OOTB A state_sig eq_get_set_weak
-  (CtxU CtxØ (TyFun (TyOption TyA) (CTy A state_sig eq_get_set_weak))) HypØ
+(* continue *)
 
-  (InstU InstØ
-    (Fun 
-      (ListMatch (Var 0)
-        (Op "get" Unit
-          (ListMatch (Var 0) (App (Var 2) (Inl Unit))
-              (Op "set" (Var 0) (App (Var 5) (Inr (Var 2))))))
-        (Op "set" (Var 0)
-          (Op "get" Unit
-              (ListMatch (Var 0) (App (Var 5) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 8) (Inr (Var 2))))))))))
+apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto. 
+apply veq_refl. obvious_vtype. obvious.
 
-  CtxØ
+eapply ceq_trans. eapply Op_ListMatch.
+
+all: try reflexivity. instantiate (1:=(Var 0)).
+simpl. all: obvious. instantiate (1:=TyA). obvious_vtype.
+obvious_vtype. admit. admit.
+
+apply ceq_sym. eapply ceq_trans. eapply Op_ListMatch.
+
+all: try reflexivity. instantiate (1:=(Var 0)). simpl. all: obvious. 
+admit. admit. admit. admit. simpl_c_subs.
+
+apply WfJudg; obvious. admit.  eapply CeqListMatch.
+apply veq_refl. instantiate (1:=(TyA)). obvious_vtype. obvious.
+2: apply ceq_refl. 2: admit.  2: obvious.
+
+
+(* OOTB set get *)
+
+(CtxU (CtxØ) TyState)
   (TCtxU (TCtxØ) TyState)
-    (TOp "get" Unit (TOp "set" (Var 0) (TApp 0 (Var 1))))
-    (TOp "get" Unit (TApp 0 (Var 0)))
+    (TOp "set" (Var 0) (TOp "get" Unit (TApp 0 (Var 0))))
+    (TOp "set" (Var 0) (TApp 0 (Var 1))) )
 
-) as rule. simpl in rule.
+
+assert ( judg 
+  (CtxU CtxØ (TyFun (TyOption TyA) (CTy A state_sig eq_weak_state))) HypØ
+  (Ceq (CTy A state_sig eq_weak_state)
+    (Op "get" Unit
+      (Op "set" (Var 0)
+      (App (Fun
+        (ListMatch (Var 0)
+          (Op "get" Unit
+              (ListMatch (Var 0) (App (Var 4) (Inl Unit))
+                (Op "set" (Var 0) (App (Var 7) (Inr (Var 2))))))
+          (Op "set" (Var 0)
+              (Op "get" Unit
+                (ListMatch (Var 0) (App (Var 7) (Inl Unit))
+                    (Op "set" (Var 0) (App (Var 10) (Inr (Var 2)))))))))
+        (Var 1))))
+    (Op "get" Unit
+      (App (Fun
+        (ListMatch (Var 0)
+          (Op "get" Unit
+              (ListMatch (Var 0) (App (Var 3) (Inl Unit))
+                (Op "set" (Var 0) (App (Var 6) (Inr (Var 2))))))
+          (Op "set" (Var 0)
+              (Op "get" Unit
+                (ListMatch (Var 0) (App (Var 6) (Inl Unit))
+                    (Op "set" (Var 0) (App (Var 9) (Inr (Var 2)))))))))
+        (Var 0))) ) ).
+{ apply WfJudg; obvious. admit.
+  eapply OOTB. simpl. left. eauto.
+  instantiate (1:= InstU InstØ
+  (Fun
+    (ListMatch (Var 0)
+      (Op "get" Unit
+          (ListMatch (Var 0) (App (Var 2) (Inl Unit))
+            (Op "set" (Var 0) (App (Var 5) (Inr (Var 2))))))
+      (Op "set" (Var 0)
+          (Op "get" Unit
+            (ListMatch (Var 0) (App (Var 5) (Inl Unit))
+                (Op "set" (Var 0) (App (Var 8) (Inr (Var 2)))))))))).
+  admit. simpl. reflexivity. simpl. reflexivity. }
+
+eapply ceq_trans in H.
+Focus 2.
+  apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto.
+  apply veq_refl. obvious_vtype. obvious.
+  apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto.
+  apply veq_refl. obvious_vtype. obvious. apply ceq_sym.
+  apply WfJudg; obvious. admit. apply βApp.
+
+apply ceq_sym in H. eapply ceq_trans in H.
+Focus 2.
+  apply WfJudg; obvious. admit. eapply CeqOp. simpl. eauto.
+  apply veq_refl. obvious_vtype. obvious. apply ceq_sym.
+  apply WfJudg; obvious. admit. apply βApp.
+
+unfold c_subs_out, c_subs in H. simpl in H. eapply ceq_trans. exact H. clear H.
+
+
+
+
+
+
+
 
 
 Qed.

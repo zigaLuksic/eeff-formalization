@@ -456,6 +456,10 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
       (Handle (Handler c_r h) (Op op v c_k))
       (c_subs2_out c_op
         v (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) ) )
+| ηEmpty Γ Ψ v n c C:
+    n <= ctx_len Γ ->
+    has_ctype (ctx_insert Γ n (TyØ)) c C ->
+    judg' Γ Ψ (Ceq C (c_subs c n v) (Absurd v) )
 | ηPair Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyΠ A B)) c C ->

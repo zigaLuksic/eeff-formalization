@@ -698,6 +698,17 @@ simpl. eapply VeqListNil.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. destruct (n<=?i) eqn:ni.
   - apply leb_complete in ni.
+    rewrite c_shift_subs. simpl.
+    eapply ηEmpty. specialize (ctx_len_insert_trivial Γ i A_ins) as triv. omega.
+    rewrite <-ctx_insert_comm. all: aomega.
+  - apply leb_complete_conv in ni.
+    rewrite c_shift_subs_alt.
+    eapply ηEmpty. rewrite ctx_len_insert; omega.
+    rewrite ctx_insert_comm. all: aomega.
++ specialize (CL _ _ _ H3) as IHc.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
     rewrite c_shift_subs, c_shift_subs. simpl.
     assert (S(S(S i))=2+(S i)) as same by omega.
     rewrite same, <-c_shift_comm. all: try omega.
@@ -1121,6 +1132,7 @@ destruct orig. destruct H2.
 + eapply βDoBind_Op.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. auto.
++ eapply ηEmpty; eauto.
 + eapply ηPair; eauto.
 + eapply ηSum; eauto.
 + eapply ηList; eauto.
@@ -1576,6 +1588,19 @@ destruct orig. destruct H2.
   rewrite (v_shift_comm 1 0 0 1), <-c_shift_sub. eapply rule.
   rewrite <-v_shift_comm, v_shift_shift. apply sub_get_case_Some.
   eauto. all: omega.
++ specialize (CL _ _ _ H3) as IHc.
+  clear VL CL HL RL JL WFHL WFFL WFIL.
+  simpl. destruct (n<=?i) eqn:ni.
+  - apply leb_complete in ni.
+    rewrite c_sub_subs; aomega. simpl.
+    eapply ηEmpty. auto. eapply IHc.
+    * erewrite <-get_ctx_insert_changed. eauto. omega.
+    * apply v_insert_typesafe; auto. apply WfTyEmpty.
+  - apply leb_complete_conv in ni.
+    rewrite c_sub_subs_alt; aomega. simpl.
+    eapply ηEmpty. omega. eapply IHc.
+    * erewrite <-get_ctx_insert_unchanged. eauto. omega.
+    * apply v_insert_typesafe; auto. apply WfTyEmpty.
 + specialize (CL _ _ _ H3) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. destruct (n<=?i) eqn:ni.
@@ -2434,6 +2459,29 @@ unfold v_subs. simpl. apply VeqListNil; auto.
   apply negshift_get_case_Some. rewrite <-(v_shift_comm 1 0 0 1), v_shift_shift.
   simpl. rewrite <-(v_shift_comm 1 i).
   apply sub_get_case_Some. all:eaomega.
++ specialize (v_insert_typesafe _ _ _ tyvs (TyØ) n WfTyEmpty) as tyv.
+  specialize (CL _ _ c _ (1+i) _ _ H3 tyv) as IHcp.
+  specialize (v_insert_typesafe _ _ _ tyvs (TyØ) (n-1) WfTyEmpty) as tyvm.
+  specialize (CL _ _ c _ (i) _ _ H3 tyvm) as IHc.
+  clear VL CL HL RL JL WFHL WFFL WFIL. simpl.
+  assert (c_subs (Absurd v) i v_s = Absurd (v_subs v i v_s) ).
+  { unfold c_subs. simpl. auto. }
+  rewrite H4. clear H4.
+  destruct (n<=?i) eqn:ni.
+  - clear IHc.
+    apply leb_complete in ni.
+    rewrite c_subs_subs. simpl. apply ηEmpty. omega.
+    apply IHcp. subst. rewrite ctx_insert_comm. all: aomega.
+    rewrite ctx_len_insert; omega.
+  - clear IHcp.
+    apply leb_complete_conv in ni.
+    destruct n. omega.
+    rewrite (c_subs_subs_alt _ n). all: aomega. simpl.
+    apply ηEmpty.
+    subst. rewrite ctx_len_insert in H2. omega. omega.
+    assert (S n - 1 = n) as n0 by omega. rewrite n0 in *.
+    apply IHc. subst. rewrite ctx_insert_comm; aomega.
+    specialize (ctx_len_insert_trivial Γ n TyØ) as triv. omega.
 + assert (wf_vtype (TyΠ A B)) as wfab.
   { inv H3. apply wf_ctx_insert_vtype in H4. auto. auto. }
   specialize (v_insert_typesafe _ _ _ tyvs (TyΠ A B) n wfab) as tyvsab.

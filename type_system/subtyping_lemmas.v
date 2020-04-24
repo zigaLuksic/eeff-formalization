@@ -518,6 +518,11 @@ destruct H2.
 + eapply βDoBind_Op.
 + eapply βHandle_Ret.
 + eapply βHandle_Op. eauto.
++ eapply ηEmpty. apply ctx_subtype_len in ctxsty. omega.
+  eapply CL; eauto.
+  - apply wf_ctx_insert; auto. apply WfTyEmpty.
+  - eapply ctx_subtype_insert. auto.
+    apply vsubtype_refl. apply WfTyEmpty.
 + eapply ηPair. 
   apply ctx_subtype_len in ctxsty. omega.
   assert (wf_vtype (TyΠ A B)). 
