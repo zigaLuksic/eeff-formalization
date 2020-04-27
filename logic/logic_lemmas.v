@@ -186,7 +186,7 @@ destruct orig. destruct H2.
 + clear VEQ CEQ HEQ. 
   unfold h_subs; simpl. apply HeqSigØ.
 + unfold h_subs in *. unfold c_subs in *. simpl in *.
-  eapply HEQ in H3; eauto. eapply CEQ in H4.
+  eapply HEQ in H2 as IHh; eauto. eapply CEQ in H3 as IHc.
   all: clear VEQ CEQ HEQ.
   4: instantiate (2:=CtxU (CtxU Γ Aop) (TyFun Bop D)).
   Focus 3.
@@ -197,9 +197,11 @@ destruct orig. destruct H2.
     simpl in vseq. eauto. apply WfTyFun. all: inv H0; auto.
   apply HeqExtend; eauto.
   - apply negshift_get_case_None. apply sub_get_case_None. auto.
+    inv H0. eapply wf_sig_unique_cases; eauto.
   - apply negshift_get_case_None. apply sub_get_case_None. auto.
+    inv H0. eapply wf_sig_unique_cases; eauto.
   - rewrite v_shift_comm, (v_shift_comm 1 i).
-    rewrite v_shift_shift, v_shift_shift, hyp_shift_shift in H4.
+    rewrite v_shift_shift, v_shift_shift, hyp_shift_shift in IHc.
     simpl in *. all: eaomega.
   - simpl. omega.
 }

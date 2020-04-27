@@ -55,7 +55,7 @@ apply sig_subtype_refl. inv orig. assumption.
 assumption. assumption. apply WfHypØ.
 destruct orig. destruct H2.
 + eapply HeqSigØ.
-+ eapply HeqExtend; eauto.
++ inv H0. eapply HeqExtend; eauto; eapply wf_sig_unique_cases; eauto.
 }
 Qed.
 

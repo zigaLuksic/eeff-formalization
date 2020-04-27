@@ -170,9 +170,9 @@ Proof.
     rewrite <-inst_shift_comm in H3. eauto. all: simpl; omega.
 + intros safe. destruct orig. destruct H2; simpl; eauto.
   all: try f_equal; eauto.
-  eapply (c_inst_shift_pad _ _ _ (S(S n)) k (S(S cut))) in H4.
-    simpl in H4. rewrite <-inst_shift_comm, <-inst_shift_comm in H4.
-    rewrite inst_shift_shift in H4. eauto. all: simpl; omega.
+  eapply (c_inst_shift_pad _ _ _ (S(S n)) k (S(S cut))) in H3.
+  simpl in H3. rewrite <-inst_shift_comm, <-inst_shift_comm in H3.
+  rewrite inst_shift_shift in H3. eauto. all: simpl; omega.
 Qed.
 
 
@@ -766,7 +766,7 @@ simpl in *. rewrite inst_shift_shift in wfffI.
 rewrite inst_shift_shift in wfffI'. simpl in *.
 erewrite shift_smush; eauto. erewrite <-c_smush_is_sequencing; eauto; simpl.
 rewrite inst_shift_shift; eauto.
-all: inv H4; inv H5; auto; inv H9; auto.
+all: inv H3; inv H4; auto; inv H8; auto.
 }
 Qed.
 
@@ -925,13 +925,12 @@ destruct orig. destruct H3; simpl.
   apply TypeH; auto. apply TypeCasesØ; auto.
 + eapply wf_inst_InstU in wfinst as wfinsc.
   eapply wf_inst_InstU in wfinsc as wfinsc.
-  eapply HL in H4; eauto.
-  eapply CL in H5; eauto.
+  eapply HL in H3; eauto.
+  eapply CL in H4; eauto.
   all: clear VL CL HL RL JL WFHL WFFL WS.
-  simpl in H5. rewrite inst_shift_shift in H5.
+  simpl in H4. rewrite inst_shift_shift in H4.
   apply TypeH; auto. eapply TypeCasesU; eauto.
-  apply inst_get_case_None. auto.
-  all: inv H5; inv H6; auto. inv H10. auto.
+  all: inv H4; inv H5; auto. inv H9. auto.
 }{
 intros tys. destruct orig. destruct H4; simpl.
 + clear VL CL HL RL JL WFHL WFFL WS. apply Respects; auto. apply RespectEqsØ.
