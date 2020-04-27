@@ -292,7 +292,8 @@ destruct orig. destruct H2.
 + assert (get_case (CasesU h op cop) op = Some cop).
   { simpl. destruct (op==op). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
-  eapply heq_case_extend_trivial; eauto; inv H0; assumption.
+  eapply heq_case_extend_trivial; eauto; inv H0; auto.
+  all: eapply wf_sig_unique_cases; eauto.
 }
 Qed.
 

@@ -31,7 +31,7 @@ all: erewrite ext; eauto; erewrite ext; eauto.
 }{
 intro types. destruct types. destruct H2; simpl. auto. constructor; eauto.
 assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ (TyFun Bop D)) Aop)) by auto.
-rewrite H5. eauto.
+rewrite H4. eauto.
 }
 Qed.
 
@@ -497,12 +497,11 @@ intros wfins. apply TypeH.
 all: try (inv orig; assumption).
 inv orig. destruct H2.
 + simpl. clear VL CL HL RL VEL CEL HEL WF. apply TypeCasesØ.
-+ specialize (HL _ _ _ _ H3) as IHh.
-  specialize (CL _ _ _ H4) as IHc.
++ specialize (HL _ _ _ _ H2) as IHh.
+  specialize (CL _ _ _ H3) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply TypeCasesU. 2: auto.
-  - apply shift_get_case_None. assumption.
-  - do 2 rewrite ctx_insert_extend. auto.
+  simpl. apply TypeCasesU. auto.
+  do 2 rewrite ctx_insert_extend. auto.
 }{
 intros types wfins. apply Respects.
 { clear VL CL HL RL VEL CEL HEL WF. apply wf_ctx_insert. inv orig. all: auto. }
@@ -1047,14 +1046,13 @@ intros gets tyvs; simpl; apply TypeH; inv orig. auto. auto. auto.
 destruct H2.
 + clear VL CL HL RL VEL CEL HEL WF. 
   apply TypeCasesØ.
-+ specialize (HL _ _ _ _ H3) as IHh. 
-  specialize (CL _ _ _ H4) as IHc.
++ specialize (HL _ _ _ _ H2) as IHh. 
+  specialize (CL _ _ _ H3) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply TypeCasesU; eauto.
-  - rewrite <-sub_get_case_None; eauto.
-  - eapply IHc. exact gets. rewrite <-(v_shift_shift 1 1 0).
-    apply v_shift_typesafe. apply v_shift_typesafe. assumption.
-    all: inv H0. 2: assumption. apply WfTyFun; assumption.
+  eapply IHc. exact gets. rewrite <-(v_shift_shift 1 1 0).
+  apply v_shift_typesafe. apply v_shift_typesafe. assumption.
+  all: inv H0. 2: assumption. apply WfTyFun; assumption.
 }{
 intros htys gets tyvs; simpl. apply Respects; inv orig; auto.
 destruct H3.
@@ -1588,14 +1586,13 @@ destruct orig. destruct H2.
   assert (wf_vtype (TyFun Bop D)) as wfb by (inv H0; apply WfTyFun; auto).
   specialize (v_shift_typesafe _ _ (TyFun Bop D) _ tyvs wfb) as tyvs'.
   specialize (v_shift_typesafe _ _ Aop _ tyvs' wfa) as tyvs''.
-  specialize (HL _ _ h _ _ i _ _ H3 tyvs geq) as IHh.
-  specialize (CL _ _ cop _ (2+i) _ _ H4 tyvs'' H5) as IHc.
+  specialize (HL _ _ h _ _ i _ _ H2 tyvs geq) as IHh.
+  specialize (CL _ _ cop _ (2+i) _ _ H3 tyvs'' H4) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   apply TypeH; auto; unfold h_subs; simpl.
   eapply TypeCasesU; auto.
-  - apply negshift_get_case_None. apply sub_get_case_None. auto.
-  - rewrite v_shift_shift in IHc. rewrite v_shift_comm. apply IHc. 
-    simpl. omega. omega.
+  rewrite v_shift_shift in IHc. rewrite v_shift_comm. apply IHc. 
+  simpl. omega. omega.
 }{
 intros tysh tyvs geq len.
 assert (wf_ctx Γ) as wfg by (inv tyvs; assumption).

@@ -407,7 +407,7 @@ destruct types. induction H2; apply TypeH; eauto.
 + eapply TypeCasesU. auto.
   eapply HL. all: eauto.
   eapply CL. eauto.
-  all: inv H4; inv H5; inv H9.
+  all: inv H3; inv H4; inv H8.
   - apply WfCtxU. apply WfCtxU. all: auto.
   - apply SubtypeCtxU. apply SubtypeCtxU. auto.
     all: apply vsubtype_refl; auto.

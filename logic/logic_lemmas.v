@@ -167,7 +167,8 @@ intros vseq ctxs clen. destruct orig. destruct H2.
   eapply Heq; eauto; try (apply sig_subtype_refl; assumption). 
   all: unfold h_subs; simpl. apply HeqSigØ.
 + unfold h_subs in *. unfold c_subs in *. simpl.
-  eapply HEQ in H3; eauto. eapply CEQ in H4. all: clear VEQ CEQ HEQ.
+  eapply HEQ in H2 as IHh; eauto. eapply CEQ in H3 as IHc.
+  all: clear VEQ CEQ HEQ.
   4: instantiate (2:=CtxU (CtxU Γ (TyFun Bop D)) Aop).
   Focus 3. 
     erewrite <-ctx_insert_extend. f_equal. erewrite <-ctx_insert_extend.
@@ -176,9 +177,11 @@ intros vseq ctxs clen. destruct orig. destruct H2.
     eapply veq_shift_typesafe. eapply veq_shift_typesafe. eauto.
     apply WfTyFun. all: inv H0; auto.
   eapply heq_case_extend_structural; eauto.
-  all: try rewrite v_shift_shift, v_shift_shift in H4; simpl in *.
-  - apply negshift_get_case_None. apply sub_get_case_None. assumption.
-  - apply negshift_get_case_None. apply sub_get_case_None. assumption.
+  all: try rewrite v_shift_shift, v_shift_shift in IHc; simpl in *.
+  - apply negshift_get_case_None. apply sub_get_case_None.
+    inv H0. eapply wf_sig_unique_cases; eauto.
+  - apply negshift_get_case_None. apply sub_get_case_None.
+    inv H0. eapply wf_sig_unique_cases; eauto.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). assumption. all: omega.
   - omega.
 }

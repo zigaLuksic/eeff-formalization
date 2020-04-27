@@ -228,7 +228,6 @@ with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
 | TypeCasesU Γ h op cop Aop Bop Σ D :
-    get_case h op = None ->
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ (TyFun Bop D)) Aop) cop D ->
     has_htype' Γ (CasesU h op cop) (SigU Σ op Aop Bop) D

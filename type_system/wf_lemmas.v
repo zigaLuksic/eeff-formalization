@@ -93,6 +93,19 @@ intros wf_eqs has. induction wf_eqs; inv has; auto.
 destruct H4 as [a [b [c d]]]. subst. do 3 aconstructor.  
 Qed.
 
+
+Fixpoint wf_sig_unique_cases Γ h Σ D op {struct Σ}:
+  has_htype Γ h Σ D -> get_op_type Σ op = None ->
+  get_case h op = None.
+Proof.
+intros htys gets.
+destruct Σ.
++ inv htys. inv H2. simpl. auto.
++ inv htys. inv H2. simpl in *.
+  destruct (op==o). discriminate.
+  eapply wf_sig_unique_cases; eauto.
+Qed.
+
 (* ==================== Instantiations ==================== *)
 
 Lemma wf_inst_wf_ctx Γ' I Γ:
