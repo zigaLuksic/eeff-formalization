@@ -75,6 +75,31 @@ intros. induction Ψ.
   simpl. right. inv H. auto.
 Qed.
 
+
+Fixpoint sig_subtype_reduce Σ1 Σ2 op A B
+  (orig: sig_subtype Σ1 (SigU Σ2 op A B)) {struct orig} :
+  get_op_type Σ1 op = None ->
+  sig_subtype Σ1 Σ2.
+Proof.
+intros non. inv orig.
++ apply SubtypeSigØ.
++ eapply SubtypeSigU; eauto.
+  - eapply sig_subtype_reduce; eauto.
+    simpl in non. destruct (op==op0). discriminate. auto.
+  - simpl in *. destruct (op==op0). discriminate.
+    destruct (op0==op). destruct n. auto. auto.
+Qed.
+
+
+Fixpoint sig_subtype_reduce_both Σ1 Σ2 op A1 B1 A2 B2:
+  sig_subtype (SigU Σ1 op A1 B1) (SigU Σ2 op A2 B2) ->
+  get_op_type Σ1 op = None -> sig_subtype Σ1 Σ2.
+Proof.
+intros orig non. inv orig.
+eapply sig_subtype_reduce; eauto.
+Qed.
+
+
 (* ==================== Reflexivity and Transitivity ==================== *)
 
 Lemma vsubtype_refl v : wf_vtype v -> vsubtype v v
