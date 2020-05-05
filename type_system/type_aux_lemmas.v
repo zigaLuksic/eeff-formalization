@@ -30,7 +30,7 @@ all: assert (forall A Γ, S(ctx_len Γ) = ctx_len (CtxU Γ A)) as ext by auto.
 all: erewrite ext; eauto; erewrite ext; eauto.
 }{
 intro types. destruct types. destruct H2; simpl. auto. constructor; eauto.
-assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ Aop) (TyFun Bop D))) by auto.
+assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ A) (TyFun B D))) by auto.
 rewrite H4. eauto.
 }
 Qed.
@@ -2082,15 +2082,15 @@ destruct orig. destruct H2.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   apply TypeH; auto; unfold h_subs; simpl.
   apply TypeCasesØ.
-+ assert (CtxU (CtxU Γ0 Aop) (TyFun Bop D) 
-    = ctx_insert (CtxU (CtxU Γ Aop) (TyFun Bop D)) (2+i) A_s).
++ assert (CtxU (CtxU Γ0 A) (TyFun B D) 
+    = ctx_insert (CtxU (CtxU Γ A) (TyFun B D)) (2+i) A_s).
   { simpl. f_equal. f_equal. auto. }
-  assert (wf_vtype Aop) as wfa by (inv H0; auto).
-  assert (wf_vtype (TyFun Bop D)) as wfb by (inv H0; apply WfTyFun; auto).
-  specialize (v_shift_typesafe _ _ Aop _ tyvs wfa) as tyvs'.
-  specialize (v_shift_typesafe _ _ (TyFun Bop D) _ tyvs' wfb) as tyvs''.
+  assert (wf_vtype A) as wfa by (inv H0; auto).
+  assert (wf_vtype (TyFun B D)) as wfb by (inv H0; apply WfTyFun; auto).
+  specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
+  specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs' wfb) as tyvs''.
   specialize (HL _ _ h _ _ i _ _ H2 tyvs geq) as IHh.
-  specialize (CL _ _ cop _ (2+i) _ _ H3 tyvs'' H4) as IHc.
+  specialize (CL _ _ c _ (2+i) _ _ H3 tyvs'' H4) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   apply TypeH; auto; unfold h_subs; simpl.
   eapply TypeCasesU; auto.

@@ -1504,7 +1504,7 @@ all: apply c_shift_inst; auto.
 Qed.
 
 
-Fixpoint form_shift_inst I φ d cut :
+Fixpoint form_shift_inst I φ d cut {struct φ}:
   form_shift (form_inst φ I) d cut = form_inst φ (inst_shift I d cut).
 Proof.
 destruct φ; simpl; f_equal; auto.

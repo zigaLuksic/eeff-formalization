@@ -188,7 +188,7 @@ destruct orig. destruct H2.
 + unfold h_subs in *. unfold c_subs in *. simpl in *.
   eapply HEQ in H2 as IHh; eauto. eapply CEQ in H3 as IHc.
   all: clear VEQ CEQ HEQ.
-  4: instantiate (2:=CtxU (CtxU Γ Aop) (TyFun Bop D)).
+  4: instantiate (2:=CtxU (CtxU Γ A) (TyFun B D)).
   Focus 3.
     erewrite <-ctx_insert_extend. f_equal. erewrite <-ctx_insert_extend.
     f_equal. eauto.

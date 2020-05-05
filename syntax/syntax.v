@@ -42,9 +42,9 @@ with comp : Type :=
 
 with hcases : Type :=
 | CasesØ : hcases
-| CasesU : hcases -> op_id -> comp -> hcases (* x~1 k~0 *).
+| CasesU : hcases -> op_id -> vtype -> vtype -> comp -> hcases (* x~1 k~0 *)
 
-Inductive vtype : Type :=
+with vtype : Type :=
 | TyUnit : vtype
 | TyInt : vtype
 | TyØ : vtype
@@ -112,7 +112,7 @@ Fixpoint get_op_type Σ op :=
 Fixpoint get_case h op : option comp :=
   match h with
   | CasesØ => None
-  | CasesU h' op' c_op =>
+  | CasesU h' op' A B c_op =>
       if op == op' then Some c_op else get_case h' op
   end.
 
@@ -259,7 +259,7 @@ with c_no_var c j :=
 with h_no_var h j :=
   match h with
   | CasesØ => True
-  | CasesU h op c =>
+  | CasesU h op A B c =>
       (h_no_var h j) /\ (c_no_var c (2+j))
   end.
 
@@ -307,7 +307,7 @@ with c_under_var c j :=
 with h_under_var h j :=
   match h with
   | CasesØ => True
-  | CasesU h op c =>
+  | CasesU h op A B c =>
       (h_under_var h j) /\ (c_under_var c (2+j))
   end.
 

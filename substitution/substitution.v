@@ -48,8 +48,8 @@ with c_shift c d cut :=
 with h_shift h d cut :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op c => 
-      CasesU (h_shift h d cut) op (c_shift c d (2+cut))
+  | CasesU h op A B c => 
+      CasesU (h_shift h d cut) op A B (c_shift c d (2+cut))
   end.
 
 
@@ -98,7 +98,8 @@ with c_negshift c d cut :=
 with h_negshift h d cut :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op c => CasesU (h_negshift h d cut) op (c_negshift c d (2+cut))
+  | CasesU h op A B c => 
+      CasesU (h_negshift h d cut) op A B (c_negshift c d (2+cut))
   end.
 
 
@@ -152,8 +153,8 @@ with c_sub c (sub : nat * val) :=
 with h_sub h (sub : nat * val) :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op c => 
-      CasesU (h_sub h sub) op (c_sub c (sub_shift sub 2))
+  | CasesU h op A B c => 
+      CasesU (h_sub h sub) op A B (c_sub c (sub_shift sub 2))
   end.
 
 
@@ -354,8 +355,8 @@ with c_inst c I :=
 with h_inst h I :=
   match h with
   | CasesØ => CasesØ
-  | CasesU h op c => 
-      CasesU (h_inst h I) op
+  | CasesU h op A B c => 
+      CasesU (h_inst h I) op A B
         (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   end.
 

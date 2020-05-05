@@ -268,10 +268,10 @@ with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
 
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 | TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
-| TypeCasesU Γ h op cop Aop Bop Σ D :
+| TypeCasesU Γ h op c A B Σ D :
     has_htype Γ h Σ D ->
-    has_ctype (CtxU (CtxU Γ Aop) (TyFun Bop D)) cop D ->
-    has_htype' Γ (CasesU h op cop) (SigU Σ op Aop Bop) D
+    has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c D ->
+    has_htype' Γ (CasesU h op A B c) (SigU Σ op A B) D
 
 (* ==================== Logic Judgements ==================== *)
 
@@ -508,7 +508,8 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Heq Σ D h1 h2) ->
     get_case h1 op = None -> get_case h2 op = None ->
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
-    judg' Γ Ψ (Heq (SigU Σ op A B) D (CasesU h1 op c1) (CasesU h2 op c2))
+    judg' Γ Ψ (Heq (SigU Σ op A B) D 
+      (CasesU h1 op A B c1) (CasesU h2 op A B c2))
 (* - - - - - - - - - - - - - - -  General - - - - - - - - - - - - - - -  *)
 | IsHyp Γ Ψ φ:
     has_hypothesis Ψ φ ->
