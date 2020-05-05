@@ -37,20 +37,20 @@ destruct types. destruct h.
   specialize (VL _ _ _ h0) as IH2. destruct IH2 as [v2' ann2].
   eexists. eapply AnnPair; eauto.
 + specialize (VL _ _ _ h) as IH1. destruct IH1 as [v' ann1].
-  eexists. eapply AnnInl; eauto.
+  eexists. eapply AnnLeft; eauto.
 + specialize (VL _ _ _ h) as IH1. destruct IH1 as [v' ann1].
-  eexists. eapply AnnInr; eauto. 
-+ eexists. apply AnnListNil.
+  eexists. eapply AnnRight; eauto. 
++ eexists. apply AnnNil.
 + specialize (VL _ _ _ h) as IH1. destruct IH1 as [v1' ann1].
   specialize (VL _ _ _ h0) as IH2. destruct IH2 as [v2' ann2].
-  eexists. eapply AnnListCons; eauto.
+  eexists. eapply AnnCons; eauto.
 + specialize (CL _ _ _ h) as IH1. destruct IH1 as [c' ann1].
   eexists. eapply AnnFun; eauto.
 + specialize (CL _ _ _ h0) as IH1. destruct IH1 as [c' ann1].
   specialize (HL _ _ _ _ h1) as IH2. destruct IH2 as [h' ann2].
   eexists. eapply AnnHandler; eauto.
 + specialize (VL _ _ _ h) as IH1. destruct IH1 as [v1' ann1].
-  eexists. eapply AnnVSubtype; eauto.
+  eexists. eapply AnnVSTy; eauto.
 }{
 rename has_vtype_annotates into VL.
 rename has_ctype_annotates into CL.
@@ -62,18 +62,18 @@ destruct types. destruct h.
   eexists. eapply AnnAbsurd; eauto.
 + specialize (VL _ _ _ h) as IH. destruct IH as [v' ann].
   specialize (CL _ _ _ h0) as IH1. destruct IH1 as [c1' ann1].
-  eexists. eapply AnnΠMatch; eauto.
+  eexists. eapply AnnProdMatch; eauto.
 + specialize (VL _ _ _ h) as IH. destruct IH as [v' ann].
   specialize (CL _ _ _ h0) as IH1. destruct IH1 as [c1' ann1].
   specialize (CL _ _ _ h1) as IH2. destruct IH2 as [c2' ann2].
-  eexists. eapply AnnΣMatch; eauto.
+  eexists. eapply AnnSumMatch; eauto.
 + specialize (VL _ _ _ h) as IH. destruct IH as [v' ann].
   specialize (CL _ _ _ h0) as IH1. destruct IH1 as [c1' ann1].
   specialize (CL _ _ _ h1) as IH2. destruct IH2 as [c2' ann2].
   eexists. eapply AnnListMatch; eauto.
 + specialize (CL _ _ _ h) as IH1. destruct IH1 as [c1' ann1].
   specialize (CL _ _ _ h0) as IH2. destruct IH2 as [c2' ann2].
-  eexists. eapply AnnDoBind; eauto.
+  eexists. eapply AnnDo; eauto.
 + specialize (VL _ _ _ h) as IH1. destruct IH1 as [v1' ann1].
   specialize (VL _ _ _ h0) as IH2. destruct IH2 as [v2' ann2].
   eexists. eapply AnnApp; eauto.
@@ -87,7 +87,7 @@ destruct types. destruct h.
   specialize (CL _ _ _ h0) as IH2. destruct IH2 as [c2' ann2].
   eexists. eapply AnnOp; eauto.
 + specialize (CL _ _ _ h) as IH1. destruct IH1 as [c1' ann1].
-  eexists. eapply AnnCSubtype; eauto.
+  eexists. eapply AnnCSTy; eauto.
 }{
 rename has_vtype_annotates into VL.
 rename has_ctype_annotates into CL.
@@ -127,10 +127,10 @@ destruct ann; simpl.
 + apply SkTypeUnit.
 + apply SkTypeInt.
 + apply SkTypePair; eauto.
-+ apply SkTypeInl; eauto.
-+ apply SkTypeInr; eauto.
-+ apply SkTypeListNil.
-+ apply SkTypeListCons; eauto.
++ apply SkTypeLeft; eauto.
++ apply SkTypeRight; eauto.
++ apply SkTypeNil.
++ apply SkTypeCons; eauto.
   eapply ann_val_types in ann2. simpl in *. auto.
 + apply SkTypeFun.
   eapply ann_comp_types in H. simpl in *. auto.
@@ -144,10 +144,10 @@ destruct ann; simpl.
 + apply SkTypeRet. eauto.
 + apply SkTypeAbsurd.
   eapply ann_val_types in H. simpl in *. auto.
-+ eapply SkTypeΠMatch.
++ eapply SkTypeProdMatch.
   eapply ann_val_types in H. simpl in *. eauto.
   eapply ann_comp_types in ann. simpl in *. auto.
-+ eapply SkTypeΣMatch.
++ eapply SkTypeSumMatch.
   eapply ann_val_types in H. simpl in *. eauto.
   eapply ann_comp_types in ann1. simpl in *. auto.
   eapply ann_comp_types in ann2. simpl in *. auto.
@@ -155,7 +155,7 @@ destruct ann; simpl.
   eapply ann_val_types in H. simpl in *. eauto.
   eapply ann_comp_types in ann1. simpl in *. auto.
   eapply ann_comp_types in ann2. simpl in *. auto.
-+ eapply SkTypeDoBind.
++ eapply SkTypeDo.
   eapply ann_comp_types in ann1. simpl in *. eauto.
   eapply ann_comp_types in ann2. simpl in *. auto.
 + eapply SkTypeApp; eauto.
@@ -202,7 +202,7 @@ inv ann. auto. apply inv_ann_Int in H. auto.
 Qed.
 
 Fixpoint inv_ann_Pair Γ v1 v2 A B p v'
-  (ann: v_ann Γ (Pair v1 v2) (TyΠ A B) p v') {struct ann}:
+  (ann: v_ann Γ (Pair v1 v2) (TyProd A B) p v') {struct ann}:
   exists v1' v2' A' B' p1 p2,
     vsubtype A' A /\ vsubtype B' B /\
     v_ann Γ v1 A' p1 v1' /\ v_ann Γ v2 B' p2 v2' /\
@@ -218,53 +218,53 @@ inv ann.
   all: eapply vsubtype_trans; eauto.
 Qed.
 
-Fixpoint inv_ann_Inl Γ v A B p v'
-  (ann: v_ann Γ (Inl v) (TyΣ A B) p v') {struct ann}:
+Fixpoint inv_ann_Left Γ v A B p v'
+  (ann: v_ann Γ (Left v) (TySum A B) p v') {struct ann}:
   exists v1' A' p1,
-    vsubtype A' A /\ v_ann Γ v A' p1 v1' /\ v' = SkInl v1'.
+    vsubtype A' A /\ v_ann Γ v A' p1 v1' /\ v' = SkLeft v1'.
 Proof.
 inv ann.
 + exists v'0, A, pl. aconstructor.
   apply vsubtype_refl. inv p. inv H0. auto.
-+ inv H0. eapply inv_ann_Inl in H.
++ inv H0. eapply inv_ann_Left in H.
   destruct H as [v1'[A'[p1[stya othr]]]].
   exists v1',A',p1. aconstructor.
   eapply vsubtype_trans; eauto.
 Qed.
 
-Fixpoint inv_ann_Inr Γ v A B p v'
-  (ann: v_ann Γ (Inr v) (TyΣ A B) p v') {struct ann}:
+Fixpoint inv_ann_Right Γ v A B p v'
+  (ann: v_ann Γ (Right v) (TySum A B) p v') {struct ann}:
   exists v1' B' p1,
-    vsubtype B' B /\ v_ann Γ v B' p1 v1' /\ v' = SkInr v1'.
+    vsubtype B' B /\ v_ann Γ v B' p1 v1' /\ v' = SkRight v1'.
 Proof.
 inv ann.
 + exists v'0, B, pr. aconstructor.
   apply vsubtype_refl. inv p. inv H0. auto.
-+ inv H0. eapply inv_ann_Inr in H.
++ inv H0. eapply inv_ann_Right in H.
   destruct H as [v1'[B'[p1[styb othr]]]].
   exists v1',B',p1. aconstructor.
   eapply vsubtype_trans; eauto.
 Qed.
 
-Fixpoint inv_ann_ListNil Γ A p v'
-  (ann: v_ann Γ ListNil A p v') {struct ann}:
-  v' = SkListNil.
+Fixpoint inv_ann_Nil Γ A p v'
+  (ann: v_ann Γ Nil A p v') {struct ann}:
+  v' = SkNil.
 Proof.
 inv ann. auto.
-eapply inv_ann_ListNil in H. auto.
+eapply inv_ann_Nil in H. auto.
 Qed.
 
-Fixpoint inv_ann_ListCons Γ v1 v2 A p v'
-  (ann: v_ann Γ (ListCons v1 v2) (TyList A) p v') {struct ann}:
+Fixpoint inv_ann_Cons Γ v1 v2 A p v'
+  (ann: v_ann Γ (Cons v1 v2) (TyList A) p v') {struct ann}:
   exists v1' v2' A' p1 p2,
     vsubtype A' A /\
     v_ann Γ v1 A' p1 v1' /\ v_ann Γ v2 (TyList A') p2 v2' /\
-    v' = SkListCons v1' v2'.
+    v' = SkCons v1' v2'.
 Proof.
 inv ann.
 + exists v1', v2', A, p1, p2. aconstructor.
   all: apply vsubtype_refl; inv p; inv H0; auto.
-+ inv H0. eapply inv_ann_ListCons in H.
++ inv H0. eapply inv_ann_Cons in H.
   destruct H as [v1'[v2'[A'[p1[p2[stya othr]]]]]].
   exists v1',v2',A',p1,p2.
   aconstructor. eapply vsubtype_trans; eauto.
@@ -304,7 +304,33 @@ inv ann.
   do 2 try aconstructor. all: eapply csubtype_trans; eauto.
 Qed.
 
+(* Inversions for computations *)
 
+Fixpoint inv_ann_Ret Γ v A Σ E p c'
+  (ann: c_ann Γ (Ret v) (CTy A Σ E) p c') {struct ann}:
+  exists v' A' p',
+    vsubtype A' A /\ v_ann Γ v A' p' v' /\ c' = SkRet v'.
+Proof.
+inv ann.
++ exists v', A, pv. aconstructor.
+  apply vsubtype_refl. inv p. inv H0. auto.
++ inv H0. eapply inv_ann_Ret in H.
+  destruct H as [v1'[A'[p1[stya othr]]]].
+  exists v1',A',p1. aconstructor.
+  eapply vsubtype_trans; eauto.
+Qed.
+
+Fixpoint inv_ann_Absurd Γ v C p c'
+  (ann: c_ann Γ (Absurd v) C p c') {struct ann}:
+  exists v' p',
+    v_ann Γ v TyEmpty p' v' /\ c' = SkAbsurd v'.
+Proof.
+inv ann.
++ exists v', pv. aconstructor.
++ inv H0. eapply inv_ann_Absurd in H.
+  destruct H as [v1'[p1[ty othr]]].
+  exists v1', p1. aconstructor.
+Qed.
 
 Fixpoint inv_ann_Op Γ id v c C p c'
   (ann: c_ann Γ (Op id v c) C p c') {struct ann}:
@@ -333,9 +359,6 @@ inv ann.
 Qed.
 
 
-(* TODO:
-
-  show that here is preciseliy one Σ for which h types *)
 
 (* Show uniqueness *)
 (* We are lucky because there are no restrictions on the context! <3 *)
@@ -352,11 +375,9 @@ with c_ann_unique Γ1 Γ2 c C C1 C2 c1 c2
   csubtype C1 C -> csubtype C2 C ->
   c1 = c2
 
-with h_ann_unique Γ Γ1 Γ2 h Σ Σ1 Σ2 D D1 D2 h1 h2
+with h_ann_unique Γ1 Γ2 h Σ1 Σ2 D D1 D2 h1 h2
   (tys1: has_htype Γ1 h Σ1 D1) (tys2: has_htype Γ2 h Σ2 D2)
   (ann1: h_ann Γ1 h Σ1 D1 tys1 h1) (ann2: h_ann Γ2 h Σ2 D2 tys2 h2) {struct ann1}:
-  has_htype Γ h Σ D ->
-  sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
   csubtype D1 D -> csubtype D2 D ->
   h1 = h2.
 
@@ -383,30 +404,30 @@ Focus 11. (* Subtyping on left *)
     eapply vsubtype_trans; eauto.
   - inv sty1. inv sty2. eapply VL; eauto. 
     eapply vsubtype_trans; eauto.
-+ eapply shape_inl_full in tys2 as shape. 2: reflexivity.
++ eapply shape_left_full in tys2 as shape. 2: reflexivity.
   destruct shape as [A'[B'[s t]]]. subst.
-  apply inv_ann_Inl in ann2.
+  apply inv_ann_Left in ann2.
   destruct ann2 as [v''[A''[p''[stya[ann2 id]]]]].
   subst. f_equal.
   inv sty1. eapply VL; eauto. inv sty2.
   eapply vsubtype_trans; eauto.
-+ eapply shape_inr_full in tys2 as shape. 2: reflexivity.
++ eapply shape_right_full in tys2 as shape. 2: reflexivity.
   destruct shape as [A'[B'[s t]]]. subst.
-  apply inv_ann_Inr in ann2.
+  apply inv_ann_Right in ann2.
   destruct ann2 as [v''[B''[p''[styb[ann2 id]]]]].
   subst. f_equal.
   inv sty1. eapply VL; eauto. inv sty2.
   eapply vsubtype_trans; eauto.
-+ eapply inv_ann_ListNil in ann2. auto.
-+ eapply shape_list_cons_full in tys2 as shape. 2: reflexivity.
++ eapply inv_ann_Nil in ann2. auto.
++ eapply shape_cons_full in tys2 as shape. 2: reflexivity.
   destruct shape as [A'[s[t1 t2]]]. subst.
-  apply inv_ann_ListCons in ann2.
+  apply inv_ann_Cons in ann2.
   destruct ann2 as [v1''[v2''[A''[p1''[p2''[stya[t1'[t2' id]]]]]]]].
   subst. f_equal.
   - inv sty1. inv sty2. eapply VL; eauto.
     eapply vsubtype_trans; eauto.
   - inv sty1. inv sty2. eapply VL; eauto.
-    all: apply SubtypeTyList. eauto. eapply vsubtype_trans; eauto.
+    all: apply STyList. eauto. eapply vsubtype_trans; eauto.
 + eapply shape_fun_full in tys2 as shape. 2: reflexivity.
   destruct shape as [A'[C'[s t]]]. subst.
   apply inv_ann_Fun in ann2.
@@ -422,196 +443,28 @@ Focus 11. (* Subtyping on left *)
   subst. f_equal.
   - inv sty1. inv sty2. inv H3. inv H6. eapply CL; eauto.
     eapply csubtype_trans; eauto.
-  - inv sty1. inv sty2. inv H3. inv H6. eapply HL. eauto. eauto.
-    instantiate (2:=Σ0). 2: eauto.
-    3: eapply sig_subtype_trans; eauto.
-  exact ph.
-    inv csty'. eapply sig_subtype_trans; eauto. eapply csubtype_trans; eauto.
+  - inv sty1. inv sty2. inv H3. inv H6. eapply HL; eauto. 
+    eapply csubtype_trans; eauto.
 }{
 intros sty1 sty2. clear HL. destruct ann1.
 Focus 11. (* Subtyping on left *)
   eapply CL. eauto. eauto. 2: eauto.
   eapply csubtype_trans. all: eauto.
 
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
-+ admit.
 + destruct C2 as [A2 Σ2 E2].
-  eapply shape_op_full in tys2 as shape; try reflexivity.
-  destruct shape as [Aop'[Bop'[gets'[vty' cty']]]].
-  eapply inv_ann_Op in ann2.
-  destruct ann2 as [vop'[cop'[Aop''[Bop''[A''[Σ''[E'' othr]]]]]]].
-  destruct othr as [p1[p2[styc[gets''[vann2[cann2 s]]]]]].
-  inv sty1. inv sty2.
-  assert (sig_subtype Σ'' Σ') as stytrans.
-  { inv styc. eapply sig_subtype_trans; eauto. }
-  eapply sig_subtype_get_Some in stytrans as styop. 2: eauto.
-  destruct styop as [a[b[sget1[sa sb]]]].
-  eapply sig_subtype_get_Some in H6 as styop. 2: eauto.
-  destruct styop as [a'[b'[sget2[sa' sb']]]].
-  rewrite sget2 in sget1. inv sget1. clear sget2.
-  subst. f_equal.
-  - clear VL CL.
-    apply skeletons_ignore_vsubtype in sa. rewrite sa. clear sa.
-    apply skeletons_ignore_vsubtype. auto.
-  - clear VL CL.
-    apply skeletons_ignore_vsubtype in sb. rewrite <-sb. clear sb.
-    symmetry. apply skeletons_ignore_vsubtype. auto.
-  - eapply VL; eauto.
-  - eapply CL. eauto. eauto.
-    eapply SubtypeCTy; eauto.
-    eapply csubtype_trans; eauto. eapply SubtypeCTy; eauto.
-}{
-intros htys sty1 sty2 csty1 csty2. clear VL. destruct ann1.
-inv ann2. auto.
-inv ann2. f_equal.
-+ clear CL. inv htys. inv H3. eapply HL; eauto; clear HL.
-  - eapply sig_subtype_reduce_both; eauto. inv H1. auto.
-  - eapply sig_subtype_reduce_both; eauto. inv H1. auto.
-+ clear CL HL. inv htys. inv H3.
-  assert (get_op_type (SigU Σ2 op Aop Bop) op = Some (Aop, Bop)) as gets.
-  { simpl. destruct (op==op). auto. destruct n. auto. }
-  eapply sig_subtype_get_Some in sty1; eauto.
-  eapply sig_subtype_get_Some in sty2; eauto.
-  destruct sty1 as [A1[B1[gets1[sty1 _]]]].
-  destruct sty2 as [A2[B2[gets2[sty2 _]]]].
-  simpl in *. destruct (op==op). 2: destruct n; auto.
-  inv gets. inv gets1. inv gets2.
-  apply skeletons_ignore_vsubtype in sty1.
-  apply skeletons_ignore_vsubtype in sty2.
-  rewrite <-sty1. auto.
-+ clear CL HL. inv htys. inv H3.
-  assert (get_op_type (SigU Σ2 op Aop Bop) op = Some (Aop, Bop)) as gets.
-  { simpl. destruct (op==op). auto. destruct n. auto. }
-  eapply sig_subtype_get_Some in sty1; eauto.
-  eapply sig_subtype_get_Some in sty2; eauto.
-  destruct sty1 as [A1[B1[gets1[_ sty1]]]].
-  destruct sty2 as [A2[B2[gets2[_ sty2]]]].
-  simpl in *. destruct (op==op). 2: destruct n; auto.
-  inv gets. inv gets1. inv gets2.
-  apply skeletons_ignore_vsubtype in sty1.
-  apply skeletons_ignore_vsubtype in sty2.
-  rewrite sty1. auto.
-+ clear HL. inv htys. inv H3. eapply CL; eauto.
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-(* Show uniqueness *)
-
-Fixpoint v_ann_unique Γ Γ1 Γ2 v A A1 A2 v1 v2
-  (tys1: has_vtype Γ1 v A1) (tys2: has_vtype Γ2 v A2)
-  (ann1: v_ann Γ1 v A1 tys1 v1) (ann2: v_ann Γ2 v A2 tys2 v2) {struct ann1}:
-  vsubtype A1 A -> vsubtype A2 A ->
-  ctx_subtype Γ Γ1 -> ctx_subtype Γ Γ2 ->
-  v1 = v2
-with c_ann_unique Γ Γ1 Γ2 c C C1 C2 c1 c2
-  (tys1: has_ctype Γ1 c C1) (tys2: has_ctype Γ2 c C2)
-  (ann1: c_ann Γ1 c C1 tys1 c1) (ann2: c_ann Γ2 c C2 tys2 c2) {struct ann1}:
-  csubtype C1 C -> csubtype C2 C ->
-  ctx_subtype Γ Γ1 -> ctx_subtype Γ Γ2 ->
-  c1 = c2
-with h_ann_unique Γ Γ1 Γ2 h Σ Σ1 Σ2 D D1 D2 h1 h2
-  (tys1: has_htype Γ1 h Σ1 D1) (tys2: has_htype Γ2 h Σ2 D2)
-  (ann1: h_ann Γ1 h Σ1 D1 tys1 h1) (ann2: h_ann Γ2 h Σ2 D2 tys2 h2) {struct ann1}:
-  has_htype Γ h Σ D ->
-  sig_subtype Σ Σ1 -> sig_subtype Σ Σ2 ->
-  csubtype D1 D -> csubtype D2 D ->
-  ctx_subtype Γ Γ1 -> ctx_subtype Γ Γ2 ->
-  h1 = h2.
-Proof.
-all: rename v_ann_unique into VL.
-all: rename c_ann_unique into CL.
-all: rename h_ann_unique into HL.
-{
-intros sty1 sty2 sctx1 sctx2. destruct ann1.
-Focus 11. (* Subtyping on left *)
-  eapply VL. eauto. eauto. 2: eauto.
-  eapply vsubtype_trans. all: eauto.
-
-+ eapply inv_ann_Var in ann2; eauto.
-+ apply inv_ann_Unit in ann2; auto.
-+ eapply inv_ann_Int in ann2; eauto.
-+ eapply shape_pair_full in tys2 as shape. 2: reflexivity.
-  destruct shape as [A'[B'[s[t1 t2]]]]. subst.
-  apply inv_ann_Pair in ann2.
-  destruct ann2 as [v1''[v2''[A''[B''[p1''[p2'' othr]]]]]].
-  destruct othr as [stya[styb[ann2_1[ann2_2 id]]]].
-  subst. f_equal. 
-  - inv sty1. inv sty2. eapply VL; eauto.
-    eapply vsubtype_trans; eauto.
-  - inv sty1. inv sty2. eapply VL; eauto. 
-    eapply vsubtype_trans; eauto.
-+ eapply shape_inl_full in tys2 as shape. 2: reflexivity.
-  destruct shape as [A'[B'[s t]]]. subst.
-  apply inv_ann_Inl in ann2.
+  eapply shape_ret_full in tys2 as shape. 2: reflexivity. 2: reflexivity.
+  apply inv_ann_Ret in ann2.
   destruct ann2 as [v''[A''[p''[stya[ann2 id]]]]].
   subst. f_equal.
   inv sty1. eapply VL; eauto. inv sty2.
   eapply vsubtype_trans; eauto.
-+ eapply shape_inr_full in tys2 as shape. 2: reflexivity.
-  destruct shape as [A'[B'[s t]]]. subst.
-  apply inv_ann_Inr in ann2.
-  destruct ann2 as [v''[B''[p''[styb[ann2 id]]]]].
++ destruct C2 as [A2 Σ2 E2].
+  eapply shape_ret_full in tys2 as shape. 2: reflexivity. 2: reflexivity.
+  apply inv_ann_Ret in ann2.
+  destruct ann2 as [v''[A''[p''[stya[ann2 id]]]]].
   subst. f_equal.
   inv sty1. eapply VL; eauto. inv sty2.
   eapply vsubtype_trans; eauto.
-+ eapply inv_ann_ListNil in ann2. auto.
-+ eapply shape_list_cons_full in tys2 as shape. 2: reflexivity.
-  destruct shape as [A'[s[t1 t2]]]. subst.
-  apply inv_ann_ListCons in ann2.
-  destruct ann2 as [v1''[v2''[A''[p1''[p2''[stya[t1'[t2' id]]]]]]]].
-  subst. f_equal.
-  - inv sty1. inv sty2. eapply VL; eauto.
-    eapply vsubtype_trans; eauto.
-  - inv sty1. inv sty2. eapply VL; eauto.
-    all: apply SubtypeTyList. eauto. eapply vsubtype_trans; eauto.
-+ eapply shape_fun_full in tys2 as shape. 2: reflexivity.
-  destruct shape as [A'[C'[s t]]]. subst.
-  apply inv_ann_Fun in ann2.
-  destruct ann2 as [c''[A''[C''[p''[stya[styc[ann2 id]]]]]]].
-  subst. f_equal.
-  inv sty1. inv sty2. eapply CL; eauto.
-  - eapply csubtype_trans; eauto.
-  - eapply SubtypeCtxU; eauto.
-  - apply SubtypeCtxU. auto. eapply vsubtype_trans; eauto.
-+ eapply shape_handler_full in tys2 as shape. 2: reflexivity.
-  destruct shape as [A'[Σ'[E'[D'[Σ''[D''[s[ct[ht[r[ssty csty]]]]]]]]]]]. subst.
-  apply inv_ann_Handler in ann2.
-  destruct ann2 as [c''[h''[A'''[Σ'''[E'''[D'''[pc'[ph' othr]]]]]]]].
-  destruct othr as [csty'[dsty'[cann[hann s]]]].
-  subst. f_equal.
-  - inv sty1. inv sty2. inv H3. inv H6. eapply CL; eauto.
-    * eapply csubtype_trans; eauto.
-    * eapply SubtypeCtxU; eauto.
-    * apply SubtypeCtxU. auto. inv csty'. eapply vsubtype_trans; eauto.
-  - admit.
-    (* inv sty1. inv sty2. inv H3. inv H6. eapply HL; eauto. *)
-    (* inv csty'. eapply sig_subtype_trans; eauto. eapply csubtype_trans; eauto. *)
-}{
-intros sty1 sty2 sctx1 sctx2. clear HL. destruct ann1.
-Focus 11. (* Subtyping on left *)
-  eapply CL. eauto. eauto. 2: eauto.
-  eapply csubtype_trans. all: eauto.
-
-+ admit.
-+ admit.
 + admit.
 + admit.
 + admit.
@@ -642,49 +495,38 @@ Focus 11. (* Subtyping on left *)
     symmetry. apply skeletons_ignore_vsubtype. auto.
   - eapply VL; eauto.
   - eapply CL. eauto. eauto.
-    eapply SubtypeCTy; eauto.
-    eapply csubtype_trans; eauto. eapply SubtypeCTy; eauto.
-    all: eapply SubtypeCtxU; eauto.
+    eapply STyCTy; eauto.
+    eapply csubtype_trans; eauto. eapply STyCTy; eauto.
 }{
-intros htys sty1 sty2 csty1 csty2 sctx1 sctx2. clear VL. destruct ann1.
+intros csty1 csty2. clear VL. destruct ann1.
 inv ann2. auto.
 inv ann2. f_equal.
-+ clear CL. inv htys. inv H3. eapply HL; eauto; clear HL.
-  - eapply sig_subtype_reduce_both; eauto. inv H1. auto.
-  - eapply sig_subtype_reduce_both; eauto. inv H1. auto.
-+ clear CL HL. inv htys. inv H3.
-  assert (get_op_type (SigU Σ2 op Aop Bop) op = Some (Aop, Bop)) as gets.
-  { simpl. destruct (op==op). auto. destruct n. auto. }
-  eapply sig_subtype_get_Some in sty1; eauto.
-  eapply sig_subtype_get_Some in sty2; eauto.
-  destruct sty1 as [A1[B1[gets1[sty1 _]]]].
-  destruct sty2 as [A2[B2[gets2[sty2 _]]]].
-  simpl in *. destruct (op==op). 2: destruct n; auto.
-  inv gets. inv gets1. inv gets2.
-  apply skeletons_ignore_vsubtype in sty1.
-  apply skeletons_ignore_vsubtype in sty2.
-  rewrite <-sty1. auto.
-+ clear CL HL. inv htys. inv H3.
-  assert (get_op_type (SigU Σ2 op Aop Bop) op = Some (Aop, Bop)) as gets.
-  { simpl. destruct (op==op). auto. destruct n. auto. }
-  eapply sig_subtype_get_Some in sty1; eauto.
-  eapply sig_subtype_get_Some in sty2; eauto.
-  destruct sty1 as [A1[B1[gets1[_ sty1]]]].
-  destruct sty2 as [A2[B2[gets2[_ sty2]]]].
-  simpl in *. destruct (op==op). 2: destruct n; auto.
-  inv gets. inv gets1. inv gets2.
-  apply skeletons_ignore_vsubtype in sty1.
-  apply skeletons_ignore_vsubtype in sty2.
-  rewrite sty1. auto.
-+ clear HL. inv htys. inv H3. eapply CL; eauto; clear CL.
-  instantiate (1:=(CtxU (CtxU Γ Aop) (TyFun Bop D))).
-  - assert (get_op_type (SigU Σ2 op Aop Bop) op = Some (Aop, Bop)) as gets.
-    { simpl. destruct (op==op). auto. destruct n. auto. }
-    eapply sig_subtype_get_Some in sty1; eauto.
-    destruct sty1 as [A1[B1[gets1[stya styb]]]].
-    simpl in *. destruct (op==op). 2: destruct n; auto.
-    inv gets. inv gets1.
-    do 2 try apply SubtypeCtxU; auto.
-    apply SubtypeTyFun;
-
++ clear CL. eapply HL; eauto; clear HL.
++ clear HL. eapply CL; eauto.
 }
+Admitted.
+
+
+Fixpoint v_ann_unique_clean Γ v A v1 v2 
+  (tys1: has_vtype Γ v A) (tys2: has_vtype Γ v A)
+  (ann1: v_ann Γ v A tys1 v1) (ann2: v_ann Γ v A tys2 v2):
+  v1 = v2
+
+with c_ann_unique_clean Γ c C c1 c2
+  (tys1: has_ctype Γ c C) (tys2: has_ctype Γ c C)
+  (ann1: c_ann Γ c C tys1 c1) (ann2: c_ann Γ c C tys2 c2):
+  c1 = c2
+
+with h_ann_unique_clean Γ h Σ D h1 h2
+  (tys1: has_htype Γ h Σ D) (tys2: has_htype Γ h Σ D)
+  (ann1: h_ann Γ h Σ D tys1 h1) (ann2: h_ann Γ h Σ D tys2 h2):
+  h1 = h2.
+
+Proof.
++ eapply v_ann_unique; eauto.
+  all: apply vsubtype_refl; clear ann1; inv tys1; auto.
++ eapply c_ann_unique; eauto.
+  all: apply csubtype_refl; clear ann1; inv tys1; auto.
++ eapply h_ann_unique; eauto.
+  all: apply csubtype_refl; clear ann1; inv tys1; auto.
+Qed.

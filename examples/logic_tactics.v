@@ -21,19 +21,19 @@ Ltac obvious :=
 || apply WfEqsØ || apply WfSigØ || (apply WfSigU; obvious)
 || apply WfTyUnit || apply WfTyInt || apply WfTyEmpty
 || (apply WfTyHandler; obvious) || (apply WfTyFun; obvious) 
-|| (apply WfTyList; obvious)|| (apply WfTyΣ; obvious)
-|| (apply WfTyΠ; obvious) || (apply WfCTy; obvious)
+|| (apply WfTyList; obvious)|| (apply WfTySum; obvious)
+|| (apply WfTyProd; obvious) || (apply WfCTy; obvious)
 || auto.
 
 Ltac obvious_vtype := (
 (apply TypeV; (
    (apply TypeUnit; obvious)
 || (apply TypeInt; obvious)
-|| (apply TypeInl; obvious_vtype)
-|| (apply TypeInr; obvious_vtype)
+|| (apply TypeLeft; obvious_vtype)
+|| (apply TypeRight; obvious_vtype)
 || (apply TypePair; obvious_vtype)
-|| (apply TypeListNil; obvious)
-|| (apply TypeListCons; obvious_vtype)
+|| (apply TypeNil; obvious)
+|| (apply TypeCons; obvious_vtype)
 || (apply TypeVar; simpl in *; obvious)
 || obvious)
 )
@@ -43,11 +43,11 @@ Ltac vtype_step := (
 (apply TypeV; (
    (apply TypeUnit; obvious)
 || (apply TypeInt; obvious)
-|| (apply TypeInl; obvious)
-|| (apply TypeInr; obvious)
+|| (apply TypeLeft; obvious)
+|| (apply TypeRight; obvious)
 || (apply TypePair; obvious)
-|| (apply TypeListNil; obvious)
-|| (apply TypeListCons; obvious)
+|| (apply TypeNil; obvious)
+|| (apply TypeCons; obvious)
 || (apply TypeFun; obvious)
 || (apply TypeHandler; obvious)
 || (apply TypeVar; simpl in *; obvious)
@@ -60,8 +60,8 @@ Ltac obvious_ctype := (
 (apply TypeC; (
   (apply TypeRet; obvious_vtype)
 || (eapply TypeApp; obvious_vtype)
-|| (eapply TypeΣMatch; obvious_vtype; obvious_ctype)
-|| (eapply TypeΠMatch; obvious_vtype; obvious_ctype)
+|| (eapply TypeSumMatch; obvious_vtype; obvious_ctype)
+|| (eapply TypeProdMatch; obvious_vtype; obvious_ctype)
 || (eapply TypeListMatch; obvious_vtype; obvious_ctype)
 || obvious)
 )
@@ -71,10 +71,10 @@ Ltac ctype_step := (
 (apply TypeC; (
   (apply TypeRet; obvious)
 || (eapply TypeApp; obvious)
-|| (eapply TypeΣMatch; obvious)
-|| (eapply TypeΠMatch; obvious)
+|| (eapply TypeSumMatch; obvious)
+|| (eapply TypeProdMatch; obvious)
 || (eapply TypeListMatch; obvious)
-|| (eapply TypeDoBind; obvious)
+|| (eapply TypeDo; obvious)
 || (eapply TypeLetRec; obvious)
 || obvious)
 )
@@ -82,10 +82,10 @@ Ltac ctype_step := (
 
 Ltac wft_step := (
    (eapply WfTApp; obvious)
-|| (eapply WfTΣMatch; obvious)
-|| (eapply WfTΠMatch; obvious)
+|| (eapply WfTSumMatch; obvious)
+|| (eapply WfTProdMatch; obvious)
 || (eapply WfTListMatch; obvious)
-|| (eapply WfTLetBind; obvious)
+|| (eapply WfTDo; obvious)
 || (eapply WfTOp; obvious)
 || obvious).
 
@@ -96,9 +96,9 @@ Lemma dirty_ret Γ A Σ E v:
   has_ctype Γ (Ret v) (CTy A Σ E).
 Proof.
 intros wfs wfe vty. apply TypeC. inv vty. auto. obvious. inv vty. auto.
-eapply TypeCSubtype. instantiate (1:= (CTy A SigØ EqsØ)).
-obvious_ctype. all: inv vty; auto. apply SubtypeCTy.
-apply vsubtype_refl. auto. apply SubtypeSigØ. apply SubtypeEqsØ.
+eapply TypeCSubsume. instantiate (1:= (CTy A SigØ EqsØ)).
+obvious_ctype. all: inv vty; auto. apply STyCTy.
+apply vsubtype_refl. auto. apply STySigØ. apply STyEqsØ.
 Qed.
 
 
@@ -177,15 +177,15 @@ assert (
   (c_subs
      (Op id (v_shift vop 1 0)
         (ListMatch (Var 1) (c_shift c1 1 1) (c_shift c2 1 3))) 0
-     ListNil)
+     Nil)
   (c_subs
      (c_shift
         (Op id (v_shift vop 1 0)
            (ListMatch (Var 1) (c_shift c1 1 1) (c_shift c2 1 3)))
-        2 0) (2 + 0) (ListCons (Var 1) (Var 0))))
-  = (ListMatch v' (Op id vop (ListMatch ListNil c1 c2))
+        2 0) (2 + 0) (Cons (Var 1) (Var 0))))
+  = (ListMatch v' (Op id vop (ListMatch Nil c1 c2))
       (Op id (v_shift vop 2 0) 
-        (ListMatch (ListCons (Var 2) (Var 1))
+        (ListMatch (Cons (Var 2) (Var 1))
           (c_shift c1 2 1)
           (c_shift c2 2 3))))) as sameR.
 { clear rule. simpl_c_subs. f_equal.
@@ -300,7 +300,7 @@ eapply CeqListMatch. instantiate (1:=Al).
   { inv wfc. apply WfCeq. 2: obvious. ctype_step.
     instantiate (1:=Al). obvious_vtype. auto. }
 
-  apply βListMatch_Nil.
+  apply βMatchNil.
 
 + assert (wf_hyp (CtxU (CtxU Γ Al) (TyList Al)) (hyp_shift Ψ 2 0)).
   { rewrite <-(hyp_shift_shift 1). do 2 try apply wf_hyp_shift_typesafe; obvious. }
@@ -336,7 +336,7 @@ eapply CeqListMatch. instantiate (1:=Al).
   { rewrite <-(v_shift_shift 1). do 2 try apply v_shift_typesafe; obvious. }
 
   eapply ceq_trans. apply WfJudg; obvious. 2: apply wf_hyp_shift_typesafe; obvious.
-  2: apply βListMatch_Cons.
+  2: apply βMatchCons.
 
   { inv wfc. apply WfCeq.
     ctype_step. instantiate (1:=Al). obvious_vtype.

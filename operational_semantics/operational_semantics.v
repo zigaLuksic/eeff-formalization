@@ -5,49 +5,49 @@ Add Rec LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 Require Export syntax substitution.
 
 Inductive step : comp -> comp -> Prop :=
-| Step_ΠMatch v1 v2 c: 
+| Step_MatchPair v1 v2 c: 
     step 
-      (ΠMatch (Pair v1 v2) c)
+      (ProdMatch (Pair v1 v2) c)
       (c_subs2_out c v1 v2)
-| Step_ΣMatch_Inl v c1 c2:
+| Step_MatchLeft v c1 c2:
     step 
-      (ΣMatch (Inl v) c1 c2)
+      (SumMatch (Left v) c1 c2)
       (c_subs_out c1 v)
-| Step_ΣMatch_Inr v c1 c2:
+| Step_MatchRight v c1 c2:
     step 
-      (ΣMatch (Inr v) c1 c2)
+      (SumMatch (Right v) c1 c2)
       (c_subs_out c2 v)
-| Step_ListMatch_Nil c1 c2:
+| Step_MatchNil c1 c2:
     step 
-      (ListMatch ListNil c1 c2)
+      (ListMatch Nil c1 c2)
       c1
-| Step_ListMatch_Cons v vs c1 c2:
+| Step_MatchCons v vs c1 c2:
     step 
-      (ListMatch (ListCons v vs) c1 c2)
+      (ListMatch (Cons v vs) c1 c2)
       (c_subs2_out c2 v vs)
-| Step_App c v:
+| Step_AppFun c v:
     step (App (Fun c) v) (c_subs_out c v)
-| Step_LetRec c1 c2:
+| Step_LetRecStep c1 c2:
     step
       (LetRec c1 c2)
       (c_subs_out c2 (Fun (LetRec (c_shift c1 1 2) c1)))
-| Step_DoBind_step c1 c1' c2:
+| Step_DoStep c1 c1' c2:
     step c1 c1' ->
-    step (DoBind c1 c2) (DoBind c1' c2)
-| Step_DoBind_Ret v c:
-    step (DoBind (Ret v) c) (c_subs_out c v)
-| Step_DoBind_Op op v c1 c2:
+    step (Do c1 c2) (Do c1' c2)
+| Step_DoRet v c:
+    step (Do (Ret v) c) (c_subs_out c v)
+| Step_DoOp op v c1 c2:
     step
-      (DoBind (Op op v c1) c2)
-      (Op op v (DoBind c1 (c_shift c2 1 1)))
-| Step_Handle_Step v c c' :
+      (Do (Op op v c1) c2)
+      (Op op v (Do c1 (c_shift c2 1 1)))
+| Step_HandleStep v c c' :
     step c c' ->
     step (Handle v c) (Handle v c')
-| Step_Handle_Ret c_r h v :
+| Step_HandleRet c_r h v :
     step
       (Handle (Handler c_r h) (Ret v))
       (c_subs_out c_r v)
-| Step_Handle_Op c_r h op v c_k c_op :
+| Step_HandleOp c_r h op v c_k c_op :
     get_case h op = Some c_op ->
     step
       (Handle (Handler c_r h) (Op op v c_k))

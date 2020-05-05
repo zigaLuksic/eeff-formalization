@@ -26,27 +26,27 @@ apply WfVeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + apply VeqInt. 
 + eapply VeqVar. eauto.
 + apply VeqPair; eauto.
-+ apply VeqInl; eauto.
-+ apply VeqInr; eauto.
-+ apply VeqListNil; eauto.
-+ apply VeqListCons; eauto.
++ apply VeqLeft; eauto.
++ apply VeqRight; eauto.
++ apply VeqNil; eauto.
++ apply VeqCons; eauto.
 + apply VeqFun; eauto. 
 + eapply VeqHandler; eauto.
-+ apply veq_refl_raw in H1. eapply VeqSubtype; eauto.
++ apply veq_refl_raw in H1. eapply VeqSubsume; eauto.
 }{
 apply WfJudg. inv orig. auto.
 apply WfCeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + apply CeqRet. auto.
 + apply CeqAbsurd.
-+ eapply CeqΠMatch; eauto.
-+ eapply CeqΣMatch; eauto.
++ eapply CeqProdMatch; eauto.
++ eapply CeqSumMatch; eauto.
 + eapply CeqListMatch; eauto.
-+ eapply CeqDoBind; eauto. 
++ eapply CeqDo; eauto. 
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec; eauto.
 + eapply CeqOp; eauto.
-+ apply ceq_refl_raw in H1. eapply CeqSubtype; eauto.
++ apply ceq_refl_raw in H1. eapply CeqSubsume; eauto.
 }{
 apply WfJudg. inv orig. auto. eapply WfHeq; auto.
 inv orig. assumption.

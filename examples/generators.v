@@ -21,11 +21,11 @@ Definition TyA := TyInt. (* Need some wellformed type *)
 
 Definition TyState := TyList TyA. (* Need some wellformed type *)
 
-Definition TyOption A := TyΣ TyUnit A.
+Definition TyOption A := TySum TyUnit A.
 
-Definition None := Inl Unit.
+Definition None := Left Unit.
 
-Definition Some a := Inr a.
+Definition Some a := Right a.
 
 (* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
 
@@ -92,7 +92,7 @@ Qed.
 Example eq_none_repeats := (EqsU (EqsØ)
   CtxØ (TCtxU (TCtxØ) (TyOption TyA))
     (TOp "next" Unit 
-      (TΣMatch (Var 0) 
+      (TSumMatch (Var 0) 
         (TApp 0 None)
         (TOp "next" Unit (TApp 0 (Var 0))) ))
     (* ~ *)
@@ -174,7 +174,7 @@ simpl. apply veq_refl. admit. obvious.
 
 simpl_c_subs. eapply ceq_trans. apply WfJudg; obvious. admit. eapply CeqListMatch.
 simpl. apply veq_refl. admit. obvious. 
-{ eapply WfJudg; obvious. admit. eapply CeqΣMatch.
+{ eapply WfJudg; obvious. admit. eapply CeqSumMatch.
   apply veq_refl. admit. obvious. apply ceq_refl. admit. obvious.
   apply WfJudg; obvious. admit. eapply CeqOp. simpl. reflexivity.
   apply veq_refl. admit. obvious.
@@ -186,7 +186,7 @@ simpl. apply veq_refl. admit. obvious.
     apply WfJudg; obvious. admit. apply βApp. }
 { apply WfJudg; obvious. admit. eapply CeqOp. simpl. reflexivity.
   apply veq_refl. admit. obvious. apply WfJudg; obvious. admit.
-  eapply CeqΣMatch. instantiate (2:=TyA). apply veq_refl. admit. obvious.
+  eapply CeqSumMatch. instantiate (2:=TyA). apply veq_refl. admit. obvious.
   apply ceq_refl. admit. obvious.
   apply WfJudg; obvious. admit. eapply CeqOp. simpl. reflexivity.
   apply veq_refl. admit. obvious. apply WfJudg; obvious. admit.
@@ -199,10 +199,10 @@ simpl. apply veq_refl. admit. obvious.
 simpl_c_subs. apply WfJudg; obvious. admit. eapply CeqListMatch.
 instantiate (2:=TyA).
 { apply veq_refl. admit. obvious. }
-{ apply WfJudg; obvious. admit. apply βΣMatch_Inl. }
+{ apply WfJudg; obvious. admit. apply βMatchLeft. }
 { apply WfJudg; obvious. admit. eapply CeqOp. simpl. reflexivity.
   apply veq_refl. admit. obvious. 
-  apply WfJudg; obvious. admit. apply βΣMatch_Inr. }
+  apply WfJudg; obvious. admit. apply βMatchRight. }
 
 simpl_c_subs. apply ceq_sym.
 (* cleanup phase R *)
@@ -245,23 +245,23 @@ assert ( judg
       (App (Fun
         (ListMatch (Var 0)
           (Op "get" Unit
-              (ListMatch (Var 0) (App (Var 4) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 7) (Inr (Var 2))))))
+              (ListMatch (Var 0) (App (Var 4) (Left Unit))
+                (Op "set" (Var 0) (App (Var 7) (Right (Var 2))))))
           (Op "set" (Var 0)
               (Op "get" Unit
-                (ListMatch (Var 0) (App (Var 7) (Inl Unit))
-                    (Op "set" (Var 0) (App (Var 10) (Inr (Var 2)))))))))
+                (ListMatch (Var 0) (App (Var 7) (Left Unit))
+                    (Op "set" (Var 0) (App (Var 10) (Right (Var 2)))))))))
         (Var 1))))
     (Op "get" Unit
       (App (Fun
         (ListMatch (Var 0)
           (Op "get" Unit
-              (ListMatch (Var 0) (App (Var 3) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 6) (Inr (Var 2))))))
+              (ListMatch (Var 0) (App (Var 3) (Left Unit))
+                (Op "set" (Var 0) (App (Var 6) (Right (Var 2))))))
           (Op "set" (Var 0)
               (Op "get" Unit
-                (ListMatch (Var 0) (App (Var 6) (Inl Unit))
-                    (Op "set" (Var 0) (App (Var 9) (Inr (Var 2)))))))))
+                (ListMatch (Var 0) (App (Var 6) (Left Unit))
+                    (Op "set" (Var 0) (App (Var 9) (Right (Var 2)))))))))
         (Var 0))) ) ).
 { apply WfJudg; obvious. admit.
   eapply OOTB. simpl. left. eauto.
@@ -269,12 +269,12 @@ assert ( judg
   (Fun
     (ListMatch (Var 0)
       (Op "get" Unit
-          (ListMatch (Var 0) (App (Var 2) (Inl Unit))
-            (Op "set" (Var 0) (App (Var 5) (Inr (Var 2))))))
+          (ListMatch (Var 0) (App (Var 2) (Left Unit))
+            (Op "set" (Var 0) (App (Var 5) (Right (Var 2))))))
       (Op "set" (Var 0)
           (Op "get" Unit
-            (ListMatch (Var 0) (App (Var 5) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 8) (Inr (Var 2)))))))))).
+            (ListMatch (Var 0) (App (Var 5) (Left Unit))
+                (Op "set" (Var 0) (App (Var 8) (Right (Var 2)))))))))).
   admit. simpl. reflexivity. simpl. reflexivity. }
 
 eapply ceq_trans in H.
@@ -331,23 +331,23 @@ assert ( judg
       (App (Fun
         (ListMatch (Var 0)
           (Op "get" Unit
-              (ListMatch (Var 0) (App (Var 4) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 7) (Inr (Var 2))))))
+              (ListMatch (Var 0) (App (Var 4) (Left Unit))
+                (Op "set" (Var 0) (App (Var 7) (Right (Var 2))))))
           (Op "set" (Var 0)
               (Op "get" Unit
-                (ListMatch (Var 0) (App (Var 7) (Inl Unit))
-                    (Op "set" (Var 0) (App (Var 10) (Inr (Var 2)))))))))
+                (ListMatch (Var 0) (App (Var 7) (Left Unit))
+                    (Op "set" (Var 0) (App (Var 10) (Right (Var 2)))))))))
         (Var 1))))
     (Op "get" Unit
       (App (Fun
         (ListMatch (Var 0)
           (Op "get" Unit
-              (ListMatch (Var 0) (App (Var 3) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 6) (Inr (Var 2))))))
+              (ListMatch (Var 0) (App (Var 3) (Left Unit))
+                (Op "set" (Var 0) (App (Var 6) (Right (Var 2))))))
           (Op "set" (Var 0)
               (Op "get" Unit
-                (ListMatch (Var 0) (App (Var 6) (Inl Unit))
-                    (Op "set" (Var 0) (App (Var 9) (Inr (Var 2)))))))))
+                (ListMatch (Var 0) (App (Var 6) (Left Unit))
+                    (Op "set" (Var 0) (App (Var 9) (Right (Var 2)))))))))
         (Var 0))) ) ).
 { apply WfJudg; obvious. admit.
   eapply OOTB. simpl. left. eauto.
@@ -355,12 +355,12 @@ assert ( judg
   (Fun
     (ListMatch (Var 0)
       (Op "get" Unit
-          (ListMatch (Var 0) (App (Var 2) (Inl Unit))
-            (Op "set" (Var 0) (App (Var 5) (Inr (Var 2))))))
+          (ListMatch (Var 0) (App (Var 2) (Left Unit))
+            (Op "set" (Var 0) (App (Var 5) (Right (Var 2))))))
       (Op "set" (Var 0)
           (Op "get" Unit
-            (ListMatch (Var 0) (App (Var 5) (Inl Unit))
-                (Op "set" (Var 0) (App (Var 8) (Inr (Var 2)))))))))).
+            (ListMatch (Var 0) (App (Var 5) (Left Unit))
+                (Op "set" (Var 0) (App (Var 8) (Right (Var 2)))))))))).
   admit. simpl. reflexivity. simpl. reflexivity. }
 
 eapply ceq_trans in H.

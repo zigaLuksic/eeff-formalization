@@ -53,11 +53,11 @@ all: try unfold c_subs2_out.
   eapply c_subs_out_typesafe. eapply c_subs_out_typesafe.
   all: eauto. inv H0. apply v_shift_typesafe; auto.
 + apply shape_summatch in orig.
-  destruct orig as [A [B [vty [inl _]]]].
-  eapply c_subs_out_typesafe. exact inl. apply shape_inl in vty. auto.
+  destruct orig as [A [B [vty [Left _]]]].
+  eapply c_subs_out_typesafe. exact Left. apply shape_left in vty. auto.
 + apply shape_summatch in orig.
-  destruct orig as [A [B [vty [_ inr]]]].
-  eapply c_subs_out_typesafe. exact inr. apply shape_inr in vty. auto.
+  destruct orig as [A [B [vty [_ Right]]]].
+  eapply c_subs_out_typesafe. exact Right. apply shape_right in vty. auto.
 + apply shape_listmatch in orig.
   destruct orig as [A[_[ty1 _]]]. auto.
 + apply shape_listmatch in orig. destruct orig as [A[vty[_ ty2]]]. 
@@ -78,19 +78,19 @@ all: try unfold c_subs2_out.
     as insertion. { simpl. destruct Γ; auto. }
     rewrite insertion. apply c_insert_typesafe. auto.
     inv H. inv H0. inv H5. auto.
-+ destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
++ destruct C as (A, Σ, E) eqn:e. apply shape_do in orig.
   destruct orig as [A' [c1ty]].
-  apply TypeC. inv c1ty. 3 : eapply TypeDoBind. all: eauto. inv H. auto.
-+ destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
+  apply TypeC. inv c1ty. 3 : eapply TypeDo. all: eauto. inv H. auto.
++ destruct C as (A, Σ, E) eqn:e. apply shape_do in orig.
   destruct orig as [A' [c1ty]]. eapply c_subs_out_typesafe. eauto.
   apply shape_ret in c1ty. auto.
-+ destruct C as (A, Σ, E) eqn:e. apply shape_dobind in orig.
++ destruct C as (A, Σ, E) eqn:e. apply shape_do in orig.
   destruct orig as [A' [c1ty]]. eapply shape_op in c1ty.
   destruct c1ty as [Aop [Bop [gets [vty]]]]. apply TypeC.
   - inv H. inv H1. auto.
   - inv H. auto.
   - eapply TypeOp; eauto. eapply TypeC. inv H0. auto. inv H. auto.
-    eapply TypeDoBind. exact H0.
+    eapply TypeDo. exact H0.
     assert (CtxU (CtxU Γ Bop) A' = ctx_insert (CtxU Γ A') 1 Bop).
     { simpl. destruct Γ; auto. }
     rewrite H1. apply c_insert_typesafe. auto. inv H0. inv H2. auto.
@@ -103,7 +103,7 @@ all: try unfold c_subs2_out.
   eapply c_subs_out_typesafe; eauto. apply TypeC. 
   - inv H. apply WfCtxU; auto.
   - inv hty. inv H2. auto.
-  - eapply TypeCSubtype; eauto.
+  - eapply TypeCSubsume; eauto.
 + eapply shape_handle in orig. rename C into D. 
   destruct orig as [C[hty]]. destruct C as (A, Σ, E).
   eapply shape_handler in hty as hty'.
@@ -111,7 +111,7 @@ all: try unfold c_subs2_out.
   eapply shape_op in H0 as opt. destruct opt as [Aop[Bop[gets]]].
   assert (wf_ctx Γ) by (inv hty; auto). 
   apply TypeC; auto. inv hty. inv H5. auto.
-  eapply TypeCSubtype; eauto. inv H2.
+  eapply TypeCSubsume; eauto. inv H2.
   assert (wf_vtype Aop) by (inv H4; auto).
   assert (wf_vtype Bop) by (inv H5; inv H6; auto).
   assert (wf_ctype D') by (inv hcty; auto).
@@ -123,9 +123,9 @@ all: try unfold c_subs2_out.
     destruct gets as [A'[B'[gets']]]. inv H8.
     eapply ctx_subtype_ctype. eapply case_has_type; eauto.
     * apply WfCtxU. apply WfCtxU. 3: apply WfTyFun. all: auto.
-    * apply SubtypeCtxU. apply SubtypeCtxU.
+    * apply STyCtxU. apply STyCtxU.
       apply ctx_subtype_refl; auto. auto.
-      apply SubtypeTyFun; auto. apply csubtype_refl. all: auto.
+      apply STyFun; auto. apply csubtype_refl. all: auto.
   - apply v_shift_typesafe. 2: (inv H4; auto).
     apply TypeV. auto. apply WfTyFun; auto.
     eapply TypeFun. apply TypeC. apply WfCtxU. all: auto.
@@ -133,12 +133,12 @@ all: try unfold c_subs2_out.
     assert (CtxU Γ Bop = ctx_insert Γ 0 Bop) by (destruct Γ; simpl; auto).
     rewrite H8. eapply v_insert_typesafe. 2: auto.
     apply TypeV. auto. apply WfTyHandler. inv H0. auto. auto.
-    eapply TypeVSubtype. instantiate (1:=(TyHandler (CTy A Σ' E) D'));
+    eapply TypeVSubsume. instantiate (1:=(TyHandler (CTy A Σ' E) D'));
     inv H5; inv H10; inv H0.
     * apply TypeV. auto. apply WfTyHandler. apply WfCTy; auto.
       all: try (inv hcty; assumption). eapply wf_eqs_sig_subtype; eauto.
       inv hcty. auto. apply TypeHandler; auto.
-    * apply SubtypeTyHandler. apply SubtypeCTy. 2: auto.
+    * apply STyHandler. apply STyCTy. 2: auto.
       apply vsubtype_refl. inv H5. inv H10. auto.
       eapply eqs_subtype_refl. inv H5. inv H10. eauto.
       apply csubtype_refl. auto.
@@ -165,40 +165,40 @@ revert C. induction c; intros C orig.
   - destruct H0 as [n same]. rewrite same in *.
     apply shape_var_ctx_empty in vty. destruct vty.
   - destruct H0 as [v1[v2[same[ty1]]]]. subst.
-    eexists. apply Step_ΠMatch.
+    eexists. apply Step_MatchPair.
 + right. right. clear IHc1 IHc2.
   eapply shape_summatch in orig. destruct orig as [A [B [vty]]].
   eapply shape_sum_full in vty as shape. 2: reflexivity.
   destruct shape. 2: destruct H0.
   - destruct H0 as [n same]. rewrite same in *.
     apply shape_var_ctx_empty in vty. destruct vty.
-  - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inl.
-  - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_ΣMatch_Inr.
+  - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_MatchLeft.
+  - destruct H0 as [v' [same]]. rewrite same. eexists. apply Step_MatchRight.
 + right. right.
   eapply shape_listmatch in orig. destruct orig as [A[vty[cty1 cty2]]].
   eapply shape_list_full in vty as shape; eauto. destruct shape. 
   destruct H as [n same]. subst. apply shape_var_ctx_empty in vty. destruct vty. 
   destruct H.
-  - exists c1. subst. apply Step_ListMatch_Nil.
+  - exists c1. subst. apply Step_MatchNil.
   - destruct H as [w[ws[same[wty wsty]]]]. subst. 
-    eexists. apply Step_ListMatch_Cons. 
+    eexists. apply Step_MatchCons. 
 + right. right.
   eapply shape_app_full in orig. 2: reflexivity.
   destruct orig as [A [fty]]. eapply shape_tyfun_full in fty as ffty.
   2: reflexivity. destruct ffty.
   - destruct H0 as [n same]. rewrite same in *.
     apply shape_var_ctx_empty in fty. destruct fty.
-  - destruct H0 as [x [c [same]]]. subst. eexists. apply Step_App.
+  - destruct H0 as [x [c [same]]]. subst. eexists. apply Step_AppFun.
 + right. left. eauto.
 + right. right. clear IHc1 IHc2.
-  eexists. apply Step_LetRec.
+  eexists. apply Step_LetRecStep.
 + right. right. clear IHc2. destruct C as (A, Σ, E). 
-  eapply shape_dobind in orig. destruct orig as [A' [c1ty]].
+  eapply shape_do in orig. destruct orig as [A' [c1ty]].
   apply IHc1 in c1ty as IH. clear IHc1. destruct IH as [h1 | [h2 | h3]].
-  - destruct h1. rewrite H0 in *. eexists. apply Step_DoBind_Ret.
+  - destruct h1. rewrite H0 in *. eexists. apply Step_DoRet.
   - destruct h2. destruct H0. destruct H0 as [c' same]. rewrite same in *.
-    eexists. apply Step_DoBind_Op.
-  - destruct h3. eexists. apply Step_DoBind_step. exact H0.
+    eexists. apply Step_DoOp.
+  - destruct h3. eexists. apply Step_DoStep. exact H0.
 + right. right. eapply shape_handle in orig. rename C into D.
   destruct orig as [C [hty]]. apply IHc in H as H'. clear IHc.
   destruct C as (A, Σ, E). eapply shape_tyhandler_full in hty as shape.
@@ -207,13 +207,13 @@ revert C. induction c; intros C orig.
     apply shape_var_ctx_empty in hty. contradiction. }
   destruct H0 as [c_r[h[Σ'[D'[same[crty]]]]]]. subst.
   destruct H'. 2: destruct H1.
-  - destruct H1 as [v]. subst. eexists. apply Step_Handle_Ret.   
+  - destruct H1 as [v]. subst. eexists. apply Step_HandleRet.   
   - destruct H1 as [op[v[c']]]. subst. destruct H0 as [hcsty[r[sigsty]]].
     apply shape_op in H. destruct H as [A_op[B_op[gets]]].
     eapply sig_subtype_get_Some in gets. 2: exact sigsty.
     destruct gets as [A'[B'[gets']]].
     eapply h_has_case in hcsty. 2: exact gets'.
     destruct hcsty as [c_op finds].
-    eexists. eapply Step_Handle_Op. eauto.    
-  - destruct H1 as [c']. eexists. apply Step_Handle_Step. exact H1.
+    eexists. eapply Step_HandleOp. eauto.    
+  - destruct H1 as [c']. eexists. apply Step_HandleStep. exact H1.
 Qed.

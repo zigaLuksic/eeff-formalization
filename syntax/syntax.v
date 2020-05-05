@@ -20,24 +20,24 @@ Inductive val : Type :=
 | Var : nat -> val
 | Unit : val
 | Int : Z.t -> val
-| Inl : val -> val
-| Inr : val -> val
+| Left : val -> val
+| Right : val -> val
 | Pair : val -> val -> val
-| ListNil : val
-| ListCons : val -> val -> val
+| Nil : val
+| Cons : val -> val -> val
 | Fun : comp -> val
 | Handler : comp -> hcases -> val
 
 with comp : Type :=
 | Ret : val -> comp
 | Absurd : val -> comp
-| ΠMatch : val -> comp -> comp (* x~1 y~0 *)
-| ΣMatch : val -> comp -> comp -> comp
+| ProdMatch : val -> comp -> comp (* x~1 y~0 *)
+| SumMatch : val -> comp -> comp -> comp
 | ListMatch : val -> comp -> comp -> comp (* x~1 xs~0 *)
 | App : val -> val -> comp
 | Op : op_id -> val -> comp -> comp (* x~1 k~0 *)
 | LetRec : comp -> comp -> comp (* f~0 x~1 *)
-| DoBind : comp -> comp -> comp
+| Do : comp -> comp -> comp
 | Handle : val -> comp -> comp
 
 with hcases : Type :=
@@ -47,9 +47,9 @@ with hcases : Type :=
 with vtype : Type :=
 | TyUnit : vtype
 | TyInt : vtype
-| TyØ : vtype
-| TyΣ : vtype -> vtype -> vtype
-| TyΠ : vtype -> vtype -> vtype
+| TyEmpty : vtype
+| TySum : vtype -> vtype -> vtype
+| TyProd : vtype -> vtype -> vtype
 | TyList : vtype -> vtype
 | TyFun : vtype -> ctype -> vtype
 | TyHandler : ctype -> ctype -> vtype
@@ -72,10 +72,10 @@ with tctx : Type :=
 with tmpl : Type :=
 | TApp : nat -> val -> tmpl
 | TAbsurd : val -> tmpl
-| TΠMatch : val -> tmpl -> tmpl
-| TΣMatch : val -> tmpl -> tmpl -> tmpl
+| TProdMatch : val -> tmpl -> tmpl
+| TSumMatch : val -> tmpl -> tmpl -> tmpl
 | TListMatch : val -> tmpl -> tmpl -> tmpl
-| TLetBind : comp -> tmpl -> tmpl
+| TDo : comp -> tmpl -> tmpl
 | TOp : op_id -> val -> tmpl -> tmpl
 
 with eqs : Type := 
@@ -221,12 +221,12 @@ Fixpoint v_no_var v j :=
   | Var dbi => not (j = dbi)
   | Unit => True
   | Int j => True
-  | Inl v' => v_no_var v' j
-  | Inr v' => v_no_var v' j
+  | Left v' => v_no_var v' j
+  | Right v' => v_no_var v' j
   | Pair v1 v2 =>
       (v_no_var v1 j) /\ (v_no_var v2 j)
-  | ListNil => True
-  | ListCons v vs =>
+  | Nil => True
+  | Cons v vs =>
       (v_no_var v j) /\ (v_no_var vs j)
   | Fun c => 
       c_no_var c (1+j)
@@ -238,9 +238,9 @@ with c_no_var c j :=
   match c with
   | Ret v => v_no_var v j
   | Absurd v => v_no_var v j 
-  | ΠMatch v c => 
+  | ProdMatch v c => 
       (v_no_var v j) /\ c_no_var c (2+j)
-  | ΣMatch v c1 c2 =>
+  | SumMatch v c1 c2 =>
       (v_no_var v j) /\ (c_no_var c1 (1+j)) /\ (c_no_var c2 (1+j))
   | ListMatch v c1 c2 =>
       (v_no_var v j) /\ (c_no_var c1 j) /\ (c_no_var c2 (2+j))
@@ -250,7 +250,7 @@ with c_no_var c j :=
       (v_no_var v_arg j) /\ (c_no_var c (1+j))
   | LetRec c1 c2 =>
       (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
-  | DoBind c1 c2 =>
+  | Do c1 c2 =>
       (c_no_var c1 j) /\ (c_no_var c2 (1+j))
   | Handle v c' =>
       (v_no_var v j) /\ (c_no_var c' j)
@@ -269,12 +269,12 @@ Fixpoint v_under_var v j :=
   | Var dbi => dbi < j
   | Unit => True
   | Int j => True
-  | Inl v' => v_under_var v' j
-  | Inr v' => v_under_var v' j
+  | Left v' => v_under_var v' j
+  | Right v' => v_under_var v' j
   | Pair v1 v2 =>
       (v_under_var v1 j) /\ (v_under_var v2 j)
-  | ListNil => True
-  | ListCons v vs =>
+  | Nil => True
+  | Cons v vs =>
       (v_under_var v j) /\ (v_under_var vs j)
   | Fun c =>
       c_under_var c (1+j)
@@ -286,9 +286,9 @@ with c_under_var c j :=
   match c with
   | Ret v => v_under_var v j
   | Absurd v => v_under_var v j 
-  | ΠMatch v c => 
+  | ProdMatch v c => 
       (v_under_var v j) /\ c_under_var c (2+j)
-  | ΣMatch v c1 c2 =>
+  | SumMatch v c1 c2 =>
       (v_under_var v j) /\ (c_under_var c1 (1+j)) /\ (c_under_var c2 (1+j))
   | ListMatch v c1 c2 =>
       (v_under_var v j) /\ (c_under_var c1 j) /\ (c_under_var c2 (2+j))
@@ -298,7 +298,7 @@ with c_under_var c j :=
       (v_under_var v j) /\ (c_under_var c (1+j))
   | LetRec c1 c2 =>
       (c_under_var c1 (2+j)) /\ (c_under_var c2 (1+j))
-  | DoBind c1 c2 =>
+  | Do c1 c2 =>
       (c_under_var c1 j) /\ (c_under_var c2 (1+j))
   | Handle v c' =>
       (v_under_var v j) /\ (c_under_var c' j)
@@ -316,13 +316,13 @@ Fixpoint t_under_var T j :=
   match T with
   | TApp zi v => v_under_var v j
   | TAbsurd v => v_under_var v j
-  | TΠMatch v T =>
+  | TProdMatch v T =>
       v_under_var v j /\ t_under_var T (2+j)
-  | TΣMatch v T1 T2 =>
+  | TSumMatch v T1 T2 =>
       (v_under_var v j) /\ (t_under_var T1 (1+j)) /\ (t_under_var T2 (1+j))
   | TListMatch v T1 T2 =>
       (v_under_var v j) /\ (t_under_var T1 j) /\ (t_under_var T2 (2+j))
-  | TLetBind c T =>
+  | TDo c T =>
       (c_under_var c j) /\ (t_under_var T (1+j))
   | TOp op v T =>
       (v_under_var v j) /\ (t_under_var T (1+j))
@@ -333,12 +333,12 @@ Fixpoint t_under_tvar T j :=
   match T with
   | TApp zi v => zi < j
   | TAbsurd v => True
-  | TΠMatch v T => t_under_tvar T j
-  | TΣMatch v T1 T2 =>
+  | TProdMatch v T => t_under_tvar T j
+  | TSumMatch v T1 T2 =>
       (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
   | TListMatch v T1 T2 =>
       (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
-  | TLetBind c T =>
+  | TDo c T =>
       (t_under_tvar T j)
   | TOp op v T =>
       t_under_tvar T j

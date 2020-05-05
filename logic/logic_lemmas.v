@@ -23,28 +23,28 @@ assert (has_ctype Γ c' C) as tys' by (eapply preservation; eauto).
 revert C tys tys'. induction steps; intros C tys tys'; apply WfJudg.
 all: apply WfCeq || apply WfHypØ || auto.
 all: assumption || (inv tys; assumption) || auto.
-+ eapply βΠMatch.
-+ eapply βΣMatch_Inl.
-+ eapply βΣMatch_Inr.
-+ eapply βListMatch_Nil.
-+ eapply βListMatch_Cons.
++ eapply βMatchPair.
++ eapply βMatchLeft.
++ eapply βMatchRight.
++ eapply βMatchNil.
++ eapply βMatchCons.
 + eapply βApp.
 + eapply βLetRec.
-+ destruct C as [A Σ E]. eapply shape_dobind_full in tys.
++ destruct C as [A Σ E]. eapply shape_do_full in tys.
   3: reflexivity. 2: reflexivity. destruct tys as [A' [ty1 ty2]].
-  eapply CeqDoBind.
+  eapply CeqDo.
   - eapply IHsteps. eauto. eapply preservation; eauto.
   - apply ceq_refl. auto. 
     apply wf_hyp_shift_typesafe. apply WfHypØ.
     inv ty1. inv H0. auto.
-+ eapply βDoBind_Ret.
-+ eapply βDoBind_Op. 
++ eapply βDoRet.
++ eapply βDoOp. 
 + eapply shape_handle in tys. destruct tys as [C' [tyh tyc]].
   eapply CeqHandle. 
   - apply veq_refl. eauto. apply WfHypØ.
   - apply IHsteps. assumption. eapply preservation; eauto.
-+ eapply βHandle_Ret.
-+ eapply βHandle_Op. eauto.
++ eapply βHandleRet.
++ eapply βHandleOp. eauto.
 Qed.
 
 (* ==================== Substitution is Safe in Logic ==================== *)
@@ -100,10 +100,10 @@ destruct orig. destruct H1.
     * inv vseq. auto.
     * inv H2. assumption.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqPair; eapply VEQ; eauto.
-+ clear CEQ HEQ. unfold v_subs. simpl. apply VeqInl. eapply VEQ; eauto.
-+ clear CEQ HEQ. unfold v_subs. simpl. apply VeqInr. eapply VEQ; eauto.
-+ clear CEQ HEQ. unfold v_subs. simpl. apply VeqListNil.
-+ clear CEQ HEQ. unfold v_subs. simpl. apply VeqListCons; eapply VEQ; eauto.
++ clear CEQ HEQ. unfold v_subs. simpl. apply VeqLeft. eapply VEQ; eauto.
++ clear CEQ HEQ. unfold v_subs. simpl. apply VeqRight. eapply VEQ; eauto.
++ clear CEQ HEQ. unfold v_subs. simpl. apply VeqNil.
++ clear CEQ HEQ. unfold v_subs. simpl. apply VeqCons; eapply VEQ; eauto.
 + clear VEQ HEQ. unfold v_subs. unfold c_subs in CEQ. simpl. 
   apply VeqFun. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
   eapply CEQ; eauto. apply vseq_ext.
@@ -114,7 +114,7 @@ destruct orig. destruct H1.
     apply vseq_ext. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
-+ eapply VeqSubtype; eauto.
++ eapply VeqSubsume; eauto.
 }{
 assert (forall A B, wf_vtype A -> wf_vtype B -> 
 judg (CtxU (CtxU Γ B) A) (hyp_shift Ψ 2 0) 
@@ -133,14 +133,14 @@ destruct orig. destruct H1.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
   apply CeqAbsurd.
 + clear HEQ. unfold c_subs in *. unfold v_subs in VEQ. simpl.
-  eapply CeqΠMatch. eauto.
+  eapply CeqProdMatch. eauto.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
   apply vseq_extext.
   inv H1. inv H4. assumption. inv H1. inv H4. assumption.
   subst. rewrite ctx_insert_extend, ctx_insert_extend. reflexivity.
   simpl. all: omega.
 + clear HEQ. unfold c_subs in *. unfold v_subs in VEQ. simpl.
-  eapply CeqΣMatch. eauto.
+  eapply CeqSumMatch. eauto.
   all: rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
   eapply CEQ; eauto. apply vseq_ext. inv H1. inv H5.
   assumption. subst. apply ctx_insert_extend. simpl.
@@ -154,7 +154,7 @@ destruct orig. destruct H1.
   subst. rewrite ctx_insert_extend, ctx_insert_extend. reflexivity.
   simpl. all: omega.
 + clear HEQ VEQ. unfold c_subs in *. simpl.
-  eapply CeqDoBind. eauto. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
+  eapply CeqDo. eauto. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
   eapply CEQ; eauto. apply vseq_ext.
   inv H1. inv H4. assumption. subst. apply ctx_insert_extend. simpl. all: omega.
 + clear HEQ. unfold c_subs. unfold v_subs in *. simpl. eapply CeqApp; eauto.
@@ -173,7 +173,7 @@ destruct orig. destruct H1.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
   apply vseq_ext. inv H3. inv H4. assumption.
   subst. apply ctx_insert_extend. simpl. all: omega.
-+ eapply CeqSubtype; eauto.
++ eapply CeqSubsume; eauto.
 }{
 apply WfJudg. inv vseq. auto. eapply WfHeq.
 { inv orig. auto. }
@@ -221,10 +221,10 @@ instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
   assert (forall B, ctx_insert Γ 0 B = CtxU Γ B) as same.
   { intros. destruct Γ; simpl; auto. }
   rewrite same. auto. inv wfc. auto.
-+ inv wfc. vtype_step. ctype_step. eapply TypeCSubtype.
++ inv wfc. vtype_step. ctype_step. eapply TypeCSubsume.
   instantiate (1:= CTy A SigØ EqsØ). ctype_step.
-  obvious_vtype. apply SubtypeCTy. apply vsubtype_refl. auto.
-  apply SubtypeSigØ. apply SubtypeEqsØ.
+  obvious_vtype. apply STyCTy. apply vsubtype_refl. auto.
+  apply STySigØ. apply STyEqsØ.
 + omega.
 Qed.
 

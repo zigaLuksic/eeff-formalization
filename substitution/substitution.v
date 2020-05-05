@@ -9,13 +9,13 @@ Fixpoint v_shift v d cut :=
   | Var n => if cut <=? n then Var (d + n) else Var n
   | Unit => Unit
   | Int n => Int n
-  | Inl v' => Inl (v_shift v' d cut)
-  | Inr v' => Inr (v_shift v' d cut)
+  | Left v' => Left (v_shift v' d cut)
+  | Right v' => Right (v_shift v' d cut)
   | Pair v1 v2 =>
       Pair (v_shift v1 d cut) (v_shift v2 d cut)
-  | ListNil => ListNil
-  | ListCons v vs => 
-      ListCons (v_shift v d cut) (v_shift vs d cut)
+  | Nil => Nil
+  | Cons v vs => 
+      Cons (v_shift v d cut) (v_shift vs d cut)
   | Fun c =>
       Fun (c_shift c d (1+cut))
   | Handler c_ret h =>
@@ -26,10 +26,10 @@ with c_shift c d cut :=
   match c with
   | Ret v => Ret (v_shift v d cut)
   | Absurd v => Absurd (v_shift v d cut)
-  | ΠMatch v c => 
-      ΠMatch (v_shift v d cut) (c_shift c d (2+cut))
-  | ΣMatch v c1 c2 =>
-      ΣMatch (v_shift v d cut) 
+  | ProdMatch v c => 
+      ProdMatch (v_shift v d cut) (c_shift c d (2+cut))
+  | SumMatch v c1 c2 =>
+      SumMatch (v_shift v d cut) 
         (c_shift c1 d (1+cut)) (c_shift c2 d (1+cut))
   | ListMatch v c1 c2 =>
       ListMatch (v_shift v d cut) (c_shift c1 d cut) (c_shift c2 d (2+cut))
@@ -39,8 +39,8 @@ with c_shift c d cut :=
       Op op (v_shift v d cut) (c_shift c d (1+cut))
   | LetRec c1 c2 => 
       LetRec (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
-  | DoBind c1 c2 => 
-      DoBind (c_shift c1 d cut) (c_shift c2 d (1+cut))
+  | Do c1 c2 => 
+      Do (c_shift c1 d cut) (c_shift c2 d (1+cut))
   | Handle v c' => 
       Handle (v_shift v d cut) (c_shift c' d cut)
   end
@@ -58,13 +58,13 @@ Fixpoint v_negshift v d cut :=
   | Var n => if Nat.leb cut n then Var (n - d) else Var n   
   | Unit => Unit
   | Int n => Int n
-  | Inl v' => Inl (v_negshift v' d cut)
-  | Inr v' => Inr (v_negshift v' d cut)
+  | Left v' => Left (v_negshift v' d cut)
+  | Right v' => Right (v_negshift v' d cut)
   | Pair v1 v2 => 
       Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
-  | ListNil => ListNil
-  | ListCons v vs =>
-      ListCons (v_negshift v d cut) (v_negshift vs d cut)
+  | Nil => Nil
+  | Cons v vs =>
+      Cons (v_negshift v d cut) (v_negshift vs d cut)
   | Fun c =>
       Fun (c_negshift c d (1+cut))
   | Handler c_ret h =>
@@ -75,10 +75,10 @@ with c_negshift c d cut :=
   match c with
   | Ret v => Ret (v_negshift v d cut)
   | Absurd v => Absurd (v_negshift v d cut)
-  | ΠMatch v c => 
-      ΠMatch (v_negshift v d cut) (c_negshift c d (2+cut))
-  | ΣMatch v c1 c2 =>
-      ΣMatch (v_negshift v d cut)
+  | ProdMatch v c => 
+      ProdMatch (v_negshift v d cut) (c_negshift c d (2+cut))
+  | SumMatch v c1 c2 =>
+      SumMatch (v_negshift v d cut)
         (c_negshift c1 d (1+cut)) (c_negshift c2 d (1+cut))
   | ListMatch v c1 c2 =>
       ListMatch (v_negshift v d cut)
@@ -89,8 +89,8 @@ with c_negshift c d cut :=
       Op op (v_negshift v d cut) (c_negshift c d (1+cut))
   | LetRec c1 c2 =>
       LetRec (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
-  | DoBind c1 c2 => 
-      DoBind (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
+  | Do c1 c2 => 
+      Do (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
   | Handle v c' => 
       Handle (v_negshift v d cut) (c_negshift c' d cut)
   end
@@ -113,13 +113,13 @@ let (db_i, v_s) := sub in
   | Var n => if n =? db_i then v_s else Var n 
   | Unit => Unit
   | Int n => Int n
-  | Inl v' => Inl (v_sub v' sub)
-  | Inr v' => Inr (v_sub v' sub)
+  | Left v' => Left (v_sub v' sub)
+  | Right v' => Right (v_sub v' sub)
   | Pair v1 v2 => 
       Pair (v_sub v1 sub) (v_sub v2 sub)
-  | ListNil => ListNil
-  | ListCons v vs => 
-      ListCons (v_sub v sub) (v_sub vs sub)
+  | Nil => Nil
+  | Cons v vs => 
+      Cons (v_sub v sub) (v_sub vs sub)
   | Fun c => 
       Fun (c_sub c (sub_shift sub 1))
   | Handler c_ret h =>
@@ -130,10 +130,10 @@ with c_sub c (sub : nat * val) :=
   match c with
   | Ret v => Ret (v_sub v sub)
   | Absurd v => Absurd (v_sub v sub)
-  | ΠMatch v c => 
-      ΠMatch (v_sub v sub) (c_sub c (sub_shift sub 2))
-  | ΣMatch v c1 c2 =>
-      ΣMatch (v_sub v sub)
+  | ProdMatch v c => 
+      ProdMatch (v_sub v sub) (c_sub c (sub_shift sub 2))
+  | SumMatch v c1 c2 =>
+      SumMatch (v_sub v sub)
         (c_sub c1 (sub_shift sub 1)) (c_sub c2 (sub_shift sub 1))
   | ListMatch v c1 c2 =>
       ListMatch (v_sub v sub)
@@ -144,8 +144,8 @@ with c_sub c (sub : nat * val) :=
       Op op (v_sub v sub) (c_sub c (sub_shift sub 1))
   | LetRec c1 c2 =>
       LetRec (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
-  | DoBind c1 c2 => 
-      DoBind (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
+  | Do c1 c2 => 
+      Do (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
   | Handle v c' => 
       Handle (v_sub v sub) (c_sub c' sub)
   end
@@ -304,13 +304,13 @@ Fixpoint v_inst v I:=
       end
   | Unit => Unit
   | Int n => Int n
-  | Inl v' => Inl (v_inst v' I)
-  | Inr v' => Inr (v_inst v' I)
+  | Left v' => Left (v_inst v' I)
+  | Right v' => Right (v_inst v' I)
   | Pair v1 v2 => 
       Pair (v_inst v1 I) (v_inst v2 I)
-  | ListNil => ListNil
-  | ListCons v vs => 
-      ListCons (v_inst v I) (v_inst vs I)
+  | Nil => Nil
+  | Cons v vs => 
+      Cons (v_inst v I) (v_inst vs I)
   | Fun c => 
       Fun (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
   | Handler c_ret h =>
@@ -323,11 +323,11 @@ with c_inst c I :=
   match c with
   | Ret v => Ret (v_inst v I)
   | Absurd v => Absurd (v_inst v I)
-  | ΠMatch v c => 
-      ΠMatch (v_inst v I)
+  | ProdMatch v c => 
+      ProdMatch (v_inst v I)
         (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
-  | ΣMatch v c1 c2 =>
-      ΣMatch (v_inst v I)
+  | SumMatch v c1 c2 =>
+      SumMatch (v_inst v I)
         (c_inst c1 (InstU (inst_shift I 1 0) (Var 0))) 
         (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
   | ListMatch v c1 c2 =>
@@ -345,8 +345,8 @@ with c_inst c I :=
         (c_inst c1 
           (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0))) 
         (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
-  | DoBind c1 c2 => 
-      DoBind (c_inst c1 I) 
+  | Do c1 c2 => 
+      Do (c_inst c1 I) 
         (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
   | Handle v c' => 
       Handle (v_inst v I) (c_inst c' I)

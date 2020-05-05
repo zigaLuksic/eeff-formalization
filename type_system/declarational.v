@@ -13,18 +13,18 @@ Fixpoint handle_t Γ_len Z_len h T :=
   match T with
   | TApp n v => App (Var (Γ_len+n)) v
   | TAbsurd v => Absurd v
-  | TΠMatch v T => 
-      ΠMatch v (handle_t (2+Γ_len) Z_len h T)
-  | TΣMatch v T1 T2 => 
-      ΣMatch v
+  | TProdMatch v T => 
+      ProdMatch v (handle_t (2+Γ_len) Z_len h T)
+  | TSumMatch v T1 T2 => 
+      SumMatch v
         (handle_t (1+Γ_len) Z_len h T1) 
         (handle_t (1+Γ_len) Z_len h T2)
   | TListMatch v T1 T2 =>
       ListMatch v
         (handle_t Γ_len Z_len h T1)
         (handle_t (2+Γ_len) Z_len h T2)
-  | TLetBind c T =>
-      DoBind c (handle_t (1+Γ_len) Z_len h T)
+  | TDo c T =>
+      Do c (handle_t (1+Γ_len) Z_len h T)
   | TOp op v T =>
       match get_case h op with 
       | Some c_op =>
@@ -41,18 +41,18 @@ Fixpoint tmpl_to_comp Γ_len T :=
   match T with
   | TApp n v => App (Var (Γ_len+n)) v
   | TAbsurd v => Absurd v
-  | TΠMatch v T => 
-      ΠMatch v (tmpl_to_comp (2+Γ_len) T)
-  | TΣMatch v T1 T2 => 
-      ΣMatch v
+  | TProdMatch v T => 
+      ProdMatch v (tmpl_to_comp (2+Γ_len) T)
+  | TSumMatch v T1 T2 => 
+      SumMatch v
         (tmpl_to_comp (1+Γ_len) T1) 
         (tmpl_to_comp (1+Γ_len) T2)
   | TListMatch v T1 T2 => 
       ListMatch v
         (tmpl_to_comp Γ_len T1) 
         (tmpl_to_comp (2+Γ_len) T2)
-  | TLetBind c T =>
-      DoBind c (tmpl_to_comp (1+Γ_len) T)
+  | TDo c T =>
+      Do c (tmpl_to_comp (1+Γ_len) T)
   | TOp op v T =>
       Op op v (tmpl_to_comp (1+Γ_len) T)
   end.
@@ -62,9 +62,9 @@ Fixpoint tmpl_to_comp Γ_len T :=
 Inductive wf_vtype : vtype -> Prop :=
 | WfTyUnit : wf_vtype TyUnit 
 | WfTyInt : wf_vtype TyInt
-| WfTyEmpty : wf_vtype TyØ
-| WfTyΣ A B: wf_vtype A -> wf_vtype B -> wf_vtype (TyΣ A B)
-| WfTyΠ A B : wf_vtype A -> wf_vtype B -> wf_vtype (TyΠ A B)
+| WfTyEmpty : wf_vtype TyEmpty
+| WfTySum A B: wf_vtype A -> wf_vtype B -> wf_vtype (TySum A B)
+| WfTyProd A B : wf_vtype A -> wf_vtype B -> wf_vtype (TyProd A B)
 | WfTyList A : wf_vtype A -> wf_vtype (TyList A)
 | WfTyFun A C : wf_vtype A -> wf_ctype C -> wf_vtype (TyFun A C)
 | WfTyHandler C D : wf_ctype C -> wf_ctype D -> wf_vtype (TyHandler C D)
@@ -92,23 +92,23 @@ with wf_t : ctx -> tctx -> tmpl -> sig -> Prop :=
     has_vtype Γ v A -> get_ttype Z n = Some A ->
     wf_t Γ Z (TApp n v) Σ
 | WfTAbsurd Γ Z v Σ :
-    has_vtype Γ v TyØ -> 
+    has_vtype Γ v TyEmpty -> 
     wf_t Γ Z (TAbsurd v) Σ 
-| WfTΠMatch Γ Z v T A B Σ :
-    has_vtype Γ v (TyΠ A B) -> wf_t (CtxU (CtxU Γ A) B) Z T Σ -> 
-    wf_t Γ Z (TΠMatch v T) Σ
-| WfTΣMatch Γ Z v T1 T2 A B Σ :
-    has_vtype Γ v (TyΣ A B) -> 
+| WfTProdMatch Γ Z v T A B Σ :
+    has_vtype Γ v (TyProd A B) -> wf_t (CtxU (CtxU Γ A) B) Z T Σ -> 
+    wf_t Γ Z (TProdMatch v T) Σ
+| WfTSumMatch Γ Z v T1 T2 A B Σ :
+    has_vtype Γ v (TySum A B) -> 
     wf_t (CtxU Γ A) Z T1 Σ -> wf_t (CtxU Γ B) Z T2 Σ -> 
-    wf_t Γ Z (TΣMatch v T1 T2) Σ
+    wf_t Γ Z (TSumMatch v T1 T2) Σ
 | WfTListMatch Γ Z v T1 T2 A Σ :
     has_vtype Γ v (TyList A) -> 
     wf_t Γ Z T1 Σ -> wf_t (CtxU (CtxU Γ A) (TyList A)) Z T2 Σ ->  
     wf_t Γ Z (TListMatch v T1 T2) Σ
-| WfTLetBind Γ Z c T A Σ :
+| WfTDo Γ Z c T A Σ :
     has_ctype Γ c (CTy A SigØ EqsØ) ->
     wf_t (CtxU Γ A) Z T Σ ->
-    wf_t  Γ Z (TLetBind c T) Σ
+    wf_t  Γ Z (TDo c T) Σ
 | WfTOp Γ Z op v T Aop Bop Σ :
     get_op_type Σ op = Some (Aop, Bop) -> has_vtype Γ v Aop ->
     wf_t (CtxU Γ Bop) Z T Σ ->
@@ -181,19 +181,19 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
 | TypePair Γ v1 v2 A B :
     has_vtype Γ v1 A ->
     has_vtype Γ v2 B ->
-    has_vtype' Γ (Pair v1 v2) (TyΠ A B)
-| TypeInl Γ v A B :
+    has_vtype' Γ (Pair v1 v2) (TyProd A B)
+| TypeLeft Γ v A B :
     has_vtype Γ v A ->
-    has_vtype' Γ (Inl v) (TyΣ A B)
-| TypeInr Γ v A B :
+    has_vtype' Γ (Left v) (TySum A B)
+| TypeRight Γ v A B :
     has_vtype Γ v B ->
-    has_vtype' Γ (Inr v) (TyΣ A B)
-| TypeListNil Γ A :
-    has_vtype' Γ ListNil (TyList A)
-| TypeListCons Γ v vs A :
+    has_vtype' Γ (Right v) (TySum A B)
+| TypeNil Γ A :
+    has_vtype' Γ Nil (TyList A)
+| TypeCons Γ v vs A :
     has_vtype Γ v A ->
     has_vtype Γ vs (TyList A) ->
-    has_vtype' Γ (ListCons v vs) (TyList A)
+    has_vtype' Γ (Cons v vs) (TyList A)
 | TypeFun Γ c A C :
     has_ctype (CtxU Γ A) c C ->
     has_vtype' Γ (Fun c) (TyFun A C)
@@ -202,7 +202,7 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
     has_htype Γ h Σ D -> 
     respects Γ h Σ D E ->
     has_vtype' Γ (Handler cr h) (TyHandler (CTy A Σ E) D)
-| TypeVSubtype Γ v A A' :
+| TypeVSubsume Γ v A A' :
     has_vtype Γ v A ->
     vsubtype A A' -> 
     has_vtype' Γ v A'
@@ -218,26 +218,26 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_vtype Γ v A ->
     has_ctype' Γ (Ret v) (CTy A SigØ EqsØ)
 | TypeAbsurd Γ v C :
-    has_vtype Γ v TyØ -> 
+    has_vtype Γ v TyEmpty -> 
     has_ctype' Γ (Absurd v) C
-| TypeΠMatch Γ v A B c C :
-    has_vtype Γ v (TyΠ A B) ->
+| TypeProdMatch Γ v A B c C :
+    has_vtype Γ v (TyProd A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
-    has_ctype' Γ (ΠMatch v c) C
-| TypeΣMatch Γ v A B c1 c2 C :
-    has_vtype Γ v (TyΣ A B) ->
+    has_ctype' Γ (ProdMatch v c) C
+| TypeSumMatch Γ v A B c1 c2 C :
+    has_vtype Γ v (TySum A B) ->
     has_ctype (CtxU Γ A) c1 C ->
     has_ctype (CtxU Γ B) c2 C ->
-    has_ctype' Γ (ΣMatch v c1 c2) C
+    has_ctype' Γ (SumMatch v c1 c2) C
 | TypeListMatch Γ v A c1 c2 C :
     has_vtype Γ v (TyList A) ->
     has_ctype Γ c1 C ->
     has_ctype (CtxU (CtxU Γ A) (TyList A)) c2 C ->
     has_ctype' Γ (ListMatch v c1 c2) C
-| TypeDoBind Γ c1 c2 A B Σ E :
+| TypeDo Γ c1 c2 A B Σ E :
     has_ctype Γ c1 (CTy A Σ E) ->
     has_ctype (CtxU Γ A) c2 (CTy B Σ E) ->
-    has_ctype' Γ (DoBind c1 c2) (CTy B Σ E)
+    has_ctype' Γ (Do c1 c2) (CTy B Σ E)
 | TypeApp Γ v1 v2 A C :
     has_vtype Γ v1 (TyFun A C) ->
     has_vtype Γ v2 A ->
@@ -255,7 +255,7 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_vtype Γ v Aop ->
     has_ctype (CtxU Γ Bop) c (CTy A Σ E) ->
     has_ctype' Γ (Op op v c) (CTy A Σ E)
-| TypeCSubtype Γ c C C' :
+| TypeCSubsume Γ c C C' :
     has_ctype Γ c C -> 
     csubtype C C' -> 
     has_ctype' Γ c C'
@@ -318,19 +318,19 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | VeqPair A B Γ Ψ v1 v1' v2 v2' :
     judg Γ Ψ (Veq A v1 v1') ->
     judg Γ Ψ (Veq B v2 v2') -> 
-    judg' Γ Ψ (Veq (TyΠ A B) (Pair v1 v2) (Pair v1' v2'))
-| VeqInl A B Γ Ψ v v' :
+    judg' Γ Ψ (Veq (TyProd A B) (Pair v1 v2) (Pair v1' v2'))
+| VeqLeft A B Γ Ψ v v' :
     judg Γ Ψ (Veq A v v') ->
-    judg' Γ Ψ (Veq (TyΣ A B) (Inl v) (Inl v'))
-| VeqInr A B Γ Ψ v v' :
+    judg' Γ Ψ (Veq (TySum A B) (Left v) (Left v'))
+| VeqRight A B Γ Ψ v v' :
     judg Γ Ψ (Veq B v v') ->
-    judg' Γ Ψ (Veq (TyΣ A B) (Inr v) (Inr v'))
-| VeqListNil A Γ Ψ :
-    judg' Γ Ψ (Veq (TyList A) ListNil ListNil)
-| VeqListCons A Γ Ψ v v' vs vs':
+    judg' Γ Ψ (Veq (TySum A B) (Right v) (Right v'))
+| VeqNil A Γ Ψ :
+    judg' Γ Ψ (Veq (TyList A) Nil Nil)
+| VeqCons A Γ Ψ v v' vs vs':
     judg Γ Ψ (Veq A v v') ->
     judg Γ Ψ (Veq (TyList A) vs vs') ->
-    judg' Γ Ψ (Veq (TyList A) (ListCons v vs) (ListCons v' vs'))
+    judg' Γ Ψ (Veq (TyList A) (Cons v vs) (Cons v' vs'))
 | VeqFun A C Γ Ψ c c':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c c') ->
     judg' Γ Ψ (Veq (TyFun A C) (Fun c) (Fun c'))
@@ -338,7 +338,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq D c c') ->
     judg Γ Ψ (Heq Σ D h h') ->
     judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h'))
-| VeqSubtype Γ Ψ A A' v1 v2 :
+| VeqSubsume Γ Ψ A A' v1 v2 :
     judg Γ Ψ (Veq A v1 v2) ->
     vsubtype A A' ->
     judg' Γ Ψ (Veq A' v1 v2)
@@ -359,24 +359,24 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Ceq (CTy A Σ E) (Ret v) (Ret v'))
 | CeqAbsurd Γ Ψ C v v' :
     judg' Γ Ψ (Ceq C (Absurd v) (Absurd v'))
-| CeqΠMatch Γ Ψ C v v' A B c c':
-    judg Γ Ψ (Veq (TyΠ A B) v v') ->
+| CeqProdMatch Γ Ψ C v v' A B c c':
+    judg Γ Ψ (Veq (TyProd A B) v v') ->
     judg (CtxU (CtxU Γ A) B) (hyp_shift Ψ 2 0) (Ceq C c c') ->
-    judg' Γ Ψ (Ceq C (ΠMatch v c) (ΠMatch v' c'))
-| CeqΣMatch Γ Ψ C v v' A B c1 c1' c2 c2':
-    judg Γ Ψ (Veq (TyΣ A B) v v') ->
+    judg' Γ Ψ (Ceq C (ProdMatch v c) (ProdMatch v' c'))
+| CeqSumMatch Γ Ψ C v v' A B c1 c1' c2 c2':
+    judg Γ Ψ (Veq (TySum A B) v v') ->
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c1 c1') ->
     judg (CtxU Γ B) (hyp_shift Ψ 1 0) (Ceq C c2 c2') ->
-    judg' Γ Ψ (Ceq C (ΣMatch v c1 c2) (ΣMatch v' c1' c2'))
+    judg' Γ Ψ (Ceq C (SumMatch v c1 c2) (SumMatch v' c1' c2'))
 | CeqListMatch Γ Ψ C v v' A c1 c1' c2 c2':
     judg Γ Ψ (Veq (TyList A) v v') ->
     judg Γ Ψ (Ceq C c1 c1') ->
     judg (CtxU (CtxU Γ A) (TyList A)) (hyp_shift Ψ 2 0) (Ceq C c2 c2') ->
     judg' Γ Ψ (Ceq C (ListMatch v c1 c2) (ListMatch v' c1' c2'))
-| CeqDoBind A B Σ E Γ Ψ c1 c1' c2 c2':
+| CeqDo A B Σ E Γ Ψ c1 c1' c2 c2':
     judg Γ Ψ (Ceq (CTy A Σ E) c1 c1') ->
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq (CTy B Σ E) c2 c2') ->
-    judg' Γ Ψ (Ceq (CTy B Σ E) (DoBind c1 c2) (DoBind c1' c2'))
+    judg' Γ Ψ (Ceq (CTy B Σ E) (Do c1 c2) (Do c1' c2'))
 | CeqApp Γ Ψ v1 v1' v2 v2' A C:
     judg Γ Ψ (Veq (TyFun A C) v1 v1') ->
     judg Γ Ψ (Veq A v2 v2') ->
@@ -394,7 +394,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Veq Aop v v') ->
     judg (CtxU Γ Bop) (hyp_shift Ψ 1 0) (Ceq (CTy A Σ E) c c') ->
     judg' Γ Ψ (Ceq (CTy A Σ E) (Op op v c) (Op op v' c'))
-| CeqSubtype Γ Ψ C C' c1 c2 :
+| CeqSubsume Γ Ψ C C' c1 c2 :
     judg Γ Ψ (Ceq C c1 c2) ->
     csubtype C C' ->
     judg' Γ Ψ (Ceq C' c1 c2)
@@ -404,30 +404,30 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     c_inst (tmpl_to_comp (ctx_len Γ) T1) I = c1 ->
     c_inst (tmpl_to_comp (ctx_len Γ) T2) I = c2 ->
     judg' Γ' Ψ (Ceq (CTy A Σ E) c1 c2)
-| βΠMatch v1 v2 c C Γ Ψ: 
+| βMatchPair v1 v2 c C Γ Ψ: 
     judg' Γ Ψ 
     (Ceq  C
-      (ΠMatch (Pair v1 v2) c) 
+      (ProdMatch (Pair v1 v2) c) 
       (c_subs2_out c v1 v2) )
-| βΣMatch_Inl v c1 c2 C Γ Ψ:
+| βMatchLeft v c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (ΣMatch (Inl v) c1 c2)
+      (SumMatch (Left v) c1 c2)
       (c_subs_out c1 v) )
-| βΣMatch_Inr v c1 c2 C Γ Ψ:
+| βMatchRight v c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (ΣMatch (Inr v) c1 c2)
+      (SumMatch (Right v) c1 c2)
       (c_subs_out c2 v) )
-| βListMatch_Nil c1 c2 C Γ Ψ:
+| βMatchNil c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (ListMatch ListNil c1 c2)
+      (ListMatch Nil c1 c2)
       c1 )
-| βListMatch_Cons v vs c1 c2 C Γ Ψ:
+| βMatchCons v vs c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (ListMatch (ListCons v vs) c1 c2)
+      (ListMatch (Cons v vs) c1 c2)
       (c_subs2_out c2 v vs) )
 | βApp c v C Γ Ψ:
     judg' Γ Ψ (Ceq C (App (Fun c) v) (c_subs_out c v))
@@ -436,19 +436,19 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     (Ceq C
       (LetRec c1 c2)
       (c_subs_out c2 (Fun (LetRec (c_shift c1 1 2) c1))) )
-| βDoBind_Ret v c C Γ Ψ:
-    judg' Γ Ψ (Ceq C (DoBind (Ret v) c) (c_subs_out c v))
-| βDoBind_Op op v c1 c2 C Γ Ψ:
+| βDoRet v c C Γ Ψ:
+    judg' Γ Ψ (Ceq C (Do (Ret v) c) (c_subs_out c v))
+| βDoOp op v c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (DoBind (Op op v c1) c2)
-      (Op op v (DoBind c1 (c_shift c2 1 1))) )
-| βHandle_Ret c_r h v C Γ Ψ:
+      (Do (Op op v c1) c2)
+      (Op op v (Do c1 (c_shift c2 1 1))) )
+| βHandleRet c_r h v C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
       (Handle (Handler c_r h) (Ret v))
       (c_subs_out c_r v) )
-| βHandle_Op c_r h op v c_k c_op C Γ Ψ:
+| βHandleOp c_r h op v c_k c_op C Γ Ψ:
     get_case h op = Some c_op ->
     judg' Γ Ψ 
     (Ceq C
@@ -457,32 +457,32 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
         v (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) ) )
 | ηEmpty Γ Ψ v n c C:
     n <= ctx_len Γ ->
-    has_ctype (ctx_insert Γ n (TyØ)) c C ->
+    has_ctype (ctx_insert Γ n (TyEmpty)) c C ->
     judg' Γ Ψ (Ceq C (c_subs c n v) (Absurd v) )
 | ηPair Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
-    has_ctype (ctx_insert Γ n (TyΠ A B)) c C ->
+    has_ctype (ctx_insert Γ n (TyProd A B)) c C ->
     judg' Γ Ψ (Ceq C (c_subs c n v)
-      (ΠMatch v (c_subs (c_shift c 2 0) (2+n) (Pair (Var 1) (Var 0)))) )
+      (ProdMatch v (c_subs (c_shift c 2 0) (2+n) (Pair (Var 1) (Var 0)))) )
 | ηSum Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
-    has_ctype (ctx_insert Γ n (TyΣ A B)) c C ->
+    has_ctype (ctx_insert Γ n (TySum A B)) c C ->
     judg' Γ Ψ (Ceq C (c_subs c n v)
-      (ΣMatch v 
-        (c_subs (c_shift c 1 0) (1+n) (Inl (Var 0))) 
-        (c_subs (c_shift c 1 0) (1+n) (Inr (Var 0)))) )
+      (SumMatch v 
+        (c_subs (c_shift c 1 0) (1+n) (Left (Var 0))) 
+        (c_subs (c_shift c 1 0) (1+n) (Right (Var 0)))) )
 | ηList Γ Ψ v n c C A:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyList A)) c C ->
     judg' Γ Ψ (Ceq C (c_subs c n v)
       (ListMatch v 
-        (c_subs c n ListNil) 
-        (c_subs (c_shift c 2 0) (2+n) (ListCons (Var 1) (Var 0)))) )
-| ηDoBind Γ Ψ c C:
-    judg' Γ Ψ (Ceq C (DoBind c (Ret (Var 0))) c)
+        (c_subs c n Nil) 
+        (c_subs (c_shift c 2 0) (2+n) (Cons (Var 1) (Var 0)))) )
+| ηDo Γ Ψ c C:
+    judg' Γ Ψ (Ceq C (Do c (Ret (Var 0))) c)
 | DoLoop Γ Ψ c C:
     judg' Γ Ψ (Ceq C 
-      (DoBind (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) c) 
+      (Do (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) c) 
       (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) )
 | HandleLoop Γ Ψ v C:
     judg' Γ Ψ (Ceq C 
@@ -529,10 +529,10 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | AndElRight Γ Ψ φ1 φ2:
     judg Γ Ψ (And φ1 φ2) ->
     judg' Γ Ψ φ2
-| OrInLeft Γ Ψ φ1 φ2:
+| OrLefteft Γ Ψ φ1 φ2:
     judg Γ Ψ φ1 ->
     judg' Γ Ψ (Or φ1 φ2)
-| OrInRight Γ Ψ φ1 φ2:
+| OrRightight Γ Ψ φ1 φ2:
     judg Γ Ψ φ1 ->
     judg' Γ Ψ (Or φ1 φ2)
 | OrEl Γ Ψ φ1 φ2 Φ:
