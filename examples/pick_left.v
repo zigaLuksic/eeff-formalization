@@ -16,7 +16,7 @@ Open Scope string_scope.
 
 (* ========================================================================== *)
 
-Example sig := (SigU (SigØ) ("choose") TyUnit (TyΣ TyUnit TyUnit)).
+Example sig := (SigU (SigØ) ("choose") TyUnit (TySum TyUnit TyUnit)).
 
 
 Lemma sig_wf:
@@ -29,20 +29,20 @@ Qed.
 Example eq_idem := (EqsU (EqsØ) CtxØ (TCtxU TCtxØ TyUnit)
   (TApp 0 Unit)
   (TOp "choose" Unit 
-    (TΣMatch (Var 0) (TApp 0 Unit) (TApp 0 Unit)))
+    (TSumMatch (Var 0) (TApp 0 Unit) (TApp 0 Unit)))
 ).
 
 Example eq_idem_assoc := (EqsU eq_idem CtxØ
   (TCtxU (TCtxU (TCtxU TCtxØ TyUnit) TyUnit) TyUnit)
   (TOp "choose" Unit 
-    (TΣMatch (Var 0) 
+    (TSumMatch (Var 0) 
       (TApp 0 Unit) 
       (TOp "choose" Unit 
-        (TΣMatch (Var 0) (TApp 1 Unit) (TApp 2 Unit)))))
+        (TSumMatch (Var 0) (TApp 1 Unit) (TApp 2 Unit)))))
   (TOp "choose" Unit 
-    (TΣMatch (Var 0) 
+    (TSumMatch (Var 0) 
       (TOp "choose" Unit 
-        (TΣMatch (Var 0) (TApp 0 Unit) (TApp 1 Unit)))
+        (TSumMatch (Var 0) (TApp 0 Unit) (TApp 1 Unit)))
       (TApp 2 Unit) ))
 ).
 
@@ -55,7 +55,7 @@ unfold eq_idem. apply WfEqsU; obvious.
 - eapply WfTApp; obvious. apply H; obvious. simpl. auto.
 - eapply WfTOp; obvious_vtype.
   + unfold sig. simpl. reflexivity.
-  + eapply WfTΣMatch.
+  + eapply WfTSumMatch.
     * apply TypeV; obvious. apply TypeVar. simpl. auto.
     * eapply WfTApp. obvious_vtype. simpl. auto.
     * eapply WfTApp. obvious_vtype. simpl. auto.
@@ -68,18 +68,18 @@ Proof.
 unfold eq_idem_assoc. apply WfEqsU; obvious. apply eq_idem_wf.
 - eapply WfTOp; obvious_vtype.
   unfold sig. simpl. reflexivity.
-  eapply WfTΣMatch; obvious_vtype.
+  eapply WfTSumMatch; obvious_vtype.
   + eapply WfTApp. obvious_vtype. simpl. auto.
   + eapply WfTOp; obvious_vtype.
     unfold sig. simpl. reflexivity.
-    eapply WfTΣMatch; obvious_vtype.
+    eapply WfTSumMatch; obvious_vtype.
     all: eapply WfTApp; obvious_vtype.
 - eapply WfTOp; obvious_vtype.
   unfold sig. simpl. reflexivity.
-  eapply WfTΣMatch; obvious_vtype.
+  eapply WfTSumMatch; obvious_vtype.
   + eapply WfTOp; obvious_vtype.
     unfold sig. simpl. reflexivity.
-    eapply WfTΣMatch; obvious_vtype.
+    eapply WfTSumMatch; obvious_vtype.
     all: eapply WfTApp; obvious_vtype.
   + eapply WfTApp. obvious_vtype. simpl. auto.
 Qed.
@@ -89,7 +89,7 @@ Qed.
 
 Example cases :=
   (CasesU CasesØ
-    "choose" (App (Var 1) (Inl Unit))).
+    "choose" (App (Var 1) (Left Unit))).
 
 Example handler :=
   Handler (Ret (Var 0)) cases.
@@ -107,61 +107,61 @@ apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
 {
 apply ceq_sym. simpl_c_subs.
 assert (has_ctype (CtxU CtxØ (TyFun TyUnit D))
-  (App (Fun (ΣMatch (Var 0) (App (Var 2) Unit) (App (Var 2) Unit))) (Inl Unit))
+  (App (Fun (SumMatch (Var 0) (App (Var 2) Unit) (App (Var 2) Unit))) (Left Unit))
   D ).
-{ apply TypeC; obvious. eapply TypeApp. instantiate (1:= TyΣ TyUnit TyUnit).
+{ apply TypeC; obvious. eapply TypeApp. instantiate (1:= TySum TyUnit TyUnit).
   2: obvious_vtype. apply TypeV; obvious. apply TypeFun.
-  apply TypeC; obvious. eapply TypeΣMatch. obvious_vtype.
+  apply TypeC; obvious. eapply TypeSumMatch. obvious_vtype.
   all: obvious_ctype. }
 eapply ceq_trans. apply Ceq. auto. 2: apply βApp.
-{ simpl_c_subs. apply TypeC; obvious. eapply TypeΣMatch. obvious_vtype.
+{ simpl_c_subs. apply TypeC; obvious. eapply TypeSumMatch. obvious_vtype.
   all: obvious_ctype. }
-simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βΣMatch_Inl.
-{ apply TypeC; obvious. eapply TypeΣMatch. obvious_vtype.
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βMatchLeft.
+{ apply TypeC; obvious. eapply TypeSumMatch. obvious_vtype.
   all: obvious_ctype. }
 all: simpl_c_subs. obvious_ctype. apply ceq_refl. obvious_ctype.
 }{
 simpl. simpl_c_subs.
 eapply ceq_trans. apply Ceq. 3: apply βApp.
-{ apply TypeC; obvious. eapply TypeApp. instantiate (1:= TyΣ TyUnit TyUnit).
+{ apply TypeC; obvious. eapply TypeApp. instantiate (1:= TySum TyUnit TyUnit).
   + apply TypeV; obvious. apply TypeFun. obvious_ctype. obvious_ctype.
-    apply TypeC; obvious. eapply TypeApp. instantiate (1:= TyΣ TyUnit TyUnit).
+    apply TypeC; obvious. eapply TypeApp. instantiate (1:= TySum TyUnit TyUnit).
     - apply TypeV; obvious. apply TypeFun.
       obvious_ctype. all: obvious_ctype.
     - obvious_vtype.
   + obvious_vtype. }
 { simpl_c_subs.
-  apply TypeC; obvious. eapply TypeΣMatch. obvious_vtype. obvious_ctype.
-  apply TypeC; obvious. eapply TypeApp. instantiate (1:= TyΣ TyUnit TyUnit).
+  apply TypeC; obvious. eapply TypeSumMatch. obvious_vtype. obvious_ctype.
+  apply TypeC; obvious. eapply TypeApp. instantiate (1:= TySum TyUnit TyUnit).
   - apply TypeV; obvious. apply TypeFun.
-    apply TypeC; obvious. eapply TypeΣMatch. obvious_vtype.
+    apply TypeC; obvious. eapply TypeSumMatch. obvious_vtype.
     all: obvious_ctype.
   - obvious_vtype. }
 simpl_c_subs. apply ceq_sym. eapply ceq_trans. apply Ceq. 3: apply βApp.
-{ ctype_step. instantiate (1:= TyΣ TyUnit TyUnit). vtype_step. obvious_ctype.
-  - ctype_step. instantiate (1:= TyΣ TyUnit TyUnit). vtype_step.
+{ ctype_step. instantiate (1:= TySum TyUnit TyUnit). vtype_step. obvious_ctype.
+  - ctype_step. instantiate (1:= TySum TyUnit TyUnit). vtype_step.
     obvious_ctype. obvious_ctype. obvious_ctype. obvious_vtype.
   - obvious_ctype.
   - obvious_vtype. }
 { simpl_c_subs. obvious_ctype. 2: obvious_ctype.
-  ctype_step. instantiate (1:= TyΣ TyUnit TyUnit). vtype_step.
+  ctype_step. instantiate (1:= TySum TyUnit TyUnit). vtype_step.
   obvious_ctype; obvious_ctype. obvious_vtype. }
-simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βΣMatch_Inl.
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βMatchLeft.
 all: simpl_c_subs.
 { simpl_c_subs. obvious_ctype. 2: obvious_ctype.
-  ctype_step. instantiate (1:= TyΣ TyUnit TyUnit). vtype_step.
+  ctype_step. instantiate (1:= TySum TyUnit TyUnit). vtype_step.
   obvious_ctype; obvious_ctype. obvious_vtype. }
-{ ctype_step. instantiate (1:= TyΣ TyUnit TyUnit). vtype_step.
+{ ctype_step. instantiate (1:= TySum TyUnit TyUnit). vtype_step.
   obvious_ctype; obvious_ctype. obvious_vtype. }
 eapply ceq_trans. apply Ceq. 3: apply βApp. all: simpl_c_subs.
-{ ctype_step. instantiate (1:= TyΣ TyUnit TyUnit). vtype_step.
+{ ctype_step. instantiate (1:= TySum TyUnit TyUnit). vtype_step.
   obvious_ctype; obvious_ctype. obvious_vtype. }
 { obvious_ctype; obvious_ctype. }
-eapply ceq_trans. apply Ceq. 3: apply βΣMatch_Inl. all: simpl_c_subs.
+eapply ceq_trans. apply Ceq. 3: apply βMatchLeft. all: simpl_c_subs.
 { obvious_ctype; obvious_ctype. }
 { obvious_ctype. }
-eapply ceq_sym. eapply ceq_trans. apply Ceq. 3: apply βΣMatch_Inl.
-{ obvious_ctype. obvious_ctype. ctype_step. instantiate (1:= TyΣ TyUnit TyUnit).
+eapply ceq_sym. eapply ceq_trans. apply Ceq. 3: apply βMatchLeft.
+{ obvious_ctype. obvious_ctype. ctype_step. instantiate (1:= TySum TyUnit TyUnit).
   vtype_step. obvious_ctype; obvious_ctype. obvious_vtype. }
 { simpl_c_subs. obvious_ctype. }
 simpl_c_subs. apply ceq_refl. obvious_ctype.
@@ -180,7 +180,7 @@ apply TypeHandler; obvious.
 + obvious_ctype.
 + apply TypeH; obvious. apply TypeCasesU; obvious.
   - apply TypeH; obvious. apply TypeCasesØ.
-  - ctype_step. instantiate (1:= TyΣ TyUnit TyUnit).
+  - ctype_step. instantiate (1:= TySum TyUnit TyUnit).
     obvious_vtype. obvious_vtype.
 + apply cases_respect. obvious.
 Qed.

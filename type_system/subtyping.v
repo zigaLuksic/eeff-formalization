@@ -4,48 +4,48 @@ Require Import syntax.
 
 
 Inductive vsubtype : vtype -> vtype -> Prop :=
-| SubtypeUnit : vsubtype TyUnit TyUnit
-| SubtypeInt : vsubtype TyInt TyInt
-| SubtypeTyØ : vsubtype TyØ TyØ
-| SubtypeTyΣ A A' B B' : 
+| STyUnit : vsubtype TyUnit TyUnit
+| STyInt : vsubtype TyInt TyInt
+| STyEmpty : vsubtype TyEmpty TyEmpty
+| STySum A A' B B' : 
     vsubtype A A' -> vsubtype B B' -> 
-    vsubtype (TyΣ A B) (TyΣ A' B')
-| SubtypeTyΠ A A' B B' : 
+    vsubtype (TySum A B) (TySum A' B')
+| STyProd A A' B B' : 
     vsubtype A A' -> vsubtype B B' -> 
-    vsubtype (TyΠ A B) (TyΠ A' B')
-| SubtypeTyList A A' :
+    vsubtype (TyProd A B) (TyProd A' B')
+| STyList A A' :
     vsubtype A A' ->
     vsubtype (TyList A) (TyList A')
-| SubtypeTyFun A A' C C' : 
+| STyFun A A' C C' : 
     vsubtype A' A -> csubtype C C' -> 
     vsubtype (TyFun A C) (TyFun A' C')
-| SubtypeTyHandler C C' D D': 
+| STyHandler C C' D D': 
     csubtype C' C -> csubtype D D' -> 
     vsubtype (TyHandler C D) (TyHandler C' D')
 
 with csubtype : ctype -> ctype -> Prop  :=
-| SubtypeCTy A A' Σ Σ' E E': 
+| STyCTy A A' Σ Σ' E E': 
     vsubtype A A' -> sig_subtype Σ Σ' -> eqs_subtype E E' ->
     csubtype (CTy A Σ E) (CTy A' Σ' E')
 
 with sig_subtype : sig -> sig -> Prop :=
-| SubtypeSigØ Σ: sig_subtype SigØ Σ
-| SubtypeSigU Σ Σ' op A B A' B' : 
+| STySigØ Σ: sig_subtype SigØ Σ
+| STySigU Σ Σ' op A B A' B' : 
     sig_subtype Σ Σ' -> get_op_type Σ' op = Some (A', B') -> 
     vsubtype A A' -> vsubtype B' B ->
     sig_subtype (SigU Σ op A B) Σ'
 
 with eqs_subtype : eqs -> eqs -> Prop :=
-| SubtypeEqsØ E: eqs_subtype EqsØ E
-| SubtypeEqsU E E' Γ Z T1 T2 : 
+| STyEqsØ E: eqs_subtype EqsØ E
+| STyEqsU E E' Γ Z T1 T2 : 
     eqs_subtype E E' -> has_eq E' Γ Z T1 T2 ->
     eqs_subtype (EqsU E Γ Z T1 T2) E'
 .
 
 
 Inductive ctx_subtype : ctx -> ctx -> Prop :=
-| SubtypeCtxØ : ctx_subtype CtxØ CtxØ
-| SubtypeCtxU Γ Γ' A A' : 
+| STyCtxØ : ctx_subtype CtxØ CtxØ
+| STyCtxU Γ Γ' A A' : 
     ctx_subtype Γ Γ' -> vsubtype A A' -> 
     ctx_subtype (CtxU Γ A) (CtxU Γ' A')
 .

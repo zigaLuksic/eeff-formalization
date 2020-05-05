@@ -16,43 +16,43 @@ Open Scope string_scope.
 
 Lemma letbind_ctype A c1 c2 Γ D:
   has_ctype Γ c1 (CTy A SigØ EqsØ) -> has_ctype (CtxU Γ A) c2 D ->
-  has_ctype Γ (DoBind c1 c2) D.
+  has_ctype Γ (Do c1 c2) D.
 Proof.
 intros tys1 tys2.
 apply TypeC. inv tys1. auto. inv tys2. auto.
-destruct D as [B Σ E]. eapply TypeDoBind; eauto.
+destruct D as [B Σ E]. eapply TypeDo; eauto.
 apply TypeC. inv tys1. auto.
 + apply WfCTy. inv tys1. inv H0. auto.
   all: inv tys2; inv H0; auto.
-+ eapply TypeCSubtype; eauto. apply SubtypeCTy.
++ eapply TypeCSubsume; eauto. apply STyCTy.
   apply vsubtype_refl. inv tys1. inv H0. auto.
-  apply SubtypeSigØ. apply SubtypeEqsØ.
+  apply STySigØ. apply STyEqsØ.
 Qed.
 
 
 Lemma letbind_reduce A c1 c1' c2 Γ D:
   ceq (CTy A SigØ EqsØ) Γ c1 c1' -> has_ctype (CtxU Γ A) c2 D ->
-  ceq D Γ (DoBind c1 c2) (DoBind c1' c2).
+  ceq D Γ (Do c1 c2) (Do c1' c2).
 Proof.
 intros step tys. destruct D as [B Σ E].
 assert (wf_ctx Γ) as wfctx by (inv step; inv H; auto).
 apply Ceq; obvious.
 + apply TypeC. auto. inv tys. auto.
-  eapply TypeDoBind; eauto. inv step.
+  eapply TypeDo; eauto. inv step.
   apply TypeC. auto. apply WfCTy. inv H. inv H3. auto.
-  3: eapply TypeCSubtype; eauto. all: inv tys; inv H3; auto.
-  apply SubtypeCTy. apply vsubtype_refl. inv H2. auto.
-  apply SubtypeSigØ. apply SubtypeEqsØ.
+  3: eapply TypeCSubsume; eauto. all: inv tys; inv H3; auto.
+  apply STyCTy. apply vsubtype_refl. inv H2. auto.
+  apply STySigØ. apply STyEqsØ.
 + apply TypeC. auto. inv tys. auto.
-  eapply TypeDoBind; eauto. inv step.
+  eapply TypeDo; eauto. inv step.
   apply TypeC. auto. apply WfCTy. inv H. inv H3. auto.
-  3: eapply TypeCSubtype; eauto. all: inv tys; inv H3; auto.
-  apply SubtypeCTy. apply vsubtype_refl. inv H2. auto.
-  apply SubtypeSigØ. apply SubtypeEqsØ.
-+ eapply CeqDoBind. 2: apply ceq_refl; eauto.
+  3: eapply TypeCSubsume; eauto. all: inv tys; inv H3; auto.
+  apply STyCTy. apply vsubtype_refl. inv H2. auto.
+  apply STySigØ. apply STyEqsØ.
++ eapply CeqDo. 2: apply ceq_refl; eauto.
   eapply ceq_subtype. eauto. apply WfCTy; inv tys; inv H; inv H0; auto.
-  apply SubtypeCTy. apply vsubtype_refl. inv tys. inv H. auto. 
-  apply SubtypeSigØ. apply SubtypeEqsØ.
+  apply STyCTy. apply vsubtype_refl. inv tys. inv H. auto. 
+  apply STySigØ. apply STyEqsØ.
 Qed.
 
 (* ========================================================================== *)
@@ -74,11 +74,11 @@ Qed.
 Example state_cases := (CasesU (CasesU (CasesØ)
   ("get") 
     (Ret(Fun (
-      DoBind (App (Var 2) (Var 0))
+      Do (App (Var 2) (Var 0))
         (App (Var 0) (Var 1)))) ))
   ("set") 
     (Ret(Fun (
-      DoBind (App (Var 2) Unit)
+      Do (App (Var 2) Unit)
         (App (Var 0) (Var 2)))) )).
 
   
@@ -112,7 +112,7 @@ Example eq_set_set := (EqsU (EqsØ)
 
 Example eq_get_get := (EqsU (EqsØ)
   CtxØ
-  (TCtxU (TCtxØ) (TyΠ TyState TyState))
+  (TCtxU (TCtxØ) (TyProd TyState TyState))
     (TOp "get" Unit (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 1)))))
     (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 0)))) ).
 
@@ -239,8 +239,8 @@ apply CeqRet. apply Veq; obvious.
 
 apply VeqFun. eapply ceq_trans.
 instantiate (1:=
-  (DoBind (Ret (Fun
-          (DoBind (App (Fun (App (Var 5) Unit)) Unit)
+  (Do (Ret (Fun
+          (Do (App (Fun (App (Var 5) Unit)) Unit)
              (App (Var 0) (Var 4)))))) (App (Var 0) (Var 2)) ).
 eapply (letbind_reduce (TyFun TyState (CTy A SigØ EqsØ))).
 
@@ -254,7 +254,7 @@ eapply (letbind_reduce (TyFun TyState (CTy A SigØ EqsØ))).
     + ctype_step. instantiate (1:=TyState). all: obvious_vtype. } }
 { ctype_step. instantiate (1:=TyState). all: obvious_vtype. }
 
-eapply ceq_trans. apply Ceq; obvious. 3: apply βDoBind_Ret.
+eapply ceq_trans. apply Ceq; obvious. 3: apply βDoRet.
 
 { eapply letbind_ctype. instantiate (1:= (TyFun TyState (CTy A SigØ EqsØ))).
   ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
@@ -301,19 +301,19 @@ apply Ceq; obvious.
 apply CeqRet. apply Veq; obvious.
 { admit. }
 { admit. }
-apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDoBind.
+apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDo.
 { admit. }
 { admit. }
 2: apply ceq_refl; admit. apply Ceq. 3: apply βApp.
 { admit. }
 { admit. }
-simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoBind_Ret.
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoRet.
 { admit. }
 { admit. }
 simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp.
 { admit. }
 { admit. }
-simpl_c_subs. apply Ceq. 3: eapply CeqDoBind. 
+simpl_c_subs. apply Ceq. 3: eapply CeqDo. 
 3: instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
 { admit. }
 { admit. }
@@ -348,19 +348,19 @@ apply Ceq; obvious.
 apply CeqRet. apply Veq; obvious.
 { admit. }
 { admit. }
-apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDoBind.
+apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDo.
 { admit. }
 { admit. }
 2: apply ceq_refl; admit. apply Ceq. 3: apply βApp.
 { admit. }
 { admit. }
-simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoBind_Ret.
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoRet.
 { admit. }
 { admit. }
 simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp.
 { admit. }
 { admit. }
-simpl_c_subs. apply Ceq. 3: eapply CeqDoBind. 
+simpl_c_subs. apply Ceq. 3: eapply CeqDo. 
 3: instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
 { admit. }
 { admit. }
@@ -411,19 +411,19 @@ apply Ceq; obvious.
 apply CeqRet. apply Veq; obvious.
 { admit. }
 { admit. }
-apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDoBind.
+apply VeqFun. eapply ceq_trans. apply Ceq. 3: eapply CeqDo.
 { admit. }
 { admit. }
 2: apply ceq_refl; admit. apply Ceq. 3: apply βApp.
 { admit. }
 { admit. }
-simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoBind_Ret.
+simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βDoRet.
 { admit. }
 { admit. }
 simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp.
 { admit. }
 { admit. }
-simpl_c_subs. apply Ceq. 3: eapply CeqDoBind. 
+simpl_c_subs. apply Ceq. 3: eapply CeqDo. 
 3: instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
 { admit. }
 { admit. }
