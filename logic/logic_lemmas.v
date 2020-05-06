@@ -169,10 +169,24 @@ destruct orig. destruct H1.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
     apply vseq_ext. inv H2. inv H3. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
-+ clear HEQ. unfold c_subs in *. unfold v_subs in *. simpl. eapply CeqOp; eauto.
-  rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
-  apply vseq_ext. inv H3. inv H4. assumption.
-  subst. apply ctx_insert_extend. simpl. all: omega.
++ clear HEQ. unfold c_subs in *. unfold v_subs in *. simpl. 
+  eapply CeqOp; eauto.
+  - clear CEQ. eapply VEQ in vseq as IH. all: clear VEQ. 2: eauto. all: eauto.
+    apply WfJudg; try (inv vseq; assumption).
+    * apply get_op_type_wf in H1. 2: inv H0; auto. destruct H1.
+      apply WfVeq; eapply v_subs_typesafe; eauto; inv vseq; inv H10; auto.
+      all: apply TypeV; auto; eapply TypeVSubsume; eauto.
+    * eapply VeqSubsume; eauto.
+  - clear vseq_extext VEQ. specialize (vseq_ext Bop).
+    eapply CEQ in vseq_ext as IH. all: clear CEQ. 2: eauto.
+    3: instantiate (1:= S i). 2: auto.
+    * rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
+      inv vseq. eapply ctx_subtype_judg; eauto.
+      all: apply WfCtxU || apply STyCtxU || omega; auto.
+      apply get_op_type_wf in H1. 2: inv H0; auto. destruct H1. auto.
+      apply ctx_subtype_refl. auto.
+    * subst. simpl. auto.
+    * simpl. omega.
 + eapply CeqSubsume; eauto.
 }{
 apply WfJudg. inv vseq. auto. eapply WfHeq.
@@ -256,7 +270,7 @@ Lemma induction_check_step Γ A Σ E φ op Aop Bop:
   get_op_type Σ op = Some (Aop, Bop) ->
   wf_form (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) 
     (form_subs (form_shift φ 2 0) 2 
-      (Fun (Op op (Var 2) (App (Var 2) (Var 0))))).
+      (Fun (Op op Aop Bop (Var 2) (App (Var 2) (Var 0))))).
 Proof.
 intros wfc wfg orig gets. eapply wf_form_subs_typesafe; eauto; simpl.
 instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
@@ -267,7 +281,7 @@ instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
   { intros. destruct Γ; simpl; auto. }
   rewrite same. all: obvious. inv wfc. auto.
 + inv wfc. apply get_op_type_wf in gets as getss. destruct getss. 
-  vtype_step. ctype_step. eapply TypeOp; eauto.
+  vtype_step. ctype_step. eapply TypeOp; eauto; try apply vsubtype_refl; auto.
   - vtype_step.
   - ctype_step. instantiate (1:=Bop). 2: obvious_vtype. vtype_step.
   - auto.

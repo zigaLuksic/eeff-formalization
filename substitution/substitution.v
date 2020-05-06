@@ -35,8 +35,8 @@ with c_shift c d cut :=
       ListMatch (v_shift v d cut) (c_shift c1 d cut) (c_shift c2 d (2+cut))
   | App v1 v2 => 
       App (v_shift v1 d cut) (v_shift v2 d cut)
-  | Op op v c => 
-      Op op (v_shift v d cut) (c_shift c d (1+cut))
+  | Op op A B v c => 
+      Op op A B (v_shift v d cut) (c_shift c d (1+cut))
   | LetRec c1 c2 => 
       LetRec (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
   | Do c1 c2 => 
@@ -85,8 +85,8 @@ with c_negshift c d cut :=
         (c_negshift c1 d cut) (c_negshift c2 d (2+cut))
   | App v1 v2 => 
       App (v_negshift v1 d cut) (v_negshift v2 d cut)
-  | Op op v c => 
-      Op op (v_negshift v d cut) (c_negshift c d (1+cut))
+  | Op A B op v c => 
+      Op A B op (v_negshift v d cut) (c_negshift c d (1+cut))
   | LetRec c1 c2 =>
       LetRec (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
   | Do c1 c2 => 
@@ -140,8 +140,8 @@ with c_sub c (sub : nat * val) :=
         (c_sub c1 sub) (c_sub c2 (sub_shift sub 2))
   | App v1 v2 => 
       App (v_sub v1 sub) (v_sub v2 sub)
-  | Op op v c => 
-      Op op (v_sub v sub) (c_sub c (sub_shift sub 1))
+  | Op A B op v c => 
+      Op A B op (v_sub v sub) (c_sub c (sub_shift sub 1))
   | LetRec c1 c2 =>
       LetRec (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
   | Do c1 c2 => 
@@ -337,8 +337,8 @@ with c_inst c I :=
           (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   | App v1 v2 => 
       App (v_inst v1 I) (v_inst v2 I)
-  | Op op v c => 
-      Op op (v_inst v I) 
+  | Op op A B v c => 
+      Op op A B (v_inst v I) 
         (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
   | LetRec c1 c2 =>
       LetRec

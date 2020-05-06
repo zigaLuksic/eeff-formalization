@@ -11,14 +11,13 @@ Require Export subtyping_lemmas.
 (* ================== Reflexivity, Symmetry, Transitivity ================== *)
 
 (* We 'upgrade' it to arbitrary hypotheses in aux_type_lemmas *)
-Lemma veq_refl_raw Γ v A : 
-  has_vtype Γ v A -> judg Γ HypØ (Veq A v v)
-with ceq_refl_raw Γ c C : 
-  has_ctype Γ c C -> judg Γ HypØ (Ceq C c c)
-with heq_refl_raw Γ h Σ D : 
-  has_htype Γ h Σ D -> judg Γ HypØ (Heq Σ D h h).
+Fixpoint veq_refl_raw Γ v A (orig : has_vtype Γ v A) {struct orig}:
+  judg Γ HypØ (Veq A v v)
+with ceq_refl_raw Γ c C (orig : has_ctype Γ c C) {struct orig}:
+  judg Γ HypØ (Ceq C c c)
+with heq_refl_raw Γ h Σ D (orig : has_htype Γ h Σ D) {struct orig}:
+  judg Γ HypØ (Heq Σ D h h).
 Proof.
-all: intros orig.
 {
 apply WfJudg. inv orig. auto.
 apply WfVeq; auto. apply WfHypØ. destruct orig. destruct H1.
@@ -46,6 +45,16 @@ apply WfCeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec; eauto.
 + eapply CeqOp; eauto.
+  - apply get_op_type_wf in H1. destruct H1. apply veq_refl_raw in H6 as IH.
+    assert (has_vtype Γ v Aop') as tys'.
+    { apply TypeV; auto. eapply TypeVSubsume; eauto. }
+    apply WfJudg; auto. apply WfVeq; auto. apply WfHypØ.
+    eapply VeqSubsume; eauto.
+    inv H0. auto.
+  - apply get_op_type_wf in H1. destruct H1. 
+    apply ceq_refl_raw in H7 as IH. eapply ctx_subtype_judg; eauto.
+    all: apply WfCtxU || apply STyCtxU || inv H0; auto.
+    apply ctx_subtype_refl. auto.
 + apply ceq_refl_raw in H1. eapply CeqSubsume; eauto.
 }{
 apply WfJudg. inv orig. auto. eapply WfHeq; auto.

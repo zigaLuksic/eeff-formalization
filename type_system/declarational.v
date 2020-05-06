@@ -25,14 +25,14 @@ Fixpoint handle_t Γ_len Z_len h T :=
         (handle_t (2+Γ_len) Z_len h T2)
   | TDo c T =>
       Do c (handle_t (1+Γ_len) Z_len h T)
-  | TOp op v T =>
+  | TOp op A B v T =>
       match get_case h op with 
       | Some c_op =>
           c_subs2_out (c_shift c_op (Γ_len + Z_len) 2) 
             v (Fun (handle_t (1+Γ_len) Z_len h T))
       | None => 
           (* You shouldn't be here *)
-          Op op v (handle_t (1+Γ_len) Z_len h T) 
+          Op op A B v (handle_t (1+Γ_len) Z_len h T) 
       end
   end.
 
@@ -53,8 +53,8 @@ Fixpoint tmpl_to_comp Γ_len T :=
         (tmpl_to_comp (2+Γ_len) T2)
   | TDo c T =>
       Do c (tmpl_to_comp (1+Γ_len) T)
-  | TOp op v T =>
-      Op op v (tmpl_to_comp (1+Γ_len) T)
+  | TOp op A B v T =>
+      Op op A B v (tmpl_to_comp (1+Γ_len) T)
   end.
 
 (* ==================== Welljudged Judgements ==================== *)
@@ -109,10 +109,13 @@ with wf_t : ctx -> tctx -> tmpl -> sig -> Prop :=
     has_ctype Γ c (CTy A SigØ EqsØ) ->
     wf_t (CtxU Γ A) Z T Σ ->
     wf_t  Γ Z (TDo c T) Σ
-| WfTOp Γ Z op v T Aop Bop Σ :
-    get_op_type Σ op = Some (Aop, Bop) -> has_vtype Γ v Aop ->
+| WfTOp Γ Z op Aop Bop v T A B Σ :
+    get_op_type Σ op = Some (A, B) -> 
+    vsubtype Aop A -> vsubtype B Bop ->
+    wf_vtype Aop -> wf_vtype Bop ->
+    has_vtype Γ v Aop ->
     wf_t (CtxU Γ Bop) Z T Σ ->
-    wf_t Γ Z (TOp op v T) Σ
+    wf_t Γ Z (TOp op Aop Bop v T) Σ
 
 with wf_eqs : eqs -> sig -> Prop :=
 | WfEqsØ Σ : wf_eqs EqsØ Σ
@@ -250,11 +253,13 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     has_ctype (CtxU Γ (TyFun A C)) c2 D ->
     has_ctype' Γ (LetRec c1 c2) D
-| TypeOp Γ op v c Aop Bop A Σ E :
-    get_op_type Σ op = Some (Aop, Bop) ->
+| TypeOp Γ op v c Aop Bop Aop' Bop' A Σ E :
+    get_op_type Σ op = Some (Aop', Bop') -> 
+    vsubtype Aop Aop' -> vsubtype Bop' Bop ->
+    wf_vtype Aop -> wf_vtype Bop ->
     has_vtype Γ v Aop ->
     has_ctype (CtxU Γ Bop) c (CTy A Σ E) ->
-    has_ctype' Γ (Op op v c) (CTy A Σ E)
+    has_ctype' Γ (Op op Aop Bop v c) (CTy A Σ E)
 | TypeCSubsume Γ c C C' :
     has_ctype Γ c C -> 
     csubtype C C' -> 
@@ -389,11 +394,12 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU (CtxU Γ A) (TyFun A C)) (hyp_shift Ψ 2 0) (Ceq C c1 c1') ->
     judg (CtxU Γ (TyFun A C)) (hyp_shift Ψ 1 0) (Ceq D c2 c2') ->
     judg' Γ Ψ (Ceq D (LetRec c1 c2) (LetRec c1' c2'))
-| CeqOp Γ Ψ op v v' c c' Aop Bop A Σ E:
+| CeqOp Γ Ψ op v v' c c' A A' B B' Aop Bop Ac Σ E:
     get_op_type Σ op = Some (Aop, Bop) ->
+    vsubtype A Aop -> vsubtype A' Aop -> vsubtype Bop B -> vsubtype Bop B' ->
     judg Γ Ψ (Veq Aop v v') ->
-    judg (CtxU Γ Bop) (hyp_shift Ψ 1 0) (Ceq (CTy A Σ E) c c') ->
-    judg' Γ Ψ (Ceq (CTy A Σ E) (Op op v c) (Op op v' c'))
+    judg (CtxU Γ Bop) (hyp_shift Ψ 1 0) (Ceq (CTy Ac Σ E) c c') ->
+    judg' Γ Ψ (Ceq (CTy Ac Σ E) (Op op A B v c) (Op op A' B' v' c'))
 | CeqSubsume Γ Ψ C C' c1 c2 :
     judg Γ Ψ (Ceq C c1 c2) ->
     csubtype C C' ->
@@ -438,21 +444,21 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
       (c_subs_out c2 (Fun (LetRec (c_shift c1 1 2) c1))) )
 | βDoRet v c C Γ Ψ:
     judg' Γ Ψ (Ceq C (Do (Ret v) c) (c_subs_out c v))
-| βDoOp op v c1 c2 C Γ Ψ:
+| βDoOp op A B v c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (Do (Op op v c1) c2)
-      (Op op v (Do c1 (c_shift c2 1 1))) )
+      (Do (Op op A B v c1) c2)
+      (Op op A B v (Do c1 (c_shift c2 1 1))) )
 | βHandleRet c_r h v C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
       (Handle (Handler c_r h) (Ret v))
       (c_subs_out c_r v) )
-| βHandleOp c_r h op v c_k c_op C Γ Ψ:
+| βHandleOp c_r h op A B  v c_k c_op C Γ Ψ:
     get_case h op = Some c_op ->
     judg' Γ Ψ 
     (Ceq C
-      (Handle (Handler c_r h) (Op op v c_k))
+      (Handle (Handler c_r h) (Op op A B v c_k))
       (c_subs2_out c_op
         v (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) ) )
 | ηEmpty Γ Ψ v n c C:
@@ -576,7 +582,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
             (form_subs (form_shift φ 3 0) 3 
               (Fun (App (Var 2) (Var 1))))))
         (form_subs (form_shift φ 2 0) 2 
-          (Fun (Op op (Var 2) (App (Var 2) (Var 0)))))
+          (Fun (Op op Aop Bop (Var 2) (App (Var 2) (Var 0)))))
     ) ->
     (* Nontermination case *)
     judg Γ Ψ 

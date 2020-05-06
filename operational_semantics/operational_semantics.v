@@ -36,10 +36,10 @@ Inductive step : comp -> comp -> Prop :=
     step (Do c1 c2) (Do c1' c2)
 | Step_DoRet v c:
     step (Do (Ret v) c) (c_subs_out c v)
-| Step_DoOp op v c1 c2:
+| Step_DoOp op A B v c1 c2:
     step
-      (Do (Op op v c1) c2)
-      (Op op v (Do c1 (c_shift c2 1 1)))
+      (Do (Op op A B v c1) c2)
+      (Op op A B v (Do c1 (c_shift c2 1 1)))
 | Step_HandleStep v c c' :
     step c c' ->
     step (Handle v c) (Handle v c')
@@ -47,10 +47,10 @@ Inductive step : comp -> comp -> Prop :=
     step
       (Handle (Handler c_r h) (Ret v))
       (c_subs_out c_r v)
-| Step_HandleOp c_r h op v c_k c_op :
+| Step_HandleOp c_r h op A B v c_k c_op :
     get_case h op = Some c_op ->
     step
-      (Handle (Handler c_r h) (Op op v c_k))
+      (Handle (Handler c_r h) (Op op A B v c_k))
       (c_subs2_out c_op v
         (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) )
 .

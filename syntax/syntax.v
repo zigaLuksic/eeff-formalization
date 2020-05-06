@@ -35,7 +35,7 @@ with comp : Type :=
 | SumMatch : val -> comp -> comp -> comp
 | ListMatch : val -> comp -> comp -> comp (* x~1 xs~0 *)
 | App : val -> val -> comp
-| Op : op_id -> val -> comp -> comp (* x~1 k~0 *)
+| Op : op_id -> vtype -> vtype -> val -> comp -> comp (* x~1 k~0 *)
 | LetRec : comp -> comp -> comp (* f~0 x~1 *)
 | Do : comp -> comp -> comp
 | Handle : val -> comp -> comp
@@ -76,7 +76,7 @@ with tmpl : Type :=
 | TSumMatch : val -> tmpl -> tmpl -> tmpl
 | TListMatch : val -> tmpl -> tmpl -> tmpl
 | TDo : comp -> tmpl -> tmpl
-| TOp : op_id -> val -> tmpl -> tmpl
+| TOp : op_id -> vtype -> vtype -> val -> tmpl -> tmpl
 
 with eqs : Type := 
 | EqsØ : eqs
@@ -246,7 +246,7 @@ with c_no_var c j :=
       (v_no_var v j) /\ (c_no_var c1 j) /\ (c_no_var c2 (2+j))
   | App v1 v2 => 
       (v_no_var v1 j) /\ (v_no_var v2 j)
-  | Op op v_arg c =>
+  | Op op A B v_arg c =>
       (v_no_var v_arg j) /\ (c_no_var c (1+j))
   | LetRec c1 c2 =>
       (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
@@ -294,7 +294,7 @@ with c_under_var c j :=
       (v_under_var v j) /\ (c_under_var c1 j) /\ (c_under_var c2 (2+j))
   | App v1 v2 =>
       (v_under_var v1 j) /\ (v_under_var v2 j)
-  | Op op v c =>
+  | Op op A B v c =>
       (v_under_var v j) /\ (c_under_var c (1+j))
   | LetRec c1 c2 =>
       (c_under_var c1 (2+j)) /\ (c_under_var c2 (1+j))
@@ -324,7 +324,7 @@ Fixpoint t_under_var T j :=
       (v_under_var v j) /\ (t_under_var T1 j) /\ (t_under_var T2 (2+j))
   | TDo c T =>
       (c_under_var c j) /\ (t_under_var T (1+j))
-  | TOp op v T =>
+  | TOp op A B v T =>
       (v_under_var v j) /\ (t_under_var T (1+j))
   end.
 
@@ -340,7 +340,7 @@ Fixpoint t_under_tvar T j :=
       (t_under_tvar T1 j) /\ (t_under_tvar T2 j)
   | TDo c T =>
       (t_under_tvar T j)
-  | TOp op v T =>
+  | TOp op A B v T =>
       t_under_tvar T j
   end.
 

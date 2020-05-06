@@ -430,7 +430,7 @@ destruct types. induction H1; apply TypeC; eauto.
     * apply WfCtxU; auto.
     * apply STyCtxU. eauto. apply vsubtype_refl. auto.
 + eapply TypeOp; eauto.
-  eapply CL. eauto. all: inv H3; inv H4.
+  eapply CL. eauto. all: inv H7; inv H8.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeCSubsume; eauto.
@@ -527,7 +527,7 @@ destruct H2.
     * apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqOp; eauto.
   eapply JL; eauto.
-  all: inv H3; inv H4; inv H9; inv H3.
+  all: inv H8; inv H9.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqSubsume; eauto.
@@ -815,15 +815,13 @@ intros orig. revert Γ'. induction orig; intros Γ' sty cty wfs wfc.
   apply WfCtxU; auto.
 + eapply sig_subtype_get_Some in H. 2: exact sty.
   destruct H as [A'[B'[gets'[Asty Bsty]]]].
-  eapply WfTOp. eauto.
-  - eapply ctx_subtype_vtype; eauto. apply TypeV.
-    * inv H0. auto.
-    * apply get_op_type_wf in gets'. inv gets'. all: auto.
-    * eapply TypeVSubsume; eauto.
+  eapply WfTOp; eauto.
+  - eapply vsubtype_trans; eauto.
+  - eapply vsubtype_trans; eauto.
+  - eapply ctx_subtype_vtype; eauto.
   - apply IHorig; auto.
-    * apply STyCtxU; auto.
-    * apply get_op_type_wf in gets'. inv gets'.
-      apply WfCtxU. all: auto.
+    * apply STyCtxU; auto. apply vsubtype_refl. auto.
+    * apply WfCtxU. all: auto.
 Qed.
 
 
@@ -1484,39 +1482,35 @@ Qed.
 
 
 (* Op *)
-Fixpoint shape_op_full Γ c C op v c' A Σ E
+Fixpoint shape_op_full Γ c C op v c' Aop Bop A Σ E
   (orig : has_ctype Γ c C) {struct orig} :
-  c = Op op v c' -> C = CTy A Σ E ->
-  exists Aop Bop,
-    get_op_type Σ op = Some (Aop, Bop) /\
-    has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c' C.
+  c = Op op Aop Bop v c' -> C = CTy A Σ E ->
+  has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c' C /\
+  exists Aop' Bop',
+    get_op_type Σ op = Some (Aop', Bop') 
+    /\ vsubtype Aop Aop' /\ vsubtype Bop' Bop.
 Proof.  
 intros same samety. destruct orig. destruct H1; try discriminate; inv same.
-+ inv samety. eauto.
++ inv samety. do 2 aconstructor. exists Aop', Bop'. do 2 aconstructor.
 + destruct C as (A', Σ', E').
-  apply (shape_op_full _ _ (CTy A' Σ' E') op v c' A' Σ' E') in H1; eauto.
-  destruct H1 as [A'' [B'' [g [vty]]]]. inv H2.
-  eapply sig_subtype_get_Some in g; eauto.
-  destruct g as [A'''[B'''[g'[s']]]].
-  exists A''', B'''. aconstructor. constructor.
-  - apply TypeV. auto. apply get_op_type_wf in g'. destruct g'.
-    auto. inv H0. auto. eapply TypeVSubsume; eauto.
-  - eapply (ctx_subtype_ctype (CtxU Γ B'') (CtxU Γ B''')).
-    * apply TypeC. inv H1. auto. auto.
-      eapply TypeCSubsume. eauto. apply STyCTy; auto.
-    * apply WfCtxU. auto. apply get_op_type_wf in g'. destruct g'.
-      all: inv H0; auto.
-    * apply STyCtxU. apply ctx_subtype_refl. all: auto.
+  eapply shape_op_full in H1; eauto.
+  destruct H1 as [vty[cty[A'' [B'' [gets [sty1 sty2]]]]]].
+  inv H2. eapply sig_subtype_get_Some in H9 as gets'; eauto.
+  destruct gets' as [A'''[B'''[g'[sty1' sty2']]]].
+  do 2 aconstructor.
+  - apply TypeC; auto. inv cty. auto.
+    eapply TypeCSubsume. eauto. apply STyCTy; auto.
+  - exists A''', B'''. aconstructor. constructor.
+    all: eapply vsubtype_trans; eauto.
 Qed.
 
 
-Fixpoint shape_op Γ op v c A Σ E :
-  has_ctype Γ (Op op v c) (CTy A Σ E) -> 
-  exists Aop Bop,
-    get_op_type Σ op = Some (Aop, Bop) /\
-    has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E).
+Fixpoint shape_op Γ op Aop Bop v c A Σ E :
+  has_ctype Γ (Op op Aop Bop v c) (CTy A Σ E) -> 
+  has_vtype Γ v Aop /\  has_ctype (CtxU Γ Bop) c (CTy A Σ E).
 Proof.  
-intro orig. eapply (shape_op_full _ _ _ op v c A Σ E) in orig; auto.
+intro orig. eapply (shape_op_full _ _ _ op v c Aop Bop A Σ E) in orig; auto.
+destruct orig as [a[b _]]. auto.
 Qed.
 
 
