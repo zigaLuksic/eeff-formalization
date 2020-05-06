@@ -173,90 +173,44 @@ Fixpoint skeletize_ctx Γ :=
   | CtxU Γ A => SkCtxU (skeletize_ctx Γ) (skeletize_vtype A)
   end.
 
-(* The variable 'p' is the proof term. We do that to avoid constructing proof
-   terms by hand. This might complicate things later on, since it breaks
-   proof dependency by introducing new proofs. *)
+Fixpoint skeletize_val v :=
+match v with
+| Var x => SkVar x
+| Unit => SkUnit 
+| Int n => SkInt n
+| Left v => SkLeft (skeletize_val v)
+| Right v => SkRight (skeletize_val v)
+| Pair v1 v2 => SkPair (skeletize_val v1) (skeletize_val v2)
+| Nil => SkNil 
+| Cons v1 v2 => SkCons (skeletize_val v1) (skeletize_val v2)
+| Fun c => SkFun (skeletize_comp c)
+| Handler c h => SkHandler (skeletize_comp c) (skeletize_hcases h)
+end
 
-Inductive v_ann : forall Γ v A, has_vtype Γ v A -> sk_val -> Prop :=
-| AnnVar Γ n A p:
-    get_vtype Γ n = Some A ->
-    v_ann Γ (Var n) A p (SkVar n)
-| AnnUnit Γ p: 
-    v_ann Γ Unit TyUnit p SkUnit
-| AnnInt Γ n p: 
-    v_ann Γ (Int n) TyInt p (SkInt n)
-| AnnPair Γ v1 v2 A B v1' v2' p1 p2 p:
-    v_ann Γ v1 A p1 v1' -> v_ann Γ v2 B p2 v2' ->
-    v_ann Γ (Pair v1 v2) (TyProd A B) p (SkPair v1' v2')
-| AnnLeft Γ v A B v' pl p:
-    v_ann Γ v A pl v' ->
-    v_ann Γ (Left v) (TySum A B) p (SkLeft v')
-| AnnRight Γ v A B v' pr p:
-    v_ann Γ v B pr v' ->
-    v_ann Γ (Right v) (TySum A B) p (SkRight v')
-| AnnNil Γ A p:
-    v_ann Γ Nil (TyList A) p (SkNil)
-| AnnCons Γ v1 v2 A v1' v2' p1 p2 p:
-    v_ann Γ v1 A p1 v1' -> v_ann Γ v2 (TyList A) p2 v2' ->
-    v_ann Γ (Cons v1 v2) (TyList A) p (SkCons v1' v2')
-| AnnFun Γ c A C c' pc p:
-    c_ann (CtxU Γ A) c C pc c' ->
-    v_ann Γ (Fun c) (TyFun A C) p (SkFun c')
-| AnnHandler Γ c c' h h' A Σ E D pc ph p:
-    c_ann (CtxU Γ A) c D pc c' -> h_ann Γ h Σ D ph h' ->
-    v_ann Γ (Handler c h) (TyHandler (CTy A Σ E) D) p (SkHandler c' h')
-| AnnVSTy Γ v v' A A' p p':
-    v_ann Γ v A p' v' ->
-    vsubtype A A' ->
-    v_ann Γ v A' p v'
+with skeletize_comp c :=
+match c with
+| Ret v => SkRet (skeletize_val v)
+| Absurd v => SkAbsurd (skeletize_val v)
+| ProdMatch v c => SkProdMatch (skeletize_val v) (skeletize_comp c)
+| SumMatch v c1 c2 => 
+    SkSumMatch (skeletize_val v) (skeletize_comp c1) (skeletize_comp c2)
+| ListMatch v c1 c2 =>
+    SkListMatch (skeletize_val v) (skeletize_comp c1) (skeletize_comp c2)
+| App v1 v2 => SkApp (skeletize_val v1) (skeletize_val v2)
+| Op op A B v c => 
+    SkOp op (skeletize_vtype A) (skeletize_vtype B)
+    (skeletize_val v) (skeletize_comp c)
+| LetRec c1 c2 => SkLetRec (skeletize_comp c1) (skeletize_comp c2)
+| Do c1 c2 => SkDo (skeletize_comp c1) (skeletize_comp c2)
+| Handle v c => SkHandle (skeletize_val v) (skeletize_comp c)
+end
 
-with c_ann : forall Γ c C, has_ctype Γ c C -> sk_comp -> Prop :=
-| AnnRet Γ v v' A pv p :
-    v_ann Γ v A pv v' ->
-    c_ann Γ (Ret v) (CTy A SigØ EqsØ) p (SkRet v')
-| AnnAbsurd Γ v v' C pv p :
-    v_ann Γ v TyEmpty pv v' ->
-    c_ann Γ (Absurd v) C p (SkAbsurd v')
-| AnnProdMatch Γ v v' A B c c' C pv pc p:
-    v_ann Γ v (TyProd A B) pv v' -> c_ann (CtxU (CtxU Γ A) B) c C pc c'->
-    c_ann Γ (ProdMatch v c) C p (SkProdMatch v' c')
-| AnnSumMatch Γ v v' A B c1 c1' c2 c2' C p pv pc1 pc2:
-    v_ann Γ v (TySum A B) pv v' ->
-    c_ann (CtxU Γ A) c1 C pc1 c1' -> c_ann (CtxU Γ B) c2 C pc2 c2' ->
-    c_ann Γ (SumMatch v c1 c2) C p (SkSumMatch v' c1' c2')
-| AnnListMatch Γ v v' A c1 c1' c2 c2' C p pv pc1 pc2:
-    v_ann Γ v (TyList A) pv v' ->
-    c_ann Γ c1 C pc1 c1' -> c_ann (CtxU (CtxU Γ A) (TyList A)) c2 C pc2 c2' ->
-    c_ann Γ (ListMatch v c1 c2) C p (SkListMatch v' c1' c2')
-| AnnDo Γ c1 c1' c2 c2' A B Σ E p pc1 pc2:
-    c_ann Γ c1 (CTy A Σ E) pc1 c1' -> c_ann (CtxU Γ A) c2 (CTy B Σ E) pc2 c2' ->
-    c_ann Γ (Do c1 c2) (CTy B Σ E) p (SkDo c1' c2')
-| AnnApp Γ v1 v1' v2 v2' A C pv1 pv2 p:
-    v_ann Γ v1 (TyFun A C) pv1 v1' -> v_ann Γ v2 A pv2 v2' ->
-    c_ann Γ (App v1 v2) C p (SkApp v1' v2')
-| AnnHandle Γ v v' c c' C D pv pc p:
-    v_ann Γ v (TyHandler C D) pv v' -> c_ann Γ c C pc c' ->
-    c_ann Γ (Handle v c) D p (SkHandle v' c')
-| AnnLetRec Γ c1 c1' c2 c2' A C D pc1 pc2 p :
-    c_ann (CtxU (CtxU Γ A) (TyFun A C)) c1 C pc1 c1' ->
-    c_ann (CtxU Γ (TyFun A C)) c2 D pc2 c2' -> 
-    c_ann Γ (LetRec c1 c2) D p (SkLetRec c1' c2')
-| AnnOp Γ op v v' c c' A Σ E Aop Bop pv pc p :
-    get_op_type Σ op = Some (Aop, Bop) ->
-    v_ann Γ v Aop pv v' -> c_ann (CtxU Γ Bop) c (CTy A Σ E) pc c' ->
-    c_ann Γ (Op op v c) (CTy A Σ E) p 
-      (SkOp op (skeletize_vtype Aop) (skeletize_vtype Bop) v' c')
-| AnnCSTy Γ c c' C C' p p':
-    c_ann Γ c C p' c' ->
-    csubtype C C' ->
-    c_ann Γ c C' p c'
-
-with h_ann : forall Γ h Σ D, has_htype Γ h Σ D -> sk_hcases -> Prop := 
-| AnnCasesØ Γ Σ D p:
-    h_ann Γ CasesØ Σ D p SkCasesØ
-| AnnCasesU Γ Σ D h h' c c' A B op ph pc p:
-    h_ann Γ h Σ D ph h' ->
-    c_ann (CtxU (CtxU Γ A) (TyFun B D)) c D pc c' ->
-    h_ann Γ (CasesU h op A B c) (SigU Σ op A B) D p 
-      (SkCasesU h' op (skeletize_vtype A) (skeletize_vtype B) c')
+with skeletize_hcases h :=
+match h with
+| CasesØ => SkCasesØ
+| CasesU h op A B c => 
+    SkCasesU (skeletize_hcases h) op (skeletize_vtype A) (skeletize_vtype B)
+      (skeletize_comp c)
+end
 .
+
