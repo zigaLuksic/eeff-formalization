@@ -306,10 +306,10 @@ Qed.
 
 (* Inversions for computations *)
 
-Fixpoint inv_ann_Ret Γ v A Σ E p c'
-  (ann: c_ann Γ (Ret v) (CTy A Σ E) p c') {struct ann}:
+Fixpoint inv_ann_Ret Γ v A Σ E p csk
+  (ann: c_ann Γ (Ret v) (CTy A Σ E) p csk) {struct ann}:
   exists v' A' p',
-    vsubtype A' A /\ v_ann Γ v A' p' v' /\ c' = SkRet v'.
+    vsubtype A' A /\ v_ann Γ v A' p' v' /\ csk = SkRet v'.
 Proof.
 inv ann.
 + exists v', A, pv. aconstructor.
@@ -320,16 +320,70 @@ inv ann.
   eapply vsubtype_trans; eauto.
 Qed.
 
-Fixpoint inv_ann_Absurd Γ v C p c'
-  (ann: c_ann Γ (Absurd v) C p c') {struct ann}:
+Fixpoint inv_ann_Absurd Γ v C p csk
+  (ann: c_ann Γ (Absurd v) C p csk) {struct ann}:
   exists v' p',
-    v_ann Γ v TyEmpty p' v' /\ c' = SkAbsurd v'.
+    v_ann Γ v TyEmpty p' v' /\ csk = SkAbsurd v'.
 Proof.
 inv ann.
 + exists v', pv. aconstructor.
 + inv H0. eapply inv_ann_Absurd in H.
   destruct H as [v1'[p1[ty othr]]].
   exists v1', p1. aconstructor.
+Qed.
+
+Fixpoint inv_ann_ProdMatch Γ v c C p csk
+  (ann: c_ann Γ (ProdMatch v c) C p csk) {struct ann}:
+  exists v' A B pv c' C' pc,
+    v_ann Γ v (TyProd A B) pv v' /\ c_ann (CtxU (CtxU Γ A) B) c C' pc c'
+    /\ csubtype C' C /\ csk = SkProdMatch v' c'.
+Proof.
+inv ann.
++ exists v', A, B, pv, c', C, pc. do 3 try aconstructor.
+  apply csubtype_refl. inv p. auto.
++ eapply inv_ann_ProdMatch in H. clear inv_ann_ProdMatch.
+  destruct H as [v'[A[B[pv[c'[C'[pc othr]]]]]]].
+  destruct othr as [vann[cann[csty id]]].
+  subst.
+  exists v', A, B, pv, c', C', pc.
+  do 3 try aconstructor. eapply csubtype_trans; eauto.
+Qed.
+
+
+Fixpoint inv_ann_SumMatch Γ v c1 c2 C p csk
+  (ann: c_ann Γ (SumMatch v c1 c2) C p csk) {struct ann}:
+  exists v' A B pv c1' c2' C' pc1 pc2,
+    v_ann Γ v (TySum A B) pv v' /\ c_ann (CtxU Γ A) c1 C' pc1 c1'
+    /\ c_ann (CtxU Γ B) c2 C' pc2 c2'
+    /\ csubtype C' C /\ csk = SkSumMatch v' c1' c2'.
+Proof.
+inv ann.
++ exists v', A, B, pv, c1', c2', C, pc1, pc2. do 4 try aconstructor.
+  apply csubtype_refl. inv p. auto.
++ eapply inv_ann_SumMatch in H. clear inv_ann_SumMatch.
+  destruct H as [v'[A[B[pv[c1'[c2'[C'[pc1[pc2 othr]]]]]]]]].
+  destruct othr as [vann[cann1[cann2[csty id]]]].
+  subst.
+  exists v', A, B, pv, c1', c2', C', pc1, pc2.
+  do 4 try aconstructor. eapply csubtype_trans; eauto.
+Qed.
+
+Fixpoint inv_ann_ListMatch Γ v c1 c2 C p csk
+  (ann: c_ann Γ (ListMatch v c1 c2) C p csk) {struct ann}:
+  exists v' A pv c1' c2' C' pc1 pc2,
+    v_ann Γ v (TyList A) pv v' /\ c_ann Γ c1 C' pc1 c1'
+    /\ c_ann (CtxU (CtxU Γ A) (TyList A)) c2 C' pc2 c2'
+    /\ csubtype C' C /\ csk = SkListMatch v' c1' c2'.
+Proof.
+inv ann.
++ exists v', A, pv, c1', c2', C, pc1, pc2. do 4 try aconstructor.
+  apply csubtype_refl. inv p. auto.
++ eapply inv_ann_ListMatch in H. clear inv_ann_ListMatch.
+  destruct H as [v'[A[pv[c1'[c2'[C'[pc1[pc2 othr]]]]]]]].
+  destruct othr as [vann[cann1[cann2[csty id]]]].
+  subst.
+  exists v', A, pv, c1', c2', C', pc1, pc2.
+  do 4 try aconstructor. eapply csubtype_trans; eauto.
 Qed.
 
 Fixpoint inv_ann_Op Γ id v c C p c'
@@ -458,14 +512,16 @@ Focus 11. (* Subtyping on left *)
   subst. f_equal.
   inv sty1. eapply VL; eauto. inv sty2.
   eapply vsubtype_trans; eauto.
-+ destruct C2 as [A2 Σ2 E2].
-  eapply shape_ret_full in tys2 as shape. 2: reflexivity. 2: reflexivity.
-  apply inv_ann_Ret in ann2.
-  destruct ann2 as [v''[A''[p''[stya[ann2 id]]]]].
++ eapply shape_absurd_full in tys2 as shape. 2: reflexivity.
+  apply inv_ann_Absurd in ann2.
+  destruct ann2 as [v''[p''[ann2 id]]].
   subst. f_equal.
-  inv sty1. eapply VL; eauto. inv sty2.
-  eapply vsubtype_trans; eauto.
-+ admit.
+  inv sty1. eapply VL; eauto; apply STyEmpty.
++ eapply inv_ann_ProdMatch in ann2.
+  destruct ann2 as [v''[A'[B'[pv'[c''[C'[pc' othr]]]]]]].
+  destruct othr as [vann[cann[csty id]]].
+  subst. f_equal.
+  - eapply VL; eauto.
 + admit.
 + admit.
 + admit.
