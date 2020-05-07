@@ -183,13 +183,13 @@ assert (
   (c_subs
      (Op id Aop Bop (v_shift vop 1 0)
         (ListMatch (Var 1) (c_shift c1 1 1) (c_shift c2 1 3))) 0
-     Nil)
+     (Nil Al))
   (c_subs
      (c_shift
         (Op id Aop Bop (v_shift vop 1 0)
            (ListMatch (Var 1) (c_shift c1 1 1) (c_shift c2 1 3)))
         2 0) (2 + 0) (Cons (Var 1) (Var 0))))
-  = (ListMatch v' (Op id Aop Bop vop (ListMatch Nil c1 c2))
+  = (ListMatch v' (Op id Aop Bop vop (ListMatch (Nil Al) c1 c2))
       (Op id Aop Bop (v_shift vop 2 0) 
         (ListMatch (Cons (Var 2) (Var 1))
           (c_shift c1 2 1)

@@ -77,10 +77,10 @@ revert Γ. induction T; intros Γ wf.
 Qed.
 
 
-Lemma handle_t_no_var h i Γ Z T Σ:
+Lemma handle_t_no_var h i D Γ Z T Σ:
   h_no_var h i -> wf_t Γ Z T Σ ->
   c_no_var 
-    (handle_t (ctx_len Γ) (tctx_len Z) h T)
+    (handle_t D (ctx_len Γ) (tctx_len Z) h T)
     (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert h Γ i. induction T; intros; simpl.
@@ -121,9 +121,9 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
 Qed.
 
 
-Lemma handle_t_under_var h i Γ Z T Σ:
+Lemma handle_t_under_var h i D Γ Z T Σ:
   h_under_var h i -> wf_t Γ Z T Σ ->
-  c_under_var (handle_t (ctx_len Γ) (tctx_len Z) h T) 
+  c_under_var (handle_t D (ctx_len Γ) (tctx_len Z) h T) 
     (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert h Γ i. induction T; intros; simpl.
@@ -166,9 +166,9 @@ Qed.
 
 Lemma handle_t_shift Γ' Γ Z h T Σ D i:
   wf_t Γ Z T Σ -> has_htype Γ' h Σ D -> 
-    handle_t (ctx_len Γ) (tctx_len Z) (h_shift h 1 i) T
+    handle_t D (ctx_len Γ) (tctx_len Z) (h_shift h 1 i) T
   = c_shift 
-      (handle_t (ctx_len Γ) (tctx_len Z) h T) 
+      (handle_t D (ctx_len Γ) (tctx_len Z) h T) 
       1 (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
@@ -225,9 +225,9 @@ Qed.
 
 Lemma handle_t_negshift Γ' Γ Z h T Σ D i:
   h_no_var h i -> wf_t Γ Z T Σ -> has_htype Γ' h Σ D -> 
-    handle_t (ctx_len Γ) (tctx_len Z) (h_negshift h 1 i) T
+    handle_t D (ctx_len Γ) (tctx_len Z) (h_negshift h 1 i) T
   = c_negshift 
-      (handle_t (ctx_len Γ) (tctx_len Z) h T) 
+      (handle_t D (ctx_len Γ) (tctx_len Z) h T) 
       1 (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert Γ h i. induction T; intros Γ h i novar wf types; simpl; inv wf.
@@ -294,9 +294,9 @@ Qed.
 
 Lemma handle_t_sub Γ' Γ Z h T Σ D i v_s:
   wf_t Γ Z T Σ -> has_htype Γ' h Σ D ->
-    handle_t (ctx_len Γ) (tctx_len Z) (h_sub h (i, v_s)) T
+    handle_t D (ctx_len Γ) (tctx_len Z) (h_sub h (i, v_s)) T
   = c_sub 
-      (handle_t (ctx_len Γ) (tctx_len Z) h T)
+      (handle_t D (ctx_len Γ) (tctx_len Z) h T)
       (i+tctx_len Z+ctx_len Γ, v_shift v_s (tctx_len Z+ctx_len Γ) 0).
 Proof.
 revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
@@ -564,14 +564,14 @@ destruct orig. destruct H2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply VeqRight; eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
-simpl. eapply VeqNil.
+  simpl. eapply VeqNil; auto.
 + specialize (JL _ _ _ H2) as IH1.
   specialize (JL _ _ _ H3) as IH2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply VeqCons; eauto.
 + specialize (JL _ _ _ H2) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply VeqFun.
+  simpl. eapply VeqFun; auto.
   rewrite ctx_insert_extend, hyp_shift_comm; eaomega.
 + specialize (JL _ _ _ H2) as IHc.
   specialize (JL _ _ _ H3) as IHh.
@@ -596,7 +596,7 @@ simpl. eapply VeqNil.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply CeqRet. eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. apply CeqAbsurd.
+  simpl. apply CeqAbsurd; auto.
 + specialize (JL _ _ _ H2) as IHv.
   specialize (JL _ _ _ H3) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -630,7 +630,7 @@ simpl. eapply VeqNil.
 + specialize (JL _ _ _ H2) as IHc1.
   specialize (JL _ _ _ H3) as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqLetRec.
+  simpl. eapply CeqLetRec; eauto.
   do 2 rewrite ctx_insert_extend. rewrite hyp_shift_comm; eaomega.
   rewrite ctx_insert_extend, hyp_shift_comm; eaomega.
 + specialize (JL _ _ _ H7) as IHv.
@@ -840,11 +840,11 @@ simpl. eapply VeqNil.
        (HypU (hyp_shift (hyp_shift Ψ 2 0) 1 (S (S i)))
           (Forall Bop
              (form_shift
-                (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))
+                (form_subs (form_shift φ 3 0) 3 (Fun TyUnit (App (Var 2) (Var 1))))
                 1 (3+i))))
        (form_shift
           (form_subs (form_shift φ 2 0) 2 
-            (Fun (Op op Aop Bop (Var 2) (App (Var 2) (Var 0))))) 1 (2+i))
+            (Fun TyUnit (Op op Aop Bop (Var 2) (App (Var 2) (Var 0))))) 1 (2+i))
   ) as IH2.
   { intros op Aop Bop gets. specialize (H3 op Aop Bop gets).
     specialize (JL _ _ _ H3 A_ins (2+i) wfins) as IH.
@@ -1054,17 +1054,17 @@ destruct orig. destruct H2.
 + apply VeqUnit.
 + apply VeqInt.
 + apply VeqPair; eauto.
-+ apply VeqLeft. eauto.
-+ apply VeqRight. eauto.
-+ apply VeqNil. 
++ eapply VeqLeft; eauto.
++ eapply VeqRight; eauto.
++ apply VeqNil; eauto. 
 + apply VeqCons; eauto.
-+ apply VeqFun. eapply hypotheses_weakening. eauto.
++ apply VeqFun; auto. eapply hypotheses_weakening. eauto.
   - apply wf_hyp_shift_typesafe; auto.
-    inv H2. inv H3. auto.
+    inv H2. inv H5. auto.
   - apply hyp_subset_shift. auto.
 + eapply VeqHandler; eauto. eapply hypotheses_weakening. eauto.
   - apply wf_hyp_shift_typesafe; auto.
-    inv H2. inv H4. auto.
+    inv H2. inv H6. auto.
   - apply hyp_subset_shift. auto.
 + eapply VeqSubsume; eauto.
 + apply ηUnit.
@@ -1102,13 +1102,12 @@ destruct orig. destruct H2.
   - apply hyp_subset_shift. auto.
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
-+ eapply CeqLetRec. 
-  instantiate (1:=C). instantiate (1:=A).
++ eapply CeqLetRec; eauto. 
   all: eapply hypotheses_weakening; eauto.
   - rewrite <-(hyp_shift_shift 1).
     apply wf_hyp_shift_typesafe; auto.
     apply wf_hyp_shift_typesafe; auto.
-    all: inv H2; inv H4. inv H9. auto. auto.
+    all: inv H2; inv H4. inv H10. auto. auto.
   - apply hyp_subset_shift. auto.
   - apply wf_hyp_shift_typesafe; auto.
     inv H2. inv H4. auto.
@@ -1430,16 +1429,16 @@ destruct orig. destruct H2.
     simpl. apply VeqCons; eauto.
 + specialize (JL _ _ _ H2) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply VeqFun. rewrite hyp_shift_sub. eapply IH.
+  simpl. eapply VeqFun; auto. rewrite hyp_shift_sub. eapply IH.
   - simpl. eauto.
-  - apply v_shift_typesafe; auto. inv H0. inv H6. inv H3. auto.
+  - apply v_shift_typesafe; auto. inv H0. inv H8. inv H5. auto.
   - omega.
 + specialize (JL _ _ _ H2) as IHc.
   specialize (JL _ _ _ H3) as IHh.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply VeqHandler; eauto. rewrite hyp_shift_sub. eapply IHc.
   - simpl. eauto.
-  - apply v_shift_typesafe; auto. inv H0. inv H7. inv H4. inv H8. auto.
+  - apply v_shift_typesafe; auto. inv H0. inv H9. inv H6. inv H10. auto.
   - omega.
 + specialize (JL _ _ _ H2) as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1459,7 +1458,7 @@ destruct orig. destruct H2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply CeqRet. eauto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. apply CeqAbsurd.
+  simpl. apply CeqAbsurd; auto.
 + specialize (JL _ _ _ H2) as IHv.
   specialize (JL _ _ _ H3) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -1511,7 +1510,7 @@ destruct orig. destruct H2.
 + specialize (JL _ _ _ H2) as IHc1.
   specialize (JL _ _ _ H3) as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply CeqLetRec.
+  simpl. eapply CeqLetRec; eauto.
   - rewrite hyp_shift_sub. eapply IHc1. simpl. eauto.
     rewrite <-(v_shift_shift 1 1). apply v_shift_typesafe; auto.
     apply v_shift_typesafe; auto.
@@ -1591,12 +1590,12 @@ destruct orig. destruct H2.
   simpl. destruct (n<=?i) eqn:ni.
   - apply leb_complete in ni.
     rewrite c_sub_subs; aomega. simpl.
-    eapply ηEmpty. auto. eapply IHc.
+    eapply ηEmpty; auto. eapply IHc.
     * erewrite <-get_ctx_insert_changed. eauto. omega.
     * apply v_insert_typesafe; auto. apply WfTyEmpty.
   - apply leb_complete_conv in ni.
     rewrite c_sub_subs_alt; aomega. simpl.
-    eapply ηEmpty. omega. eapply IHc.
+    eapply ηEmpty; aomega. eapply IHc.
     * erewrite <-get_ctx_insert_unchanged. eauto. omega.
     * apply v_insert_typesafe; auto. apply WfTyEmpty.
 + specialize (CL _ _ _ H3) as IHc.
@@ -1761,11 +1760,11 @@ destruct orig. destruct H2.
        (hyp_sub
           (HypU (hyp_shift Ψ 2 0)
              (Forall Bop
-                (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))))
+                (form_subs (form_shift φ 3 0) 3 (Fun TyUnit (App (Var 2) (Var 1))))))
           (2 + i, v_shift v_s 2 0))
        (form_sub
           (form_subs (form_shift φ 2 0) 2
-             (Fun (Op op Aop Bop (Var 2) (App (Var 2) (Var 0)))))
+             (Fun TyUnit (Op op Aop Bop (Var 2) (App (Var 2) (Var 0)))))
           (2 + i, v_shift v_s 2 0))
   ) as IH2.
   { intros op Aop Bop gets'. specialize (H3 op Aop Bop gets').
@@ -2106,8 +2105,8 @@ destruct orig. destruct H3.
   specialize (JL (join_ctxs (join_ctxs Γ (tctx_to_ctx Z D)) Γ0) 
     (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ0) HypØ
     (Ceq D 
-      (handle_t (ctx_len Γ0) (tctx_len Z) h T1) 
-      (handle_t (ctx_len Γ0) (tctx_len Z) h T2) )
+      (handle_t D (ctx_len Γ0) (tctx_len Z) h T1) 
+      (handle_t D (ctx_len Γ0) (tctx_len Z) h T2) )
     H4 (i + tctx_len Z + ctx_len Γ0) 
     (v_shift v_s (tctx_len Z+ctx_len Γ0) 0) A_s ) as IHc.
   all: clear VL CL HL RL JL WFHL WFFL WFIL.
@@ -2178,16 +2177,16 @@ unfold v_subs. simpl. apply VeqNil; auto.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   unfold v_subs. simpl. apply VeqCons; auto.
 + assert (wf_vtype A) as wfa. 
-  { clear VL CL HL RL JL WFHL WFFL WFIL. inv H0. inv H6. inv H3. auto. }
+  { clear VL CL HL RL JL WFHL WFFL WFIL. inv H0. inv H10. inv H5. auto. }
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (JL _ _ _ _ H2 (S i) _ _ tyvs') as IH.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. unfold v_subs. simpl. eapply VeqFun.
+  simpl. unfold v_subs. simpl. eapply VeqFun; auto.
   rewrite v_shift_comm, hyp_shift_subs_alt.
   apply IH. simpl. f_equal. auto.
   all: simpl; omega.
 + assert (wf_vtype A) as wfa.
-  { clear VL CL HL RL JL WFHL WFFL WFIL. inv H0. inv H7. inv H4. inv H8. auto. }
+  { clear VL CL HL RL JL WFHL WFFL WFIL. inv H0. inv H9. inv H6. inv H10. auto. }
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (JL _ _ _ _ H2 (S i) _ _ tyvs') as IHc.
   specialize (JL _ _ _ _ H3 i _ _ tyvs) as IHh.
@@ -2216,7 +2215,7 @@ unfold v_subs. simpl. apply VeqNil; auto.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. apply CeqRet. auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. apply CeqAbsurd.
+  simpl. apply CeqAbsurd; auto.
 + specialize (JL _ _ _ _ H2 i _ _ tyvs) as IHv.
   assert (wf_vtype A) as wfa.
   { inv H3. inv H4. inv H9. auto. }
@@ -2288,7 +2287,7 @@ unfold v_subs. simpl. apply VeqNil; auto.
   specialize (JL _ _ _ _ H3 (1+i) _ _ tyvs''') as IHc2.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. unfold c_subs. simpl. eapply CeqLetRec.
-  instantiate (1:=C). instantiate (1:=A). all: rewrite v_shift_comm; eaomega.
+  all: rewrite v_shift_comm; eaomega.
   - rewrite <-(v_shift_shift 1 1), <-(hyp_shift_shift 1).
     rewrite hyp_shift_subs_alt, hyp_shift_subs_alt, hyp_shift_shift.
     eapply IHc1. simpl. do 2 f_equal. all: simpl; aomega.
@@ -2325,8 +2324,8 @@ unfold v_subs. simpl. apply VeqNil; auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   specialize βMatchLeft as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (SumMatch (Left v) c1 c2) i v_s
-    = SumMatch (Left (v_subs v i v_s)) 
+  assert (c_subs (SumMatch (Left A B v) c1 c2) i v_s
+    = SumMatch (Left A B (v_subs v i v_s)) 
         (c_subs c1 (1+i) (v_shift v_s 1 0))
         (c_subs c2 (1+i) (v_shift v_s 1 0))).
   { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
@@ -2335,8 +2334,8 @@ unfold v_subs. simpl. apply VeqNil; auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   specialize βMatchRight as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (SumMatch (Right v) c1 c2) i v_s
-    = SumMatch (Right (v_subs v i v_s)) 
+  assert (c_subs (SumMatch (Right A B v) c1 c2) i v_s
+    = SumMatch (Right A B (v_subs v i v_s)) 
         (c_subs c1 (1+i) (v_shift v_s 1 0))
         (c_subs c2 (1+i) (v_shift v_s 1 0))).
   { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
@@ -2345,8 +2344,8 @@ unfold v_subs. simpl. apply VeqNil; auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   specialize βMatchNil as rule.
   unfold c_subs_out in *. simpl.
-  assert (c_subs (ListMatch Nil c1 c2) i v_s 
-    = ListMatch Nil 
+  assert (c_subs (ListMatch (Nil A) c1 c2) i v_s 
+    = ListMatch (Nil A) 
         (c_subs c1 i v_s)
         (c_subs c2 (2+i) (v_shift v_s 2 0))).
   { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
@@ -2367,21 +2366,21 @@ unfold v_subs. simpl. apply VeqNil; auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   specialize βApp as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (App (Fun c) v) i v_s 
-    = App (Fun (c_subs c (1+i) (v_shift v_s 1 0))) (v_subs v i v_s)).
+  assert (c_subs (App (Fun A c) v) i v_s 
+    = App (Fun A (c_subs c (1+i) (v_shift v_s 1 0))) (v_subs v i v_s)).
   { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
     rewrite v_shift_comm; reflexivity || omega. }  
   rewrite H2. apply rule. all: omega.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   specialize βLetRec as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (LetRec c1 c2) i v_s
-    = LetRec (c_subs c1 (2+i) (v_shift v_s 2 0))
+  assert (c_subs (LetRec A C c1 c2) i v_s
+    = LetRec A C (c_subs c1 (2+i) (v_shift v_s 2 0))
         (c_subs c2 (1+i) (v_shift v_s 1 0))).
   { unfold c_subs. simpl. do 2 f_equal; rewrite v_shift_comm; auto || omega. }  
   rewrite H2. clear H1.
-  assert ( v_subs (Fun (LetRec (c_shift c1 1 2) c1)) i v_s
-    = Fun (LetRec
+  assert ( v_subs (Fun A (LetRec A C (c_shift c1 1 2) c1)) i v_s
+    = Fun A (LetRec A C
        (c_shift (c_subs c1 (2+i) (v_shift v_s 2 0)) 1 2)
        (c_subs c1 (2+i) (v_shift v_s 2 0))) ).
   { unfold c_subs. unfold v_subs. simpl. do 2 f_equal.
@@ -2416,8 +2415,8 @@ unfold v_subs. simpl. apply VeqNil; auto.
 + clear VL CL HL RL JL WFHL WFFL WFIL.
   specialize βHandleRet as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (Handle (Handler c_r h) (Ret v)) i v_s
-    = Handle (Handler 
+  assert (c_subs (Handle (Handler A c_r h) (Ret v)) i v_s
+    = Handle (Handler A
       (c_subs c_r (1+i) (v_shift v_s 1 0)) (h_subs h i v_s)) 
       (Ret (v_subs v i v_s) ) ).
   { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
@@ -2427,16 +2426,16 @@ unfold v_subs. simpl. apply VeqNil; auto.
   specialize βHandleOp as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
   rewrite c_subs_subs, (c_subs_subs _ 0). simpl.
-  assert (c_subs (Handle (Handler c_r h) (Op op A B v c_k)) i v_s =
-    Handle (Handler (c_subs c_r (1+i) (v_shift v_s 1 0)) (h_subs h i v_s))
-    (Op op A B (v_subs v i v_s) (c_subs c_k (1+i) (v_shift v_s 1 0)))).
+  assert (c_subs (Handle (Handler A c_r h) (Op op Aop Bop v c_k)) i v_s =
+    Handle (Handler A (c_subs c_r (1+i) (v_shift v_s 1 0)) (h_subs h i v_s))
+    (Op op Aop Bop (v_subs v i v_s) (c_subs c_k (1+i) (v_shift v_s 1 0)))).
   { unfold c_subs. unfold v_subs. simpl. do 5 f_equal;
     apply v_shift_comm; omega. }
   rewrite H3. clear H3.
-  assert (v_subs (Fun
-    (Handle (Handler (c_shift (c_shift c_r 1 1) 1 2) 
+  assert (v_subs (Fun Bop
+    (Handle (Handler A (c_shift (c_shift c_r 1 1) 1 2) 
     (h_shift (h_shift h 1 0) 1 1)) (c_shift c_k 1 1))) (S i) (v_shift v_s 1 0)
-  = Fun (Handle (v_shift (Handler (c_subs (c_shift c_r 1 1) (2+i) 
+  = Fun Bop (Handle (v_shift (Handler A (c_subs (c_shift c_r 1 1) (2+i) 
       (v_shift v_s 2 0)) (h_subs (h_shift h 1 0) (S i) (v_shift v_s 1 0))) 1 0)
       (c_subs (c_shift c_k 1 1) (2+i) (v_shift v_s 2 0)))).
   { clear rule. unfold v_subs. unfold c_subs. unfold h_subs. 
@@ -2461,20 +2460,20 @@ unfold v_subs. simpl. apply VeqNil; auto.
   specialize (v_insert_typesafe _ _ _ tyvs (TyEmpty) (n-1) WfTyEmpty) as tyvm.
   specialize (CL _ _ c _ (i) _ _ H3 tyvm) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL. simpl.
-  assert (c_subs (Absurd v) i v_s = Absurd (v_subs v i v_s) ).
+  assert (c_subs (Absurd C v) i v_s = Absurd C (v_subs v i v_s) ).
   { unfold c_subs. simpl. auto. }
-  rewrite H4. clear H4.
+  rewrite H5. clear H5.
   destruct (n<=?i) eqn:ni.
   - clear IHc.
     apply leb_complete in ni.
-    rewrite c_subs_subs. simpl. apply ηEmpty. omega.
+    rewrite c_subs_subs. simpl. apply ηEmpty; auto. omega.
     apply IHcp. subst. rewrite ctx_insert_comm. all: aomega.
     rewrite ctx_len_insert; omega.
   - clear IHcp.
     apply leb_complete_conv in ni.
     destruct n. omega.
     rewrite (c_subs_subs_alt _ n). all: aomega. simpl.
-    apply ηEmpty.
+    apply ηEmpty; auto.
     subst. rewrite ctx_len_insert in H2. omega. omega.
     assert (S n - 1 = n) as n0 by omega. rewrite n0 in *.
     apply IHc. subst. rewrite ctx_insert_comm; aomega.
@@ -2713,11 +2712,11 @@ unfold v_subs. simpl. apply VeqNil; auto.
        (hyp_subs
           (HypU (hyp_shift Ψ 2 0)
              (Forall Bop
-                (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))))
+                (form_subs (form_shift φ 3 0) 3 (Fun TyUnit (App (Var 2) (Var 1))))))
           (2 + i) (v_shift v_s 2 0))
        (form_subs
           (form_subs (form_shift φ 2 0) 2
-             (Fun 
+             (Fun TyUnit
               (Op op Aop Bop (Var 2) (App (Var 2) (Var 0))))) (2 + i) (v_shift v_s 2 0))
   ) as IH2.
   { intros op Aop Bop gets'. specialize (H3 op Aop Bop gets').
@@ -2813,13 +2812,14 @@ intros tyvs geq len. destruct orig.
 }
 Qed.
 
+
 (* ==================== Templates as Terms ==================== *)
 
 Fixpoint tmpl_to_comp_has_ctype Γ Z T A Σ E (orig: wf_t Γ Z T Σ):
   wf_ctype (CTy A Σ E) -> wf_ctx Γ -> wf_tctx Z ->
   has_ctype 
     (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) 
-    (tmpl_to_comp (ctx_len Γ) T) 
+    (tmpl_to_comp (CTy A Σ E) (ctx_len Γ) T) 
     (CTy A Σ E).
 Proof.
 intros wfd wfg wfz.
@@ -2911,7 +2911,7 @@ Fixpoint handle_t_types Γ Z T Σ Γ' h D (orig: wf_t Γ Z T Σ) {struct orig}:
   wf_ctx Γ -> wf_tctx Z -> has_htype Γ' h  Σ D ->
   has_ctype 
     (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
-    (handle_t (ctx_len Γ) (tctx_len Z) h T) D.
+    (handle_t D (ctx_len Γ) (tctx_len Z) h T) D.
 Proof.
 intros wfc wfz tys.
 assert (wf_ctype D) by (inv tys; inv H0; assumption).

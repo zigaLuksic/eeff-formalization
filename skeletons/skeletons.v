@@ -26,28 +26,28 @@ Inductive sk_val : Type :=
 | SkVar : nat -> sk_val
 | SkUnit : sk_val
 | SkInt : Z.t -> sk_val
-| SkLeft : sk_val -> sk_val
-| SkRight : sk_val -> sk_val
+| SkLeft : sk_vtype -> sk_vtype -> sk_val -> sk_val
+| SkRight : sk_vtype -> sk_vtype -> sk_val -> sk_val
 | SkPair : sk_val -> sk_val -> sk_val
-| SkNil : sk_val
+| SkNil : sk_vtype -> sk_val
 | SkCons : sk_val -> sk_val -> sk_val
-| SkFun : sk_comp -> sk_val
-| SkHandler : sk_comp -> sk_hcases -> sk_val
+| SkFun : sk_vtype -> sk_comp -> sk_val
+| SkHandler : sk_vtype -> sk_comp -> sk_hcases -> sk_val
 
 with sk_comp : Type :=
 | SkRet : sk_val -> sk_comp
-| SkAbsurd : sk_val -> sk_comp
+| SkAbsurd : sk_ctype -> sk_val -> sk_comp
 | SkProdMatch : sk_val -> sk_comp -> sk_comp
 | SkSumMatch : sk_val -> sk_comp -> sk_comp -> sk_comp
 | SkListMatch : sk_val -> sk_comp -> sk_comp -> sk_comp
 | SkApp : sk_val -> sk_val -> sk_comp
 | SkOp : op_id -> sk_vtype -> sk_vtype -> sk_val -> sk_comp -> sk_comp
-| SkLetRec : sk_comp -> sk_comp -> sk_comp
+| SkLetRec : sk_vtype -> sk_ctype -> sk_comp -> sk_comp -> sk_comp
 | SkDo : sk_comp -> sk_comp -> sk_comp
 | SkHandle : sk_val -> sk_comp -> sk_comp
 
 with sk_hcases : Type :=
-| SkCasesØ : sk_hcases
+| SkCasesØ : sk_ctype -> sk_hcases
 | SkCasesU : sk_hcases -> op_id -> sk_vtype -> sk_vtype -> sk_comp -> sk_hcases
 .
 
@@ -79,23 +79,23 @@ Inductive has_sk_vtype : sk_ctx -> sk_val -> sk_vtype -> Prop :=
     has_sk_vtype Γ (SkPair v1 v2) (SkTyProd A B)
 | SkTypeLeft Γ v A B :
     has_sk_vtype Γ v A ->
-    has_sk_vtype Γ (SkLeft v) (SkTySum A B)
+    has_sk_vtype Γ (SkLeft A B v) (SkTySum A B)
 | SkTypeRight Γ v A B :
     has_sk_vtype Γ v B ->
-    has_sk_vtype Γ (SkRight v) (SkTySum A B)
+    has_sk_vtype Γ (SkRight A B v) (SkTySum A B)
 | SkTypeNil Γ A :
-    has_sk_vtype Γ SkNil (SkTyList A)
+    has_sk_vtype Γ (SkNil A) (SkTyList A)
 | SkTypeCons Γ v vs A :
     has_sk_vtype Γ v A ->
     has_sk_vtype Γ vs (SkTyList A) ->
     has_sk_vtype Γ (SkCons v vs) (SkTyList A)
 | SkTypeFun Γ c A C :
     has_sk_ctype (SkCtxU Γ A) c C ->
-    has_sk_vtype Γ (SkFun c) (SkTyFun A C)
+    has_sk_vtype Γ (SkFun A c) (SkTyFun A C)
 | SkTypeHandler Γ cr h A D :
     has_sk_ctype (SkCtxU Γ A) cr D ->
     has_sk_htype Γ h D -> 
-    has_sk_vtype Γ (SkHandler cr h) (SkTyHandler (SkCTy A) D)
+    has_sk_vtype Γ (SkHandler A cr h) (SkTyHandler (SkCTy A) D)
 
 with has_sk_ctype : sk_ctx -> sk_comp -> sk_ctype -> Prop :=
 | SkTypeRet Γ v A : 
@@ -103,7 +103,7 @@ with has_sk_ctype : sk_ctx -> sk_comp -> sk_ctype -> Prop :=
     has_sk_ctype Γ (SkRet v) (SkCTy A)
 | SkTypeAbsurd Γ v C :
     has_sk_vtype Γ v SkTyEmpty -> 
-    has_sk_ctype Γ (SkAbsurd v) C
+    has_sk_ctype Γ (SkAbsurd C v) C
 | SkTypeProdMatch Γ v A B c C :
     has_sk_vtype Γ v (SkTyProd A B) ->
     has_sk_ctype (SkCtxU (SkCtxU Γ A) B) c C ->
@@ -133,14 +133,14 @@ with has_sk_ctype : sk_ctx -> sk_comp -> sk_ctype -> Prop :=
 | SkTypeLetRec Γ A C c1 c2 D:
     has_sk_ctype (SkCtxU (SkCtxU Γ A) (SkTyFun A C)) c1 C ->
     has_sk_ctype (SkCtxU Γ (SkTyFun A C)) c2 D ->
-    has_sk_ctype Γ (SkLetRec c1 c2) D
+    has_sk_ctype Γ (SkLetRec A C c1 c2) D
 | SkTypeOp Γ op v c Aop Bop A :
     has_sk_vtype Γ v Aop ->
     has_sk_ctype (SkCtxU Γ Bop) c (SkCTy A) ->
     has_sk_ctype Γ (SkOp op Aop Bop v c) (SkCTy A)
 
 with has_sk_htype : sk_ctx -> sk_hcases -> sk_ctype -> Prop :=
-| SkTypeCasesØ Γ D : has_sk_htype Γ SkCasesØ D
+| SkTypeCasesØ Γ D : has_sk_htype Γ (SkCasesØ D) D
 | SkTypeCasesU Γ h op cop Aop Bop D :
     has_sk_htype Γ h D ->
     has_sk_ctype (SkCtxU (SkCtxU Γ Aop) (SkTyFun Bop D)) cop D ->
@@ -178,19 +178,22 @@ match v with
 | Var x => SkVar x
 | Unit => SkUnit 
 | Int n => SkInt n
-| Left v => SkLeft (skeletize_val v)
-| Right v => SkRight (skeletize_val v)
+| Left A B v => 
+    SkLeft (skeletize_vtype A) (skeletize_vtype B) (skeletize_val v)
+| Right A B v => 
+    SkRight (skeletize_vtype A) (skeletize_vtype B) (skeletize_val v)
 | Pair v1 v2 => SkPair (skeletize_val v1) (skeletize_val v2)
-| Nil => SkNil 
+| Nil A => SkNil  (skeletize_vtype A)
 | Cons v1 v2 => SkCons (skeletize_val v1) (skeletize_val v2)
-| Fun c => SkFun (skeletize_comp c)
-| Handler c h => SkHandler (skeletize_comp c) (skeletize_hcases h)
+| Fun A c => SkFun (skeletize_vtype A) (skeletize_comp c)
+| Handler A c h => 
+    SkHandler (skeletize_vtype A) (skeletize_comp c) (skeletize_hcases h)
 end
 
 with skeletize_comp c :=
 match c with
 | Ret v => SkRet (skeletize_val v)
-| Absurd v => SkAbsurd (skeletize_val v)
+| Absurd C v => SkAbsurd  (skeletize_ctype C) (skeletize_val v)
 | ProdMatch v c => SkProdMatch (skeletize_val v) (skeletize_comp c)
 | SumMatch v c1 c2 => 
     SkSumMatch (skeletize_val v) (skeletize_comp c1) (skeletize_comp c2)
@@ -200,14 +203,16 @@ match c with
 | Op op A B v c => 
     SkOp op (skeletize_vtype A) (skeletize_vtype B)
     (skeletize_val v) (skeletize_comp c)
-| LetRec c1 c2 => SkLetRec (skeletize_comp c1) (skeletize_comp c2)
+| LetRec A C c1 c2 => 
+    SkLetRec (skeletize_vtype A) (skeletize_ctype C) 
+      (skeletize_comp c1) (skeletize_comp c2)
 | Do c1 c2 => SkDo (skeletize_comp c1) (skeletize_comp c2)
 | Handle v c => SkHandle (skeletize_val v) (skeletize_comp c)
 end
 
 with skeletize_hcases h :=
 match h with
-| CasesØ => SkCasesØ
+| CasesØ D => SkCasesØ (skeletize_ctype D)
 | CasesU h op A B c => 
     SkCasesU (skeletize_hcases h) op (skeletize_vtype A) (skeletize_vtype B)
       (skeletize_comp c)

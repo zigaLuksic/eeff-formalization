@@ -25,18 +25,18 @@ apply WfVeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + apply VeqInt. 
 + eapply VeqVar. eauto.
 + apply VeqPair; eauto.
-+ apply VeqLeft; eauto.
-+ apply VeqRight; eauto.
-+ apply VeqNil; eauto.
++ inv H0. eapply VeqLeft; eauto. all: apply vsubtype_refl; auto.
++ inv H0. eapply VeqRight; eauto. all: apply vsubtype_refl; auto.
++ inv H0. eapply VeqNil; eauto. all: apply vsubtype_refl; auto.
 + apply VeqCons; eauto.
-+ apply VeqFun; eauto. 
-+ eapply VeqHandler; eauto.
++ inv H0. eapply VeqFun; eauto. all: apply vsubtype_refl; auto.
++ inv H0. inv H6. eapply VeqHandler; eauto. all: apply vsubtype_refl; auto.
 + apply veq_refl_raw in H1. eapply VeqSubsume; eauto.
 }{
 apply WfJudg. inv orig. auto.
 apply WfCeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + apply CeqRet. auto.
-+ apply CeqAbsurd.
++ eapply CeqAbsurd; apply csubtype_refl; auto.
 + eapply CeqProdMatch; eauto.
 + eapply CeqSumMatch; eauto.
 + eapply CeqListMatch; eauto.

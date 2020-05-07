@@ -20,28 +20,28 @@ Inductive val : Type :=
 | Var : nat -> val
 | Unit : val
 | Int : Z.t -> val
-| Left : val -> val
-| Right : val -> val
+| Left : vtype -> vtype -> val -> val
+| Right : vtype -> vtype -> val -> val
 | Pair : val -> val -> val
-| Nil : val
+| Nil : vtype -> val
 | Cons : val -> val -> val
-| Fun : comp -> val
-| Handler : comp -> hcases -> val
+| Fun : vtype -> comp -> val
+| Handler : vtype -> comp -> hcases -> val
 
 with comp : Type :=
 | Ret : val -> comp
-| Absurd : val -> comp
+| Absurd : ctype -> val -> comp
 | ProdMatch : val -> comp -> comp (* x~1 y~0 *)
 | SumMatch : val -> comp -> comp -> comp
 | ListMatch : val -> comp -> comp -> comp (* x~1 xs~0 *)
 | App : val -> val -> comp
 | Op : op_id -> vtype -> vtype -> val -> comp -> comp (* x~1 k~0 *)
-| LetRec : comp -> comp -> comp (* f~0 x~1 *)
+| LetRec : vtype -> ctype -> comp -> comp -> comp (* f~0 x~1 *)
 | Do : comp -> comp -> comp
 | Handle : val -> comp -> comp
 
 with hcases : Type :=
-| CasesØ : hcases
+| CasesØ : ctype -> hcases
 | CasesU : hcases -> op_id -> vtype -> vtype -> comp -> hcases (* x~1 k~0 *)
 
 with vtype : Type :=
@@ -111,7 +111,7 @@ Fixpoint get_op_type Σ op :=
 
 Fixpoint get_case h op : option comp :=
   match h with
-  | CasesØ => None
+  | CasesØ D => None
   | CasesU h' op' A B c_op =>
       if op == op' then Some c_op else get_case h' op
   end.
@@ -221,23 +221,23 @@ Fixpoint v_no_var v j :=
   | Var dbi => not (j = dbi)
   | Unit => True
   | Int j => True
-  | Left v' => v_no_var v' j
-  | Right v' => v_no_var v' j
+  | Left A B v' => v_no_var v' j
+  | Right A B v' => v_no_var v' j
   | Pair v1 v2 =>
       (v_no_var v1 j) /\ (v_no_var v2 j)
-  | Nil => True
+  | Nil A => True
   | Cons v vs =>
       (v_no_var v j) /\ (v_no_var vs j)
-  | Fun c => 
+  | Fun A c => 
       c_no_var c (1+j)
-  | Handler c_ret h =>
+  | Handler A c_ret h =>
       (c_no_var c_ret (1+j)) /\ (h_no_var h j)
   end
 
 with c_no_var c j :=
   match c with
   | Ret v => v_no_var v j
-  | Absurd v => v_no_var v j 
+  | Absurd C v => v_no_var v j 
   | ProdMatch v c => 
       (v_no_var v j) /\ c_no_var c (2+j)
   | SumMatch v c1 c2 =>
@@ -248,7 +248,7 @@ with c_no_var c j :=
       (v_no_var v1 j) /\ (v_no_var v2 j)
   | Op op A B v_arg c =>
       (v_no_var v_arg j) /\ (c_no_var c (1+j))
-  | LetRec c1 c2 =>
+  | LetRec A C c1 c2 =>
       (c_no_var c1 (2+j)) /\ (c_no_var c2 (1+j))
   | Do c1 c2 =>
       (c_no_var c1 j) /\ (c_no_var c2 (1+j))
@@ -258,7 +258,7 @@ with c_no_var c j :=
 
 with h_no_var h j :=
   match h with
-  | CasesØ => True
+  | CasesØ D => True
   | CasesU h op A B c =>
       (h_no_var h j) /\ (c_no_var c (2+j))
   end.
@@ -269,23 +269,23 @@ Fixpoint v_under_var v j :=
   | Var dbi => dbi < j
   | Unit => True
   | Int j => True
-  | Left v' => v_under_var v' j
-  | Right v' => v_under_var v' j
+  | Left A B  v' => v_under_var v' j
+  | Right A B  v' => v_under_var v' j
   | Pair v1 v2 =>
       (v_under_var v1 j) /\ (v_under_var v2 j)
-  | Nil => True
+  | Nil A => True
   | Cons v vs =>
       (v_under_var v j) /\ (v_under_var vs j)
-  | Fun c =>
+  | Fun A c =>
       c_under_var c (1+j)
-  | Handler c_ret h =>
+  | Handler A c_ret h =>
       (c_under_var c_ret (1+j)) /\ (h_under_var h j)
   end
 
 with c_under_var c j :=
   match c with
   | Ret v => v_under_var v j
-  | Absurd v => v_under_var v j 
+  | Absurd C v => v_under_var v j 
   | ProdMatch v c => 
       (v_under_var v j) /\ c_under_var c (2+j)
   | SumMatch v c1 c2 =>
@@ -296,7 +296,7 @@ with c_under_var c j :=
       (v_under_var v1 j) /\ (v_under_var v2 j)
   | Op op A B v c =>
       (v_under_var v j) /\ (c_under_var c (1+j))
-  | LetRec c1 c2 =>
+  | LetRec A C c1 c2 =>
       (c_under_var c1 (2+j)) /\ (c_under_var c2 (1+j))
   | Do c1 c2 =>
       (c_under_var c1 j) /\ (c_under_var c2 (1+j))
@@ -306,7 +306,7 @@ with c_under_var c j :=
 
 with h_under_var h j :=
   match h with
-  | CasesØ => True
+  | CasesØ D => True
   | CasesU h op A B c =>
       (h_under_var h j) /\ (c_under_var c (2+j))
   end.

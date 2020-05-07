@@ -20,7 +20,7 @@ Lemma operational_in_logic Γ c c' C:
 Proof.
 intros tys steps.
 assert (has_ctype Γ c' C) as tys' by (eapply preservation; eauto).
-revert C tys tys'. induction steps; intros C tys tys'; apply WfJudg.
+revert C tys tys'. induction steps; intros C' tys tys'; apply WfJudg.
 all: apply WfCeq || apply WfHypØ || auto.
 all: assumption || (inv tys; assumption) || auto.
 + eapply βMatchPair.
@@ -30,7 +30,7 @@ all: assumption || (inv tys; assumption) || auto.
 + eapply βMatchCons.
 + eapply βApp.
 + eapply βLetRec.
-+ destruct C as [A Σ E]. eapply shape_do_full in tys.
++ destruct C' as [A Σ E]. eapply shape_do_full in tys.
   3: reflexivity. 2: reflexivity. destruct tys as [A' [ty1 ty2]].
   eapply CeqDo.
   - eapply IHsteps. eauto. eapply preservation; eauto.
@@ -39,7 +39,7 @@ all: assumption || (inv tys; assumption) || auto.
     inv ty1. inv H0. auto.
 + eapply βDoRet.
 + eapply βDoOp. 
-+ eapply shape_handle in tys. destruct tys as [C' [tyh tyc]].
++ eapply shape_handle in tys. destruct tys as [C'' [tyh tyc]].
   eapply CeqHandle. 
   - apply veq_refl. eauto. apply WfHypØ.
   - apply IHsteps. assumption. eapply preservation; eauto.
@@ -100,20 +100,26 @@ destruct orig. destruct H1.
     * inv vseq. auto.
     * inv H2. assumption.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqPair; eapply VEQ; eauto.
-+ clear CEQ HEQ. unfold v_subs. simpl. apply VeqLeft. eapply VEQ; eauto.
-+ clear CEQ HEQ. unfold v_subs. simpl. apply VeqRight. eapply VEQ; eauto.
++ clear CEQ HEQ. unfold v_subs. simpl. eapply VeqLeft. eapply VEQ; eauto.
+  all: apply vsubtype_refl; inv H0; auto.
++ clear CEQ HEQ. unfold v_subs. simpl. eapply VeqRight. eapply VEQ; eauto.
+  all: apply vsubtype_refl; inv H0; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqNil.
+  all: apply vsubtype_refl; inv H0; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqCons; eapply VEQ; eauto.
 + clear VEQ HEQ. unfold v_subs. unfold c_subs in CEQ. simpl. 
   apply VeqFun. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
   eapply CEQ; eauto. apply vseq_ext.
-  inv H0. auto. subst. apply ctx_insert_extend. simpl. all: omega.
+  inv H0. auto. subst. apply ctx_insert_extend. simpl. all: aomega.
+  all: apply vsubtype_refl; inv H0; auto.
 + clear VEQ. unfold v_subs. unfold c_subs in CEQ. unfold h_subs in HEQ. simpl.
   eapply VeqHandler.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
     apply vseq_ext. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
+  - apply vsubtype_refl. inv H0. inv H6. auto.
+  - apply vsubtype_refl. inv H0. inv H6. auto.
 + eapply VeqSubsume; eauto.
 }{
 assert (forall A B, wf_vtype A -> wf_vtype B -> 
@@ -131,7 +137,7 @@ destruct orig. destruct H1.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
   apply CeqRet. eauto.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
-  apply CeqAbsurd.
+  apply CeqAbsurd. all: apply csubtype_refl; auto.
 + clear HEQ. unfold c_subs in *. unfold v_subs in VEQ. simpl.
   eapply CeqProdMatch. eauto.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
@@ -227,7 +233,7 @@ Qed.
 Lemma induction_check_base Γ A Σ E φ:
   wf_ctype (CTy A Σ E) -> wf_ctx Γ ->
   wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
-  wf_form (CtxU Γ A) (form_subs (form_shift φ 1 0) 1 (Fun (Ret (Var 1)))).
+  wf_form (CtxU Γ A) (form_subs (form_shift φ 1 0) 1 (Fun TyUnit (Ret (Var 1)))).
 Proof.
 intros wfc wfg orig. eapply wf_form_subs_typesafe; eauto; simpl.
 instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
@@ -247,7 +253,7 @@ Lemma induction_check_assumption Γ A Σ E φ op Aop Bop:
   wf_form (CtxU Γ (TyFun TyUnit (CTy A Σ E))) φ ->
   get_op_type Σ op = Some (Aop, Bop) ->
   wf_form (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) 
-    (Forall Bop (form_subs (form_shift φ 3 0) 3 (Fun (App (Var 2) (Var 1))))).
+    (Forall Bop (form_subs (form_shift φ 3 0) 3 (Fun TyUnit (App (Var 2) (Var 1))))).
 Proof.
 intros wfc wfg orig gets. inv wfc.
 apply get_op_type_wf in gets as getss; auto. destruct getss.
@@ -270,7 +276,7 @@ Lemma induction_check_step Γ A Σ E φ op Aop Bop:
   get_op_type Σ op = Some (Aop, Bop) ->
   wf_form (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) 
     (form_subs (form_shift φ 2 0) 2 
-      (Fun (Op op Aop Bop (Var 2) (App (Var 2) (Var 0))))).
+      (Fun TyUnit (Op op Aop Bop (Var 2) (App (Var 2) (Var 0))))).
 Proof.
 intros wfc wfg orig gets. eapply wf_form_subs_typesafe; eauto; simpl.
 instantiate (1:=(TyFun TyUnit (CTy A Σ E))).

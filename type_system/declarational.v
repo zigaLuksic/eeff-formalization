@@ -9,52 +9,52 @@ Require Export syntax subtyping substitution.
 (* ==================== Template Handling ==================== *)
 
 (* We increase context length so that we don't have to shift h. *)
-Fixpoint handle_t Γ_len Z_len h T :=
+Fixpoint handle_t D Γ_len Z_len h T :=
   match T with
   | TApp n v => App (Var (Γ_len+n)) v
-  | TAbsurd v => Absurd v
+  | TAbsurd v => Absurd D v
   | TProdMatch v T => 
-      ProdMatch v (handle_t (2+Γ_len) Z_len h T)
+      ProdMatch v (handle_t D (2+Γ_len) Z_len h T)
   | TSumMatch v T1 T2 => 
       SumMatch v
-        (handle_t (1+Γ_len) Z_len h T1) 
-        (handle_t (1+Γ_len) Z_len h T2)
+        (handle_t D (1+Γ_len) Z_len h T1) 
+        (handle_t D (1+Γ_len) Z_len h T2)
   | TListMatch v T1 T2 =>
       ListMatch v
-        (handle_t Γ_len Z_len h T1)
-        (handle_t (2+Γ_len) Z_len h T2)
+        (handle_t D Γ_len Z_len h T1)
+        (handle_t D (2+Γ_len) Z_len h T2)
   | TDo c T =>
-      Do c (handle_t (1+Γ_len) Z_len h T)
+      Do c (handle_t D (1+Γ_len) Z_len h T)
   | TOp op A B v T =>
       match get_case h op with 
       | Some c_op =>
           c_subs2_out (c_shift c_op (Γ_len + Z_len) 2) 
-            v (Fun (handle_t (1+Γ_len) Z_len h T))
+            v (Fun B (handle_t D (1+Γ_len) Z_len h T))
       | None => 
           (* You shouldn't be here *)
-          Op op A B v (handle_t (1+Γ_len) Z_len h T) 
+          Op op A B v (handle_t D (1+Γ_len) Z_len h T) 
       end
   end.
 
 
-Fixpoint tmpl_to_comp Γ_len T :=
+Fixpoint tmpl_to_comp C Γ_len T :=
   match T with
   | TApp n v => App (Var (Γ_len+n)) v
-  | TAbsurd v => Absurd v
+  | TAbsurd v => Absurd C v
   | TProdMatch v T => 
-      ProdMatch v (tmpl_to_comp (2+Γ_len) T)
+      ProdMatch v (tmpl_to_comp C (2+Γ_len) T)
   | TSumMatch v T1 T2 => 
       SumMatch v
-        (tmpl_to_comp (1+Γ_len) T1) 
-        (tmpl_to_comp (1+Γ_len) T2)
+        (tmpl_to_comp C (1+Γ_len) T1) 
+        (tmpl_to_comp C (1+Γ_len) T2)
   | TListMatch v T1 T2 => 
       ListMatch v
-        (tmpl_to_comp Γ_len T1) 
-        (tmpl_to_comp (2+Γ_len) T2)
+        (tmpl_to_comp C Γ_len T1) 
+        (tmpl_to_comp C (2+Γ_len) T2)
   | TDo c T =>
-      Do c (tmpl_to_comp (1+Γ_len) T)
+      Do c (tmpl_to_comp C (1+Γ_len) T)
   | TOp op A B v T =>
-      Op op A B v (tmpl_to_comp (1+Γ_len) T)
+      Op op A B v (tmpl_to_comp C (1+Γ_len) T)
   end.
 
 (* ==================== Welljudged Judgements ==================== *)
@@ -187,24 +187,24 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
     has_vtype' Γ (Pair v1 v2) (TyProd A B)
 | TypeLeft Γ v A B :
     has_vtype Γ v A ->
-    has_vtype' Γ (Left v) (TySum A B)
+    has_vtype' Γ (Left A B v) (TySum A B)
 | TypeRight Γ v A B :
     has_vtype Γ v B ->
-    has_vtype' Γ (Right v) (TySum A B)
+    has_vtype' Γ (Right A B v) (TySum A B)
 | TypeNil Γ A :
-    has_vtype' Γ Nil (TyList A)
+    has_vtype' Γ (Nil A) (TyList A)
 | TypeCons Γ v vs A :
     has_vtype Γ v A ->
     has_vtype Γ vs (TyList A) ->
     has_vtype' Γ (Cons v vs) (TyList A)
 | TypeFun Γ c A C :
     has_ctype (CtxU Γ A) c C ->
-    has_vtype' Γ (Fun c) (TyFun A C)
+    has_vtype' Γ (Fun A c) (TyFun A C)
 | TypeHandler Γ cr h A Σ E D :
     has_ctype (CtxU Γ A) cr D ->
     has_htype Γ h Σ D -> 
     respects Γ h Σ D E ->
-    has_vtype' Γ (Handler cr h) (TyHandler (CTy A Σ E) D)
+    has_vtype' Γ (Handler A cr h) (TyHandler (CTy A Σ E) D)
 | TypeVSubsume Γ v A A' :
     has_vtype Γ v A ->
     vsubtype A A' -> 
@@ -222,7 +222,7 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype' Γ (Ret v) (CTy A SigØ EqsØ)
 | TypeAbsurd Γ v C :
     has_vtype Γ v TyEmpty -> 
-    has_ctype' Γ (Absurd v) C
+    has_ctype' Γ (Absurd C v) C
 | TypeProdMatch Γ v A B c C :
     has_vtype Γ v (TyProd A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
@@ -252,7 +252,7 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
 | TypeLetRec Γ A C c1 c2 D:
     has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     has_ctype (CtxU Γ (TyFun A C)) c2 D ->
-    has_ctype' Γ (LetRec c1 c2) D
+    has_ctype' Γ (LetRec A C c1 c2) D
 | TypeOp Γ op v c Aop Bop Aop' Bop' A Σ E :
     get_op_type Σ op = Some (Aop', Bop') -> 
     vsubtype Aop Aop' -> vsubtype Bop' Bop ->
@@ -272,7 +272,7 @@ with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
     has_htype Γ h Σ D
 
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
-| TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
+| TypeCasesØ Γ D : has_htype' Γ (CasesØ D) SigØ D
 | TypeCasesU Γ h op c A B Σ D :
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c D ->
@@ -292,8 +292,8 @@ with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
     respects Γ' h Σ D E -> 
     judg (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) HypØ
       (Ceq D
-        (handle_t (ctx_len Γ) (tctx_len Z) h T1) 
-        (handle_t (ctx_len Γ) (tctx_len Z) h T2) ) ->
+        (handle_t D (ctx_len Γ) (tctx_len Z) h T1) 
+        (handle_t D (ctx_len Γ) (tctx_len Z) h T2) ) ->
     respects' Γ' h Σ D (EqsU E Γ Z T1 T2)
 
 with judg : ctx -> hypotheses -> formula -> Prop :=
@@ -324,25 +324,30 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Veq A v1 v1') ->
     judg Γ Ψ (Veq B v2 v2') -> 
     judg' Γ Ψ (Veq (TyProd A B) (Pair v1 v2) (Pair v1' v2'))
-| VeqLeft A B Γ Ψ v v' :
+| VeqLeft A A1 A2 B B1 B2 Γ Ψ v v' :
     judg Γ Ψ (Veq A v v') ->
-    judg' Γ Ψ (Veq (TySum A B) (Left v) (Left v'))
-| VeqRight A B Γ Ψ v v' :
+    vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
+    judg' Γ Ψ (Veq (TySum A B) (Left A B v) (Left A B v'))
+| VeqRight A A1 A2 B B1 B2 Γ Ψ v v' :
     judg Γ Ψ (Veq B v v') ->
-    judg' Γ Ψ (Veq (TySum A B) (Right v) (Right v'))
-| VeqNil A Γ Ψ :
-    judg' Γ Ψ (Veq (TyList A) Nil Nil)
+    vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
+    judg' Γ Ψ (Veq (TySum A B) (Right A B v) (Right A B v'))
+| VeqNil A A1 A2 Γ Ψ :
+    vsubtype A1 A -> vsubtype A2 A ->
+    judg' Γ Ψ (Veq (TyList A) (Nil A1) (Nil A2))
 | VeqCons A Γ Ψ v v' vs vs':
     judg Γ Ψ (Veq A v v') ->
     judg Γ Ψ (Veq (TyList A) vs vs') ->
     judg' Γ Ψ (Veq (TyList A) (Cons v vs) (Cons v' vs'))
-| VeqFun A C Γ Ψ c c':
+| VeqFun A A1 A2 C Γ Ψ c c':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c c') ->
-    judg' Γ Ψ (Veq (TyFun A C) (Fun c) (Fun c'))
-| VeqHandler A Σ E D Γ Ψ c c' h h':
+    vsubtype A A1 -> vsubtype A A2 ->
+    judg' Γ Ψ (Veq (TyFun A C) (Fun A1 c) (Fun A2 c'))
+| VeqHandler A A1 A2 Σ E D Γ Ψ c c' h h':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq D c c') ->
     judg Γ Ψ (Heq Σ D h h') ->
-    judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler c h) (Handler c' h'))
+    vsubtype A A1 -> vsubtype A A2 ->
+    judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler A1 c h) (Handler A2 c' h'))
 | VeqSubsume Γ Ψ A A' v1 v2 :
     judg Γ Ψ (Veq A v1 v2) ->
     vsubtype A A' ->
@@ -350,7 +355,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | ηUnit Γ Ψ v:
     judg' Γ Ψ (Veq TyUnit v Unit)
 | ηFun A C Γ Ψ f:
-    judg' Γ Ψ (Veq (TyFun A C) (Fun (App (v_shift f 1 0) (Var 0))) f)
+    judg' Γ Ψ (Veq (TyFun A C) (Fun A (App (v_shift f 1 0) (Var 0))) f)
 (* - - - - - - - - - - - - - - -  Computations - - - - - - - - - - - - - - -  *)
 | CeqSym Γ Ψ C c1 c2 : 
     judg Γ Ψ (Ceq C c1 c2) -> 
@@ -362,8 +367,9 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | CeqRet A Σ E Γ Ψ v v' : 
     judg Γ Ψ (Veq A v v') -> 
     judg' Γ Ψ (Ceq (CTy A Σ E) (Ret v) (Ret v'))
-| CeqAbsurd Γ Ψ C v v' :
-    judg' Γ Ψ (Ceq C (Absurd v) (Absurd v'))
+| CeqAbsurd Γ Ψ C C1 C2 v v' :
+    csubtype C1 C -> csubtype C2 C ->
+    judg' Γ Ψ (Ceq C (Absurd C1 v) (Absurd C2 v'))
 | CeqProdMatch Γ Ψ C v v' A B c c':
     judg Γ Ψ (Veq (TyProd A B) v v') ->
     judg (CtxU (CtxU Γ A) B) (hyp_shift Ψ 2 0) (Ceq C c c') ->
@@ -393,7 +399,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | CeqLetRec Γ Ψ c1 c1' c2 c2' A C D:
     judg (CtxU (CtxU Γ A) (TyFun A C)) (hyp_shift Ψ 2 0) (Ceq C c1 c1') ->
     judg (CtxU Γ (TyFun A C)) (hyp_shift Ψ 1 0) (Ceq D c2 c2') ->
-    judg' Γ Ψ (Ceq D (LetRec c1 c2) (LetRec c1' c2'))
+    judg' Γ Ψ (Ceq D (LetRec A C c1 c2) (LetRec A C c1' c2'))
 | CeqOp Γ Ψ op v v' c c' A A' B B' Aop Bop Ac Σ E:
     get_op_type Σ op = Some (Aop, Bop) ->
     vsubtype A Aop -> vsubtype A' Aop -> vsubtype Bop B -> vsubtype Bop B' ->
@@ -407,41 +413,41 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | OOTB A Σ E Γ' Ψ I Γ Z T1 T2 c1 c2:
     has_eq E Γ Z T1 T2 ->
     wf_inst Γ' I (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) ->
-    c_inst (tmpl_to_comp (ctx_len Γ) T1) I = c1 ->
-    c_inst (tmpl_to_comp (ctx_len Γ) T2) I = c2 ->
+    c_inst (tmpl_to_comp (CTy A Σ E) (ctx_len Γ) T1) I = c1 ->
+    c_inst (tmpl_to_comp (CTy A Σ E) (ctx_len Γ) T2) I = c2 ->
     judg' Γ' Ψ (Ceq (CTy A Σ E) c1 c2)
 | βMatchPair v1 v2 c C Γ Ψ: 
     judg' Γ Ψ 
     (Ceq  C
       (ProdMatch (Pair v1 v2) c) 
       (c_subs2_out c v1 v2) )
-| βMatchLeft v c1 c2 C Γ Ψ:
+| βMatchLeft v c1 c2 C A B Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (SumMatch (Left v) c1 c2)
+      (SumMatch (Left A B v) c1 c2)
       (c_subs_out c1 v) )
-| βMatchRight v c1 c2 C Γ Ψ:
+| βMatchRight v c1 c2 C A B Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (SumMatch (Right v) c1 c2)
+      (SumMatch (Right A B v) c1 c2)
       (c_subs_out c2 v) )
-| βMatchNil c1 c2 C Γ Ψ:
+| βMatchNil c1 c2 C A Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (ListMatch Nil c1 c2)
+      (ListMatch (Nil A) c1 c2)
       c1 )
 | βMatchCons v vs c1 c2 C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
       (ListMatch (Cons v vs) c1 c2)
       (c_subs2_out c2 v vs) )
-| βApp c v C Γ Ψ:
-    judg' Γ Ψ (Ceq C (App (Fun c) v) (c_subs_out c v))
-| βLetRec c1 c2 C Γ Ψ:
+| βApp c v A C Γ Ψ:
+    judg' Γ Ψ (Ceq C (App (Fun A c) v) (c_subs_out c v))
+| βLetRec c1 c2 A C D Γ Ψ:
     judg' Γ Ψ 
-    (Ceq C
-      (LetRec c1 c2)
-      (c_subs_out c2 (Fun (LetRec (c_shift c1 1 2) c1))) )
+    (Ceq D
+      (LetRec A C c1 c2)
+      (c_subs_out c2 (Fun A (LetRec A C (c_shift c1 1 2) c1))) )
 | βDoRet v c C Γ Ψ:
     judg' Γ Ψ (Ceq C (Do (Ret v) c) (c_subs_out c v))
 | βDoOp op A B v c1 c2 C Γ Ψ:
@@ -449,22 +455,23 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     (Ceq C
       (Do (Op op A B v c1) c2)
       (Op op A B v (Do c1 (c_shift c2 1 1))) )
-| βHandleRet c_r h v C Γ Ψ:
+| βHandleRet c_r h v A C Γ Ψ:
     judg' Γ Ψ 
     (Ceq C
-      (Handle (Handler c_r h) (Ret v))
+      (Handle (Handler A c_r h) (Ret v))
       (c_subs_out c_r v) )
-| βHandleOp c_r h op A B  v c_k c_op C Γ Ψ:
+| βHandleOp A c_r h op Aop Bop  v c_k c_op C Γ Ψ:
     get_case h op = Some c_op ->
     judg' Γ Ψ 
     (Ceq C
-      (Handle (Handler c_r h) (Op op A B v c_k))
+      (Handle (Handler A c_r h) (Op op Aop Bop v c_k))
       (c_subs2_out c_op
-        v (Fun (Handle (v_shift (Handler c_r h) 1 0) c_k)) ) )
-| ηEmpty Γ Ψ v n c C:
+        v (Fun Bop (Handle (v_shift (Handler A c_r h) 1 0) c_k)) ) )
+| ηEmpty Γ Ψ v n c C C':
     n <= ctx_len Γ ->
-    has_ctype (ctx_insert Γ n (TyEmpty)) c C ->
-    judg' Γ Ψ (Ceq C (c_subs c n v) (Absurd v) )
+    has_ctype (ctx_insert Γ n (TyEmpty)) c C' ->
+    csubtype C C' ->
+    judg' Γ Ψ (Ceq C' (c_subs c n v) (Absurd C v) )
 | ηPair Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyProd A B)) c C ->
@@ -475,25 +482,25 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     has_ctype (ctx_insert Γ n (TySum A B)) c C ->
     judg' Γ Ψ (Ceq C (c_subs c n v)
       (SumMatch v 
-        (c_subs (c_shift c 1 0) (1+n) (Left (Var 0))) 
-        (c_subs (c_shift c 1 0) (1+n) (Right (Var 0)))) )
+        (c_subs (c_shift c 1 0) (1+n) (Left A B (Var 0))) 
+        (c_subs (c_shift c 1 0) (1+n) (Right A B (Var 0)))) )
 | ηList Γ Ψ v n c C A:
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyList A)) c C ->
     judg' Γ Ψ (Ceq C (c_subs c n v)
       (ListMatch v 
-        (c_subs c n Nil) 
+        (c_subs c n (Nil A)) 
         (c_subs (c_shift c 2 0) (2+n) (Cons (Var 1) (Var 0)))) )
 | ηDo Γ Ψ c C:
     judg' Γ Ψ (Ceq C (Do c (Ret (Var 0))) c)
-| DoLoop Γ Ψ c C:
-    judg' Γ Ψ (Ceq C 
-      (Do (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) c) 
-      (LetRec (App (Var 0) Unit) (App (Var 0) Unit) ) )
-| HandleLoop Γ Ψ v C:
-    judg' Γ Ψ (Ceq C 
-      (Handle v (LetRec (App (Var 0) Unit) (App (Var 0) Unit))) 
-      (LetRec (App (Var 0) Unit) (App (Var 0) Unit)) )
+| DoLoop Γ Ψ c A C D:
+    judg' Γ Ψ (Ceq D 
+      (Do (LetRec A C (App (Var 0) Unit) (App (Var 0) Unit) ) c) 
+      (LetRec A C (App (Var 0) Unit) (App (Var 0) Unit) ) )
+| HandleLoop Γ Ψ v A C D:
+    judg' Γ Ψ (Ceq D 
+      (Handle v (LetRec A C (App (Var 0) Unit) (App (Var 0) Unit))) 
+      (LetRec A C (App (Var 0) Unit) (App (Var 0) Unit)) )
 (* - - - - - - - - - - - - - - -  Cases - - - - - - - - - - - - - - -  *)
 | HeqSym Γ Ψ Σ D h1 h2 : 
     judg Γ Ψ (Heq Σ D h1 h2) -> 
@@ -571,7 +578,7 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | CompInduction Γ Ψ A Σ E φ :
     (* Base case *)
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) 
-      (form_subs (form_shift φ 1 0) 1 (Fun (Ret (Var 1)))) ->
+      (form_subs (form_shift φ 1 0) 1 (Fun TyUnit (Ret (Var 1)))) ->
     (* Operation case *)
     (forall op Aop Bop,
       get_op_type Σ op = Some (Aop, Bop) ->
@@ -580,14 +587,14 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
         (HypU (hyp_shift Ψ 2 0)  
           (Forall Bop 
             (form_subs (form_shift φ 3 0) 3 
-              (Fun (App (Var 2) (Var 1))))))
+              (Fun TyUnit (App (Var 2) (Var 1))))))
         (form_subs (form_shift φ 2 0) 2 
-          (Fun (Op op Aop Bop (Var 2) (App (Var 2) (Var 0)))))
+          (Fun TyUnit (Op op Aop Bop (Var 2) (App (Var 2) (Var 0)))))
     ) ->
     (* Nontermination case *)
     judg Γ Ψ 
       (form_subs φ 0 
-        (Fun (LetRec 
+        (Fun TyUnit (LetRec TyUnit (CTy A Σ E)
           (App (Var 0) Unit)
           (App (Var 0) Unit) ))
       ) ->
