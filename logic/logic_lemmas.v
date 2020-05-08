@@ -18,7 +18,7 @@ Lemma operational_in_logic Γ c c' C:
 Proof.
 intros tys steps.
 assert (has_ctype Γ c' C) as tys' by (eapply preservation; eauto).
-revert C tys tys'. induction steps; intros C tys tys'; apply Ceq.
+revert C tys tys'. induction steps; intros C' tys tys'; apply Ceq.
 all: assumption || (inv tys; assumption) || auto.
 + eapply βMatchPair.
 + eapply βMatchLeft.
@@ -27,14 +27,14 @@ all: assumption || (inv tys; assumption) || auto.
 + eapply βMatchCons.
 + eapply βApp.
 + eapply βLetRec.
-+ destruct C as [A Σ E]. eapply shape_do_full in tys.
++ destruct C' as [A Σ E]. eapply shape_do_full in tys.
   3: reflexivity. 2: reflexivity. destruct tys as [A' [ty1 ty2]].
   eapply CeqDo.
   - eapply IHsteps. eauto. eapply preservation; eauto.
   - apply ceq_refl. auto.
 + eapply βDoRet.
 + eapply βDoOp. 
-+ eapply shape_handle in tys. destruct tys as [C' [tyh tyc]].
++ eapply shape_handle in tys. destruct tys as [C [tyh tyc]].
   eapply CeqHandle. 
   - apply veq_refl. eauto.
   - apply IHsteps. assumption. eapply preservation; eauto.
@@ -89,15 +89,21 @@ destruct orig. destruct H1.
     * inv H2. assumption.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqPair; eapply VEQ; eauto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqLeft. eapply VEQ; eauto.
+  all: inv H0; apply vsubtype_refl; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqRight. eapply VEQ; eauto.
+  all: inv H0; apply vsubtype_refl; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqNil.
+  all: inv H0; apply vsubtype_refl; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqCons; eapply VEQ; eauto.
 + clear VEQ HEQ. unfold v_subs. unfold c_subs in CEQ. simpl. 
   apply VeqFun. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). 
   eapply CEQ; eauto. apply veq_shift_typesafe; eauto.
-  inv H0. auto. subst. apply ctx_insert_extend. simpl. all: omega.
+  inv H0. auto. subst. apply ctx_insert_extend. simpl. all: aomega.
+  all: inv H0; apply vsubtype_refl; auto.
 + clear VEQ. unfold v_subs. unfold c_subs in CEQ. unfold h_subs in HEQ. simpl.
-  eapply VeqHandler. 3: apply csubtype_refl; inv H0; assumption.
+  eapply VeqHandler.
+  all: try apply vsubtype_refl || apply csubtype_refl.
+  all: try (inv H0; inv H6; assumption).
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
     apply veq_shift_typesafe; eauto. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
@@ -112,7 +118,7 @@ destruct orig. destruct H1.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
   apply CeqRet. eauto.
 + clear CEQ HEQ. unfold c_subs. unfold v_subs in VEQ. simpl.
-  apply CeqAbsurd.
+  apply CeqAbsurd. all: apply csubtype_refl; auto.
 + clear HEQ. unfold c_subs in *. unfold v_subs in VEQ. simpl.
   eapply CeqProdMatch. eauto.
   rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
@@ -153,29 +159,45 @@ destruct orig. destruct H1.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
     apply veq_shift_typesafe. eauto. inv H2. inv H3. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
-+ clear HEQ. unfold c_subs in *. unfold v_subs in *. simpl. eapply CeqOp; eauto.
-  rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
-  apply veq_shift_typesafe. eauto. inv H3. inv H4. assumption.
-  subst. apply ctx_insert_extend. simpl. all: omega.
++ clear HEQ. unfold c_subs in *. unfold v_subs in *. simpl. 
+  eapply CeqOp; eauto.
+  - clear CEQ. eapply VEQ in vseq as IH. all: clear VEQ. 2: eauto. all: eauto.
+    eapply veq_subtype; eauto. 
+    apply get_op_type_wf in H1. 2: inv H0; auto. destruct H1. auto.
+  - clear VEQ.
+    assert (forall A, wf_vtype A -> 
+      veq A_s (CtxU Γ A) (v_shift v_s 1 0) (v_shift v_s' 1 0) ) as vseq_ext by
+    (intros; eapply veq_shift_typesafe in vseq; simpl in vseq; eauto).
+    specialize (vseq_ext Bop).
+    eapply CEQ in vseq_ext as IH. all: clear CEQ. 2: eauto.
+    3: instantiate (1:= S i).
+    * rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
+      inv vseq. eapply ctx_subtype_ceq; eauto.
+      all: apply WfCtxU || apply STyCtxU || omega; auto. inv H6. auto.
+      apply get_op_type_wf in H1. 2: inv H0; auto. destruct H1. auto.
+      apply ctx_subtype_refl. inv H6. auto.
+    * inv H5. inv H6. auto.
+    * subst. simpl. auto.
+    * simpl. omega.
 + assert (ceq C' Γ (c_subs c i v_s) (c_subs c i v_s')).
   eapply ceq_subtype; eauto. inv H3. assumption.
 }{
 intros vseq ctxs clen. destruct orig. destruct H2.
 + clear VEQ CEQ HEQ. 
-  assert (has_htype Γ CasesØ SigØ D).
+  assert (has_htype Γ (CasesØ D) SigØ D).
   {apply TypeH. inv vseq. inv H2. 2:apply WfSigØ. all:auto. apply TypeCasesØ. }
   eapply Heq; eauto; try (apply sig_subtype_refl; assumption). 
   all: unfold h_subs; simpl. apply HeqSigØ.
 + unfold h_subs in *. unfold c_subs in *. simpl.
   eapply HEQ in H2 as IHh; eauto. eapply CEQ in H3 as IHc.
   all: clear VEQ CEQ HEQ.
-  4: instantiate (2:=CtxU (CtxU Γ (TyFun Bop D)) Aop).
+  4: instantiate (2:=CtxU (CtxU Γ A) (TyFun B D)).
   Focus 3. 
     erewrite <-ctx_insert_extend. f_equal. erewrite <-ctx_insert_extend.
     f_equal. eauto.
   Focus 2.
     eapply veq_shift_typesafe. eapply veq_shift_typesafe. eauto.
-    apply WfTyFun. all: inv H0; auto.
+    2:apply WfTyFun. all: inv H0; auto.
   eapply heq_case_extend_structural; eauto.
   all: try rewrite v_shift_shift, v_shift_shift in IHc; simpl in *.
   - apply negshift_get_case_None. apply sub_get_case_None.
@@ -257,19 +279,3 @@ all: intros wfc' orig.
     apply heq_insert_typesafe. auto. inv wfc'. auto.
     all: inv orig; eapply has_htype_is_under_ctx; eauto.
 Qed.
-
-(* 
-Lemma handle_t_makes_sense Γ' x c_r h A Σ E D Γ Z T:
-  has_vtype Γ' (Handler x c_r h)  (TyHandler (CTy A Σ E) D) ->
-  wf_t Γ Z T Σ ->
-  ceq D (join_ctxs Γ' (join_ctx_tctx Γ Z D))
-    (handle_t (ctx_len Γ) (tctx_len Z) h T)
-    (Handle 
-      (Sub.v_shift (Handler x c_r h) (ctx_len Γ + tctx_len Z) 0) 
-      (instantiate_t (tctx_len Z) T))
-.
-Proof.
-induction T; intros htys wft.
-+ simpl. *)
-
-(* h : C => D -> c1 ~C c2 -> with h handle c1 ~D with h handle c2 *)

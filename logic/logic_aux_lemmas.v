@@ -12,7 +12,7 @@ Lemma heq_cases_ceq Σ D Γ h1 h2 op A B c1 c2 :
   heq Σ D Γ h1 h2 -> get_op_type Σ op = Some (A, B) ->
   get_case h1 op = Some c1 ->
   get_case h2 op = Some c2 ->
-  ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2.
+  ceq D (CtxU (CtxU Γ A) (TyFun B D)) c1 c2.
 Proof.
 intros eqs gets finds1 finds2.
 induction Σ. simpl in gets. discriminate.
@@ -45,12 +45,12 @@ intros wf sty. induction Σ' as [ | Σ' IH o A' B'].
   destruct case2 as [c2 find2].
   clear A1 B1 get1 A2 B2 get2.
   eapply HeqSigU; eauto.
-  assert (ceq D (CtxU (CtxU Γ (TyFun B'0 D)) A'0) c1 c2).
+  assert (ceq D (CtxU (CtxU Γ A'0) (TyFun B'0 D)) c1 c2).
   - eapply heq_cases_ceq. 2: eauto.
     eapply Heq. 2: exact H0. all: eauto.
   - eapply ctx_subtype_ceq; eauto.
-    * inv H2. apply WfCtxU. apply WfCtxU. 2: apply WfTyFun. all: auto.
-    * apply STyCtxU. apply STyCtxU. 2: apply STyFun. all: auto.
+    * inv H2. apply WfCtxU. apply WfCtxU. 3: apply WfTyFun. all: auto.
+    * apply STyCtxU. apply STyCtxU. 3: apply STyFun. all: auto.
       all: inv H2; (apply ctx_subtype_refl || apply csubtype_refl); auto.
 Qed.
 
@@ -74,23 +74,31 @@ destruct H3; apply Veq; auto.
 + inv H0. apply VeqInt; eauto.
 + inv H0. inv H. eapply VeqPair; eapply veq_subtype; eauto.
 + inv H0. eapply VeqLeft. eapply veq_subtype; eauto. inv H. auto.
+  all: eapply vsubtype_trans; eauto.
 + inv H0. eapply VeqRight. eapply veq_subtype; eauto. inv H. auto.
+  all: eapply vsubtype_trans; eauto.
 + inv H0. eapply VeqNil.
+  all: eapply vsubtype_trans; eauto.
 + inv H0. eapply VeqCons; eapply veq_subtype; eauto. inv H. auto.
   apply STyList. auto.
 + inv H0. apply VeqFun. inv H. eapply ceq_subtype in H3; eauto.
   eapply ctx_subtype_ceq. eauto.
   - apply WfCtxU; auto. inv H1. auto.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-+ inv H0. inv H8. eapply VeqHandler. eapply ceq_subtype in H3; eauto.
-  eapply ctx_subtype_ceq. eauto. all: inv H; inv H7.
+  - eapply vsubtype_trans; eauto.
+  - eapply vsubtype_trans; eauto.
++ inv H0. eapply ceq_subtype in H3; eauto. clear ceq_subtype veq_subtype.
+  inv H10. eapply VeqHandler.
+  eapply ctx_subtype_ceq. eauto. all: inv H; inv H9.
   - apply WfCtxU; auto. inv H1. assumption.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-  - assumption.
   - eapply heq_subtype; eauto.
+  - eapply vsubtype_trans; eauto.
+  - eapply vsubtype_trans; eauto.
   - eapply csubtype_trans; eauto.
+  - auto.
 + inv H0. apply ηUnit.
-+ inv H0. apply ηFun.
++ inv H0. apply ηFun. eapply vsubtype_trans; eauto.
 }{
 intros. inv orig.
 assert (wf_ctx Γ) as wfctx by (inv H1; assumption).
@@ -102,7 +110,7 @@ apply Ceq; auto. destruct H3.
 + apply CeqSym. eauto.
 + eapply CeqTrans; eauto.
 + inv H0. inv H. eapply CeqRet; eauto.
-+ eapply CeqAbsurd; eauto.
++ eapply CeqAbsurd; eauto. all: eapply csubtype_trans; eauto.
 + eapply CeqProdMatch; eauto.
 + eapply CeqSumMatch; eauto.
 + eapply CeqListMatch; eauto.
@@ -123,6 +131,7 @@ apply Ceq; auto. destruct H3.
 + inv H0. eapply sig_subtype_get_Some in H3; eauto.
   destruct H3 as [A_op'[B_op'[gets[asty bsty]]]].
   eapply CeqOp; eauto.
+  all: try (eapply vsubtype_trans; eauto).
   - eapply veq_subtype; eauto.
     eapply get_op_type_wf in gets. destruct gets. auto. inv H. auto.
   - eapply ctx_subtype_ceq; eauto.
@@ -130,9 +139,7 @@ apply Ceq; auto. destruct H3.
     * apply WfCtxU. auto. 
       eapply get_op_type_wf in gets. destruct gets. auto. inv H. auto.
     * eapply STyCtxU. apply ctx_subtype_refl. all: auto.
-+ inv H0. eapply OOTB; eauto. eapply eqs_subtype_contains; eauto.
-  eapply wf_inst_tctx_subtype; eauto.
-  apply STyCTy; auto.
++ eapply OOTB; eauto. eapply csubtype_trans; eauto.
 + eapply βMatchPair.
 + eapply βMatchLeft.
 + eapply βMatchRight.
@@ -144,8 +151,7 @@ apply Ceq; auto. destruct H3.
 + eapply βDoOp.
 + eapply βHandleRet.
 + eapply βHandleOp. eauto.
-+ eapply ηEmpty. omega.
-  apply TypeC. inv H4. eauto. auto. eapply TypeCSubsume; eauto.
++ eapply ηEmpty; aomega. eapply csubtype_trans; eauto.
 + eapply ηPair. omega.
   apply TypeC. inv H4. eauto. auto. eapply TypeCSubsume; eauto.
 + eapply ηSum. omega.
@@ -161,17 +167,17 @@ Qed.
 Lemma heq_case_extend_trivial Σ D Γ h1 h2 op A1 A2 B1 B2 c1 c2:
   heq Σ D Γ h1 h2 ->
   get_case h1 op = None -> get_case h2 op = None ->
-  has_ctype (CtxU (CtxU Γ (TyFun B1 D)) A1) c1 D ->
-  has_ctype (CtxU (CtxU Γ (TyFun B2 D)) A2) c2 D ->
-  heq Σ D Γ (CasesU h1 op c1) (CasesU h2 op c2).
+  has_ctype (CtxU (CtxU Γ A1) (TyFun B1 D)) c1 D ->
+  has_ctype (CtxU (CtxU Γ A2) (TyFun B2 D)) c2 D ->
+  heq Σ D Γ (CasesU h1 op A1 B1 c1) (CasesU h2 op A2 B2 c2).
 Proof.
 intros orig f1 f2 tys1 tys2.
-assert (wf_vtype A1) as wfa1 by (inv tys1; inv H; auto).
-assert (wf_vtype A2) as wfa2 by (inv tys2; inv H; auto).
-assert (wf_vtype B1) as wfb1 by (inv tys1; inv H; inv H4; inv H6; auto).
-assert (wf_vtype B2) as wfb2 by (inv tys2; inv H; inv H4; inv H6; auto).
-assert (wf_ctype D) as wfd by (inv tys1; auto).
-assert (wf_ctx Γ) as wfctx by (inv orig; inv H2; auto).
+assert (wf_vtype A1) as wfa1. { inv tys1. inv H. inv H4. auto. }
+assert (wf_vtype A2) as wfa2. { inv tys2. inv H. inv H4. auto. }
+assert (wf_vtype B1) as wfb1. { inv tys1. inv H. inv H5. auto. }
+assert (wf_vtype B2) as wfb2. { inv tys2. inv H. inv H5. auto. }
+assert (wf_ctype D) as wfd. { inv tys1. auto. }
+assert (wf_ctx Γ) as wfctx. { inv orig. inv H2. auto. }
 destruct orig.
 assert (get_op_type Σ1 op = None) as getn1.
 { destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
@@ -206,18 +212,18 @@ Qed.
 Lemma heq_case_extend_structural Σ D Γ h1 h2 op A B c1 c2:
   heq Σ D Γ h1 h2 ->
   get_case h1 op = None -> get_case h2 op = None ->
-  ceq D (CtxU (CtxU Γ (TyFun B D)) A) c1 c2 ->
-  heq (SigU Σ op A B) D Γ (CasesU h1 op c1) (CasesU h2 op c2).
+  ceq D (CtxU (CtxU Γ A) (TyFun B D)) c1 c2 ->
+  heq (SigU Σ op A B) D Γ (CasesU h1 op A B c1) (CasesU h2 op A B c2).
 Proof.
 intros orig f1 f2 ceq12.
-assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c1 D) as tys1 
+assert (has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c1 D) as tys1 
 by (inv ceq12; auto).
-assert (has_ctype (CtxU (CtxU Γ (TyFun B D)) A) c2 D) as tys2 
+assert (has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c2 D) as tys2 
 by (inv ceq12; auto).
-assert (wf_vtype A) as wfa by (inv tys1; inv H; auto).
-assert (wf_vtype B) as wfb by (inv tys1; inv H; inv H4; inv H6; auto).
-assert (wf_ctype D) as wfd by (inv tys1; auto).
-assert (wf_ctx Γ) as wfctx by (inv orig; inv H2; auto).
+assert (wf_vtype A) as wfa. { inv tys1. inv H. inv H4. auto. }
+assert (wf_vtype B) as wfb. { inv tys1. inv H. inv H5. auto. }
+assert (wf_ctype D) as wfd. { inv tys1. auto. }
+assert (wf_ctx Γ) as wfctx. { inv orig. inv H2. auto. }
 destruct orig.
 assert (get_op_type Σ1 op = None) as getn1.
 { destruct (get_op_type Σ1 op) eqn: g. destruct p. 2: reflexivity.
@@ -249,6 +255,7 @@ eapply Heq. apply WfSigU; auto. exact ss1. exact ss2.
   * eapply heq_case_extend_trivial; eauto. eapply Heq. 2:exact H0. all: eauto.
 Qed.
 
+
 (* ================== Reflexivity, Symmetry, Transitivity ================== *)
 
 Lemma veq_refl Γ v A   : has_vtype Γ v A -> veq A Γ v v
@@ -263,16 +270,21 @@ apply Veq; auto. all: destruct orig; auto. destruct H1.
 + eapply VeqVar. eauto. apply vsubtype_refl. assumption.
 + apply VeqPair; eauto.
 + apply VeqLeft; eauto.
+  all: inv H0; apply vsubtype_refl; auto.
 + apply VeqRight; eauto.
+  all: inv H0; apply vsubtype_refl; auto.
 + apply VeqNil; eauto.
+  all: inv H0; apply vsubtype_refl; auto.
 + apply VeqCons; eauto.
 + apply VeqFun; eauto.
-+ eapply VeqHandler; eauto. apply csubtype_refl. inv H2. assumption.
+  all: inv H0; apply vsubtype_refl; auto.
++ eapply VeqHandler; eauto.
+  all: inv H0; inv H6; apply vsubtype_refl || apply csubtype_refl; auto.
 + apply veq_refl in H1. eapply veq_subtype in H1; eauto. inv H1. assumption.
 }{
 apply Ceq; auto. all: destruct orig; auto. destruct H1.
 + apply CeqRet. auto.
-+ apply CeqAbsurd.
++ apply CeqAbsurd. all: apply csubtype_refl; auto.
 + eapply CeqProdMatch; eauto.
 + eapply CeqSumMatch; eauto.
 + eapply CeqListMatch; eauto.
@@ -280,7 +292,12 @@ apply Ceq; auto. all: destruct orig; auto. destruct H1.
 + eapply CeqApp; eauto.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec; eauto.
-+ eapply CeqOp; eauto.
++ apply get_op_type_wf in H1 as wf. destruct wf.
+  eapply CeqOp; eauto. 
+  - apply veq_refl in H4. eapply veq_subtype; eauto.
+  - apply ceq_refl in H5. eapply ctx_subtype_ceq; eauto.
+    all: apply WfCtxU || apply STyCtxU; auto. apply ctx_subtype_refl. auto.
+  - inv H0. auto.
 + apply ceq_refl in H1. eapply ceq_subtype in H1; eauto. inv H1. assumption.
 }{
 eapply Heq. inv orig. assumption.
@@ -289,7 +306,7 @@ apply sig_subtype_refl. inv orig. assumption.
 assumption. assumption.
 destruct orig. destruct H2.
 + eapply HeqSigØ.
-+ assert (get_case (CasesU h op cop) op = Some cop).
++ assert (get_case (CasesU h op A B c) op = Some c).
   { simpl. destruct (op==op). auto. destruct n. auto. }
   eapply HeqSigU; eauto.
   eapply heq_case_extend_trivial; eauto; inv H0; auto.

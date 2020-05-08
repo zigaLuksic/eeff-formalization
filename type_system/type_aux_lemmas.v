@@ -30,13 +30,13 @@ all: assert (forall A Γ, S(ctx_len Γ) = ctx_len (CtxU Γ A)) as ext by auto.
 all: erewrite ext; eauto; erewrite ext; eauto.
 }{
 intro types. destruct types. destruct H2; simpl. auto. constructor; eauto.
-assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ (TyFun Bop D)) Aop)) by auto.
+assert (S(S(ctx_len Γ)) = ctx_len(CtxU(CtxU Γ A) (TyFun B D))) by auto.
 rewrite H4. eauto.
 }
 Qed.
 
 
-Lemma wf_is_under_ctx_tctx Γ Z T Σ:
+Lemma wf_t_is_under_ctx_tctx Γ Z T Σ:
   wf_t Γ Z T Σ -> 
   t_under_var T (ctx_len Γ) /\ t_under_tvar T (tctx_len Z).
 Proof.
@@ -61,14 +61,14 @@ revert Γ. induction T; intros Γ wf.
   all: apply IHT in H5; destruct H5; auto.
 + inv wf. simpl. constructor. constructor.
   eapply has_vtype_is_under_ctx. eauto.
-  all: apply IHT in H7; destruct H7; assumption.
+  all: apply IHT in H13; destruct H13; assumption.
 Qed.
 
 
-Lemma handle_t_no_var h i Γ Z T Σ:
+Lemma handle_t_no_var h i D Γ Z T Σ:
   h_no_var h i -> wf_t Γ Z T Σ ->
   c_no_var 
-    (handle_t (ctx_len Γ) (tctx_len Z) h T)
+    (handle_t D (ctx_len Γ) (tctx_len Z) h T)
     (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert h Γ i. induction T; intros; simpl.
@@ -77,9 +77,9 @@ all: assert (forall A Γ, S(ctx_len Γ)=ctx_len (CtxU Γ A)) as sctx by
 all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   (intros; omega).
 + constructor.
-  all: apply wf_is_under_ctx_tctx in H0; destruct H0; simpl in *.
+  all: apply wf_t_is_under_ctx_tctx in H0; destruct H0; simpl in *.
   omega. eapply v_under_var_no_var; eaomega.
-+ apply wf_is_under_ctx_tctx in H0. destruct H0.
++ apply wf_t_is_under_ctx_tctx in H0. destruct H0.
   eapply v_under_var_no_var; eaomega.
 + constructor; inv H0.
   - eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. all: eaomega.
@@ -100,18 +100,18 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     * eapply get_case_no_var in finds; eauto.
       assert (S(S(i+tctx_len Z+ctx_len Γ))=(ctx_len Γ+tctx_len Z)+(2+i)).
       omega. rewrite H0. apply c_no_var_shift; eaomega.
-    * apply v_no_var_shift. eapply v_under_var_no_var.
-      eapply has_vtype_is_under_ctx. all: eaomega.
-    * rewrite slen, (sctx Bop). eauto.
+    * apply c_no_var_shift. rewrite slen, (sctx v0). eapply IHT.
+      all: aomega.
+    * eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. all: eaomega.
   - simpl. constructor.
     * eapply v_under_var_no_var. eapply has_vtype_is_under_ctx. all: eaomega.
-    * rewrite slen, (sctx Bop). eauto.
+    * rewrite slen, (sctx v0). eauto.
 Qed.
 
 
-Lemma handle_t_under_var h i Γ Z T Σ:
+Lemma handle_t_under_var h i D Γ Z T Σ:
   h_under_var h i -> wf_t Γ Z T Σ ->
-  c_under_var (handle_t (ctx_len Γ) (tctx_len Z) h T) 
+  c_under_var (handle_t D (ctx_len Γ) (tctx_len Z) h T) 
     (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert h Γ i. induction T; intros; simpl.
@@ -120,9 +120,9 @@ all: assert (forall A Γ, S(ctx_len Γ)=ctx_len (CtxU Γ A)) as sctx by
 all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   (intros; omega).
 + constructor.
-  all: apply wf_is_under_ctx_tctx in H0; destruct H0; simpl in *. 
+  all: apply wf_t_is_under_ctx_tctx in H0; destruct H0; simpl in *. 
   omega. eapply v_under_var_weaken; eaomega.
-+ apply wf_is_under_ctx_tctx in H0. destruct H0.
++ apply wf_t_is_under_ctx_tctx in H0. destruct H0.
   eapply v_under_var_weaken; eaomega.
 + constructor; inv H0.
   - eapply v_under_var_weaken. eapply has_vtype_is_under_ctx. eauto. omega.
@@ -142,21 +142,21 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     * eapply get_case_under_var in finds; eauto.
       assert (S(S(i+tctx_len Z+ctx_len Γ))=(ctx_len Γ+tctx_len Z)+(2+i)).
       omega. rewrite H0. apply c_under_var_shift; eaomega.
-    * apply v_under_var_shift. eapply v_under_var_weaken.
-      eapply has_vtype_is_under_ctx. all: eaomega.
-    * rewrite slen, (sctx Bop). eauto.
+    * apply c_under_var_shift. rewrite slen, (sctx v0). eapply IHT.
+      all: aomega.
+    * eapply v_under_var_weaken. eapply has_vtype_is_under_ctx. eauto. omega.
   - simpl. constructor.
     * eapply v_under_var_weaken. eapply has_vtype_is_under_ctx. eauto. omega.
-    * rewrite slen, (sctx Bop). eauto.
+    * rewrite slen, (sctx v0). eauto.
 Qed.
 
 (* ==================== Handling and Shifts. ==================== *)
 
 Lemma handle_t_shift Γ' Γ Z h T Σ D i:
   wf_t Γ Z T Σ -> has_htype Γ' h Σ D -> 
-    handle_t (ctx_len Γ) (tctx_len Z) (h_shift h 1 i) T
+    handle_t D (ctx_len Γ) (tctx_len Z) (h_shift h 1 i) T
   = c_shift 
-      (handle_t (ctx_len Γ) (tctx_len Z) h T) 
+      (handle_t D (ctx_len Γ) (tctx_len Z) h T) 
       1 (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
@@ -203,19 +203,19 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   * rewrite c_shift_subs. 2: omega. f_equal; simpl.
     assert (S(S(i+tctx_len Z+ctx_len Γ))=(tctx_len Z+ctx_len Γ)+S(S i))
     as cext by omega. rewrite cext.
-    rewrite c_shift_comm. f_equal. omega. omega.
-    rewrite (v_shift_too_high (v_shift v 1 0)). auto.
-    apply v_under_var_shift. apply has_vtype_is_under_ctx in H6.
-    eapply v_under_var_weaken. all: eaomega. 
-  * f_equal. rewrite slen, (sctx Bop). auto. 
+    rewrite c_shift_comm. f_equal. omega. omega. f_equal.
+    rewrite (sctx v0), IHT, c_shift_comm; aomega.
+    f_equal. all: simpl; omega.
+  * rewrite v_shift_too_high. auto. 
+    apply has_vtype_is_under_ctx in H12. eapply v_under_var_weaken; eaomega.
 Qed.
 
 
 Lemma handle_t_negshift Γ' Γ Z h T Σ D i:
   h_no_var h i -> wf_t Γ Z T Σ -> has_htype Γ' h Σ D -> 
-    handle_t (ctx_len Γ) (tctx_len Z) (h_negshift h 1 i) T
+    handle_t D (ctx_len Γ) (tctx_len Z) (h_negshift h 1 i) T
   = c_negshift 
-      (handle_t (ctx_len Γ) (tctx_len Z) h T) 
+      (handle_t D (ctx_len Γ) (tctx_len Z) h T) 
       1 (i + tctx_len Z + ctx_len Γ).
 Proof.
 revert Γ h i. induction T; intros Γ h i novar wf types; simpl; inv wf.
@@ -261,29 +261,30 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
   eapply get_case_no_var in find as cop_novar; eauto.
   erewrite negshift_get_case_Some, find; eauto.
   unfold c_subs2_out. unfold c_subs_out.
-  rewrite c_negshift_subs. 2: omega. f_equal; simpl. 
-  * rewrite c_negshift_subs. 2: omega. f_equal; simpl.
-    rewrite cext, c_shift_negshift_comm. f_equal. auto. omega.
-    rewrite v_negshift_too_high. auto.
-    - apply v_under_var_shift. apply has_vtype_is_under_ctx in H6.
-      eapply v_under_var_weaken. all: eaomega. 
-    - simpl. rewrite cext. apply c_no_var_shift. eauto. omega.
-    - apply v_no_var_shift. apply has_vtype_is_under_ctx in H6.
-      eapply v_under_var_no_var. all: eaomega. 
-  * f_equal. rewrite slen, (sctx Bop). auto.
-  * apply c_no_var_subs. simpl. rewrite cext.
-    apply c_no_var_shift; eaomega. 
-    apply v_no_var_shift. apply has_vtype_is_under_ctx in H6.
-    eapply v_under_var_no_var. all: eaomega.
-  * simpl. rewrite slen, (sctx Bop). eapply handle_t_no_var; eauto.
+  rewrite c_negshift_subs. 2: omega. f_equal.
+  * rewrite c_negshift_subs. 2: omega. simpl.
+    rewrite cext, c_shift_negshift_comm. do 2 f_equal.
+    rewrite (sctx v0), IHT; auto.
+    rewrite c_shift_negshift_comm. f_equal. all: simpl; aomega.
+    - rewrite (sctx v0). eapply handle_t_no_var; eauto. 
+    - rewrite cext. apply c_no_var_shift; aomega.
+    - rewrite slen. apply c_no_var_shift. 
+      rewrite (sctx v0). eapply handle_t_no_var. all: eaomega.
+  * rewrite v_negshift_too_high. auto. 
+    apply has_vtype_is_under_ctx in H12. eapply v_under_var_weaken; eaomega.
+  * apply c_no_var_subs; simpl. rewrite cext.
+    apply c_no_var_shift. all: eaomega.
+    rewrite slen. apply c_no_var_shift. 
+    rewrite (sctx v0). eapply handle_t_no_var. all: eaomega.
+  * apply has_vtype_is_under_ctx in H12. eapply v_under_var_no_var; eaomega.
 Qed.
 
 
 Lemma handle_t_sub Γ' Γ Z h T Σ D i v_s:
   wf_t Γ Z T Σ -> has_htype Γ' h Σ D ->
-    handle_t (ctx_len Γ) (tctx_len Z) (h_sub h (i, v_s)) T
+    handle_t D (ctx_len Γ) (tctx_len Z) (h_sub h (i, v_s)) T
   = c_sub 
-      (handle_t (ctx_len Γ) (tctx_len Z) h T)
+      (handle_t D (ctx_len Γ) (tctx_len Z) h T)
       (i+tctx_len Z+ctx_len Γ, v_shift v_s (tctx_len Z+ctx_len Γ) 0).
 Proof.
 revert Γ h i. induction T; intros Γ h i wf types; simpl; inv wf.
@@ -339,14 +340,13 @@ all: assert (forall x, S(i+tctx_len Z+x) = i+tctx_len Z+S x) as slen by
     assert (S(S(i+tctx_len Z+ctx_len Γ))=(ctx_len Γ+tctx_len Z)+S(S i))
     as cext by omega. rewrite cext.
     rewrite c_shift_sub, v_shift_shift. do 2 f_equal. simpl.
-    rewrite (v_shift_comm _ _ 0). f_equal. all: try omega.
-    rewrite v_sub_too_high. auto.
-    apply v_under_var_shift. apply has_vtype_is_under_ctx in H6.
-    eapply v_under_var_weaken. all: eaomega. 
-  * assert (tctx_len Z + ctx_len Γ + 1 = tctx_len Z + S(ctx_len Γ)) as same.
-    omega. f_equal. rewrite v_shift_shift, same, slen, (sctx Bop). auto.
+    rewrite (v_shift_comm _ _ 0). f_equal. all: try omega. f_equal.
+    rewrite slen, (sctx v0), IHT; auto.
+    rewrite c_shift_sub, (v_shift_comm 1 0). do 3 f_equal.
+    rewrite v_shift_shift. f_equal. all: simpl; omega.
+  * rewrite v_sub_too_high. auto.
+    apply has_vtype_is_under_ctx in H12. eapply v_under_var_weaken; eaomega.
 Qed.
-
 
 (* ==================== Safety and Shifts. ==================== *)
 
@@ -484,10 +484,11 @@ inv orig. destruct H1.
   simpl. eapply TypeLetRec.
   - do 2 rewrite ctx_insert_extend. auto.
   - rewrite ctx_insert_extend. auto.
-+ specialize (VL _ _ _ H2) as IHv.
-  specialize (CL _ _ _ H3) as IHc.
++ specialize (VL _ _ _ H4) as IHv.
+  specialize (CL _ _ _ H5) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
-  simpl. eapply TypeOp. 3: rewrite ctx_insert_extend. all: eauto.
+  simpl. eapply TypeOp; eauto. 
+  rewrite ctx_insert_extend. all: eauto.
 + specialize (CL _ _ _ H1) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   eapply TypeCSubsume; auto.
@@ -549,14 +550,14 @@ inv orig. destruct H1.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqRight; eauto.
 + clear VL CL HL RL VEL CEL HEL WF.
-simpl. eapply VeqNil.
+  simpl. eapply VeqNil; auto.
 + specialize (VEL _ _ _ _ H1) as IH1.
   specialize (VEL _ _ _ _ H2) as IH2.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqCons; eauto.
 + specialize (CEL _ _ _ _ H1) as IH.
   clear VL CL HL RL VEL CEL HEL WF.
-  simpl. eapply VeqFun.
+  simpl. eapply VeqFun; auto.
   rewrite ctx_insert_extend. auto.
 + specialize (CEL _ _ _ _ H1) as IHc.
   specialize (HEL _ _ _ _ _ H2) as IHh.
@@ -566,7 +567,7 @@ simpl. eapply VeqNil.
 + clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply ηUnit.
 + clear VL CL HL RL VEL CEL HEL WF.
-  simpl. rewrite <-v_shift_comm. apply ηFun. omega.
+  simpl. rewrite <-v_shift_comm. apply ηFun. all: aomega.
 }{
 intros wfins. apply Ceq.
 { inv orig; eauto. }
@@ -583,7 +584,7 @@ inv orig. destruct H1.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply CeqRet. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply CeqAbsurd.
+  simpl. apply CeqAbsurd; auto.
 + specialize (VEL _ _ _ _ H1) as IHv.
   specialize (CEL _ _ _ _ H2) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
@@ -620,16 +621,16 @@ inv orig. destruct H1.
   simpl. eapply CeqLetRec.
   do 2 rewrite ctx_insert_extend; auto.
   rewrite ctx_insert_extend; auto.
-+ specialize (VEL _ _ _ _ H2) as IHv.
-  specialize (CEL _ _ _ _ H3) as IHc.
++ specialize (VEL _ _ _ _ H6) as IHv.
+  specialize (CEL _ _ _ _ H7) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply CeqOp; eauto.
   rewrite ctx_insert_extend; auto.
-+ specialize (WF _ _ _ H2) as IHwf.
++ specialize (WF _ _ _ H4) as IHwf.
   clear VL CL HL RL VEL CEL HEL WF.
   eapply OOTB; eauto.
-  rewrite <-c_shift_inst. rewrite H3. simpl. auto.
-  rewrite <-c_shift_inst. rewrite H4. simpl. auto.
+  rewrite <-c_shift_inst. rewrite H5. simpl. auto.
+  rewrite <-c_shift_inst. rewrite H6. simpl. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βMatchPair as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
@@ -672,20 +673,22 @@ inv orig. destruct H1.
   apply rule. all: omega.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βHandleOp as rule.
-  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
-  rewrite c_shift_subs, c_shift_subs, <-v_shift_comm.
-  simpl. rewrite <-c_shift_comm, <-h_shift_comm.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl in *.
+  rewrite c_shift_subs, c_shift_subs. simpl. 
+  rewrite <-(c_shift_comm 1 (S(S i))), <-(c_shift_comm 1 (S i)).
+  rewrite <-(c_shift_comm 1 (S i)), <-h_shift_comm, <-(h_shift_comm 1 i).
   eapply rule. apply shift_get_case_Some. eauto. all: omega.
-+ specialize (CL _ _ _ H2) as IHc.
++ specialize (CL _ _ _ H3) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. destruct (n<=?i) eqn:ni.
   - apply leb_complete in ni.
     rewrite c_shift_subs. simpl.
-    eapply ηEmpty. specialize (ctx_len_insert_trivial Γ i A_ins) as triv. omega.
+    eapply ηEmpty; auto. 
+    specialize (ctx_len_insert_trivial Γ i A_ins) as triv. omega.
     rewrite <-ctx_insert_comm. all: aomega.
   - apply leb_complete_conv in ni.
     rewrite c_shift_subs_alt.
-    eapply ηEmpty. rewrite ctx_len_insert; omega.
+    eapply ηEmpty; auto. rewrite ctx_len_insert; omega.
     rewrite ctx_insert_comm. all: aomega.
 + specialize (CL _ _ _ H2) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
@@ -1033,11 +1036,11 @@ intros gets tyvs. apply TypeC; inv orig. auto. auto. destruct H1.
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
     all: inv H1; inv H3. 2: assumption. inv H7. assumption. 
   - eapply IHc2. exact gets. inv H1. inv H3. apply v_shift_typesafe; auto.
-+ specialize (VL _ _ _ H2) as IHv. 
-  specialize (CL _ _ _ H3) as IHc.
++ specialize (VL _ _ _ H4) as IHv. 
+  specialize (CL _ _ _ H5) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply TypeOp; eauto.
-  eapply IHc. exact gets. inv H3. inv H4. apply v_shift_typesafe; auto.
+  eapply IHc. exact gets. inv H5. inv H6. apply v_shift_typesafe; auto.
 + specialize (CL _ _ _ H1) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   eapply TypeCSubsume; eauto.
@@ -1052,7 +1055,7 @@ destruct H2.
   simpl. apply TypeCasesU; eauto.
   eapply IHc. exact gets. rewrite <-(v_shift_shift 1 1 0).
   apply v_shift_typesafe. apply v_shift_typesafe. assumption.
-  all: inv H0. 2: assumption. apply WfTyFun; assumption.
+  all: inv H0. auto. apply WfTyFun; assumption.
 }{
 intros htys gets tyvs; simpl. apply Respects; inv orig; auto.
 destruct H3.
@@ -1108,19 +1111,19 @@ inv orig. destruct H1.
     simpl. apply VeqCons; eauto.
 + specialize (CEL _ _ _ _ H1) as IH.
   clear VL CL HL RL VEL CEL HEL WF.
-    simpl. eapply VeqFun. eapply IH.
+    simpl. eapply VeqFun; auto. eapply IH.
   - simpl. eauto.
-  - inv H. inv H3. apply v_shift_typesafe; auto.
+  - inv H. inv H5. apply v_shift_typesafe; auto.
 + specialize (CEL _ _ _ _ H1) as IHc.
   specialize (HEL _ _ _ _ _ H2) as IHh.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqHandler; eauto. eapply IHc.
   - simpl. eauto.
-  - inv H. inv H5. inv H8. apply v_shift_typesafe; auto.
+  - inv H. apply v_shift_typesafe; auto. inv H7. inv H10. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply ηUnit.
 + clear VL CL HL RL VEL CEL HEL WF.
-  simpl. rewrite <-v_shift_sub. apply ηFun. omega.
+  simpl. rewrite <-v_shift_sub. apply ηFun. all: aomega.
 }{
 intros gets vtys. apply Ceq.
 { inv orig; eauto. }
@@ -1137,7 +1140,7 @@ inv orig. destruct H1.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply CeqRet. eauto.
 + clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply CeqAbsurd.
+  simpl. apply CeqAbsurd; auto.
 + specialize (VEL _ _ _ _ H1) as IHv.
   specialize (CEL _ _ _ _ H2) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
@@ -1182,17 +1185,17 @@ inv orig. destruct H1.
   - eapply IHc1. simpl. eauto. rewrite <-(v_shift_shift 1 1).
     inv H2. apply v_shift_typesafe; auto. inv H10. apply v_shift_typesafe; auto.
   - eapply IHc2. simpl. eauto. inv H2. apply v_shift_typesafe; assumption.
-+ specialize (VEL _ _ _ _ H2) as IHv.
-  specialize (CEL _ _ _ _ H3) as IHc.
++ specialize (VEL _ _ _ _ H6) as IHv.
+  specialize (CEL _ _ _ _ H7) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply CeqOp; eauto.
   eapply IHc. simpl. eauto. apply v_shift_typesafe. assumption.
-  apply get_op_type_wf in H1. destruct H1. assumption. inv H. inv H5. auto.
-+ specialize (WF _ _ _ H2) as IHwf.
+  apply get_op_type_wf in H1. destruct H1. assumption. inv H. inv H9. auto.
++ specialize (WF _ _ _ H4) as IHwf.
   clear VL CL HL RL VEL CEL HEL WF.
-  clear H2. eapply OOTB; eauto.
-  rewrite <-c_sub_inst. rewrite H3. simpl. auto.
-  rewrite <-c_sub_inst. rewrite H4. simpl. auto.
+  clear H4. eapply OOTB; eauto.
+  rewrite <-c_sub_inst. rewrite H5. simpl. auto.
+  rewrite <-c_sub_inst. rewrite H6. simpl. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βMatchPair as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
@@ -1237,21 +1240,24 @@ inv orig. destruct H1.
   apply rule. all: omega.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βHandleOp as rule.
-  unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
-  rewrite c_sub_subs, c_sub_subs, <-v_shift_sub, v_shift_shift.
-  simpl. rewrite v_shift_comm, <-c_shift_sub, <-h_shift_sub.
-  simpl in rule. eapply rule. apply sub_get_case_Some. eauto. all: omega.
-+ specialize (CL _ _ _ H2) as IHc.
+  unfold c_subs2_out in *. unfold c_subs_out in *. simpl in *.
+  rewrite c_sub_subs, c_sub_subs. simpl.
+  rewrite v_shift_comm, <-c_shift_sub, <-h_shift_sub, <-h_shift_sub.
+  rewrite (v_shift_comm 1 1), <-c_shift_sub.
+  rewrite (v_shift_comm 1 0 0 1), <-c_shift_sub. eapply rule.
+  rewrite <-v_shift_comm, v_shift_shift. apply sub_get_case_Some.
+  eauto. all: omega.
++ specialize (CL _ _ _ H3) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. destruct (n<=?i) eqn:ni.
   - apply leb_complete in ni.
     rewrite c_sub_subs; aomega. simpl.
-    eapply ηEmpty. auto. eapply IHc.
+    eapply ηEmpty; auto. eapply IHc.
     * erewrite <-get_ctx_insert_changed. eauto. omega.
     * apply v_insert_typesafe; auto. apply WfTyEmpty.
   - apply leb_complete_conv in ni.
     rewrite c_sub_subs_alt; aomega. simpl.
-    eapply ηEmpty. omega. eapply IHc.
+    eapply ηEmpty; aomega. eapply IHc.
     * erewrite <-get_ctx_insert_unchanged. eauto. omega.
     * apply v_insert_typesafe; auto. apply WfTyEmpty.
 + specialize (CL _ _ _ H2) as IHc.
@@ -1560,10 +1566,10 @@ destruct orig. destruct H1.
   - rewrite v_shift_comm. apply IHc2. simpl. omega. omega.
 + assert (CtxU Γ0 Bop = ctx_insert (CtxU Γ Bop) (1+i) A_s) as geqb.
   { simpl. f_equal. auto. }
-  assert (wf_vtype Bop) as wfb by (inv H3; inv H4; auto).
+  assert (wf_vtype Bop) as wfb. { inv H5. inv H6. auto. }
   specialize (v_shift_typesafe _ _ Bop _ tyvs wfb) as tyvsb.
-  specialize (VL _ _ v _ i _ _ H2 tyvs geq) as IHv.
-  specialize (CL _ _ c _ (1+i) _ _ H3 tyvsb geqb) as IHc.
+  specialize (VL _ _ v _ i _ _ H4 tyvs geq) as IHv.
+  specialize (CL _ _ c _ (1+i) _ _ H5 tyvsb geqb) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   apply TypeC; auto; unfold c_subs; simpl.
   eapply TypeOp; eauto.
@@ -1579,15 +1585,15 @@ destruct orig. destruct H2.
 + clear VL CL HL RL VEL CEL HEL WF.
   apply TypeH; auto; unfold h_subs; simpl.
   apply TypeCasesØ.
-+ assert (CtxU (CtxU Γ0 (TyFun Bop D)) Aop 
-    = ctx_insert (CtxU (CtxU Γ (TyFun Bop D)) Aop) (2+i) A_s).
++ assert (CtxU (CtxU Γ0 A) (TyFun B D) 
+    = ctx_insert (CtxU (CtxU Γ A) (TyFun B D)) (2+i) A_s).
   { simpl. f_equal. f_equal. auto. }
-  assert (wf_vtype Aop) as wfa by (inv H0; auto).
-  assert (wf_vtype (TyFun Bop D)) as wfb by (inv H0; apply WfTyFun; auto).
-  specialize (v_shift_typesafe _ _ (TyFun Bop D) _ tyvs wfb) as tyvs'.
-  specialize (v_shift_typesafe _ _ Aop _ tyvs' wfa) as tyvs''.
+  assert (wf_vtype A) as wfa by (inv H0; auto).
+  assert (wf_vtype (TyFun B D)) as wfb by (inv H0; apply WfTyFun; auto).
+  specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
+  specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs' wfb) as tyvs''.
   specialize (HL _ _ h _ _ i _ _ H2 tyvs geq) as IHh.
-  specialize (CL _ _ cop _ (2+i) _ _ H3 tyvs'' H4) as IHc.
+  specialize (CL _ _ c _ (2+i) _ _ H3 tyvs'' H4) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   apply TypeH; auto; unfold h_subs; simpl.
   eapply TypeCasesU; auto.
@@ -1603,8 +1609,8 @@ destruct orig. destruct H3.
   specialize (CEL 
     (join_ctxs (join_ctxs Γ (tctx_to_ctx Z D)) Γ0) 
     (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ0) 
-    D (handle_t (ctx_len Γ0) (tctx_len Z) h T1) 
-    (handle_t (ctx_len Γ0) (tctx_len Z) h T2) 
+    D (handle_t D (ctx_len Γ0) (tctx_len Z) h T1) 
+    (handle_t D (ctx_len Γ0) (tctx_len Z) h T2) 
     (i + tctx_len Z + ctx_len Γ0) 
     (v_shift v_s (tctx_len Z+ctx_len Γ0) 0) A_s H4) as IHc.
   all: clear VL CL HL RL VEL CEL HEL WF.
@@ -1671,14 +1677,14 @@ unfold v_subs. simpl. apply VeqNil; auto.
   specialize (VEL _ _ _ _ _ i _ _ H2 tyvs) as IH2.
   clear VL CL HL RL VEL CEL HEL WF.
   unfold v_subs. simpl. apply VeqCons; auto.
-+ assert (wf_vtype A) as wfa by (inv H; inv H3; assumption).
++ assert (wf_vtype A) as wfa by (inv H; inv H5; assumption).
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (CEL _ _ _ _ _ (S i) _ _ H1 tyvs') as IH.
   clear VL CL HL RL VEL CEL HEL WF.
   unfold v_subs. simpl. eapply VeqFun.
-  rewrite v_shift_comm. apply IH. simpl. f_equal. auto.
-  all: simpl; omega.
-+ assert (wf_vtype A) as wfa by (inv H; inv H5; inv H8; auto).
+  rewrite v_shift_comm. apply IH. simpl. f_equal.
+  all: simpl; aomega.
++ assert (wf_vtype A) as wfa. { inv H. inv H7. inv H10. auto. }
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (CEL _ _ _ _ _ (S i) _ _ H1 tyvs') as IHc.
   specialize (HEL _ _ _ _ _ _ i _ _ H2 tyvs) as IHh.
@@ -1690,7 +1696,7 @@ unfold v_subs. simpl. apply VeqNil; auto.
   unfold v_subs. simpl. apply ηUnit.
 + clear VL CL HL RL VEL CEL HEL WF.
   unfold v_subs. simpl.
-  rewrite <-v_shift_sub, <-v_shift_negshift_comm; aomega. apply ηFun.
+  rewrite <-v_shift_sub, <-v_shift_negshift_comm; aomega. apply ηFun. auto.
   apply v_sub_makes_no_var. apply v_shift_makes_no_var. 
 }{
 intros tyvs geq len. apply Ceq.
@@ -1708,7 +1714,7 @@ destruct orig. destruct H1.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply CeqRet. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
-  simpl. apply CeqAbsurd.
+  simpl. apply CeqAbsurd; auto.
 + specialize (VEL _ _ _ _ _ i _ _ H1 tyvs) as IHv.
   assert (wf_vtype A) as wfa by (inv H1; inv H4; inv H6; auto).
   assert (wf_vtype B) as wfb by (inv H1; inv H4; inv H6; auto).
@@ -1770,18 +1776,18 @@ destruct orig. destruct H1.
   - rewrite <-(v_shift_shift 1 1). eapply IHc1. simpl. do 2 f_equal. auto.
     simpl. omega.
   - apply IHc2. simpl. f_equal. auto. simpl. omega.
-+ assert (wf_vtype Bop) as wfb by (inv H3; inv H4; inv H3; auto).
++ assert (wf_vtype Bop) as wfb. { inv H7. inv H9. inv H7. auto. }
   specialize (v_shift_typesafe _ _ Bop _ tyvs wfb) as tyvsb.
-  specialize (VEL _ _ _ _ _ i _ _ H2 tyvs) as IHv.
-  specialize (CEL _ _ _ _ _ (S i) _ _ H3 tyvsb) as IHc.
+  specialize (VEL _ _ _ _ _ i _ _ H6 tyvs) as IHv.
+  specialize (CEL _ _ _ _ _ (S i) _ _ H7 tyvsb) as IHc.
   clear VL CL HL RL VEL CEL HEL WF.
   unfold c_subs. simpl. eapply CeqOp; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. auto. simpl. omega. omega.
-+ specialize (WF _ _ _ _ i _ _ H2 tyvs) as IHwf.
++ specialize (WF _ _ _ _ i _ _ H4 tyvs) as IHwf.
   clear VL CL HL RL VEL CEL HEL WF.
   eapply OOTB; eauto.
-  rewrite <-c_subs_inst. rewrite H3. simpl. auto.
-  rewrite <-c_subs_inst. rewrite H4. simpl. auto.
+  rewrite <-c_subs_inst. rewrite H5. simpl. auto.
+  rewrite <-c_subs_inst. rewrite H6. simpl. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βMatchPair as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
@@ -1796,8 +1802,8 @@ destruct orig. destruct H1.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βMatchLeft as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (SumMatch (Left v) c1 c2) i v_s
-    = SumMatch (Left (v_subs v i v_s)) 
+  assert (c_subs (SumMatch (Left A B v) c1 c2) i v_s
+    = SumMatch (Left A B (v_subs v i v_s)) 
         (c_subs c1 (1+i) (v_shift v_s 1 0))
         (c_subs c2 (1+i) (v_shift v_s 1 0))).
   { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
@@ -1806,8 +1812,8 @@ destruct orig. destruct H1.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βMatchRight as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (SumMatch (Right v) c1 c2) i v_s
-    = SumMatch (Right (v_subs v i v_s)) 
+  assert (c_subs (SumMatch (Right A B v) c1 c2) i v_s
+    = SumMatch (Right A B (v_subs v i v_s)) 
         (c_subs c1 (1+i) (v_shift v_s 1 0))
         (c_subs c2 (1+i) (v_shift v_s 1 0))).
   { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
@@ -1816,8 +1822,8 @@ destruct orig. destruct H1.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βMatchNil as rule.
   unfold c_subs_out in *. simpl.
-  assert (c_subs (ListMatch Nil c1 c2) i v_s 
-    = ListMatch Nil 
+  assert (c_subs (ListMatch (Nil A) c1 c2) i v_s 
+    = ListMatch (Nil A) 
         (c_subs c1 i v_s)
         (c_subs c2 (2+i) (v_shift v_s 2 0))).
   { unfold c_subs. unfold v_subs. simpl. f_equal; f_equal; 
@@ -1838,21 +1844,21 @@ destruct orig. destruct H1.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βApp as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (App (Fun c) v) i v_s 
-    = App (Fun (c_subs c (1+i) (v_shift v_s 1 0))) (v_subs v i v_s)).
+  assert (c_subs (App (Fun A c) v) i v_s 
+    = App (Fun A (c_subs c (1+i) (v_shift v_s 1 0))) (v_subs v i v_s)).
   { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
     rewrite v_shift_comm; reflexivity || omega. }  
   rewrite H1. apply rule. all: omega.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βLetRec as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (LetRec c1 c2) i v_s
-    = LetRec (c_subs c1 (2+i) (v_shift v_s 2 0))
+  assert (c_subs (LetRec A C c1 c2) i v_s
+    = LetRec A C (c_subs c1 (2+i) (v_shift v_s 2 0))
         (c_subs c2 (1+i) (v_shift v_s 1 0))).
   { unfold c_subs. simpl. do 2 f_equal; rewrite v_shift_comm; auto || omega. }  
   rewrite H1. clear H1.
-  assert ( v_subs (Fun (LetRec (c_shift c1 1 2) c1)) i v_s
-    = Fun (LetRec
+  assert ( v_subs (Fun A (LetRec A C (c_shift c1 1 2) c1)) i v_s
+    = Fun A (LetRec A C
        (c_shift (c_subs c1 (2+i) (v_shift v_s 2 0)) 1 2)
        (c_subs c1 (2+i) (v_shift v_s 2 0))) ).
   { unfold c_subs. unfold v_subs. simpl. do 2 f_equal.
@@ -1887,8 +1893,8 @@ destruct orig. destruct H1.
 + clear VL CL HL RL VEL CEL HEL WF.
   specialize βHandleRet as rule.
   unfold c_subs_out in *. simpl. rewrite c_subs_subs. simpl.
-  assert (c_subs (Handle (Handler c_r h) (Ret v)) i v_s
-    = Handle (Handler 
+  assert (c_subs (Handle (Handler A c_r h) (Ret v)) i v_s
+    = Handle (Handler A
       (c_subs c_r (1+i) (v_shift v_s 1 0)) (h_subs h i v_s)) 
       (Ret (v_subs v i v_s) ) ).
   { unfold c_subs. unfold v_subs. simpl. f_equal. f_equal. 
@@ -1898,47 +1904,54 @@ destruct orig. destruct H1.
   specialize βHandleOp as rule.
   unfold c_subs2_out in *. unfold c_subs_out in *. simpl.
   rewrite c_subs_subs, (c_subs_subs _ 0). simpl.
-  assert (c_subs (Handle (Handler c_r h) (Op op v c_k)) i v_s =
-    Handle (Handler (c_subs c_r (1+i) (v_shift v_s 1 0)) (h_subs h i v_s))
-    (Op op (v_subs v i v_s) (c_subs c_k (1+i) (v_shift v_s 1 0)))).
+  assert (c_subs (Handle (Handler A c_r h) (Op op Aop Bop v c_k)) i v_s =
+    Handle (Handler A (c_subs c_r (1+i) (v_shift v_s 1 0)) (h_subs h i v_s))
+    (Op op Aop Bop (v_subs v i v_s) (c_subs c_k (1+i) (v_shift v_s 1 0)))).
   { unfold c_subs. unfold v_subs. simpl. do 5 f_equal;
     apply v_shift_comm; omega. }
   rewrite H2. clear H2.
-  assert (v_subs (Fun
-    (Handle (Handler (c_shift c_r 1 1) (h_shift h 1 0)) c_k)) i v_s
-  = Fun (Handle (v_shift (Handler (c_subs c_r (1+i) (v_shift v_s 1 0)) 
-      (h_subs h i v_s)) 1 0) (c_subs c_k (1+i) (v_shift v_s 1 0)))).
+  assert (v_subs (Fun Bop
+    (Handle (Handler A (c_shift (c_shift c_r 1 1) 1 2) 
+    (h_shift (h_shift h 1 0) 1 1)) (c_shift c_k 1 1))) (S i) (v_shift v_s 1 0)
+  = Fun Bop (Handle (v_shift (Handler A (c_subs (c_shift c_r 1 1) (2+i) 
+      (v_shift v_s 2 0)) (h_subs (h_shift h 1 0) (S i) (v_shift v_s 1 0))) 1 0)
+      (c_subs (c_shift c_k 1 1) (2+i) (v_shift v_s 2 0)))).
   { clear rule. unfold v_subs. unfold c_subs. unfold h_subs. 
     simpl. do 3 f_equal.
-    rewrite c_shift_negshift_comm, c_shift_sub. do 3 f_equal.
-    rewrite v_shift_comm. f_equal. apply v_shift_comm. all: aomega.
-    apply c_sub_makes_no_var. apply v_shift_makes_no_var.
-    rewrite h_shift_negshift_comm, h_shift_sub. all: aomega.
+    rewrite c_shift_negshift_comm, c_shift_sub. do 2 f_equal.
+    rewrite <-c_shift_comm. all: aomega. f_equal.
+    rewrite v_shift_comm. f_equal. rewrite v_shift_comm, v_shift_shift.
+    all: aomega. apply c_sub_makes_no_var. apply v_shift_makes_no_var.
+    rewrite h_shift_negshift_comm, h_shift_sub, <-h_shift_comm. all: aomega.
     apply h_sub_makes_no_var. apply v_shift_makes_no_var.
-    rewrite v_shift_comm; aomega. }
-  rewrite H2, v_shift_shift, <-v_shift_subs_alt. clear H2. simpl.
-  eapply rule. unfold h_subs. 
-  apply negshift_get_case_Some. rewrite <-(v_shift_comm 1 i 0). 
+    rewrite v_shift_comm, v_shift_shift; aomega. }
+  rewrite H2, v_shift_shift. clear H2. simpl in *.
+  rewrite <-(v_shift_shift 1 1), v_shift_comm, <-(c_shift_subs_alt _ _ 1).
+  rewrite <-c_shift_subs_alt, <-h_shift_subs_alt.
+  rewrite h_shift_comm, c_shift_comm.
+  eapply rule. 
+  apply negshift_get_case_Some. rewrite <-(v_shift_comm 1 0 0 1), v_shift_shift.
+  simpl. rewrite <-(v_shift_comm 1 i).
   apply sub_get_case_Some. all:eaomega.
 + specialize (v_insert_typesafe _ _ _ tyvs (TyEmpty) n WfTyEmpty) as tyv.
-  specialize (CL _ _ c _ (1+i) _ _ H2 tyv) as IHcp.
+  specialize (CL _ _ c _ (1+i) _ _ H3 tyv) as IHcp.
   specialize (v_insert_typesafe _ _ _ tyvs (TyEmpty) (n-1) WfTyEmpty) as tyvm.
-  specialize (CL _ _ c _ (i) _ _ H2 tyvm) as IHc.
+  specialize (CL _ _ c _ (i) _ _ H3 tyvm) as IHc.
   clear VL CL HL RL VEL CEL HEL WF. simpl.
-  assert (c_subs (Absurd v) i v_s = Absurd (v_subs v i v_s) ).
+  assert (c_subs (Absurd C v) i v_s = Absurd C (v_subs v i v_s) ).
   { unfold c_subs. simpl. auto. }
-  rewrite H3. clear H3.
+  rewrite H4. clear H4.
   destruct (n<=?i) eqn:ni.
   - clear IHc.
     apply leb_complete in ni.
-    rewrite c_subs_subs. simpl. apply ηEmpty. omega.
+    rewrite c_subs_subs. simpl. apply ηEmpty; auto. omega.
     apply IHcp. subst. rewrite ctx_insert_comm. all: aomega.
     rewrite ctx_len_insert; omega.
   - clear IHcp.
     apply leb_complete_conv in ni.
     destruct n. omega.
     rewrite (c_subs_subs_alt _ n). all: aomega. simpl.
-    apply ηEmpty.
+    apply ηEmpty; auto.
     subst. rewrite ctx_len_insert in H1. omega. omega.
     assert (S n - 1 = n) as n0 by omega. rewrite n0 in *.
     apply IHc. subst. rewrite ctx_insert_comm; aomega.
@@ -2073,12 +2086,12 @@ destruct orig. destruct H4.
   specialize (HL _ _ h2 _ _ i _ _ H3 tyvs geq) as IHh2.
   clear VL CL HL RL VEL CEL HEL WF. eapply Heq. 
   2: exact H0. all: eauto. eapply HeqSigØ.
-+ assert (wf_vtype A) as wfa by (inv H6; inv H8; inv H6; auto).
-  assert (wf_vtype(TyFun B D)) as wff by (inv H6;inv H8;inv H6;inv H14;auto).
++ assert (wf_vtype A) as wfa. { inv H6. inv H9. inv H6. inv H14. auto. }
+  assert (wf_vtype(TyFun B D)) as wff. { inv H6. inv H9. inv H6. auto. }
   specialize (HL _ _ h1 _ _ i _ _ H2 tyvs geq) as IHh1.
   specialize (HL _ _ h2 _ _ i _ _ H3 tyvs geq) as IHh2.
-  specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs wff) as tyvs'.
-  specialize (v_shift_typesafe _ _ A _ tyvs' wfa) as tyvs''.
+  specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
+  specialize (v_shift_typesafe _ _ (TyFun B D) _ tyvs' wff) as tyvs''.
   specialize (CEL _ _ _ _ _ (2+i) _ _ H6 tyvs'') as IH1.
   specialize (HEL _ _ _ _ _ _ i _ _ H7 tyvs) as IH2.
   clear VL CL HL RL VEL CEL HEL WF.
@@ -2107,7 +2120,7 @@ Fixpoint tmpl_to_comp_has_ctype Γ Z T A Σ E (orig: wf_t Γ Z T Σ):
   wf_ctype (CTy A Σ E) -> wf_ctx Γ -> wf_tctx Z ->
   has_ctype 
     (join_ctxs (tctx_to_ctx Z (CTy A Σ E)) Γ) 
-    (tmpl_to_comp (ctx_len Γ) T) 
+    (tmpl_to_comp (CTy A Σ E) (ctx_len Γ) T) 
     (CTy A Σ E).
 Proof.
 intros wfd wfg wfz.
@@ -2164,16 +2177,16 @@ Qed.
 
 (* Auxilliary lemmas *)
 Fixpoint cop_join_ctxs_special Γ' Γ A B D c {struct Γ}:
-  wf_ctx Γ -> has_ctype (CtxU (CtxU Γ' (TyFun B D)) A) c D ->
+  wf_ctx Γ -> has_ctype (CtxU (CtxU Γ' A) (TyFun B D)) c D ->
   has_ctype 
-    (CtxU (CtxU (join_ctxs Γ' Γ) (TyFun B D)) A) 
+    (CtxU (CtxU (join_ctxs Γ' Γ) A) (TyFun B D)) 
     (c_shift c (ctx_len Γ) 2) D.
 Proof.
 intros wfg tys.
 destruct Γ; simpl.
 + rewrite c_shift_0. auto.
-+ assert (CtxU (CtxU (CtxU (join_ctxs Γ' Γ) v) (TyFun B D)) A
-    = ctx_insert (CtxU (CtxU (join_ctxs Γ' Γ) (TyFun B D)) A) 2 v).
++ assert (CtxU (CtxU (CtxU (join_ctxs Γ' Γ) v) A) (TyFun B D)
+    = ctx_insert (CtxU (CtxU (join_ctxs Γ' Γ) A) (TyFun B D)) 2 v).
   { simpl. do 2 f_equal. destruct Γ; simpl. destruct Γ'; simpl. all: auto. }
   assert (S (ctx_len Γ) = ctx_len Γ + 1) by omega.
   rewrite H, H0. rewrite <-(c_shift_shift). apply c_insert_typesafe.
@@ -2182,9 +2195,9 @@ Qed.
 
 Fixpoint cop_with_full_ctx_types Γ' Γ Z A B D c:
   wf_ctx Γ -> wf_tctx Z ->
-  has_ctype (CtxU (CtxU Γ' (TyFun B D)) A) c D ->
+  has_ctype (CtxU (CtxU Γ' A) (TyFun B D)) c D ->
   has_ctype 
-    (CtxU (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) (TyFun B D)) A) 
+    (CtxU (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) A) (TyFun B D)) 
     (c_shift c (tctx_len Z + ctx_len Γ) 2) D.
 Proof.
 intros wfg wfz tys.
@@ -2199,7 +2212,7 @@ Fixpoint handle_t_types Γ Z T Σ Γ' h D (orig: wf_t Γ Z T Σ) {struct orig}:
   wf_ctx Γ -> wf_tctx Z -> has_htype Γ' h  Σ D ->
   has_ctype 
     (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)
-    (handle_t (ctx_len Γ) (tctx_len Z) h T) D.
+    (handle_t D (ctx_len Γ) (tctx_len Z) h T) D.
 Proof.
 intros wfc wfz tys.
 assert (wf_ctype D) by (inv tys; inv H0; assumption).
@@ -2264,30 +2277,34 @@ destruct orig; simpl.
       = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z (CTy B Σ' E'))) (CtxU Γ A)). 
     { simpl. reflexivity. }
     rewrite H1. eapply handle_t_types; eauto. apply WfCtxU; auto.
-+ specialize (h_has_case Γ' h Σ D op Aop Bop tys H0) as has.
++ specialize (h_has_case Γ' h Σ D op A B tys H0) as has.
   destruct has as [cop finds].
   eapply case_has_type in finds as coptys; eauto. rewrite finds.
   unfold c_subs2_out.
   eapply c_subs_typesafe. instantiate (1:= 
-  (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)) (TyFun Bop D)).
+  (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ)) Aop).
   eapply c_subs_typesafe. instantiate (1:= 
-  (CtxU (CtxU(join_ctxs (join_ctxs Γ'(tctx_to_ctx Z D)) Γ) (TyFun Bop D))Aop)).
+  (CtxU (CtxU(join_ctxs (join_ctxs Γ'(tctx_to_ctx Z D)) Γ) Aop) (TyFun Bop D))).
   - assert (ctx_len Γ + tctx_len Z = tctx_len Z + ctx_len Γ) as same by omega.
     rewrite same. apply cop_with_full_ctx_types; eauto.
-  - apply v_shift_typesafe. apply v_join_ctxs_typesafe_right; eauto.
-    inv coptys. inv H2. inv H7. auto. 
-  - simpl. auto.
-  - omega.
-  - apply TypeV; eauto. inv coptys. inv H2. inv H7. eauto.
+    eapply ctx_subtype_ctype; eauto.
+    * do 2 try apply WfCtxU || apply WfTyFun; auto. inv tys. auto.
+    * do 2 try apply STyCtxU || apply STyFun; auto. 
+      all: inv tys; apply ctx_subtype_refl || apply csubtype_refl; auto.
+  - apply v_shift_typesafe.
+    apply TypeV. auto. 3: auto. apply WfTyFun; eauto. 
     apply TypeFun.
     assert (S (ctx_len Γ) = ctx_len (CtxU Γ Bop)) as samelen by (simpl; auto).
     assert (CtxU (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ) Bop
       = join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) (CtxU Γ Bop)).
     { simpl. reflexivity. }
-    rewrite samelen, H2. eapply handle_t_types; eauto.
-    apply WfCtxU. auto. inv coptys. inv H3. inv H8. inv H10. auto. 
+    rewrite samelen, H6. eapply handle_t_types; eauto.
+    apply WfCtxU; auto.
+  - simpl. auto.
+  - omega.
+  - apply v_join_ctxs_typesafe_right; eauto.
   - assert (forall γ A, CtxU γ A = ctx_insert γ 0 A).
     { intros. induction γ; simpl; auto. }
-    rewrite H2. auto.
+    rewrite H6. auto.
   - omega.
 Qed.

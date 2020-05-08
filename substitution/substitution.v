@@ -9,23 +9,23 @@ Fixpoint v_shift v d cut :=
   | Var n => if cut <=? n then Var (d + n) else Var n
   | Unit => Unit
   | Int n => Int n
-  | Left v' => Left (v_shift v' d cut)
-  | Right v' => Right (v_shift v' d cut)
+  | Left A B v' => Left A B (v_shift v' d cut)
+  | Right A B v' => Right A B (v_shift v' d cut)
   | Pair v1 v2 =>
       Pair (v_shift v1 d cut) (v_shift v2 d cut)
-  | Nil => Nil
+  | Nil A => Nil A
   | Cons v vs => 
       Cons (v_shift v d cut) (v_shift vs d cut)
-  | Fun c =>
-      Fun (c_shift c d (1+cut))
-  | Handler c_ret h =>
-      Handler (c_shift c_ret d (1+cut)) (h_shift h d cut)
+  | Fun A c =>
+      Fun A (c_shift c d (1+cut))
+  | Handler A c_ret h =>
+      Handler A (c_shift c_ret d (1+cut)) (h_shift h d cut)
   end
 
 with c_shift c d cut :=
   match c with
   | Ret v => Ret (v_shift v d cut)
-  | Absurd v => Absurd (v_shift v d cut)
+  | Absurd C v => Absurd C (v_shift v d cut)
   | ProdMatch v c => 
       ProdMatch (v_shift v d cut) (c_shift c d (2+cut))
   | SumMatch v c1 c2 =>
@@ -35,10 +35,10 @@ with c_shift c d cut :=
       ListMatch (v_shift v d cut) (c_shift c1 d cut) (c_shift c2 d (2+cut))
   | App v1 v2 => 
       App (v_shift v1 d cut) (v_shift v2 d cut)
-  | Op op v c => 
-      Op op (v_shift v d cut) (c_shift c d (1+cut))
-  | LetRec c1 c2 => 
-      LetRec (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
+  | Op op A B v c => 
+      Op op A B (v_shift v d cut) (c_shift c d (1+cut))
+  | LetRec A C c1 c2 => 
+      LetRec A C (c_shift c1 d (2+cut)) (c_shift c2 d (1+cut))
   | Do c1 c2 => 
       Do (c_shift c1 d cut) (c_shift c2 d (1+cut))
   | Handle v c' => 
@@ -47,9 +47,9 @@ with c_shift c d cut :=
 
 with h_shift h d cut :=
   match h with
-  | CasesØ => CasesØ
-  | CasesU h op c => 
-      CasesU (h_shift h d cut) op (c_shift c d (2+cut))
+  | CasesØ D => CasesØ D
+  | CasesU h op A B c => 
+      CasesU (h_shift h d cut) op A B (c_shift c d (2+cut))
   end.
 
 
@@ -58,23 +58,23 @@ Fixpoint v_negshift v d cut :=
   | Var n => if Nat.leb cut n then Var (n - d) else Var n   
   | Unit => Unit
   | Int n => Int n
-  | Left v' => Left (v_negshift v' d cut)
-  | Right v' => Right (v_negshift v' d cut)
+  | Left A B v' => Left A B (v_negshift v' d cut)
+  | Right A B v' => Right A B (v_negshift v' d cut)
   | Pair v1 v2 => 
       Pair (v_negshift v1 d cut) (v_negshift v2 d cut)
-  | Nil => Nil
+  | Nil A => Nil A
   | Cons v vs =>
       Cons (v_negshift v d cut) (v_negshift vs d cut)
-  | Fun c =>
-      Fun (c_negshift c d (1+cut))
-  | Handler c_ret h =>
-      Handler (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
+  | Fun A c =>
+      Fun A (c_negshift c d (1+cut))
+  | Handler A c_ret h =>
+      Handler A (c_negshift c_ret d (1+cut)) (h_negshift h d cut)
   end
 
 with c_negshift c d cut :=
   match c with
   | Ret v => Ret (v_negshift v d cut)
-  | Absurd v => Absurd (v_negshift v d cut)
+  | Absurd C v => Absurd C (v_negshift v d cut)
   | ProdMatch v c => 
       ProdMatch (v_negshift v d cut) (c_negshift c d (2+cut))
   | SumMatch v c1 c2 =>
@@ -85,10 +85,10 @@ with c_negshift c d cut :=
         (c_negshift c1 d cut) (c_negshift c2 d (2+cut))
   | App v1 v2 => 
       App (v_negshift v1 d cut) (v_negshift v2 d cut)
-  | Op op v c => 
-      Op op (v_negshift v d cut) (c_negshift c d (1+cut))
-  | LetRec c1 c2 =>
-      LetRec (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
+  | Op A B op v c => 
+      Op A B op (v_negshift v d cut) (c_negshift c d (1+cut))
+  | LetRec A C c1 c2 =>
+      LetRec A C (c_negshift c1 d (2+cut)) (c_negshift c2 d (1+cut))
   | Do c1 c2 => 
       Do (c_negshift c1 d cut) (c_negshift c2 d (1+cut))
   | Handle v c' => 
@@ -97,8 +97,9 @@ with c_negshift c d cut :=
 
 with h_negshift h d cut :=
   match h with
-  | CasesØ => CasesØ
-  | CasesU h op c => CasesU (h_negshift h d cut) op (c_negshift c d (2+cut))
+  | CasesØ D => CasesØ D
+  | CasesU h op A B c => 
+      CasesU (h_negshift h d cut) op A B (c_negshift c d (2+cut))
   end.
 
 
@@ -112,23 +113,23 @@ let (db_i, v_s) := sub in
   | Var n => if n =? db_i then v_s else Var n 
   | Unit => Unit
   | Int n => Int n
-  | Left v' => Left (v_sub v' sub)
-  | Right v' => Right (v_sub v' sub)
+  | Left A B v' => Left A B (v_sub v' sub)
+  | Right A B v' => Right A B (v_sub v' sub)
   | Pair v1 v2 => 
       Pair (v_sub v1 sub) (v_sub v2 sub)
-  | Nil => Nil
+  | Nil A => Nil A
   | Cons v vs => 
       Cons (v_sub v sub) (v_sub vs sub)
-  | Fun c => 
-      Fun (c_sub c (sub_shift sub 1))
-  | Handler c_ret h =>
-      Handler (c_sub c_ret (sub_shift sub 1)) (h_sub h sub)
+  | Fun A c => 
+      Fun A (c_sub c (sub_shift sub 1))
+  | Handler A c_ret h =>
+      Handler A (c_sub c_ret (sub_shift sub 1)) (h_sub h sub)
   end
 
 with c_sub c (sub : nat * val) :=
   match c with
   | Ret v => Ret (v_sub v sub)
-  | Absurd v => Absurd (v_sub v sub)
+  | Absurd C v => Absurd C (v_sub v sub)
   | ProdMatch v c => 
       ProdMatch (v_sub v sub) (c_sub c (sub_shift sub 2))
   | SumMatch v c1 c2 =>
@@ -139,10 +140,10 @@ with c_sub c (sub : nat * val) :=
         (c_sub c1 sub) (c_sub c2 (sub_shift sub 2))
   | App v1 v2 => 
       App (v_sub v1 sub) (v_sub v2 sub)
-  | Op op v c => 
-      Op op (v_sub v sub) (c_sub c (sub_shift sub 1))
-  | LetRec c1 c2 =>
-      LetRec (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
+  | Op A B op v c => 
+      Op A B op (v_sub v sub) (c_sub c (sub_shift sub 1))
+  | LetRec A C c1 c2 =>
+      LetRec A C (c_sub c1 (sub_shift sub 2)) (c_sub c2 (sub_shift sub 1))
   | Do c1 c2 => 
       Do (c_sub c1 sub) (c_sub c2 (sub_shift sub 1))
   | Handle v c' => 
@@ -151,12 +152,14 @@ with c_sub c (sub : nat * val) :=
 
 with h_sub h (sub : nat * val) :=
   match h with
-  | CasesØ => CasesØ
-  | CasesU h op c => 
-      CasesU (h_sub h sub) op (c_sub c (sub_shift sub 2))
+  | CasesØ D => CasesØ D
+  | CasesU h op A B c => 
+      CasesU (h_sub h sub) op A B (c_sub c (sub_shift sub 2))
   end.
 
+
 (* ==================== Complete Substitution ==================== *)
+
 
 Definition v_subs v i vs :=
   v_negshift (v_sub v (i, (v_shift vs 1 i))) 1 i.
@@ -166,6 +169,7 @@ Definition c_subs c i vs :=
 
 Definition h_subs h i vs :=
   h_negshift (h_sub h (i, (v_shift vs 1 i))) 1 i.
+
 
 Definition v_subs_out v vs := v_subs v 0 vs.
 
@@ -216,17 +220,17 @@ Fixpoint v_inst v I:=
       end
   | Unit => Unit
   | Int n => Int n
-  | Left v' => Left (v_inst v' I)
-  | Right v' => Right (v_inst v' I)
+  | Left A B v' => Left A B (v_inst v' I)
+  | Right A B v' => Right A B (v_inst v' I)
   | Pair v1 v2 => 
       Pair (v_inst v1 I) (v_inst v2 I)
-  | Nil => Nil
+  | Nil A => Nil A
   | Cons v vs => 
       Cons (v_inst v I) (v_inst vs I)
-  | Fun c => 
-      Fun (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
-  | Handler c_ret h =>
-      Handler 
+  | Fun A c => 
+      Fun A (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
+  | Handler A c_ret h =>
+      Handler A 
         (c_inst c_ret (InstU (inst_shift I 1 0) (Var 0))) 
         (h_inst h I)
   end
@@ -234,7 +238,7 @@ Fixpoint v_inst v I:=
 with c_inst c I :=
   match c with
   | Ret v => Ret (v_inst v I)
-  | Absurd v => Absurd (v_inst v I)
+  | Absurd C v => Absurd C (v_inst v I)
   | ProdMatch v c => 
       ProdMatch (v_inst v I)
         (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
@@ -249,11 +253,11 @@ with c_inst c I :=
           (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   | App v1 v2 => 
       App (v_inst v1 I) (v_inst v2 I)
-  | Op op v c => 
-      Op op (v_inst v I) 
+  | Op op A B v c => 
+      Op op A B (v_inst v I) 
         (c_inst c (InstU (inst_shift I 1 0) (Var 0)))
-  | LetRec c1 c2 =>
-      LetRec
+  | LetRec A C c1 c2 =>
+      LetRec A C
         (c_inst c1 
           (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0))) 
         (c_inst c2 (InstU (inst_shift I 1 0) (Var 0)))
@@ -266,9 +270,9 @@ with c_inst c I :=
 
 with h_inst h I :=
   match h with
-  | CasesØ => CasesØ
-  | CasesU h op c => 
-      CasesU (h_inst h I) op
+  | CasesØ D => CasesØ D
+  | CasesU h op A B c => 
+      CasesU (h_inst h I) op A B
         (c_inst c (InstU (InstU (inst_shift I 2 0) (Var 1)) (Var 0)))
   end.
 
