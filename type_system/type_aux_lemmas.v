@@ -498,10 +498,10 @@ inv orig. destruct H1.
   simpl. eapply TypeLetRec.
   - do 2 rewrite ctx_insert_extend. auto.
   - rewrite ctx_insert_extend. auto.
-+ specialize (VL _ _ _ H6) as IHv.
-  specialize (CL _ _ _ H7) as IHc.
++ specialize (VL _ _ _ H4) as IHv.
+  specialize (CL _ _ _ H5) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
-  simpl. eapply TypeOp. 7: rewrite ctx_insert_extend. all: eauto.
+  simpl. eapply TypeOp. 5: rewrite ctx_insert_extend. all: eauto.
 + specialize (CL _ _ _ H1) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   eapply TypeCSubsume; auto.
@@ -1352,11 +1352,11 @@ intros gets tyvs. apply TypeC; inv orig. auto. auto. destruct H1.
     apply v_shift_typesafe. apply v_shift_typesafe. assumption.
     all: inv H1; inv H3. 2: assumption. inv H7. assumption. 
   - eapply IHc2. exact gets. inv H1. inv H3. apply v_shift_typesafe; auto.
-+ specialize (VL _ _ _ H6) as IHv. 
-  specialize (CL _ _ _ H7) as IHc.
++ specialize (VL _ _ _ H4) as IHv. 
+  specialize (CL _ _ _ H5) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   simpl. eapply TypeOp; eauto.
-  eapply IHc. exact gets. inv H7. inv H8. apply v_shift_typesafe; auto.
+  eapply IHc. exact gets. inv H5. inv H6. apply v_shift_typesafe; auto.
 + specialize (CL _ _ _ H1) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   eapply TypeCSubsume; eauto.
@@ -2062,10 +2062,10 @@ destruct orig. destruct H1.
   - rewrite v_shift_comm. apply IHc2. simpl. omega. omega.
 + assert (CtxU Γ0 Bop = ctx_insert (CtxU Γ Bop) (1+i) A_s) as geqb.
   { simpl. f_equal. auto. }
-  assert (wf_vtype Bop) as wfb by (inv H3; inv H4; auto).
+  assert (wf_vtype Bop) as wfb. { inv H5. inv H6. auto. }
   specialize (v_shift_typesafe _ _ Bop _ tyvs wfb) as tyvsb.
-  specialize (VL _ _ v _ i _ _ H6 tyvs geq) as IHv.
-  specialize (CL _ _ c _ (1+i) _ _ H7 tyvsb geqb) as IHc.
+  specialize (VL _ _ v _ i _ _ H4 tyvs geq) as IHv.
+  specialize (CL _ _ c _ (1+i) _ _ H5 tyvsb geqb) as IHc.
   clear VL CL HL RL JL WFHL WFFL WFIL.
   apply TypeC; auto; unfold c_subs; simpl.
   eapply TypeOp; eauto.

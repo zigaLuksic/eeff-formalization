@@ -256,7 +256,6 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
 | TypeOp Γ op v c Aop Bop Aop' Bop' A Σ E :
     get_op_type Σ op = Some (Aop', Bop') -> 
     vsubtype Aop Aop' -> vsubtype Bop' Bop ->
-    wf_vtype Aop -> wf_vtype Bop ->
     has_vtype Γ v Aop ->
     has_ctype (CtxU Γ Bop) c (CTy A Σ E) ->
     has_ctype' Γ (Op op Aop Bop v c) (CTy A Σ E)
@@ -327,11 +326,11 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | VeqLeft A A1 A2 B B1 B2 Γ Ψ v v' :
     judg Γ Ψ (Veq A v v') ->
     vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
-    judg' Γ Ψ (Veq (TySum A B) (Left A B v) (Left A B v'))
+    judg' Γ Ψ (Veq (TySum A B) (Left A1 B1 v) (Left A2 B2 v'))
 | VeqRight A A1 A2 B B1 B2 Γ Ψ v v' :
     judg Γ Ψ (Veq B v v') ->
     vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
-    judg' Γ Ψ (Veq (TySum A B) (Right A B v) (Right A B v'))
+    judg' Γ Ψ (Veq (TySum A B) (Right A1 B1 v) (Right A2 B2 v'))
 | VeqNil A A1 A2 Γ Ψ :
     vsubtype A1 A -> vsubtype A2 A ->
     judg' Γ Ψ (Veq (TyList A) (Nil A1) (Nil A2))

@@ -95,14 +95,12 @@ all: try unfold c_subs2_out.
   - inv vty. auto.
   - inv H. auto.
   - eapply TypeOp; eauto. 
-    * inv vty. auto.
-    * inv cty. inv H0. auto.
-    * eapply TypeC. inv cty. auto. inv H. auto.
-      eapply TypeDo; eauto.
-      assert (CtxU (CtxU Γ B) A' = ctx_insert (CtxU Γ A') 1 B) as same.
-      { simpl. destruct Γ; auto. }
-      rewrite same. apply c_insert_typesafe. auto.
-      inv cty. inv H0. auto.
+    eapply TypeC. inv cty. auto. inv H. auto.
+    eapply TypeDo; eauto.
+    assert (CtxU (CtxU Γ B) A' = ctx_insert (CtxU Γ A') 1 B) as same.
+    { simpl. destruct Γ; auto. }
+    rewrite same. apply c_insert_typesafe. auto.
+    inv cty. inv H0. auto.
 + eapply shape_handle in orig. destruct orig as [C [hty]]. 
   apply TypeC. inv hty. auto. inv hty. inv H1. auto.
   eapply TypeHandle; eauto.

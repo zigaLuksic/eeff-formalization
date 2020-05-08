@@ -166,8 +166,8 @@ Proof.
     rewrite inst_shift_shift in H1. eauto. all: simpl; omega.
   * eapply (c_inst_shift_pad _ _ _ (S n) k (S cut)) in H2. simpl in H2. 
     rewrite <-inst_shift_comm in H2. eauto. all: simpl; omega.
-  * eapply (c_inst_shift_pad _ _ _ (S n) k (S cut)) in H7. simpl in H7. 
-    rewrite <-inst_shift_comm in H7. eauto. all: simpl; omega.
+  * eapply (c_inst_shift_pad _ _ _ (S n) k (S cut)) in H5. simpl in H5. 
+    rewrite <-inst_shift_comm in H5. eauto. all: simpl; omega.
 + intros safe. destruct orig. destruct H2; simpl; eauto.
   all: try f_equal; eauto.
   eapply (c_inst_shift_pad _ _ _ (S(S n)) k (S(S cut))) in H3.
@@ -756,7 +756,7 @@ all: try f_equal; eauto.
 + eapply wf_inst_InstU in wfI as wffI.
   eapply wf_inst_InstU in wfI' as wffI'.
   erewrite shift_smush, <-c_smush_is_sequencing; eauto.
-  all: inv H3; inv H4; auto.
+  all: inv H5; inv H6; auto.
 }{
 intros wfI wfI'. destruct orig. destruct H2; simpl; eauto.
 all: try f_equal; eauto.
@@ -913,11 +913,11 @@ destruct orig. destruct H2; simpl.
   apply TypeC; auto. eapply TypeLetRec; eauto.
   all: inv H2; inv H4; auto; inv H9; auto.
 + eapply wf_inst_InstU in wfinst as wfinsc1.
-  eapply VL in H7; eauto.
-  eapply CL in H8; eauto.
+  eapply VL in H5; eauto.
+  eapply CL in H6; eauto.
   all: clear VL CL HL RL JL WFHL WFFL WS.
   apply TypeC; auto. eapply TypeOp; eauto.
-  all: auto.
+  all: auto. inv H6. inv H7. auto.
 + eapply CL in H2; eauto.
   all: clear VL CL HL RL JL WFHL WFFL WS.
   apply TypeC; auto. eapply TypeCSubsume; eauto.

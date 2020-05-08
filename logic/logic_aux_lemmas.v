@@ -45,14 +45,14 @@ apply WfCeq; auto. apply WfHypØ. destruct orig. destruct H1.
 + eapply CeqHandle; eauto.
 + eapply CeqLetRec; eauto.
 + eapply CeqOp; eauto.
-  - apply get_op_type_wf in H1. destruct H1. apply veq_refl_raw in H6 as IH.
+  - apply get_op_type_wf in H1. destruct H1. apply veq_refl_raw in H4 as IH.
     assert (has_vtype Γ v Aop') as tys'.
     { apply TypeV; auto. eapply TypeVSubsume; eauto. }
     apply WfJudg; auto. apply WfVeq; auto. apply WfHypØ.
     eapply VeqSubsume; eauto.
     inv H0. auto.
   - apply get_op_type_wf in H1. destruct H1. 
-    apply ceq_refl_raw in H7 as IH. eapply ctx_subtype_judg; eauto.
+    apply ceq_refl_raw in H5 as IH. eapply ctx_subtype_judg; eauto.
     all: apply WfCtxU || apply STyCtxU || inv H0; auto.
     apply ctx_subtype_refl. auto.
 + apply ceq_refl_raw in H1. eapply CeqSubsume; eauto.

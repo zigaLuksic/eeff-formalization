@@ -180,17 +180,18 @@ destruct orig. destruct H1.
   - clear CEQ. eapply VEQ in vseq as IH. all: clear VEQ. 2: eauto. all: eauto.
     apply WfJudg; try (inv vseq; assumption).
     * apply get_op_type_wf in H1. 2: inv H0; auto. destruct H1.
-      apply WfVeq; eapply v_subs_typesafe; eauto; inv vseq; inv H10; auto.
+      apply WfVeq; eapply v_subs_typesafe; eauto; inv vseq; inv H8; auto.
       all: apply TypeV; auto; eapply TypeVSubsume; eauto.
     * eapply VeqSubsume; eauto.
   - clear vseq_extext VEQ. specialize (vseq_ext Bop).
     eapply CEQ in vseq_ext as IH. all: clear CEQ. 2: eauto.
-    3: instantiate (1:= S i). 2: auto.
+    3: instantiate (1:= S i).
     * rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
       inv vseq. eapply ctx_subtype_judg; eauto.
       all: apply WfCtxU || apply STyCtxU || omega; auto.
       apply get_op_type_wf in H1. 2: inv H0; auto. destruct H1. auto.
       apply ctx_subtype_refl. auto.
+    * inv H5. inv H6. auto.
     * subst. simpl. auto.
     * simpl. omega.
 + eapply CeqSubsume; eauto.

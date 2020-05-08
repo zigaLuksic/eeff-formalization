@@ -430,7 +430,7 @@ destruct types. induction H1; apply TypeC; eauto.
     * apply WfCtxU; auto.
     * apply STyCtxU. eauto. apply vsubtype_refl. auto.
 + eapply TypeOp; eauto.
-  eapply CL. eauto. all: inv H7; inv H8.
+  eapply CL. eauto. all: inv H5; inv H6.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeCSubsume; eauto.
