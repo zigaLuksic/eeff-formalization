@@ -326,14 +326,11 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Veq (TyProd A B) (Pair v1 v2) (Pair v1' v2'))
 | VeqLeft A A1 A2 B B1 B2 Γ Ψ v v' :
     judg Γ Ψ (Veq A v v') ->
-    vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
     judg' Γ Ψ (Veq (TySum A B) (Left A1 B1 v) (Left A2 B2 v'))
 | VeqRight A A1 A2 B B1 B2 Γ Ψ v v' :
     judg Γ Ψ (Veq B v v') ->
-    vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
     judg' Γ Ψ (Veq (TySum A B) (Right A1 B1 v) (Right A2 B2 v'))
 | VeqNil A A1 A2 Γ Ψ :
-    vsubtype A1 A -> vsubtype A2 A ->
     judg' Γ Ψ (Veq (TyList A) (Nil A1) (Nil A2))
 | VeqCons A Γ Ψ v v' vs vs':
     judg Γ Ψ (Veq A v v') ->
@@ -341,12 +338,10 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Veq (TyList A) (Cons v vs) (Cons v' vs'))
 | VeqFun A A1 A2 C Γ Ψ c c':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq C c c') ->
-    vsubtype A A1 -> vsubtype A A2 ->
     judg' Γ Ψ (Veq (TyFun A C) (Fun A1 c) (Fun A2 c'))
 | VeqHandler A A1 A2 Σ E D Γ Ψ c c' h h':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq D c c') ->
     judg Γ Ψ (Heq Σ D h h') ->
-    vsubtype A A1 -> vsubtype A A2 ->
     judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler A1 c h) (Handler A2 c' h'))
 | VeqSubsume Γ Ψ A A' v1 v2 :
     judg Γ Ψ (Veq A v1 v2) ->
@@ -368,7 +363,6 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg Γ Ψ (Veq A v v') -> 
     judg' Γ Ψ (Ceq (CTy A Σ E) (Ret v) (Ret v'))
 | CeqAbsurd Γ Ψ C C1 C2 v v' :
-    csubtype C1 C -> csubtype C2 C ->
     judg' Γ Ψ (Ceq C (Absurd C1 v) (Absurd C2 v'))
 | CeqProdMatch Γ Ψ C v v' A B c c':
     judg Γ Ψ (Veq (TyProd A B) v v') ->
@@ -402,7 +396,6 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Ceq D (LetRec A C c1 c2) (LetRec A C c1' c2'))
 | CeqOp Γ Ψ op v v' c c' A A' B B' Aop Bop Ac Σ E:
     get_op_type Σ op = Some (Aop, Bop) ->
-    vsubtype A Aop -> vsubtype A' Aop -> vsubtype Bop B -> vsubtype Bop B' ->
     judg Γ Ψ (Veq Aop v v') ->
     judg (CtxU Γ Bop) (hyp_shift Ψ 1 0) (Ceq (CTy Ac Σ E) c c') ->
     judg' Γ Ψ (Ceq (CTy Ac Σ E) (Op op A B v c) (Op op A' B' v' c'))
@@ -470,7 +463,6 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
 | ηEmpty Γ Ψ v n c C C':
     n <= ctx_len Γ ->
     has_ctype (ctx_insert Γ n (TyEmpty)) c C' ->
-    csubtype C C' ->
     judg' Γ Ψ (Ceq C' (c_subs c n v) (Absurd C v) )
 | ηPair Γ Ψ v n c C A B:
     n <= ctx_len Γ ->
@@ -517,12 +509,12 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg Γ Ψ (Heq Σ D h1 h2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
-| HeqExtend Γ Ψ op h1 h2 c1 c2 A A1 A2 B B1 B2 Σ D:
+| HeqExtend Γ Ψ op h1 h2 c1 c2 A B Σ D:
     judg Γ Ψ (Heq Σ D h1 h2) ->
     get_case h1 op = None -> get_case h2 op = None ->
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D 
-      (CasesU h1 op A1 B1 c1) (CasesU h2 op A2 B2 c2))
+      (CasesU h1 op A B c1) (CasesU h2 op A B c2))
 (* - - - - - - - - - - - - - - -  General - - - - - - - - - - - - - - -  *)
 | IsHyp Γ Ψ φ:
     has_hypothesis Ψ φ ->

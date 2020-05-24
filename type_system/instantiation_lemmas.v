@@ -988,7 +988,7 @@ destruct orig. apply WfJudg; eauto. destruct H3.
   simpl. apply VeqFun; auto. simpl in H3.
   specialize (hyp_inst_shift_move_to_inst 0 1 Ψ I) as pad. simpl in pad.
   rewrite hyp_shift_inst, <-pad. auto.
-  inv H1. inv H9. inv H6. auto.
+  inv H1. inv H7. inv H4. auto.
 + eapply wf_inst_InstU in wfinst as wfinsc.
   eapply JL in H3; eauto.
   eapply JL in H4; eauto.
@@ -996,7 +996,7 @@ destruct orig. apply WfJudg; eauto. destruct H3.
   simpl. eapply VeqHandler; eauto.
   specialize (hyp_inst_shift_move_to_inst 0 1 Ψ I) as pad. simpl in pad.
   rewrite hyp_shift_inst, <-pad. auto.
-  inv H1. inv H10. inv H7. inv H11. auto.
+  inv H1. inv H8. inv H5. inv H9. auto.
 + eapply JL in H3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   eapply VeqSubsume; eauto.
@@ -1086,13 +1086,13 @@ destruct orig. apply WfJudg; eauto. destruct H3.
   - inv H3. inv H5. auto.
   - inv H4. inv H5. inv H11. auto.
 + eapply wf_inst_InstU in wfinst as wfinsc.
-  eapply JL in H8; eauto.
-  eapply JL in H9; eauto.
+  eapply JL in H4; eauto.
+  eapply JL in H5; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   simpl. eapply CeqOp; eauto.
   specialize (hyp_inst_shift_move_to_inst 0 1 Ψ I) as pad; simpl in pad.
   rewrite hyp_shift_inst, <-pad. all: auto.
-  inv H9. inv H10. auto.
+  inv H5. inv H6. auto.
 + eapply JL in H3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   eapply CeqSubsume; eauto.
@@ -1324,7 +1324,7 @@ destruct orig. apply WfJudg; eauto. destruct H3.
 + eapply CL in H4 as tys3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply wf_inst_ctx_len_same in wfinst as same_len.
-  inv H1. apply shape_absurd in H11 as vtys.
+  inv H1. apply shape_absurd in H10 as vtys.
   simpl in *.
   erewrite (c_inst_subs 0).
   apply ηEmpty. all: aomega.

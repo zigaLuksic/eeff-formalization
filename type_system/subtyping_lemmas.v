@@ -478,12 +478,12 @@ destruct H2.
 + eapply VeqNil; eauto.
 + eapply VeqCons; eauto.
 + eapply VeqFun; eauto.
-  assert (wf_vtype A). { inv H2. inv H5. auto. }
+  assert (wf_vtype A). { inv H2. inv H3. auto. }
   eapply JL. eauto.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler; eauto.
-  assert (wf_vtype A). { inv H2. inv H6. auto. }
+  assert (wf_vtype A). { inv H2. inv H4. auto. }
   eapply JL; eauto.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
@@ -529,7 +529,7 @@ destruct H2.
     * apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqOp; eauto.
   eapply JL; eauto.
-  all: inv H8; inv H9.
+  all: inv H4; inv H5.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqSubsume; eauto.

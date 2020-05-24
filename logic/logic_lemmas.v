@@ -101,25 +101,19 @@ destruct orig. destruct H1.
     * inv H2. assumption.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqPair; eapply VEQ; eauto.
 + clear CEQ HEQ. unfold v_subs. simpl. eapply VeqLeft. eapply VEQ; eauto.
-  all: apply vsubtype_refl; inv H0; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. eapply VeqRight. eapply VEQ; eauto.
-  all: apply vsubtype_refl; inv H0; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqNil.
-  all: apply vsubtype_refl; inv H0; auto.
 + clear CEQ HEQ. unfold v_subs. simpl. apply VeqCons; eapply VEQ; eauto.
 + clear VEQ HEQ. unfold v_subs. unfold c_subs in CEQ. simpl. 
   apply VeqFun. rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s').
   eapply CEQ; eauto. apply vseq_ext.
   inv H0. auto. subst. apply ctx_insert_extend. simpl. all: aomega.
-  all: apply vsubtype_refl; inv H0; auto.
 + clear VEQ. unfold v_subs. unfold c_subs in CEQ. unfold h_subs in HEQ. simpl.
   eapply VeqHandler.
   - rewrite v_shift_comm, (v_shift_comm _ _ _ _ v_s'). eapply CEQ; eauto.
     apply vseq_ext. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
-  - apply vsubtype_refl. inv H0. inv H6. auto.
-  - apply vsubtype_refl. inv H0. inv H6. auto.
 + eapply VeqSubsume; eauto.
 }{
 assert (forall A B, wf_vtype A -> wf_vtype B -> 
