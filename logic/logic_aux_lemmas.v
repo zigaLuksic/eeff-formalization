@@ -85,20 +85,16 @@ destruct H3; apply Veq; auto.
   eapply ctx_subtype_ceq. eauto.
   - apply WfCtxU; auto. inv H1. auto.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-  - eapply vsubtype_trans; eauto.
-  - eapply vsubtype_trans; eauto.
 + inv H0. eapply ceq_subtype in H3; eauto. clear ceq_subtype veq_subtype.
-  inv H10. eapply VeqHandler.
-  eapply ctx_subtype_ceq. eauto. all: inv H; inv H9.
+  inv H8. eapply VeqHandler.
+  eapply ctx_subtype_ceq. eauto. all: inv H; inv H7.
   - apply WfCtxU; auto. inv H1. assumption.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
   - eapply heq_subtype; eauto.
-  - eapply vsubtype_trans; eauto.
-  - eapply vsubtype_trans; eauto.
   - eapply csubtype_trans; eauto.
   - auto.
 + inv H0. apply ηUnit.
-+ inv H0. apply ηFun. eapply vsubtype_trans; eauto.
++ inv H0. apply ηFun.
 }{
 intros. inv orig.
 assert (wf_ctx Γ) as wfctx by (inv H1; assumption).
@@ -151,7 +147,7 @@ apply Ceq; auto. destruct H3.
 + eapply βDoOp.
 + eapply βHandleRet.
 + eapply βHandleOp. eauto.
-+ eapply ηEmpty; aomega. eapply csubtype_trans; eauto.
++ eapply ηEmpty; aomega.
 + eapply ηPair. omega.
   apply TypeC. inv H4. eauto. auto. eapply TypeCSubsume; eauto.
 + eapply ηSum. omega.

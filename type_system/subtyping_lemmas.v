@@ -440,15 +440,15 @@ all: clear VL CL HL.
 + eapply VeqNil; auto.
 + eapply VeqCons; eauto.
 + eapply VeqFun; auto. eapply CEL. eauto.
-  all: inv H; inv H5.
+  all: inv H; inv H3.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler; eauto. eapply CEL. eauto.
-  all: inv H; inv H7; inv H10.
+  all: inv H; inv H5; inv H8.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + apply ηUnit.
-+ apply ηFun. auto.
++ apply ηFun.
 }{
 intros wf ctxsty.
 inv equals. destruct H1; apply Ceq; eauto.
@@ -492,7 +492,7 @@ all: clear HL HEL.
     * apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply CeqOp; eauto.
   eapply CEL; eauto.
-  all: inv H7; inv H8; inv H7.
+  all: inv H3; inv H4; inv H3.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply OOTB; eauto.

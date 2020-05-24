@@ -281,14 +281,11 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     veq' (TyProd A B) Γ (Pair v1 v2) (Pair v1' v2')
 | VeqLeft A A1 A2 B B1 B2 Γ v v' :
     veq A Γ v v' ->
-    vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
     veq' (TySum A B) Γ (Left A1 B1 v) (Left A2 B2 v')
 | VeqRight A A1 A2 B B1 B2 Γ v v' :
     veq B Γ v v' ->
-    vsubtype A1 A -> vsubtype A2 A -> vsubtype B1 B -> vsubtype B2 B ->
     veq' (TySum A B) Γ (Right A1 B1 v) (Right A2 B2 v')
 | VeqNil A A1 A2 Γ :
-    vsubtype A1 A -> vsubtype A2 A ->
     veq' (TyList A) Γ (Nil A1) (Nil A2)
 | VeqCons A Γ v v' vs vs':
     veq A Γ v v' ->
@@ -296,18 +293,15 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     veq' (TyList A) Γ (Cons v vs) (Cons v' vs')
 | VeqFun A A1 A2 C Γ c c':
     ceq C (CtxU Γ A) c c' ->
-    vsubtype A A1 -> vsubtype A A2 ->
     veq' (TyFun A C) Γ (Fun A1 c) (Fun A2 c')
 | VeqHandler A A1 A2 Σ E D D' Γ c c' h h':
     ceq D (CtxU Γ A) c c' ->
     heq Σ D' Γ h h' ->
-    vsubtype A A1 -> vsubtype A A2 -> csubtype D' D -> (* Extra subtyping *)
+    csubtype D' D -> (* Extra subtyping *)
     veq' (TyHandler (CTy A Σ E) D) Γ (Handler A1 c h) (Handler A2 c' h')
 | ηUnit Γ v:
     veq' TyUnit Γ v Unit
 | ηFun A A' C Γ f:
-    (* Extra subtyping *)
-    vsubtype A A' ->
     veq' (TyFun A C) Γ (Fun A' (App (v_shift f 1 0) (Var 0))) f
 
 
@@ -329,7 +323,6 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     veq A Γ v v' -> 
     ceq' (CTy A Σ E) Γ (Ret v) (Ret v')
 | CeqAbsurd C C1 C2 Γ v v' :
-    csubtype C1 C -> csubtype C2 C ->
     ceq' C Γ (Absurd C1 v) (Absurd C2 v')
 | CeqProdMatch Γ C v v' A B c c':
     veq (TyProd A B) Γ v v' ->
@@ -363,7 +356,6 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
     ceq' D Γ (LetRec A C c1 c2) (LetRec A C c1' c2')
 | CeqOp Γ op v v' c c' A A' Aop B B' Bop Ac Σ E:
     get_op_type Σ op = Some (Aop, Bop) ->
-    vsubtype A Aop -> vsubtype A' Aop -> vsubtype Bop B -> vsubtype Bop B' ->
     veq Aop Γ v v' ->
     ceq (CTy Ac Σ E) (CtxU Γ Bop) c c' ->
     ceq' (CTy Ac Σ E) Γ (Op op A B v c) (Op op A' B' v' c')
@@ -420,7 +412,6 @@ with ceq' : ctype -> ctx -> comp -> comp -> Prop :=
 | ηEmpty Γ v n c C C':
     (* Extra subtyping *)
     n <= ctx_len Γ ->
-    csubtype C C' ->
     has_ctype (ctx_insert Γ n (TyEmpty)) c C ->
     ceq' C' Γ (c_subs c n v) (Absurd C v)
 | ηPair Γ v n c C A B:
