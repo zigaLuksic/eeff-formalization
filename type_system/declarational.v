@@ -255,6 +255,7 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype' Γ (LetRec A C c1 c2) D
 | TypeOp Γ op v c Aop Bop Aop' Bop' A Σ E :
     get_op_type Σ op = Some (Aop', Bop') -> 
+    (* This is needed for the safety theorem. *)
     vsubtype Aop Aop' -> vsubtype Bop' Bop ->
     has_vtype Γ v Aop ->
     has_ctype (CtxU Γ Bop) c (CTy A Σ E) ->
@@ -516,12 +517,12 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg Γ Ψ (Heq Σ D h1 h2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D h1 h2)
-| HeqExtend Γ Ψ op h1 h2 c1 c2 A B Σ D:
+| HeqExtend Γ Ψ op h1 h2 c1 c2 A A1 A2 B B1 B2 Σ D:
     judg Γ Ψ (Heq Σ D h1 h2) ->
     get_case h1 op = None -> get_case h2 op = None ->
     judg (CtxU (CtxU Γ A) (TyFun B D)) (hyp_shift Ψ 2 0) (Ceq D c1 c2) ->
     judg' Γ Ψ (Heq (SigU Σ op A B) D 
-      (CasesU h1 op A B c1) (CasesU h2 op A B c2))
+      (CasesU h1 op A1 B1 c1) (CasesU h2 op A2 B2 c2))
 (* - - - - - - - - - - - - - - -  General - - - - - - - - - - - - - - -  *)
 | IsHyp Γ Ψ φ:
     has_hypothesis Ψ φ ->
