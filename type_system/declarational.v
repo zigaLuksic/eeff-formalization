@@ -4,7 +4,7 @@
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Require Export syntax subtyping substitution.
+Require Export syntax subtyping_and_admissibility substitution.
 
 (* ==================== Template Handling ==================== *)
 
@@ -568,6 +568,8 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg (CtxU Γ A) (HypU (hyp_shift Ψ 1 0) φ) (form_shift Φ 1 0) ->
     judg' Γ Ψ Φ
 | CompInduction Γ Ψ A Σ E φ :
+    (* Ensure admissibility *)
+    var_admissible 0 φ ->
     (* Base case *)
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) 
       (form_subs (form_shift φ 1 0) 1 (Fun TyUnit (Ret (Var 1)))) ->

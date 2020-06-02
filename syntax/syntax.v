@@ -371,3 +371,17 @@ Fixpoint form_under_var φ i :=
   | Forall A φ => form_under_var φ (1+i)
   | Exists A φ => form_under_var φ (1+i)
   end.
+
+Fixpoint form_no_var φ i :=
+  match φ with
+  | Veq A v1 v2 => v_no_var v1 i /\ v_no_var v2 i
+  | Ceq C c1 c2 => c_no_var c1 i /\ c_no_var c2 i
+  | Heq Σ D h1 h2 => h_no_var h1 i /\ h_no_var h2 i
+  | Truth => True
+  | Falsity => True
+  | And φ1 φ2 => form_no_var φ1 i /\ form_no_var φ2 i
+  | Or φ1 φ2 => form_no_var φ1 i /\ form_no_var φ2 i
+  | Implies φ1 φ2 => form_no_var φ1 i /\ form_no_var φ2 i
+  | Forall A φ => form_no_var φ (1+i)
+  | Exists A φ => form_no_var φ (1+i)
+  end.

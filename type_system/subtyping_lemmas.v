@@ -5,7 +5,7 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
 Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
 
-Require Export declarational wf_lemmas.
+Require Export declarational wf_lemmas substitution_lemmas.
 
 (* ==================== Sig and Eqs Properties ==================== *)
 
@@ -612,17 +612,17 @@ destruct H2.
   - apply WfCtxU; auto. inv H3. inv H4. auto.
   - apply STyCtxU. auto. apply vsubtype_refl. inv H3. inv H4. auto.
 + eapply CompInduction; eauto.
-  - eapply JL; eauto; inv H0; inv H8; inv H7.
+  - eapply JL; eauto; inv H0; inv H9; inv H8.
     apply WfCtxU; auto. apply STyCtxU; auto. apply vsubtype_refl. auto.
   - intros op Aop Bop gets.
     eapply get_op_type_wf in gets as wfs. destruct wfs.
     eapply JL; eauto.
     * apply WfCtxU. apply WfCtxU; auto. apply WfTyFun. auto.
-      inv H0. inv H10. auto.
+      inv H0. inv H11. auto.
     * apply STyCtxU. apply STyCtxU. auto.
       all: apply vsubtype_refl. auto.
-      apply WfTyFun. auto. inv H0. inv H10. auto.
-    * inv H0. inv H8. inv H7. auto.
+      apply WfTyFun. auto. inv H0. inv H11. auto.
+    * inv H0. inv H9. inv H8. auto.
 }{
 intros wfc ctxsty.
 inv wf.
@@ -1491,4 +1491,83 @@ Proof.
 intro orig. induction orig; simpl.
 + apply SubsetHypØ.
 + apply SubsetHypU. auto. apply has_hypothesis_shift. auto.
+Qed.
+
+
+(* ==================== Admissibility ==================== *)
+
+Lemma var_admissible_shift n φ j k:
+  var_admissible n φ -> n < j -> var_admissible n (form_shift φ k j).
+Proof.
+intros orig. revert j. induction orig; intros j safe; simpl; auto.
++ apply AdmissNotPresent. apply form_no_var_shift_alt; auto.
++ apply AdmissVeq.
++ apply AdmissCeq.
++ apply AdmissHeq.
++ apply AdmissTruth.
++ apply AdmissFalsity.
++ apply AdmissAnd; auto.
++ apply AdmissOr; auto.
++ apply AdmissImplies; auto. apply form_no_var_shift_alt; auto.
++ apply AdmissForall; auto. apply IHorig. omega.
+Qed.
+
+Lemma var_admissible_sub n φ j v:
+  var_admissible n φ -> n < j -> v_no_var v n ->
+  var_admissible n (form_sub φ (j, v)).
+Proof.
+intros orig. revert j v. induction orig; intros j v safe novar; simpl; auto.
++ apply AdmissNotPresent. apply form_no_var_sub_alt; auto.
++ apply AdmissVeq.
++ apply AdmissCeq.
++ apply AdmissHeq.
++ apply AdmissTruth.
++ apply AdmissFalsity.
++ apply AdmissAnd; auto.
++ apply AdmissOr; auto.
++ apply AdmissImplies; auto. apply form_no_var_sub_alt; auto.
++ apply AdmissForall; auto. apply IHorig. omega. apply v_no_var_shift; aomega.
+Qed.
+
+Lemma var_admissible_subs n φ j v:
+  var_admissible n φ -> n < j -> v_no_var v n ->
+  var_admissible n (form_subs φ j v).
+Proof.
+intros orig. revert j v. induction orig; intros j v safe novar; simpl; auto.
++ apply AdmissNotPresent. apply form_no_var_subs_alt; auto.
++ apply AdmissVeq.
++ apply AdmissCeq.
++ apply AdmissHeq.
++ apply AdmissTruth.
++ apply AdmissFalsity.
++ apply AdmissAnd; auto.
++ apply AdmissOr; auto.
++ apply AdmissImplies; auto. apply form_no_var_subs_alt; auto.
++ apply AdmissForall; auto. apply IHorig. omega. apply v_no_var_shift; aomega.
+Qed.
+
+Lemma var_admissible_inst n φ I v:
+  var_admissible n φ -> inst_no_var I n ->
+  form_under_var φ (S (inst_len I)) -> n <= inst_len I ->
+  var_admissible n (form_inst φ (inst_insert I n v)).
+Proof.
+intros orig. revert I v. induction orig; intros I v novar und safe; simpl; auto.
++ apply AdmissNotPresent. apply form_no_var_inst; auto.
++ apply AdmissVeq.
++ apply AdmissCeq.
++ apply AdmissHeq.
++ apply AdmissTruth.
++ apply AdmissFalsity.
++ apply AdmissAnd; destruct und; auto.
++ apply AdmissOr; destruct und; auto.
++ apply AdmissImplies; destruct und; auto.
+  apply form_no_var_inst; auto.
++ apply AdmissForall; simpl in und; auto.
+  assert (InstU (inst_shift (inst_insert I n v) 1 0) (Var 0)
+    = inst_insert (InstU (inst_shift I 1 0) (Var 0)) (1+n) (v_shift v 1 0)).
+  { simpl. f_equal. rewrite inst_shift_insert. f_equal. omega. }
+  rewrite H. apply IHorig. simpl. constructor. omega. 
+  - apply inst_no_var_shift; aomega.
+  - simpl. rewrite inst_len_shift. auto.
+  - simpl. rewrite inst_len_shift. omega.
 Qed.

@@ -13,7 +13,7 @@ Lemma InstU_is_insert I v:
   InstU I v = inst_insert I 0 v.
 Proof.
 destruct I; simpl; auto.
-Qed.
+Admitted.
 
 (* =============== Extending Well Formed Instantiations =============== *)
 
@@ -26,7 +26,7 @@ intros wfa wfi. apply WfInstU.
   - apply WfCtxU. inv wfi. 2: inv H. all: auto.
   - apply TypeVar. auto.
 + apply wf_inst_shift_typesafe; auto.
-Qed.
+Admitted.
 
 
 Fixpoint wf_inst_insert A Γ I Γ' n:
@@ -44,7 +44,7 @@ intros wfa wfi. destruct I; destruct Γ'; destruct n; simpl; inv wfi.
   apply wf_inst_shift_typesafe; auto.
 + apply WfInstU. apply v_shift_typesafe; auto.
   assert (n-0=n) as same by omega. rewrite same. auto.
-Qed.
+Admitted.
 
 
 (* =============== Padding Instantiations =============== *)
@@ -61,7 +61,7 @@ Lemma inst_len_pad_by_n I n :
 Proof.
 revert n. induction I; intros; induction n; simpl; auto.
 all: rewrite inst_len_shift; rewrite IHn; simpl; auto.
-Qed.
+Admitted.
 
 
 Fixpoint wf_inst_join_ctxs Γ I Γ' Γ0:
@@ -70,7 +70,7 @@ Fixpoint wf_inst_join_ctxs Γ I Γ' Γ0:
 Proof.
 intros orig wfg. destruct Γ0; simpl. auto. apply wf_inst_InstU. 
 inv wfg. auto. apply wf_inst_join_ctxs. auto. inv wfg. auto.
-Qed.
+Admitted.
 
 
 Lemma wf_inst_pad_for_handle_t Γ I Γ' Γ0 Z D:
@@ -88,7 +88,7 @@ assert (forall n m, inst_pad_by_n I (n+m)
   f_equal. rewrite IHm. auto. }
 rewrite H. apply wf_inst_join_ctxs. erewrite len_tctx_to_ctx.
 apply wf_inst_join_ctxs. auto. apply wf_tctx_to_ctx. all: auto.
-Qed.
+Admitted.
 
 
 Fixpoint get_inst_val_shift_pad_var I n m k cut {struct n}:
@@ -98,7 +98,7 @@ Fixpoint get_inst_val_shift_pad_var I n m k cut {struct n}:
 Proof.
 intros. destruct n; simpl. omega. destruct m. auto. 
 rewrite get_inst_val_shift. rewrite get_inst_val_shift_pad_var. simpl. auto. omega.
-Qed.
+Admitted.
 
 
 Fixpoint get_inst_pad_var I n m:
@@ -107,7 +107,7 @@ Fixpoint get_inst_pad_var I n m:
 Proof.
 intro. specialize (get_inst_val_shift_pad_var I n m 0 0) as stronger.
 rewrite inst_shift_0 in stronger. rewrite stronger. simpl. auto. omega.
-Qed.
+Admitted.
 
 
 Fixpoint get_inst_pad_same I n m {struct n}:
@@ -124,7 +124,7 @@ assert (forall I k m,
 + rewrite H. rewrite get_inst_pad_same. 
   destruct (get_inst_val I m); simpl.
   rewrite v_shift_shift. do 2 f_equal. omega. auto.
-Qed.
+Admitted.
 
 
 Fixpoint v_inst_shift_pad Γ v A n k cut I {orig:has_vtype Γ v A}:
@@ -173,7 +173,7 @@ Proof.
   eapply (c_inst_shift_pad _ _ _ (S(S n)) k (S(S cut))) in H3.
   simpl in H3. rewrite <-inst_shift_comm, <-inst_shift_comm in H3.
   rewrite inst_shift_shift in H3. eauto. all: simpl; omega.
-Qed.
+Admitted.
 
 
 (* Instantiation with padding changes nothing. *)
@@ -193,7 +193,7 @@ Proof.
   rewrite inst_shift_0, c_shift_0 in orig. eauto. omega.
 + intros. eapply (h_inst_shift_pad _ _ _ _ n 0 0) in orig.
   rewrite inst_shift_0, h_shift_0 in orig. eauto. omega.
-Qed.
+Admitted.
 
 
 (* =============== Instantiation and Substitution =============== *)
@@ -393,7 +393,7 @@ all: clear c_inst_subs h_inst_subs.
 + assert (S(S(inst_len I)) = 2+(inst_len I)) as same by omega.
   rewrite same. apply v_under_var_shift. auto. omega.
 }
-Qed.
+Admitted.
 
 
 Lemma c_inst_subs_out c vs I :
@@ -407,7 +407,7 @@ intros. unfold c_subs_out. unfold c_subs_out.
 rewrite (c_inst_subs 0). do 2 f_equal.
 rewrite InstU_is_insert.
 all: simpl; aomega.
-Qed.
+Admitted.
 
 
 Lemma c_inst_subs2_out c vs1 vs2 I :
@@ -431,7 +431,7 @@ all: simpl; aomega.
 + unfold c_subs_out. apply c_under_var_subs. auto.
   - apply v_under_var_shift. auto. omega.
   - omega.
-Qed.
+Admitted.
 
 
 (* =============== Instantiation and Handling Templates =============== *)
@@ -459,7 +459,7 @@ destruct I; simpl.
     destruct (get_inst_val (inst_pad_by_n (InstU I v0) k) v); simpl.
     rewrite v_shift_shift, v_shift_shift.
     do 2 f_equal. all: aomega.
-Qed.
+Admitted.
 
 
 Fixpoint get_inst_val_shift_later I k n v {struct k}:
@@ -477,7 +477,7 @@ destruct k; simpl.
   rewrite get_inst_val_shift_later_strong.
   destruct (get_inst_val (inst_pad_by_n I k) v); simpl.
   rewrite v_shift_shift, v_shift_shift. do 2 f_equal. all: aomega.
-Qed.
+Admitted.
 
 
 Fixpoint v_inst_shift_move_to_inst k n v I: 
@@ -530,7 +530,7 @@ specialize (caux (2+k) n c I). simpl in caux.
 rewrite inst_shift_shift, inst_shift_shift in caux. simpl in caux. 
 rewrite caux. auto.
 }
-Qed.
+Admitted.
 
 
 Fixpoint form_inst_shift_move_to_inst k n φ I {struct φ}:
@@ -544,7 +544,7 @@ all: auto.
 all: assert (InstU (inst_shift (inst_pad_by_n I (k + n)) 1 0) (Var 0)
   = inst_pad_by_n I (1+k+n)) as same by (simpl; auto).
 all: rewrite same, form_inst_shift_move_to_inst; auto.
-Qed.
+Admitted.
 
 
 Lemma hyp_inst_shift_move_to_inst k n Ψ I :
@@ -552,7 +552,7 @@ Lemma hyp_inst_shift_move_to_inst k n Ψ I :
   = hyp_inst Ψ (inst_pad_by_n (inst_shift I n 0) k).
 Proof.
 induction Ψ; simpl; f_equal; auto. apply form_inst_shift_move_to_inst.
-Qed.
+Admitted.
 
 
 
@@ -579,7 +579,7 @@ all: f_equal || apply v_under_var_shift; aomega.
 +  assert (InstU (inst_shift I 1 0) (Var 0) = inst_pad_by_n I 1) 
     as same by (simpl; auto).
   rewrite v_shift_inst, same, v_inst_shift_move_to_inst. simpl. auto.
-Qed.
+Admitted.
 
 
 Fixpoint inst_handle_t Γ Z I h T Σ D {struct T}:
@@ -650,7 +650,7 @@ all: assert (forall x y, x+(S y) = S (x+y)) as comm by (intros; omega).
     simpl in H13. rewrite H13. auto.
 (* Some issue with eauto magic *)
 Unshelve. exact D.
-Qed.
+Admitted.
 
 
 (* =============== Instantiation and OOTB =============== *)
@@ -668,7 +668,7 @@ Fixpoint smush_get I I' n {struct I'}:
 Proof.
 destruct I'; simpl. auto.
 destruct n; simpl. auto. rewrite smush_get. auto.
-Qed.
+Admitted.
 
 
 Fixpoint shift_smush n I I' Γ Γ' Γ'' {struct I'}:
@@ -679,7 +679,7 @@ Proof.
 intros wfI wfI'. destruct I'; simpl. auto. f_equal. 
 + destruct Γ''; inv wfI'. eauto. 
 + rewrite v_shift_inst. rewrite v_inst_shift_move_to_inst. simpl. f_equal.
-Qed.
+Admitted.
 
 
 Fixpoint v_smush_is_sequencing I I' v Γ Γ' Γ'' A (orig: has_vtype Γ'' v A)
@@ -770,7 +770,7 @@ erewrite shift_smush; eauto. erewrite <-c_smush_is_sequencing; eauto; simpl.
 rewrite inst_shift_shift; eauto.
 all: inv H3; inv H4; auto; inv H8; auto.
 }
-Qed.
+Admitted.
 
 
 (* =============== Safety =============== *)
@@ -1579,7 +1579,7 @@ destruct orig. apply WfJudg; eauto. destruct H3.
   simpl in H4. auto.
   simpl. apply wf_inst_InstU. 
   inv H4. inv H5. auto. auto.
-+ eapply JL in H3 as IH1.
++ eapply JL in H4 as IH1.
   2: instantiate (2:= (CtxU Γ A)).
   2: instantiate (1:= inst_pad_by_n I 1).
   assert (
@@ -1596,18 +1596,23 @@ destruct orig. apply WfJudg; eauto. destruct H3.
             (Fun TyUnit (Op op Aop Bop (Var 2) (App (Var 2) (Var 0)))))
           (InstU (inst_shift (InstU (inst_shift I 1 0) (Var 0)) 1 0) (Var 0)))
   ) as IH2.
-  { intros op Aop Bop gets. specialize (H4 op Aop Bop gets).
+  { intros op Aop Bop gets. specialize (H5 op Aop Bop gets).
     apply get_op_type_wf in gets. destruct gets.
-    eapply JL in H4. all: clear VL CL HL RL JL WFHL WFFL WS. eauto.
-    apply wf_inst_InstU. apply WfTyFun. auto. inv H1. inv H11. auto.
-    apply wf_inst_InstU; auto. inv H1. inv H9. inv H8. auto. }
-  eapply JL in H5 as IH3.
+    eapply JL in H5. all: clear VL CL HL RL JL WFHL WFFL WS. eauto.
+    apply wf_inst_InstU. apply WfTyFun. auto. inv H1. inv H12. auto.
+    apply wf_inst_InstU; auto. inv H1. inv H10. inv H9. auto. }
+  eapply JL in H6 as IH3.
+  all: clear VL CL HL RL JL WFHL WFFL WS.
   2: instantiate (2:= Γ).
   2: instantiate (1:= I).
-  all: clear VL CL HL RL JL WFHL WFFL WS.
-  inv H1. inv H9.
+  inv H1. inv H10.
   apply wf_inst_ctx_len_same in wfinst as same_len.
   simpl. eapply CompInduction; eauto.
+  - clear IH1 IH2 IH3 H5. rewrite InstU_is_insert. 
+    apply var_admissible_inst; aomega.
+    * apply inst_shift_makes_no_var.
+    * rewrite inst_len_shift, same_len. apply wf_form_is_under_ctx in H11.
+      simpl in H11. auto.
   - clear IH2. 
     rewrite hyp_shift_inst. rewrite hyp_inst_shift_move_to_inst in IH1.
     erewrite (form_inst_subs 1) in IH1. rewrite form_shift_inst.
@@ -1620,10 +1625,10 @@ destruct orig. apply WfJudg; eauto. destruct H3.
     rewrite H1, form_inst_shift_move_to_inst in IH1. clear H1. simpl in *.
     auto. simpl. omega.
     * apply form_under_var_shift. simpl. rewrite inst_len_shift, same_len.
-      apply wf_form_is_under_ctx in H10. simpl in H10. auto. omega.
+      apply wf_form_is_under_ctx in H11. simpl in H11. auto. omega.
     * simpl. omega.
   - intros op Aop Bop gets. specialize (IH2 op Aop Bop gets).
-    specialize (H4 op Aop Bop gets). clear IH1.
+    specialize (H5 op Aop Bop gets). clear IH1.
     apply get_op_type_wf in gets. destruct gets. simpl in *.
     rewrite hyp_shift_inst, form_shift_inst.
     rewrite (form_inst_subs 3), (form_inst_subs 2) in IH2. simpl in IH2.
@@ -1652,20 +1657,20 @@ destruct orig. apply WfJudg; eauto. destruct H3.
     rewrite pad2, form_inst_shift_move_to_inst in IH2. auto.
     all: clear IH2; simpl; try rewrite inst_len_shift, inst_len_shift.
     all: try rewrite same_len; aomega.
-    * rewrite <-(form_shift_shift 1). apply wf_form_is_under_ctx in H10.
+    * rewrite <-(form_shift_shift 1). apply wf_form_is_under_ctx in H11.
       apply form_under_var_shift. apply form_under_var_shift. 
-      simpl in H10. all: aomega.
+      simpl in H11. all: aomega.
     * rewrite <-(form_shift_shift 1), <-(form_shift_shift 1 1).
       apply form_under_var_shift. apply form_under_var_shift. 
-      apply form_under_var_shift. apply wf_form_is_under_ctx in H10.
-      rewrite inst_len_shift, same_len. simpl in H10. all: aomega.
-    * inv H4. inv H8. auto.
-  - clear H4 IH1 IH2. erewrite form_inst_subs in IH3.
+      apply form_under_var_shift. apply wf_form_is_under_ctx in H11.
+      rewrite inst_len_shift, same_len. simpl in H11. all: aomega.
+    * inv H5. inv H9. auto.
+  - clear IH1 IH2. erewrite form_inst_subs in IH3.
     rewrite InstU_is_insert. eauto. omega.
-    * rewrite same_len. apply wf_form_is_under_ctx in H10. simpl in H10. auto.
+    * rewrite same_len. apply wf_form_is_under_ctx in H11. simpl in H11. auto.
     * simpl. constructor; constructor; aomega.
   - auto.
-  - apply wf_inst_InstU; auto. inv H1. inv H9. inv H8. auto.
+  - apply wf_inst_InstU; auto. inv H1. inv H10. inv H9. auto.
 }{
 destruct orig; simpl.
 - clear VL CL HL RL JL WFHL WFFL WS.
@@ -1721,4 +1726,4 @@ destruct orig; simpl.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply WfInstU; auto.
 }
-Qed.
+Admitted.

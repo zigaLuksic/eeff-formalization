@@ -396,6 +396,12 @@ Proof.
 { revert j; induction h; intros j; simpl; auto. }
 Qed.
 
+Fixpoint inst_shift_makes_no_var I j:
+  inst_no_var (inst_shift I 1 j) j.
+Proof.
+destruct I; simpl. auto. constructor.
+apply v_shift_makes_no_var. auto.
+Qed.
 
 Fixpoint v_no_var_shift v j n cut:
   v_no_var v j -> (cut <= j) -> 
@@ -438,6 +444,19 @@ destruct orig. constructor; eauto. apply v_no_var_shift; aomega.
 Qed.
 
 
+Fixpoint form_no_var_shift φ j n cut {struct φ}:
+  form_no_var φ j -> (cut <= j) -> 
+  form_no_var (form_shift φ n cut) (n+j).
+Proof.
+intros orig cmp. destruct φ; simpl in *; eauto.
+all: try constructor; try (inv orig; eauto).
+all: apply v_no_var_shift || apply c_no_var_shift 
+  || apply h_no_var_shift || auto; aomega.
+all: assert (S(n+j)=n+(S j)) as same by omega; rewrite same.
+all: apply form_no_var_shift; aomega.
+Qed.
+
+
 Fixpoint v_no_var_shift_alt v j n cut:
   v_no_var v j -> (cut > j) ->
   v_no_var (v_shift v n cut) j
@@ -467,6 +486,16 @@ destruct orig. constructor; auto. apply c_no_var_shift_alt; aomega.
 }
 Qed.
 
+Fixpoint form_no_var_shift_alt φ j n cut {struct φ}:
+  form_no_var φ j -> (cut > j) -> 
+  form_no_var (form_shift φ n cut) j.
+Proof.
+intros orig cmp. destruct φ; simpl in *; eauto.
+all: try constructor; try (inv orig; eauto).
+all: apply v_no_var_shift_alt || apply c_no_var_shift_alt 
+  || apply h_no_var_shift_alt || auto; aomega.
+all: apply form_no_var_shift_alt; aomega.
+Qed.
 
 Fixpoint v_sub_makes_no_var v j vs :
   v_no_var vs j -> v_no_var (v_sub v (j, vs)) j
@@ -642,6 +671,48 @@ all: intros novar.
 + induction c; simpl in *. 
   all: try destruct novar; try destruct H0; f_equal; auto.
 + induction h; simpl in *; try destruct novar; f_equal; auto.
+Qed.
+
+Fixpoint v_no_var_sub_alt v v' i j {struct v}:
+  v_no_var v i -> v_no_var v' i -> j>i ->
+  v_no_var (v_sub v (j, v')) i
+
+with c_no_var_sub_alt c v' i j {struct c}:
+  c_no_var c i -> v_no_var v' i -> j>i ->
+  c_no_var (c_sub c (j, v')) i
+
+with h_no_var_sub_alt h v' i j {struct h}:
+  h_no_var h i -> v_no_var v' i -> j>i ->
+  h_no_var (h_sub h (j, v')) i.
+Proof.
+all: intros no_var no_var' cmp.
++ destruct v; simpl in *.
+  { destruct (n=?j) eqn:nj. auto. simpl. omega. }
+  all: try destruct no_var; try constructor; eauto.
+  all: apply c_no_var_sub_alt; aomega.
+  all: apply v_no_var_shift; aomega.
++ destruct c; simpl in *; eauto.
+  all: try destruct no_var; try destruct H0; try constructor; try constructor.
+  all: try apply c_no_var_sub_alt; aomega.
+  all: assert (S(S i) = 2+i) as same by omega; try rewrite same.
+  all: apply v_no_var_shift; aomega.
++ destruct h; simpl in *; eauto.
+  destruct no_var. constructor. eauto.
+  try apply c_no_var_sub_alt; aomega.
+  assert (S(S i) = 2+i) as same by omega; try rewrite same.
+  apply v_no_var_shift; aomega.
+Qed.
+
+Fixpoint form_no_var_sub_alt φ v' i j {struct φ}:
+  form_no_var φ i -> v_no_var v' i -> j>i ->
+  form_no_var (form_sub φ (j, v')) i.
+Proof.
+intros orig novar safe. destruct φ; simpl in *.
+all: try destruct orig; try constructor; eauto.
+all: apply v_no_var_sub_alt || apply c_no_var_sub_alt 
+  || apply h_no_var_sub_alt || apply form_no_var_sub_alt || auto.
+all: aomega.
+all: apply v_no_var_shift; aomega.
 Qed.
 
 (* ==================== Sub Interactions ==================== *)
@@ -881,6 +952,50 @@ all: intros no_var no_var' cmp.
   apply v_no_var_shift; aomega.
 Qed.
 
+Fixpoint v_no_var_subs_alt v v' i j {struct v}:
+  v_no_var v i -> v_no_var v' i -> j>i ->
+  v_no_var (v_subs v j v') i
+
+with c_no_var_subs_alt c v' i j {struct c}:
+  c_no_var c i -> v_no_var v' i -> j>i ->
+  c_no_var (c_subs c j v') i
+
+with h_no_var_subs_alt h v' i j {struct h}:
+  h_no_var h i -> v_no_var v' i -> j>i ->
+  h_no_var (h_subs h j v') i.
+Proof.
+all: intros no_var no_var' cmp.
++ destruct v; simpl in *.
+  { unfold v_subs. simpl. destruct (n=?j) eqn:nj.
+  + rewrite v_negshift_shift, v_shift_0; aomega.
+  + simpl. destruct (j<=?n) eqn:cmpj; simpl; apply Nat.eqb_neq in nj.
+    apply leb_complete in cmpj. omega.
+    apply leb_complete_conv in cmpj. omega. }
+  all: try destruct no_var; try constructor; eauto.
+  all: rewrite v_shift_comm; eaomega; apply c_no_var_subs_alt; aomega.
+  all: apply v_no_var_shift; aomega.
++ destruct c; simpl in *; eauto.
+  all: try destruct no_var; try destruct H0; try constructor; try constructor.
+  all: eauto; rewrite v_shift_comm; try apply c_no_var_subs_alt; aomega.
+  all: assert (S(S i) = 2+i) as same by omega; try rewrite same.
+  all: apply v_no_var_shift; aomega.
++ destruct h; simpl in *; eauto.
+  destruct no_var. constructor. eauto.
+  rewrite v_shift_comm; try apply c_no_var_subs_alt; aomega.
+  assert (S(S i) = 2+i) as same by omega; try rewrite same.
+  apply v_no_var_shift; aomega.
+Qed.
+
+Fixpoint form_no_var_subs_alt φ v' i j {struct φ}:
+  form_no_var φ i -> v_no_var v' i -> j>i ->
+  form_no_var (form_subs φ j v') i.
+Proof.
+intros orig novar safe. destruct φ; simpl in *.
+all: try destruct orig; try constructor; eauto.
+all: apply v_no_var_subs_alt || apply c_no_var_subs_alt 
+  || apply h_no_var_subs_alt || apply form_no_var_subs_alt || auto; aomega.
+all: apply v_no_var_shift; aomega.
+Qed.
 
 (* ==================== Full Subs Distributivity ==================== *)
 
@@ -1675,4 +1790,119 @@ f_equal; simpl in *; destruct safe; destruct under. auto.
 rewrite inst_shift_insert, inst_insert_extend, inst_insert_extend.
 apply c_inst_no_var_same; auto; simpl; rewrite inst_len_shift. auto. omega.
 }
+Qed.
+
+
+Fixpoint get_inst_val_no_var I n k v {struct I}:
+  inst_no_var I n -> get_inst_val I k = Some v ->
+  v_no_var v n.
+Proof.
+intros inovar gets. destruct I. simpl in gets. inv gets.
+simpl in gets. destruct k.
++ inv gets. simpl in inovar. destruct inovar. auto.
++ eapply get_inst_val_no_var. 2: eauto. destruct inovar. auto.
+Qed.
+
+
+Fixpoint v_no_var_inst I n v vs {struct v}:
+  v_no_var v n -> inst_no_var I n ->
+  n <= inst_len I -> v_under_var v (S (inst_len I)) ->
+  v_no_var (v_inst v (inst_insert I n vs)) n
+with c_no_var_inst I n c vs {struct c}:
+  c_no_var c n -> inst_no_var I n ->
+  n <= inst_len I -> c_under_var c (S (inst_len I)) ->
+  c_no_var (c_inst c (inst_insert I n vs)) n
+with h_no_var_inst I n h vs {struct h}:
+  h_no_var h n -> inst_no_var I n ->
+  n <= inst_len I -> h_under_var h (S (inst_len I)) ->
+  h_no_var (h_inst h (inst_insert I n vs)) n.
+Proof.
+{
+assert (forall I vs, InstU (inst_insert I n vs) (Var 0) 
+  = (inst_insert (InstU I (Var 0)) (S n) vs) ) as same1.
+{ intros. induction I0; simpl; f_equal; destruct n; simpl; auto. }
+intros vnovar inovar und safe.
+destruct v; simpl; auto.
+{ destruct (n<=?n0) eqn:cmp.
+  + destruct (n=?n0) eqn:eq.
+    - apply Nat.eqb_eq in eq. subst. simpl in vnovar. destruct vnovar. auto.
+    - apply leb_complete in cmp. apply Nat.eqb_neq in eq. simpl in safe.
+      destruct n0. omega. rewrite inst_insert_above; aomega.
+      assert (inst_len I <=? n0 = false) as cond. apply leb_correct_conv. omega.
+      apply leb_complete_conv in cond. 
+      specialize (get_inst_guarantee I n0 cond) as gets. destruct gets as [v].
+      rewrite H. eapply get_inst_val_no_var in H; eauto.
+  + apply leb_complete_conv in cmp. simpl in vnovar. simpl in safe.
+    rewrite inst_insert_under; aomega.
+    assert (inst_len I <=? n0 = false) as cond. apply leb_correct_conv. omega.
+      apply leb_complete_conv in cond. 
+    specialize (get_inst_guarantee I n0 cond) as gets. destruct gets as [v].
+    rewrite H. eapply get_inst_val_no_var in H; eauto. }
+all: try constructor; try destruct vnovar; try destruct safe; auto.
+all: rewrite inst_shift_insert, same1; apply c_no_var_inst; simpl in *; aomega.
+all: try rewrite inst_len_shift; aomega; aconstructor.
+all: apply inst_no_var_shift; aomega.
+}{
+assert (forall I vs, InstU (inst_insert I n vs) (Var 0) 
+  = (inst_insert (InstU I (Var 0)) (S n) vs) ) as same1.
+{ intros. induction I0; simpl; f_equal; destruct n; simpl; auto. }
+assert (forall I vs, InstU (InstU (inst_insert I n vs) (Var 1)) (Var 0) 
+  = (inst_insert (InstU (InstU I (Var 1)) (Var 0)) (S(S n)) vs) ) as same2.
+{ intros. induction I0; simpl; f_equal; destruct n; simpl; auto. }
+intros cnovar inovar und safe.
+destruct c; simpl; auto. 
+all: constructor; try destruct safe; try destruct cnovar; auto.
+all: try constructor; try rewrite inst_shift_insert.
+all: rewrite same2 || rewrite same1 || auto.
++ apply c_no_var_inst; simpl in *; aomega.
+  all: try rewrite inst_len_shift; aomega. do 2 aconstructor.
+  assert (S(S n)=2+n) by omega.   rewrite H3. apply inst_no_var_shift; aomega.
++ destruct H2. destruct H0. apply c_no_var_inst; simpl in *; aomega.
+  all: try rewrite inst_len_shift; aomega. aconstructor.
+  apply inst_no_var_shift; aomega.
++ destruct H2. destruct H0. apply c_no_var_inst; simpl in *; aomega.
+  all: try rewrite inst_len_shift; aomega. aconstructor.
+  apply inst_no_var_shift; aomega.
++ destruct H2. destruct H0. apply c_no_var_inst; simpl in *; aomega.
+  all: try rewrite inst_len_shift; aomega.
++ destruct H2. destruct H0. apply c_no_var_inst; simpl in *; aomega.
+  all: try rewrite inst_len_shift; aomega. do 2 aconstructor.
+  assert (S(S n)=2+n) by omega. rewrite H5. apply inst_no_var_shift; aomega.
++ apply c_no_var_inst; simpl in *; aomega; try rewrite inst_len_shift; aomega.
+  aconstructor. apply inst_no_var_shift; aomega.
++ apply c_no_var_inst; simpl in *; aomega; try rewrite inst_len_shift; aomega.
+  do 2 aconstructor. assert (S(S n)=2+n) by omega. rewrite H3. 
+  apply inst_no_var_shift; aomega.
++ apply c_no_var_inst; simpl in *; aomega; try rewrite inst_len_shift; aomega.
+  aconstructor. apply inst_no_var_shift; aomega.
++ apply c_no_var_inst; simpl in *; aomega; try rewrite inst_len_shift; aomega.
+  aconstructor. apply inst_no_var_shift; aomega.
+}{
+assert (forall I vs, InstU (InstU (inst_insert I n vs) (Var 1)) (Var 0) 
+  = (inst_insert (InstU (InstU I (Var 1)) (Var 0)) (S(S n)) vs) ) as same2.
+{ intros. induction I0; simpl; f_equal; destruct n; simpl; auto. }
+intros hnovar inovar und safe.
+destruct h; simpl; auto. destruct hnovar. destruct safe.
+aconstructor. rewrite inst_shift_insert, same2. apply c_no_var_inst.
+all: simpl in *; auto. all: try rewrite inst_len_shift; aomega.
+do 2 aconstructor. assert (S(S n)=2+n) by omega. rewrite H3.
+apply inst_no_var_shift; aomega.
+}
+Qed.
+
+Fixpoint form_no_var_inst I n φ vs {struct φ}:
+  form_no_var φ n -> inst_no_var I n ->
+  n <= inst_len I -> form_under_var φ (S (inst_len I)) ->
+  form_no_var (form_inst φ (inst_insert I n vs)) n.
+Proof.
+assert (forall I vs, InstU (inst_insert I n vs) (Var 0) 
+  = (inst_insert (InstU I (Var 0)) (S n) vs) ) as same1.
+{ intros. induction I0; simpl; f_equal; destruct n; simpl; auto. }
+intros fnovar inovar und safe.
+destruct φ; simpl; auto; try destruct safe; try destruct fnovar.
+all: try constructor; try rewrite inst_shift_insert, same1.
+all: apply v_no_var_inst || apply c_no_var_inst 
+  || apply h_no_var_inst || apply form_no_var_inst; aomega.
+all: simpl in *; try rewrite inst_len_shift; aomega.
+all: aconstructor; apply inst_no_var_shift; aomega.
 Qed.

@@ -55,4 +55,34 @@ Inductive hyp_subset : hypotheses -> hypotheses -> Prop :=
 | SubsetHypU Ψ φ Ψ' : 
     hyp_subset Ψ Ψ' ->
     has_hypothesis Ψ' φ ->
-    hyp_subset (HypU Ψ φ) Ψ'. 
+    hyp_subset (HypU Ψ φ) Ψ'.
+
+Inductive var_admissible : nat -> formula -> Prop :=
+| AdmissNotPresent n φ :
+    form_no_var φ n ->
+    var_admissible n φ
+| AdmissVeq n A v1 v2 :
+    var_admissible n (Veq A v1 v2)
+| AdmissCeq n C c1 c2 :
+    var_admissible n (Ceq C c1 c2)
+| AdmissHeq n Σ D h1 h2 :
+    var_admissible n (Heq Σ D h1 h2)
+| AdmissTruth n:
+    var_admissible n Truth
+| AdmissFalsity n:
+    var_admissible n Falsity
+| AdmissAnd n φ1 φ2:
+    var_admissible n φ1 ->
+    var_admissible n φ2 ->
+    var_admissible n (And φ1 φ2)
+| AdmissOr n φ1 φ2:
+    var_admissible n φ1 ->
+    var_admissible n φ2 ->
+    var_admissible n (Or φ1 φ2)
+| AdmissImplies n φ1 φ2:
+    form_no_var φ1 n ->
+    var_admissible n φ2 ->
+    var_admissible n (Implies φ1 φ2)
+| AdmissForall n A φ:
+    var_admissible (1+n) φ ->
+    var_admissible n (Forall A φ).

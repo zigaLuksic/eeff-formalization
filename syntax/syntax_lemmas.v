@@ -207,6 +207,17 @@ destruct orig; aconstructor; eapply c_under_var_weaken; eaomega.
 Qed.
 
 
+Fixpoint form_under_var_weaken φ i j:
+  form_under_var φ j -> j <= i -> form_under_var φ i.
+Proof.
+intros orig cmp. destruct φ; simpl in *; constructor || auto.
+all: try destruct orig.
+all: eapply v_under_var_weaken || eapply c_under_var_weaken
+  || eapply h_under_var_weaken || auto; eaomega.
+all: eapply form_under_var_weaken; eaomega.
+Qed.
+
+
 Fixpoint v_under_var_no_var v i j:
   v_under_var v i -> i<=j -> v_no_var v j
 with c_under_var_no_var c i j:
@@ -286,4 +297,12 @@ intros safe cmp. induction I; simpl in *; aomega.
     * apply Nat.eqb_neq in n0. destruct n0. auto.
     * assert (n-0=n) as same by omega. rewrite same.
       destruct m. omega. apply inst_insert_above; omega.
+Qed.
+
+Fixpoint get_inst_guarantee I n {struct I}:
+  n < inst_len I -> exists v, get_inst_val I n = Some v.
+Proof.
+intros safe. destruct I. simpl in safe. omega.
+destruct n; simpl. exists v. auto. 
+apply get_inst_guarantee. simpl in safe. omega.
 Qed.
