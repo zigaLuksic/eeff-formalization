@@ -14,7 +14,7 @@ Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
 Require Export type_lemmas logic_lemmas logic_tactics.
 Open Scope string_scope.
 
-
+(* Helpful lemma *)
 Lemma letbind_ctype A c1 c2 Γ D:
   has_ctype Γ c1 (CTy A SigØ EqsØ) -> has_ctype (CtxU Γ A) c2 D ->
   has_ctype Γ (Do c1 c2) D.
@@ -45,42 +45,41 @@ assert (
     (Ceq (CTy A Σ E) 
       (Do (App (Var 0) Unit) (Ret (Var 0))) (App (Var 0) Unit)
   ))).
-{ (* The showcase of induction. *)
-apply WfJudg; auto.
+{ 
+apply WfJudg; obvious.
 { apply WfForall; obvious. apply WfCeq.
   + ctype_step. instantiate (1:=A). obvious_ctype.
     apply dirty_ret; obvious_vtype.
   + obvious_ctype. }
-apply CompInduction.
-+ apply WfCeq. ctype_step. instantiate (1:=A). obvious_ctype.
-  apply dirty_ret; obvious_vtype. obvious_ctype.
-+ (* Base Case *)
+apply CompInduction. 
+(* START INDUCTION *)
++ apply AdmissCeq.
+
++ (* BASE CASE *)
   simpl. simpl_c_subs.
   assert (wf_hyp (CtxU Γ A) (hyp_shift Ψ 1 0)) as wfhyp.
   { apply wf_hyp_shift_typesafe; auto. }
   
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply CeqDo.
-  3: apply ceq_refl. 2: apply WfJudg. 4: eapply βApp. all: auto.
-  apply WfCeq. 3: apply WfCeq.
+  3: apply ceq_refl. 2: apply WfJudg; obvious. 3: eapply βApp. all: auto.
+  2: instantiate (1:=A). all: simpl_c_subs. apply WfCeq. 3: apply WfCeq.
 
   { ctype_step. instantiate (1:=A). ctype_step. 2: obvious_vtype.
-    vtype_step. apply dirty_ret; obvious_vtype.
+    vtype_step. apply dirty_ret; obvious_vtype. apply dirty_ret; obvious_vtype. }
+  { ctype_step. instantiate (1:=A). apply dirty_ret; obvious_vtype.
     apply dirty_ret; obvious_vtype. }
-  { simpl_c_subs. ctype_step. instantiate (1:=A).
-    apply dirty_ret; obvious_vtype. apply dirty_ret; obvious_vtype. }
-  { instantiate (1:=A). ctype_step. 2:obvious_vtype.
-    vtype_step. apply dirty_ret; obvious_vtype. }
+  { ctype_step. 2:obvious_vtype. vtype_step. apply dirty_ret; auto. obvious_vtype. }
   { simpl_c_subs. apply dirty_ret; obvious_vtype. }
   { apply dirty_ret; obvious_vtype. }
   { apply wf_hyp_shift_typesafe; auto. }
 
-  simpl_c_subs. eapply ceq_trans. apply WfJudg; auto. 2:eapply βDoRet.
+  eapply ceq_trans. apply WfJudg; obvious. 2:eapply βDoRet.
   all: simpl_c_subs. apply WfCeq.
 
   { ctype_step. instantiate (1:=A). all: apply dirty_ret; obvious_vtype. }
   { apply dirty_ret; obvious_vtype. }
 
-  eapply ceq_sym. eapply ceq_trans. apply WfJudg; auto. 2:eapply βApp.
+  eapply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2:eapply βApp.
   all: simpl_c_subs. apply WfCeq.
 
   { ctype_step. vtype_step. apply dirty_ret; obvious_vtype. obvious_vtype. }
@@ -88,17 +87,20 @@ apply CompInduction.
 
   eapply ceq_refl. apply dirty_ret; obvious_vtype. auto.
 
-+ (* Step Case *)
++ (* STEP CASE *)
   intros op Aop Bop gets.
   apply get_op_type_wf in gets as getss. destruct getss. 2: auto.
   simpl. simpl_c_subs.
 
+
   assert (
     wf_hyp (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E)))
     (HypU (hyp_shift Ψ 2 0)
-     (Forall Bop (Ceq (CTy A Σ E)
-      (Do (App (Fun (App (Var 2) (Var 1))) Unit) (Ret (Var 0)))
-      (App (Fun (App (Var 2) (Var 1))) Unit)))) ) as wfhyp.
+      (Forall Bop
+        (Ceq (CTy A Σ E)
+          (Do (App (Fun TyUnit (App (Var 2) (Var 1))) Unit) (Ret (Var 0)))
+          (App (Fun TyUnit (App (Var 2) (Var 1))) Unit)))) ) 
+  as wfhyp.
   { apply WfHypU.
     + rewrite <-(hyp_shift_shift 1). apply wf_hyp_shift_typesafe.
       apply wf_hyp_shift_typesafe. all: obvious.
@@ -110,85 +112,83 @@ apply CompInduction.
         instantiate (1:=Bop). all:obvious_vtype. }
   
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply CeqDo.
-  3: apply ceq_refl. 2: apply WfJudg. 4: eapply βApp. all: auto.
-  apply WfCeq. 3: apply WfCeq. all: simpl_c_subs.
+  3: apply ceq_refl. 2: apply WfJudg; obvious. 3: eapply βApp.
+  2: instantiate (1:=A). all: simpl_c_subs. apply WfCeq. 3: apply WfCeq.
 
   { ctype_step. instantiate (1:=A). 2: apply dirty_ret; obvious_vtype.
-    ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
-    eapply TypeOp; eauto. obvious_vtype. ctype_step.
-    instantiate (1:=Bop). all: obvious_vtype. }
+    ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. auto.
+    ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
   { ctype_step. instantiate (1:=A). 2: apply dirty_ret; obvious_vtype.
-    ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
+    obvious_ctype. auto. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
+  { ctype_step; obvious_vtype. obvious_ctype. auto. ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. }
-  { instantiate (1:=A). ctype_step. 2: obvious_vtype. vtype_step.
-    ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
-    instantiate (1:=Bop). all: obvious_vtype. }
-  { ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
-    instantiate (1:=Bop). all: obvious_vtype. }
+  { obvious_ctype. auto. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
   { apply dirty_ret; obvious_vtype. }
   { eapply wf_hyp_shift_typesafe in wfhyp. simpl in wfhyp. eauto. auto. }
 
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply βDoOp.
   all: simpl. apply WfCeq.
 
-  { ctype_step. instantiate (1:=A). ctype_step. eapply TypeOp; eauto.
-    obvious_vtype. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
-    apply dirty_ret; obvious_vtype. }
-  { ctype_step. eapply TypeOp; eauto. obvious_vtype. ctype_step.
-    instantiate (1:=A). ctype_step. instantiate (1:=Bop). all: obvious_vtype.
-    apply dirty_ret; obvious_vtype. }
+  { ctype_step. instantiate (1:=A). obvious_ctype. auto. ctype_step.
+    instantiate (1:=Bop). all: obvious_vtype. apply dirty_ret; obvious_vtype. }
+  { obvious_ctype. auto. ctype_step. instantiate (1:=A). ctype_step.
+    instantiate (1:=Bop). all: obvious_vtype. apply dirty_ret; obvious_vtype. }
 
   apply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2: eapply βApp.
   all: simpl_c_subs. apply WfCeq.
 
-  { ctype_step. 2: obvious_vtype. vtype_step. ctype_step. eapply TypeOp; eauto.
-    obvious_vtype. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
-  { ctype_step. eapply TypeOp; eauto.
-    obvious_vtype. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
+  { ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. auto.
+    ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
+  { obvious_ctype. auto. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
 
-  apply ceq_sym. apply WfJudg; obvious. 2: eapply CeqOp; eauto.
-  2: apply veq_refl. apply WfCeq. 4: auto.
+  apply WfJudg; obvious. 2: eapply CeqOp; eauto. 2: apply veq_refl.
+  2: obvious_vtype. 2: obvious. apply WfCeq.
 
-  { ctype_step. eapply TypeOp; eauto. obvious_vtype.
-    ctype_step. instantiate (1:=A). ctype_step. instantiate (1:=Bop).
-    all: obvious_vtype. apply dirty_ret; obvious_vtype. }
-  { ctype_step. eapply TypeOp; eauto.
-    obvious_vtype. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
-  { obvious_vtype. }
+  { obvious_ctype. auto. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
+  { obvious_ctype. auto. ctype_step. instantiate (1:=A). 
+    ctype_step. instantiate (1:=Bop). all: obvious_vtype.
+    apply dirty_ret; obvious_vtype. }
 
+  (* Extracting induction hypothesis *)
   assert (
     judg (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E)))
       (HypU (hyp_shift Ψ 2 0)
         (Forall Bop
           (Ceq (CTy A Σ E)
-            (Do (App (Fun (App (Var 2) (Var 1))) Unit)
-             (Ret (Var 0))) (App (Fun (App (Var 2) (Var 1))) Unit))))
+            (Do (App (Fun TyUnit (App (Var 2) (Var 1))) Unit)
+             (Ret (Var 0))) (App (Fun TyUnit (App (Var 2) (Var 1))) Unit))))
       (Forall Bop
         (Ceq (CTy A Σ E)
-            (Do (App (Fun (App (Var 2) (Var 1))) Unit)
-              (Ret (Var 0))) (App (Fun (App (Var 2) (Var 1))) Unit)))) as IH.
-  { apply WfJudg; auto.
-    apply WfForall; obvious. apply WfCeq. ctype_step. instantiate (1:=A).
-    ctype_step. 2:obvious_vtype. vtype_step. ctype_step. instantiate (1:=Bop).
-    all: obvious_vtype. apply dirty_ret; obvious_vtype.
-    ctype_step. vtype_step. ctype_step. instantiate (1:=Bop).
-    all: obvious_vtype.
-    apply IsHyp. simpl. left. auto. }
+            (Do (App (Fun TyUnit (App (Var 2) (Var 1))) Unit)
+              (Ret (Var 0))) (App (Fun TyUnit (App (Var 2) (Var 1))) Unit)))) 
+  as IH.
+  { apply WfJudg; obvious. apply WfForall; obvious. apply WfCeq.
+    * ctype_step. instantiate (1:=A). ctype_step. 2:obvious_vtype. vtype_step.
+      ctype_step. instantiate (1:=Bop). all: obvious_vtype.
+      apply dirty_ret; obvious_vtype.
+    * ctype_step. vtype_step. ctype_step. instantiate (1:=Bop).
+      all: obvious_vtype.
+    * apply IsHyp. simpl. left. auto. }
   
+  (* IH cleanup *)
   eapply judg_shift_typesafe in IH. 2: exact H0. eapply ForallEl in IH.
   2: instantiate (1:=(Var 0)); obvious_vtype. simpl in IH.
   unfold c_subs in IH. simpl in IH. simpl.
+
+  eapply WfJudg in IH. eapply ceq_trans in IH. (* Continue here *)
+
+  
 
   assert (forall Ψ', 
     wf_hyp (CtxU (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) Bop) Ψ' ->
     judg (CtxU (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) Bop) Ψ'
        (Ceq (CTy A Σ E)
-          (Do (App (Fun (App (Var 2) (Var 1))) Unit) (Ret (Var 0)))
+          (Do (App (Fun TyUnit (App (Var 2) (Var 1))) Unit) (Ret (Var 0)))
           (Do (App (Var 1) (Var 0)) (Ret (Var 0))))) as IH1.
   { clear wfhyp IH. intros Ψ' wfh'.
-    apply WfJudg; auto. apply WfCeq.
+    apply WfJudg; obvious. apply WfCeq.
     3: eapply CeqDo. 3: instantiate (1:=A). 4: apply ceq_refl.
-    3: eapply ceq_trans. 3: eapply WfJudg; auto. 4: apply βApp.
+    3: eapply ceq_trans. 3: eapply WfJudg; obvious. 4: apply βApp.
     + ctype_step. instantiate (1:=A). ctype_step. 2: obvious_vtype.
       vtype_step. ctype_step. instantiate (1:=Bop). all: obvious_vtype.
       apply dirty_ret; obvious_vtype.
@@ -232,7 +232,7 @@ apply CompInduction.
     instantiate (1:=Bop). all: obvious_vtype. }
   { eapply wf_hyp_shift_typesafe in wfhyp; eauto. }
 
-+ (* Nontermination case *)
++ (* NONTERMINATION CASE *)
   simpl. simpl_c_subs. eapply ceq_sym. eapply ceq_trans.
   eapply WfJudg; auto. 2: eapply βApp. simpl_c_subs. apply WfCeq.
 

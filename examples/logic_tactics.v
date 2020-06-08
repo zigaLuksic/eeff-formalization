@@ -18,6 +18,7 @@ unfold c_subs2_out; unfold c_subs_out; unfold c_subs; simpl.
 Ltac obvious := 
    apply WfCtxØ || (apply WfCtxU; obvious) 
 || apply WfTCtxØ  || (apply WfTCtxU; obvious) 
+|| apply WfHypØ
 || apply WfEqsØ || apply WfSigØ || (apply WfSigU; obvious)
 || apply WfTyUnit || apply WfTyInt || apply WfTyEmpty
 || (apply WfTyHandler; obvious) || (apply WfTyFun; obvious) 
@@ -33,6 +34,7 @@ Ltac obvious_vtype := (
 || (apply TypeRight; obvious_vtype)
 || (apply TypePair; obvious_vtype)
 || (apply TypeNil; obvious)
+|| (apply TypeFun; obvious)
 || (apply TypeCons; obvious_vtype)
 || (apply TypeVar; simpl in *; obvious)
 || obvious)
@@ -60,6 +62,7 @@ Ltac obvious_ctype := (
 (apply TypeC; (
   (apply TypeRet; obvious_vtype)
 || (eapply TypeApp; obvious_vtype)
+|| (eapply TypeOp; ((apply vsubtype_refl; obvious) || obvious_vtype || auto))
 || (eapply TypeSumMatch; obvious_vtype; obvious_ctype)
 || (eapply TypeProdMatch; obvious_vtype; obvious_ctype)
 || (eapply TypeListMatch; obvious_vtype; obvious_ctype)
