@@ -85,14 +85,13 @@ destruct H3; apply Veq; auto.
   eapply ctx_subtype_ceq. eauto.
   - apply WfCtxU; auto. inv H1. auto.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-+ inv H0. eapply ceq_subtype in H3; eauto. clear ceq_subtype veq_subtype.
-  inv H8. eapply VeqHandler.
++ inv H0. clear ceq_subtype veq_subtype.
+  inv H8. eapply VeqHandler. instantiate (1:=D').
   eapply ctx_subtype_ceq. eauto. all: inv H; inv H7.
   - apply WfCtxU; auto. inv H1. assumption.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
   - eapply heq_subtype; eauto.
   - eapply csubtype_trans; eauto.
-  - auto.
 + inv H0. apply ηUnit.
 + inv H0. apply ηFun.
 }{
