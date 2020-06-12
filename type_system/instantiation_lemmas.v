@@ -964,10 +964,9 @@ destruct orig. destruct H2; simpl.
   eapply CEL in H2; eauto.
   eapply HEL in H3; eauto.
   eapply RL in H4; eauto.
-  eapply RL in H5; eauto.
   all: clear VL CL HL RL VEL CEL HEL WS.
   apply Veq; auto. eapply VeqHandler; eauto.
-  inv H0. inv H9. inv H12. auto.
+  inv H0. inv H8. inv H11. auto.
 + eapply VL in H0; eauto.
   eapply VL in H1; eauto.
   all: clear VL CL HL RL VEL CEL HEL WS.

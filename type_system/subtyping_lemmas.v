@@ -445,7 +445,7 @@ all: clear VL CL HL.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler; eauto. eapply CEL. eauto.
-  all: inv H; inv H8; inv H11.
+  all: inv H; inv H7; inv H10.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + apply ηUnit.

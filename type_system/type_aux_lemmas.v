@@ -563,7 +563,6 @@ inv orig. destruct H1.
 + specialize (CEL _ _ _ _ H1) as IHc.
   specialize (HEL _ _ _ _ _ H2) as IHh.
   specialize (RL _ _ _ _ _ H3) as IHr1.
-  specialize (RL _ _ _ _ _ H4) as IHr2.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqHandler; eauto.
   rewrite ctx_insert_extend. auto.
@@ -1121,11 +1120,10 @@ inv orig. destruct H1.
 + specialize (CEL _ _ _ _ H1) as IHc.
   specialize (HEL _ _ _ _ _ H2) as IHh.
   specialize (RL _ _ _ _ _ H3) as IHr1.
-  specialize (RL _ _ _ _ _ H4) as IHr2.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqHandler; eauto. eapply IHc.
   - simpl. eauto.
-  - inv H. apply v_shift_typesafe; auto. inv H8. inv H11. auto.
+  - inv H. apply v_shift_typesafe; auto. inv H7. inv H10. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply ηUnit.
 + clear VL CL HL RL VEL CEL HEL WF.
@@ -1692,12 +1690,11 @@ unfold v_subs. simpl. apply VeqNil; auto.
   unfold v_subs. simpl. eapply VeqFun.
   rewrite v_shift_comm. apply IH. simpl. f_equal.
   all: simpl; aomega.
-+ assert (wf_vtype A) as wfa. { inv H. inv H8. inv H11. auto. }
++ assert (wf_vtype A) as wfa. { inv H. inv H7. inv H10. auto. }
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (CEL _ _ _ _ _ (S i) _ _ H1 tyvs') as IHc.
   specialize (HEL _ _ _ _ _ _ i _ _ H2 tyvs) as IHh.
   specialize (RL _ _ _ _ _ _ i _ _ H3 tyvs) as IHr1.
-  specialize (RL _ _ _ _ _ _ i _ _ H4 tyvs) as IHr2.
   clear VL CL HL RL VEL CEL HEL WF.
   unfold v_subs. simpl. eapply VeqHandler; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. auto.

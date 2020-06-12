@@ -296,8 +296,7 @@ with veq': vtype -> ctx -> val -> val -> Prop :=
     veq' (TyFun A C) Γ (Fun A1 c) (Fun A2 c')
 | VeqHandler A A1 A2 Σ Σ' E D D' Γ c c' h h':
     ceq D' (CtxU Γ A) c c' ->
-    heq Σ' D' Γ h h' ->
-    respects Γ h Σ' D' E -> respects Γ h' Σ' D' E ->
+    heq Σ' D' Γ h h' -> respects Γ h Σ' D' E ->
     sig_subtype Σ Σ' -> csubtype D' D -> (* Extra subtyping *)
     veq' (TyHandler (CTy A Σ E) D) Γ (Handler A1 c h) (Handler A2 c' h')
 | ηUnit Γ v:

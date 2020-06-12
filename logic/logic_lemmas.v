@@ -109,7 +109,6 @@ destruct orig. destruct H1.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
   - eapply respects_subs_typesafe; eauto. inv vseq. auto.
-  - eapply respects_subs_typesafe; eauto. inv vseq. auto.
   - apply sig_subtype_refl. inv H0. inv H6. auto.
 + assert (veq A' Γ (v_subs v i v_s) (v_subs v i v_s')).
   eapply veq_subtype; eauto. inv H3. assumption.
