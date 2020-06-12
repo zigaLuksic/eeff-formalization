@@ -86,11 +86,15 @@ destruct H3; apply Veq; auto.
   - apply WfCtxU; auto. inv H1. auto.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
 + inv H0. clear ceq_subtype veq_subtype.
-  inv H8. eapply VeqHandler. instantiate (1:=D').
-  eapply ctx_subtype_ceq. eauto. all: inv H; inv H7.
+  inv H11. eapply VeqHandler; eauto.
+  eapply ctx_subtype_ceq. eauto. all: inv H; inv H10.
   - apply WfCtxU; auto. inv H1. assumption.
   - apply STyCtxU; auto. apply ctx_subtype_refl. inv H1. auto.
-  - eapply heq_subtype; eauto.
+  - eapply respects_eqs_subtype; eauto. eapply wf_eqs_sig_subtype; eauto.
+    eapply sig_subtype_trans; eauto. inv H4. auto.
+  - eapply respects_eqs_subtype; eauto. eapply wf_eqs_sig_subtype; eauto.
+    eapply sig_subtype_trans; eauto. inv H4. auto.
+  - eapply sig_subtype_trans; eauto.
   - eapply csubtype_trans; eauto.
 + inv H0. apply ηUnit.
 + inv H0. apply ηFun.
@@ -274,7 +278,7 @@ apply Veq; auto. all: destruct orig; auto. destruct H1.
 + apply VeqFun; eauto.
   all: inv H0; apply vsubtype_refl; auto.
 + eapply VeqHandler; eauto.
-  all: inv H0; inv H6; apply vsubtype_refl || apply csubtype_refl; auto.
+  all: inv H0; inv H6; apply sig_subtype_refl || apply csubtype_refl; auto.
 + apply veq_refl in H1. eapply veq_subtype in H1; eauto. inv H1. assumption.
 }{
 apply Ceq; auto. all: destruct orig; auto. destruct H1.

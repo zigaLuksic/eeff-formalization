@@ -367,7 +367,7 @@ with h_insert_typesafe
 
 with respects_insert_typesafe
   Γ h Σ D E (orig: respects Γ h Σ D E) A_ins i {struct orig} :
-  has_htype Γ h Σ D -> wf_vtype A_ins ->
+  wf_vtype A_ins ->
   respects (ctx_insert Γ i A_ins) (h_shift h 1 i) Σ D E
 
 with veq_insert_typesafe
@@ -504,18 +504,19 @@ inv orig. destruct H2.
   simpl. apply TypeCasesU. auto.
   do 2 rewrite ctx_insert_extend. auto.
 }{
-intros types wfins. apply Respects.
+intros wfins. apply Respects.
 { clear VL CL HL RL VEL CEL HEL WF. apply wf_ctx_insert. inv orig. all: auto. }
 all: inv orig; auto.
-destruct H3.
+destruct H4.
 + clear VL CL HL RL VEL CEL HEL WF. apply RespectEqsØ.
-+ specialize (RL _ _ _ _ _ H3) as IHres. specialize (CEL _ _ _ _ H4) as IHeq.
++ specialize (RL _ _ _ _ _ H4) as IHres. 
+  specialize (CEL _ _ _ _ H5) as IHeq.
   clear VL CL HL RL VEL CEL HEL WF. apply RespectEqsU. auto.
   rewrite join_ctxs_insert, join_ctxs_insert.
   erewrite handle_t_shift. erewrite handle_t_shift.
   rewrite <-len_tctx_to_ctx.
   assert (ctx_len Γ+(tctx_len Z+i) = i+tctx_len Z+ctx_len Γ) by omega.
-  rewrite H5. apply IHeq.
+  rewrite H6. apply IHeq.
   all: inv H2. all: eauto.
 }{
 intros wfins. apply Veq.
@@ -561,6 +562,8 @@ inv orig. destruct H1.
   rewrite ctx_insert_extend. auto.
 + specialize (CEL _ _ _ _ H1) as IHc.
   specialize (HEL _ _ _ _ _ H2) as IHh.
+  specialize (RL _ _ _ _ _ H3) as IHr1.
+  specialize (RL _ _ _ _ _ H4) as IHr2.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqHandler; eauto.
   rewrite ctx_insert_extend. auto.
@@ -782,7 +785,7 @@ with h_shift_typesafe h (Γ:ctx) A0 Σ D :
   has_htype (CtxU Γ A0) (h_shift h 1 0) Σ D
 
 with respects_shift_typesafe Γ h Σ D E A0 :
-  respects Γ h Σ D E -> has_htype Γ h Σ D -> wf_vtype A0 ->
+  respects Γ h Σ D E -> wf_vtype A0 ->
   respects (CtxU Γ A0) (h_shift h 1 0) Σ D E
 
 with veq_shift_typesafe Γ A v1 v2 A0 :
@@ -914,7 +917,7 @@ with h_sub_typesafe
 
 with respects_sub_typesafe
   Γ h Σ D E (orig: respects Γ h Σ D E) i v_s A_s {struct orig} :
-  has_htype Γ h Σ D -> get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
+  get_vtype Γ i = Some A_s -> has_vtype Γ v_s A_s ->
   respects Γ (h_sub h (i, v_s)) Σ D E
 
 with veq_sub_typesafe
@@ -1057,12 +1060,13 @@ destruct H2.
   apply v_shift_typesafe. apply v_shift_typesafe. assumption.
   all: inv H0. auto. apply WfTyFun; assumption.
 }{
-intros htys gets tyvs; simpl. apply Respects; inv orig; auto.
-destruct H3.
+intros gets tyvs; simpl. apply Respects; destruct orig; auto.
+{ eapply HL. clear VL CL HL RL VEL CEL HEL WF. all: eauto. }
+destruct H4.
 + clear VL CL HL RL VEL CEL HEL WF. 
   apply RespectEqsØ.
-+ specialize (CEL _ _ _ _ H4) as IHc. 
-  specialize (RL _ _ _ _ _ H3) as IHr.
++ specialize (CEL _ _ _ _ H5) as IHc. 
+  specialize (RL _ _ _ _ _ H4) as IHr.
   clear VL CL HL RL VEL CEL HEL WF.
   apply RespectEqsU. eauto. erewrite handle_t_sub. erewrite handle_t_sub.
   eapply IHc. all: inv H2; eauto. clear IHc IHr.
@@ -1116,10 +1120,12 @@ inv orig. destruct H1.
   - inv H. inv H3. apply v_shift_typesafe; auto.
 + specialize (CEL _ _ _ _ H1) as IHc.
   specialize (HEL _ _ _ _ _ H2) as IHh.
+  specialize (RL _ _ _ _ _ H3) as IHr1.
+  specialize (RL _ _ _ _ _ H4) as IHr2.
   clear VL CL HL RL VEL CEL HEL WF.
   simpl. eapply VeqHandler; eauto. eapply IHc.
   - simpl. eauto.
-  - inv H. apply v_shift_typesafe; auto. inv H5. inv H8. auto.
+  - inv H. apply v_shift_typesafe; auto. inv H8. inv H11. auto.
 + clear VL CL HL RL VEL CEL HEL WF.
   simpl. apply ηUnit.
 + clear VL CL HL RL VEL CEL HEL WF.
@@ -1373,7 +1379,7 @@ with h_subs_typesafe
 
 with respects_subs_typesafe
   Γ Γ' h Σ D E i v_s A_s (orig: respects Γ' h Σ D E) {struct orig} :
-  has_htype Γ' h Σ D -> has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ i A_s ->
+  has_vtype Γ v_s A_s -> Γ' = ctx_insert Γ i A_s ->
   ctx_len Γ >= i ->
   respects Γ (h_subs h i v_s) Σ D E
 
@@ -1460,7 +1466,7 @@ destruct orig. destruct H1.
   specialize (v_shift_typesafe _ Γ A _ tyvs wfa) as tyvs'.
   specialize (CL _ _ cr _ (1+i) _ _ H1 tyvs' H4) as IHc. 
   specialize (HL _ _ h _ _ i _ _ H2 tyvs geq) as IHh. 
-  specialize (RL _ _ h _ _ _ i _ _ H3 H2 tyvs) as IHr.
+  specialize (RL _ _ h _ _ _ i _ _ H3 tyvs) as IHr.
   clear VL CL HL RL VEL CEL HEL WF.
   apply TypeV; auto; unfold v_subs; simpl.
   apply TypeHandler. rewrite v_shift_comm. apply IHc. simpl. all: aomega.
@@ -1600,19 +1606,21 @@ destruct orig. destruct H2.
   rewrite v_shift_shift in IHc. rewrite v_shift_comm. apply IHc. 
   simpl. omega. omega.
 }{
-intros tysh tyvs geq len.
+intros tyvs geq len.
 assert (wf_ctx Γ) as wfg by (inv tyvs; assumption).
-destruct orig. destruct H3. 
-+ clear VL CL HL RL VEL CEL HEL WF.
+destruct orig. destruct H4.
++ specialize (HL _ _ _ _ _ i v_s _ H3 tyvs geq) as IHh.
+  clear VL CL HL RL VEL CEL HEL WF.
   apply Respects; auto; unfold h_subs; simpl. apply RespectEqsØ.
-+ specialize (RL _ _ _ _ _ _ i v_s _ H3 tysh tyvs geq) as IHr.
++ specialize (HL _ _ _ _ _ i v_s _ H3 tyvs geq) as IHh.
+  specialize (RL _ _ _ _ _ _ i v_s _ H4 tyvs geq) as IHr.
   specialize (CEL 
     (join_ctxs (join_ctxs Γ (tctx_to_ctx Z D)) Γ0) 
     (join_ctxs (join_ctxs Γ' (tctx_to_ctx Z D)) Γ0) 
     D (handle_t D (ctx_len Γ0) (tctx_len Z) h T1) 
     (handle_t D (ctx_len Γ0) (tctx_len Z) h T2) 
     (i + tctx_len Z + ctx_len Γ0) 
-    (v_shift v_s (tctx_len Z+ctx_len Γ0) 0) A_s H4) as IHc.
+    (v_shift v_s (tctx_len Z+ctx_len Γ0) 0) A_s H5) as IHc.
   all: clear VL CL HL RL VEL CEL HEL WF.
   apply Respects; auto; unfold h_subs; simpl.
   apply RespectEqsU. auto.
@@ -1684,10 +1692,12 @@ unfold v_subs. simpl. apply VeqNil; auto.
   unfold v_subs. simpl. eapply VeqFun.
   rewrite v_shift_comm. apply IH. simpl. f_equal.
   all: simpl; aomega.
-+ assert (wf_vtype A) as wfa. { inv H. inv H5. inv H8. auto. }
++ assert (wf_vtype A) as wfa. { inv H. inv H8. inv H11. auto. }
   specialize (v_shift_typesafe _ _ A _ tyvs wfa) as tyvs'.
   specialize (CEL _ _ _ _ _ (S i) _ _ H1 tyvs') as IHc.
   specialize (HEL _ _ _ _ _ _ i _ _ H2 tyvs) as IHh.
+  specialize (RL _ _ _ _ _ _ i _ _ H3 tyvs) as IHr1.
+  specialize (RL _ _ _ _ _ _ i _ _ H4 tyvs) as IHr2.
   clear VL CL HL RL VEL CEL HEL WF.
   unfold v_subs. simpl. eapply VeqHandler; eauto.
   rewrite v_shift_comm. apply IHc. simpl. f_equal. auto.

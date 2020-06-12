@@ -738,7 +738,7 @@ with h_wf_inst_typesafe Γ I Γ' h Σ D (orig:has_htype Γ' h Σ D)  {struct ori
   has_htype Γ (h_inst h I) Σ D
 
 with respect_wf_inst_typesafe Γ I Γ' h Σ D E (orig:respects Γ' h Σ D E) 
-  {struct orig}: wf_inst Γ I Γ' -> has_htype Γ' h Σ D ->
+  {struct orig}: wf_inst Γ I Γ' ->
   respects Γ (h_inst h I) Σ D E
 
 with veq_wf_inst_typesafe Γ I Γ' v1 v2 A (orig: veq A Γ' v1 v2) {struct orig}:
@@ -884,11 +884,13 @@ destruct orig. destruct H3; simpl.
   apply TypeH; auto. eapply TypeCasesU; eauto.
   all: inv H1; auto. apply WfTyFun; auto.
 }{
-intros tys. destruct orig. destruct H4; simpl.
-+ clear VL CL HL RL VEL CEL HEL WS. apply Respects; auto. apply RespectEqsØ.
-+ eapply RL in H4; eauto.
-  eapply CEL in H5 as ce.
-  eapply HL in tys as tyss; eauto.
+destruct orig. destruct H5; simpl.
++ eapply HL in H4; eauto.
+  clear VL CL HL RL VEL CEL HEL WS. 
+  apply Respects; auto. apply RespectEqsØ.
++ eapply RL in H5; eauto.
+  eapply CEL in H6 as ce.
+  eapply HL in H4 as tyss; eauto.
   all: clear VL CL HL RL VEL CEL HEL WS.
   2: instantiate (2:= (join_ctxs (join_ctxs Γ (tctx_to_ctx Z D)) Γ0)).
   2: instantiate (1:= (inst_pad_by_n I (tctx_len Z + ctx_len Γ0))).
@@ -961,9 +963,11 @@ destruct orig. destruct H2; simpl.
   eapply VL in H1; eauto.
   eapply CEL in H2; eauto.
   eapply HEL in H3; eauto.
+  eapply RL in H4; eauto.
+  eapply RL in H5; eauto.
   all: clear VL CL HL RL VEL CEL HEL WS.
   apply Veq; auto. eapply VeqHandler; eauto.
-  inv H0. inv H6. inv H9. auto.
+  inv H0. inv H9. inv H12. auto.
 + eapply VL in H0; eauto.
   eapply VL in H1; eauto.
   all: clear VL CL HL RL VEL CEL HEL WS.
