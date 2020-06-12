@@ -995,12 +995,11 @@ destruct orig. apply WfJudg; eauto. destruct H3.
   eapply JL in H3; eauto.
   eapply JL in H4; eauto.
   eapply RL in H5; eauto.
-  eapply RL in H6; eauto.
   all: clear VL CL HL RL JL WFHL WFFL WS.
   simpl. eapply VeqHandler; eauto.
   specialize (hyp_inst_shift_move_to_inst 0 1 Ψ I) as pad. simpl in pad.
   rewrite hyp_shift_inst, <-pad. auto.
-  inv H1. inv H10. inv H7. inv H11. auto.
+  inv H1. inv H9. inv H6. inv H10. auto.
 + eapply JL in H3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   eapply VeqSubsume; eauto.

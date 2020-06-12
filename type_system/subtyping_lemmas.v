@@ -484,7 +484,7 @@ destruct H2.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler; eauto.
-  assert (wf_vtype A). { inv H2. inv H6. auto. }
+  assert (wf_vtype A). { inv H2. inv H5. auto. }
   eapply JL; eauto.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
