@@ -114,6 +114,8 @@ destruct orig. destruct H1.
     apply vseq_ext. inv H0. inv H6. assumption.
     subst. apply ctx_insert_extend. simpl. all: omega.
   - eapply HEQ; eauto.
+  - eapply respects_subs_typesafe; eauto. inv vseq. inv H5. auto.
+  - eapply respects_subs_typesafe; eauto. inv vseq. inv H5. auto.
 + eapply VeqSubsume; eauto.
 }{
 assert (forall A B, wf_vtype A -> wf_vtype B -> 

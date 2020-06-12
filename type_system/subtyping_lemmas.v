@@ -447,9 +447,10 @@ destruct types. induction H2; apply TypeH; eauto.
   - apply STyCtxU. apply STyCtxU. auto.
     all: apply vsubtype_refl; auto.
 }{
+intros wf ctxsty. destruct r.
+eapply (HL Γ Γ') in H3 as IHh; auto.
 clear VL CL HL WFFL WFHL WFIL.
-intros wf ctxsty.
-inv r. eapply Respects; auto. destruct H3.
+eapply Respects; auto. destruct H4.
 + eapply RespectEqsØ.
 + eapply RespectEqsU; eauto.
   eapply JL; eauto; inv H2.
@@ -483,7 +484,7 @@ destruct H2.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler; eauto.
-  assert (wf_vtype A). { inv H2. inv H4. auto. }
+  assert (wf_vtype A). { inv H2. inv H6. auto. }
   eapply JL; eauto.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
@@ -846,8 +847,8 @@ Lemma has_eq_respects Γ h Σ D E Γ' Z T1 T2:
       (handle_t D (ctx_len Γ) (tctx_len Z) h T2) ).
 Proof.
 intros r c. induction E; simpl in c; destruct c.
-- destruct H as [a[b[c]]]. subst. inv r. inv H3. assumption.
-- apply IHE. inv r. inv H4. all: assumption.
+- destruct H as [a[b[c]]]. subst. inv r. inv H4. assumption.
+- apply IHE. inv r. inv H5. all: assumption.
 Qed.
 
 

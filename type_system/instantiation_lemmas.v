@@ -13,7 +13,7 @@ Lemma InstU_is_insert I v:
   InstU I v = inst_insert I 0 v.
 Proof.
 destruct I; simpl; auto.
-Admitted.
+Qed.
 
 (* =============== Extending Well Formed Instantiations =============== *)
 
@@ -26,7 +26,7 @@ intros wfa wfi. apply WfInstU.
   - apply WfCtxU. inv wfi. 2: inv H. all: auto.
   - apply TypeVar. auto.
 + apply wf_inst_shift_typesafe; auto.
-Admitted.
+Qed.
 
 
 Fixpoint wf_inst_insert A Γ I Γ' n:
@@ -44,7 +44,7 @@ intros wfa wfi. destruct I; destruct Γ'; destruct n; simpl; inv wfi.
   apply wf_inst_shift_typesafe; auto.
 + apply WfInstU. apply v_shift_typesafe; auto.
   assert (n-0=n) as same by omega. rewrite same. auto.
-Admitted.
+Qed.
 
 
 (* =============== Padding Instantiations =============== *)
@@ -61,7 +61,7 @@ Lemma inst_len_pad_by_n I n :
 Proof.
 revert n. induction I; intros; induction n; simpl; auto.
 all: rewrite inst_len_shift; rewrite IHn; simpl; auto.
-Admitted.
+Qed.
 
 
 Fixpoint wf_inst_join_ctxs Γ I Γ' Γ0:
@@ -70,7 +70,7 @@ Fixpoint wf_inst_join_ctxs Γ I Γ' Γ0:
 Proof.
 intros orig wfg. destruct Γ0; simpl. auto. apply wf_inst_InstU. 
 inv wfg. auto. apply wf_inst_join_ctxs. auto. inv wfg. auto.
-Admitted.
+Qed.
 
 
 Lemma wf_inst_pad_for_handle_t Γ I Γ' Γ0 Z D:
@@ -88,7 +88,7 @@ assert (forall n m, inst_pad_by_n I (n+m)
   f_equal. rewrite IHm. auto. }
 rewrite H. apply wf_inst_join_ctxs. erewrite len_tctx_to_ctx.
 apply wf_inst_join_ctxs. auto. apply wf_tctx_to_ctx. all: auto.
-Admitted.
+Qed.
 
 
 Fixpoint get_inst_val_shift_pad_var I n m k cut {struct n}:
@@ -98,7 +98,7 @@ Fixpoint get_inst_val_shift_pad_var I n m k cut {struct n}:
 Proof.
 intros. destruct n; simpl. omega. destruct m. auto. 
 rewrite get_inst_val_shift. rewrite get_inst_val_shift_pad_var. simpl. auto. omega.
-Admitted.
+Qed.
 
 
 Fixpoint get_inst_pad_var I n m:
@@ -107,7 +107,7 @@ Fixpoint get_inst_pad_var I n m:
 Proof.
 intro. specialize (get_inst_val_shift_pad_var I n m 0 0) as stronger.
 rewrite inst_shift_0 in stronger. rewrite stronger. simpl. auto. omega.
-Admitted.
+Qed.
 
 
 Fixpoint get_inst_pad_same I n m {struct n}:
@@ -124,7 +124,7 @@ assert (forall I k m,
 + rewrite H. rewrite get_inst_pad_same. 
   destruct (get_inst_val I m); simpl.
   rewrite v_shift_shift. do 2 f_equal. omega. auto.
-Admitted.
+Qed.
 
 
 Fixpoint v_inst_shift_pad Γ v A n k cut I {orig:has_vtype Γ v A}:
@@ -173,7 +173,7 @@ Proof.
   eapply (c_inst_shift_pad _ _ _ (S(S n)) k (S(S cut))) in H3.
   simpl in H3. rewrite <-inst_shift_comm, <-inst_shift_comm in H3.
   rewrite inst_shift_shift in H3. eauto. all: simpl; omega.
-Admitted.
+Qed.
 
 
 (* Instantiation with padding changes nothing. *)
@@ -193,7 +193,7 @@ Proof.
   rewrite inst_shift_0, c_shift_0 in orig. eauto. omega.
 + intros. eapply (h_inst_shift_pad _ _ _ _ n 0 0) in orig.
   rewrite inst_shift_0, h_shift_0 in orig. eauto. omega.
-Admitted.
+Qed.
 
 
 (* =============== Instantiation and Substitution =============== *)
@@ -393,7 +393,7 @@ all: clear c_inst_subs h_inst_subs.
 + assert (S(S(inst_len I)) = 2+(inst_len I)) as same by omega.
   rewrite same. apply v_under_var_shift. auto. omega.
 }
-Admitted.
+Qed.
 
 
 Lemma c_inst_subs_out c vs I :
@@ -407,7 +407,7 @@ intros. unfold c_subs_out. unfold c_subs_out.
 rewrite (c_inst_subs 0). do 2 f_equal.
 rewrite InstU_is_insert.
 all: simpl; aomega.
-Admitted.
+Qed.
 
 
 Lemma c_inst_subs2_out c vs1 vs2 I :
@@ -431,7 +431,7 @@ all: simpl; aomega.
 + unfold c_subs_out. apply c_under_var_subs. auto.
   - apply v_under_var_shift. auto. omega.
   - omega.
-Admitted.
+Qed.
 
 
 (* =============== Instantiation and Handling Templates =============== *)
@@ -459,7 +459,7 @@ destruct I; simpl.
     destruct (get_inst_val (inst_pad_by_n (InstU I v0) k) v); simpl.
     rewrite v_shift_shift, v_shift_shift.
     do 2 f_equal. all: aomega.
-Admitted.
+Qed.
 
 
 Fixpoint get_inst_val_shift_later I k n v {struct k}:
@@ -477,7 +477,7 @@ destruct k; simpl.
   rewrite get_inst_val_shift_later_strong.
   destruct (get_inst_val (inst_pad_by_n I k) v); simpl.
   rewrite v_shift_shift, v_shift_shift. do 2 f_equal. all: aomega.
-Admitted.
+Qed.
 
 
 Fixpoint v_inst_shift_move_to_inst k n v I: 
@@ -530,7 +530,7 @@ specialize (caux (2+k) n c I). simpl in caux.
 rewrite inst_shift_shift, inst_shift_shift in caux. simpl in caux. 
 rewrite caux. auto.
 }
-Admitted.
+Qed.
 
 
 Fixpoint form_inst_shift_move_to_inst k n φ I {struct φ}:
@@ -544,7 +544,7 @@ all: auto.
 all: assert (InstU (inst_shift (inst_pad_by_n I (k + n)) 1 0) (Var 0)
   = inst_pad_by_n I (1+k+n)) as same by (simpl; auto).
 all: rewrite same, form_inst_shift_move_to_inst; auto.
-Admitted.
+Qed.
 
 
 Lemma hyp_inst_shift_move_to_inst k n Ψ I :
@@ -552,7 +552,7 @@ Lemma hyp_inst_shift_move_to_inst k n Ψ I :
   = hyp_inst Ψ (inst_pad_by_n (inst_shift I n 0) k).
 Proof.
 induction Ψ; simpl; f_equal; auto. apply form_inst_shift_move_to_inst.
-Admitted.
+Qed.
 
 
 
@@ -579,7 +579,7 @@ all: f_equal || apply v_under_var_shift; aomega.
 +  assert (InstU (inst_shift I 1 0) (Var 0) = inst_pad_by_n I 1) 
     as same by (simpl; auto).
   rewrite v_shift_inst, same, v_inst_shift_move_to_inst. simpl. auto.
-Admitted.
+Qed.
 
 
 Fixpoint inst_handle_t Γ Z I h T Σ D {struct T}:
@@ -650,7 +650,7 @@ all: assert (forall x y, x+(S y) = S (x+y)) as comm by (intros; omega).
     simpl in H13. rewrite H13. auto.
 (* Some issue with eauto magic *)
 Unshelve. exact D.
-Admitted.
+Qed.
 
 
 (* =============== Instantiation and OOTB =============== *)
@@ -668,7 +668,7 @@ Fixpoint smush_get I I' n {struct I'}:
 Proof.
 destruct I'; simpl. auto.
 destruct n; simpl. auto. rewrite smush_get. auto.
-Admitted.
+Qed.
 
 
 Fixpoint shift_smush n I I' Γ Γ' Γ'' {struct I'}:
@@ -679,7 +679,7 @@ Proof.
 intros wfI wfI'. destruct I'; simpl. auto. f_equal. 
 + destruct Γ''; inv wfI'. eauto. 
 + rewrite v_shift_inst. rewrite v_inst_shift_move_to_inst. simpl. f_equal.
-Admitted.
+Qed.
 
 
 Fixpoint v_smush_is_sequencing I I' v Γ Γ' Γ'' A (orig: has_vtype Γ'' v A)
@@ -770,7 +770,7 @@ erewrite shift_smush; eauto. erewrite <-c_smush_is_sequencing; eauto; simpl.
 rewrite inst_shift_shift; eauto.
 all: inv H3; inv H4; auto; inv H8; auto.
 }
-Admitted.
+Qed.
 
 
 (* =============== Safety =============== *)
@@ -788,7 +788,7 @@ with h_wf_inst_typesafe Γ I Γ' h Σ D (orig:has_htype Γ' h Σ D)  {struct ori
   has_htype Γ (h_inst h I) Σ D
 
 with respect_wf_inst_typesafe Γ I Γ' h Σ D E (orig:respects Γ' h Σ D E) 
-  {struct orig}: wf_inst Γ I Γ' -> has_htype Γ' h Σ D ->
+  {struct orig}: wf_inst Γ I Γ' ->
   respects Γ (h_inst h I) Σ D E
 
 with judg_wf_inst_typesafe Γ I Γ' Ψ φ (orig: judg Γ' Ψ φ) {struct orig}:
@@ -934,11 +934,13 @@ destruct orig. destruct H3; simpl.
   apply TypeH; auto. eapply TypeCasesU; eauto.
   all: inv H4; inv H5; auto. inv H9. auto.
 }{
-intros tys. destruct orig. destruct H4; simpl.
-+ clear VL CL HL RL JL WFHL WFFL WS. apply Respects; auto. apply RespectEqsØ.
-+ eapply RL in H4; eauto.
-  eapply JL in H5 as ce.
-  eapply HL in tys as tyss; eauto.
+destruct orig. destruct H5; simpl.
++ eapply HL in H4; eauto.
+  clear VL CL HL RL JL WFHL WFFL WS.
+  apply Respects; auto. apply RespectEqsØ.
++ eapply RL in H5; eauto.
+  eapply JL in H6 as ce.
+  eapply HL in H4 as tyss; eauto.
   all: clear VL CL HL RL JL WFHL WFFL WS.
   2: instantiate (2:= (join_ctxs (join_ctxs Γ (tctx_to_ctx Z D)) Γ0)).
   2: instantiate (1:= (inst_pad_by_n I (tctx_len Z + ctx_len Γ0))).
@@ -992,11 +994,13 @@ destruct orig. apply WfJudg; eauto. destruct H3.
 + eapply wf_inst_InstU in wfinst as wfinsc.
   eapply JL in H3; eauto.
   eapply JL in H4; eauto.
+  eapply RL in H5; eauto.
+  eapply RL in H6; eauto.
   all: clear VL CL HL RL JL WFHL WFFL WS.
   simpl. eapply VeqHandler; eauto.
   specialize (hyp_inst_shift_move_to_inst 0 1 Ψ I) as pad. simpl in pad.
   rewrite hyp_shift_inst, <-pad. auto.
-  inv H1. inv H8. inv H5. inv H9. auto.
+  inv H1. inv H10. inv H7. inv H11. auto.
 + eapply JL in H3; eauto.
   clear VL CL HL RL JL WFHL WFFL WS.
   eapply VeqSubsume; eauto.
@@ -1726,4 +1730,4 @@ destruct orig; simpl.
   clear VL CL HL RL JL WFHL WFFL WS.
   apply WfInstU; auto.
 }
-Admitted.
+Qed.

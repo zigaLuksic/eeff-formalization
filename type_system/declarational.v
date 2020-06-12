@@ -283,7 +283,7 @@ with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
 with respects : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
 | Respects Γ h Σ D E :
     wf_ctx Γ -> wf_sig Σ -> wf_ctype D -> wf_eqs E Σ ->
-    respects' Γ h Σ D E -> 
+    has_htype Γ h Σ D -> respects' Γ h Σ D E -> 
     respects Γ h Σ D E 
 
 with respects' : ctx -> hcases -> sig -> ctype -> eqs -> Prop :=
@@ -341,7 +341,8 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     judg' Γ Ψ (Veq (TyFun A C) (Fun A1 c) (Fun A2 c'))
 | VeqHandler A A1 A2 Σ E D Γ Ψ c c' h h':
     judg (CtxU Γ A) (hyp_shift Ψ 1 0) (Ceq D c c') ->
-    judg Γ Ψ (Heq Σ D h h') ->
+    judg Γ Ψ (Heq Σ D h h') -> 
+    respects Γ h Σ D E -> respects Γ h' Σ D E ->
     judg' Γ Ψ (Veq (TyHandler (CTy A Σ E) D) (Handler A1 c h) (Handler A2 c' h'))
 | VeqSubsume Γ Ψ A A' v1 v2 :
     judg Γ Ψ (Veq A v1 v2) ->
