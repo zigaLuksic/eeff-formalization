@@ -58,13 +58,11 @@ with wf_t : ctx -> tctx -> tmpl -> sig -> Prop :=
     has_ctype Γ c (CTy A SigØ EqsØ) ->
     wf_t (CtxU Γ A) Z T Σ ->
     wf_t  Γ Z (TDo c T) Σ
-| WfTOp Γ Z op Aop Bop v T A B Σ :
+| WfTOp Γ Z op v T A B Σ :
     get_op_type Σ op = Some (A, B) -> 
-    vsubtype Aop A -> vsubtype B Bop ->
-    wf_vtype Aop -> wf_vtype Bop ->
-    has_vtype Γ v Aop ->
-    wf_t (CtxU Γ Bop) Z T Σ ->
-    wf_t Γ Z (TOp op Aop Bop v T) Σ
+    has_vtype Γ v A ->
+    wf_t (CtxU Γ B) Z T Σ ->
+    wf_t Γ Z (TOp op v T) Σ
 
 with wf_eqs : eqs -> sig -> Prop :=
 | WfEqsØ Σ : wf_eqs EqsØ Σ
@@ -96,24 +94,24 @@ with has_vtype' : ctx -> val -> vtype -> Prop :=
     has_vtype' Γ (Pair v1 v2) (TyProd A B)
 | TypeLeft Γ v A B :
     has_vtype Γ v A ->
-    has_vtype' Γ (Left A B v) (TySum A B)
+    has_vtype' Γ (Left v) (TySum A B)
 | TypeRight Γ v A B :
     has_vtype Γ v B ->
-    has_vtype' Γ (Right A B v) (TySum A B)
+    has_vtype' Γ (Right v) (TySum A B)
 | TypeNil Γ A :
-    has_vtype' Γ (Nil A) (TyList A)
+    has_vtype' Γ Nil (TyList A)
 | TypeCons Γ v vs A :
     has_vtype Γ v A ->
     has_vtype Γ vs (TyList A) ->
     has_vtype' Γ (Cons v vs) (TyList A)
 | TypeFun Γ c A C :
     has_ctype (CtxU Γ A) c C ->
-    has_vtype' Γ (Fun A c) (TyFun A C)
+    has_vtype' Γ (Fun c) (TyFun A C)
 | TypeHandler Γ cr h A Σ E D :
     has_ctype (CtxU Γ A) cr D ->
     has_htype Γ h Σ D -> 
     respects Γ h Σ D E ->
-    has_vtype' Γ (Handler A cr h) (TyHandler (CTy A Σ E) D)
+    has_vtype' Γ (Handler cr h) (TyHandler (CTy A Σ E) D)
 | TypeVSubsume Γ v A A' :
     has_vtype Γ v A ->
     vsubtype A A' -> 
@@ -131,7 +129,7 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
     has_ctype' Γ (Ret v) (CTy A SigØ EqsØ)
 | TypeAbsurd Γ v C :
     has_vtype Γ v TyEmpty -> 
-    has_ctype' Γ (Absurd C v) C
+    has_ctype' Γ (Absurd v) C
 | TypeProdMatch Γ v A B c C :
     has_vtype Γ v (TyProd A B) ->
     has_ctype (CtxU (CtxU Γ A) B) c C ->
@@ -161,13 +159,12 @@ with has_ctype' : ctx -> comp -> ctype -> Prop :=
 | TypeLetRec Γ A C c1 c2 D:
     has_ctype (CtxU (CtxU Γ A) (TyFun A C)) c1 C ->
     has_ctype (CtxU Γ (TyFun A C)) c2 D ->
-    has_ctype' Γ (LetRec A C c1 c2) D
-| TypeOp Γ op v c Aop Bop Aop' Bop' A Σ E :
-    get_op_type Σ op = Some (Aop', Bop') -> 
-    vsubtype Aop Aop' -> vsubtype Bop' Bop ->
+    has_ctype' Γ (LetRec c1 c2) D
+| TypeOp Γ op v c Aop Bop A Σ E :
+    get_op_type Σ op = Some (Aop, Bop) -> 
     has_vtype Γ v Aop ->
     has_ctype (CtxU Γ Bop) c (CTy A Σ E) ->
-    has_ctype' Γ (Op op Aop Bop v c) (CTy A Σ E)
+    has_ctype' Γ (Op op v c) (CTy A Σ E)
 | TypeCSubsume Γ c C C' :
     has_ctype Γ c C -> 
     csubtype C C' -> 
@@ -180,11 +177,11 @@ with has_htype : ctx -> hcases -> sig -> ctype -> Prop :=
     has_htype Γ h Σ D
 
 with has_htype' : ctx -> hcases -> sig -> ctype -> Prop :=
-| TypeCasesØ Γ D : has_htype' Γ (CasesØ D) SigØ D
+| TypeCasesØ Γ D : has_htype' Γ CasesØ SigØ D
 | TypeCasesU Γ h op c A B Σ D :
     has_htype Γ h Σ D ->
     has_ctype (CtxU (CtxU Γ A) (TyFun B D)) c D ->
-    has_htype' Γ (CasesU h op A B c) (SigU Σ op A B) D
+    has_htype' Γ (CasesU h op c) (SigU Σ op A B) D
 
 (* ==================== Logic Judgements ==================== *)
 
