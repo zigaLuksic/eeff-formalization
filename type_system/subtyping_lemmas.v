@@ -348,7 +348,7 @@ destruct types. induction H1; apply TypeV; eauto.
 + apply TypeFun. eapply CL; inv H0. eauto.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
-+ apply TypeHandler; eauto. eapply CL; inv H0; inv H6; eauto.
++ apply TypeHandler; eauto. eapply CL; inv H0; inv H5; eauto.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply TypeVSubsume; eauto.
@@ -445,7 +445,7 @@ all: clear VL CL HL.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + eapply VeqHandler; eauto. eapply CEL. eauto.
-  all: inv H; inv H7; inv H10.
+  all: inv H; inv H6; inv H9.
   - apply WfCtxU; auto.
   - apply STyCtxU. auto. apply vsubtype_refl. auto.
 + apply ηUnit.
@@ -1029,29 +1029,25 @@ Fixpoint shape_handler_full Γ v A c_r h ty
   exists A' Σ E D Σ' D',
     ty = TyHandler (CTy A' Σ E) D /\ vsubtype A' A /\
     has_ctype (CtxU Γ A) c_r D /\ has_htype Γ h Σ' D' /\ 
-    respects Γ h Σ' D' E /\ sig_subtype Σ Σ' /\ csubtype D' D.
+    sig_subtype Σ Σ' /\ csubtype D' D.
 Proof.
 intros same. destruct orig. destruct H1; try discriminate.
 + clear shape_handler_full. exists A, Σ, E, D, Σ, D.
-  inv same. do 6 try aconstructor. all: inv H0; inv H6.
+  inv same. do 6 try aconstructor. all: inv H0; inv H5.
   all: apply sig_subtype_refl || apply csubtype_refl || apply vsubtype_refl;
   auto.
 + subst. apply (shape_handler_full _ _ A c_r h) in H1; eauto.
   clear shape_handler_full.
-  destruct H1 as [A''[Σ[E[D[Σ'[D'[same[stya[cty[hty[r[sty]]]]]]]]]]]]. subst.
+  destruct H1 as [A''[Σ[E[D[Σ'[D'[same[stya[cty[hty[sty]]]]]]]]]]]. subst.
   apply subtype_shape_handler_rev in H2.
   destruct H2 as [C' [D''[same[sty']]]]. subst.
   apply subtype_shape_cty in sty'.
   destruct sty' as [A'''[Σ'''[E'''[same]]]]. subst.
   exists A''', Σ''', E''', D'', Σ', D'.
-  do 3 try aconstructor. 3: do 2 aconstructor. 4: constructor.
-  -  destruct H3. eapply vsubtype_trans; eauto.
+  do 3 try aconstructor. 3: do 2 aconstructor.
+  - destruct H3. eapply vsubtype_trans; eauto.
   - apply TypeC. inv cty. auto. inv H0. auto.
     eapply TypeCSubsume; eauto.
-  - eapply respects_eqs_subtype; destruct H3 as [_[e]]; eauto. 
-    inv H0. inv H6.
-    eapply wf_eqs_sig_subtype; eauto.
-    eapply sig_subtype_trans; eauto. inv hty. auto.
   - destruct H3 as [_[a]]. eapply sig_subtype_trans; eauto.
   - eapply csubtype_trans; eauto.
 Qed.
@@ -1063,14 +1059,14 @@ Fixpoint shape_tyhandler_full Γ v A Σ E D ty
   (exists n, v = Var n) \/
   (exists c_r h A' Σ' D', 
     v = Handler A' c_r h /\ has_ctype (CtxU Γ A') c_r D' /\ 
-    has_htype Γ h Σ' D' /\ respects Γ h Σ' D' E /\
-    vsubtype A A' /\ sig_subtype Σ Σ' /\ csubtype D' D).
+    has_htype Γ h Σ' D' /\ vsubtype A A' /\
+    sig_subtype Σ Σ' /\ csubtype D' D).
 Proof.
 intros same. destruct orig. destruct H1; try discriminate. eauto.
 + clear shape_tyhandler_full. right.
   exists cr, h, A, Σ, D.
   inv same. do 6 try aconstructor; inv H2.
-  apply vsubtype_refl. inv H0. inv H9. auto.
+  apply vsubtype_refl. inv H0. inv H8. auto.
   apply sig_subtype_refl. auto. apply csubtype_refl. auto.
 + rewrite same in *. apply subtype_shape_handler in H2. 
   destruct H2 as [C' [D' [hty[csty dsty]]]]. subst.
@@ -1078,12 +1074,9 @@ intros same. destruct orig. destruct H1; try discriminate. eauto.
   apply (shape_tyhandler_full _ _ A' Σ' E' D') in H1; eauto. 
   destruct H1. auto.
   right. destruct H1 as [cr[h[A''[Σ''[D''[same[cty[hty othr]]]]]]]].
-  destruct othr as [resp[stya[sty2 csty2]]].
+  destruct othr as [stya[sty2 csty2]].
   exists cr, h, A'', Σ'', D''. inv H0. inv csty.
-  do 2 try aconstructor. aconstructor. constructor. 2: do 2 try constructor.
-  * eapply respects_eqs_subtype; eauto. inv H3.
-    eapply wf_eqs_sig_subtype; eauto. 
-    eapply sig_subtype_trans; eauto. inv hty. auto.
+  do 2 try aconstructor. aconstructor. constructor. 2: constructor.
   * eapply vsubtype_trans; eauto.
   * eapply sig_subtype_trans; eauto.
   * eapply csubtype_trans; eauto.
@@ -1094,7 +1087,7 @@ Lemma shape_handler Γ A' c_r h A Σ E D:
   has_vtype Γ (Handler A' c_r h) (TyHandler (CTy A Σ E) D) ->
   exists Σ' D',
     has_ctype (CtxU Γ A') c_r D' /\ has_htype Γ h Σ' D' /\
-    respects Γ h Σ' D' E /\ vsubtype A A' /\ sig_subtype Σ Σ' /\ csubtype D' D.
+    vsubtype A A' /\ sig_subtype Σ Σ' /\ csubtype D' D.
 Proof.
 intro orig.
 apply (shape_tyhandler_full _ _ A Σ E D) in orig as shape; eauto.
