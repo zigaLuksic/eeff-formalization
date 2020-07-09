@@ -1,9 +1,6 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
 Require Export syntax subtyping_and_admissibility substitution.
 
 (* ==================== Template Handling ==================== *)
@@ -57,7 +54,7 @@ Fixpoint tmpl_to_comp C Γ_len T :=
       Op op A B v (tmpl_to_comp C (1+Γ_len) T)
   end.
 
-(* ==================== Welljudged Judgements ==================== *)
+(* ==================== Well formedness Judgements ==================== *)
 
 Inductive wf_vtype : vtype -> Prop :=
 | WfTyUnit : wf_vtype TyUnit 
@@ -596,6 +593,8 @@ with judg' : ctx -> hypotheses -> formula -> Prop :=
     (* Conclusion *)
     judg' Γ Ψ (Forall (TyFun TyUnit (CTy A Σ E)) φ)
 
+
+(* ==================== Wellformed instantiations ==================== *)
 
 with wf_inst : ctx -> instantiation -> ctx -> Prop :=
 | WfInstØ Γcheck : wf_ctx Γcheck -> wf_inst Γcheck InstØ CtxØ

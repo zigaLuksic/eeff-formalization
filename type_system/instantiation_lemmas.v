@@ -1,11 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\logic".
 
 Require Export subtyping_lemmas substitution_lemmas type_aux_lemmas.
 
@@ -176,7 +172,7 @@ Proof.
 Qed.
 
 
-(* Instantiation with padding changes nothing. *)
+(* Instantiation with sufficient padding changes nothing. *)
 Fixpoint v_inst_pad_same Γ v A n I {orig:has_vtype Γ v A}:
   n >= ctx_len Γ ->
   v_inst v (inst_pad_by_n I n) = v

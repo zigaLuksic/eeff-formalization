@@ -1,19 +1,11 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\operational_semantics".
+Add LoadPath "???\logic".
 
 Require Export syntax_lemmas substitution_lemmas instantiation_lemmas 
   type_lemmas logic_tactics.
-
 
 Lemma operational_in_logic Γ c c' C:
   has_ctype Γ c C -> step c c'-> judg Γ HypØ (Ceq C c c'). 
@@ -49,25 +41,25 @@ Qed.
 
 (* ==================== Substitution is Safe in Logic ==================== *)
 
-Fixpoint veq_subs_logicsafe_weak
+Fixpoint veq_subs_logicsafe
   Γ Γ' Ψ A v (orig: has_vtype Γ' v A) i v_s v_s' A_s {struct orig} :
   judg Γ Ψ (Veq A_s v_s v_s') -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   judg Γ Ψ (Veq A (v_subs v i v_s) (v_subs v i v_s'))
 
-with ceq_subs_logicsafe_weak
+with ceq_subs_logicsafe
   Γ Γ' Ψ C c (orig: has_ctype Γ' c C) i v_s v_s' A_s {struct orig} :
   judg Γ Ψ (Veq A_s v_s v_s') -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   judg Γ Ψ (Ceq C (c_subs c i v_s) (c_subs c i v_s'))
 
-with heq_subs_logicsafe_weak
+with heq_subs_logicsafe
   Γ Γ' Ψ Σ D h (orig: has_htype Γ' h Σ D) i v_s v_s' A_s {struct orig} :
   judg Γ Ψ (Veq A_s v_s v_s') -> Γ' = ctx_insert Γ i A_s -> ctx_len Γ >= i ->
   judg Γ Ψ (Heq Σ D (h_subs h i v_s) (h_subs h i v_s')).
 
 Proof.
-all: rename veq_subs_logicsafe_weak into VEQ.
-all: rename ceq_subs_logicsafe_weak into CEQ.
-all: rename heq_subs_logicsafe_weak into HEQ.
+all: rename veq_subs_logicsafe into VEQ.
+all: rename ceq_subs_logicsafe into CEQ.
+all: rename heq_subs_logicsafe into HEQ.
 all: intros vseq ctxs clen.
 all: assert (forall A, wf_vtype A -> 
       judg (CtxU Γ A) (hyp_shift Ψ 1 0) 

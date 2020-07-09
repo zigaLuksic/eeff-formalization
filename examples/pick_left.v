@@ -1,28 +1,23 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\operational_semantics".
+Add LoadPath "???\logic".
+Add LoadPath "???\examples".
 
 Require Export type_lemmas logic_lemmas logic_tactics.
 Open Scope string_scope.
 
-(* ========================================================================== *)
+(* ==================== Sugar ==================== *)
 
 Definition TyBool := (TySum TyUnit TyUnit).
 
 Definition VTrue := Left TyUnit TyUnit Unit.
 Definition VFalse := Right TyUnit TyUnit Unit.
 
-Example sig := (SigU (SigØ) ("choose") TyUnit TyBool).
+(* ==================== Theory definition ==================== *)
 
+Example sig := (SigU (SigØ) ("choose") TyUnit TyBool).
 
 Lemma sig_wf:
   wf_sig sig.
@@ -98,46 +93,59 @@ unfold eq_idem_assoc. unfold TyBool. apply WfEqsU; obvious. apply eq_idem_wf.
 Qed.
 
 
-(* ========================================================================== *)
+(* ==================== Correctness of cases ==================== *)
 
 Example cases D :=
   (CasesU (CasesØ D)
     "choose" TyUnit TyBool (App (Var 0) VTrue)).
+
+Lemma cases_type D :
+  wf_ctype D ->
+  has_htype CtxØ (cases D) sig D.
+Proof.
+intros wfd. apply TypeH; obvious. apply TypeCasesU.
+- apply TypeH; obvious. apply TypeCasesØ.
+- ctype_step. instantiate (1:=TyBool). obvious_vtype. obvious_vtype.
+Qed.
 
 
 Lemma cases_respect D:
   wf_ctype D ->
   respects CtxØ (cases D) sig D eq_idem_assoc.
 Proof.
-intros wfd.
+intros wfd. specialize (cases_type D wfd) as wfcases.
 unfold sig. unfold eq_idem_assoc.
 apply Respects; obvious. apply eq_idem_assoc_wf.
 apply RespectEqsU. apply Respects; obvious. apply eq_idem_wf.
 apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
 
-{(* IDEMPOTENCY *)
+{(* ===== IDEMPOTENCY ===== *)
 simpl_c_subs. simpl_c_subs.
 
+(* βApp *)
 apply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2: apply βApp.
-all: simpl_c_subs. apply WfCeq. 
+all: simpl_c_subs. apply WfCeq.
 
 { ctype_step. instantiate (1:=TyBool). obvious_vtype.
   obvious_ctype. obvious_vtype. }
 { obvious_ctype. }
 
+(* βMatchLeft *)
 eapply ceq_trans. apply WfJudg; obvious. 2: apply βMatchLeft.
 all: simpl_c_subs. apply WfCeq.
 
 { obvious_ctype. }
 { obvious_ctype. } 
 
+(* reflexivity *)
 apply ceq_refl. obvious_ctype. obvious.
 }
 
-{(* ASSOCIATIVITY *)
+{(* ===== ASSOCIATIVITY ===== *)
 simpl_c_subs. simpl_c_subs.
 
-(* Clean Right*)
+(* Reduce right side *)
+(* βApp *)
 apply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2: apply βApp.
 all: simpl_c_subs. apply WfCeq.
 
@@ -147,6 +155,7 @@ all: simpl_c_subs. apply WfCeq.
 { ctype_step. obvious_vtype. ctype_step. instantiate (1:=TyBool).
   obvious_vtype. obvious_ctype. obvious_vtype. obvious_ctype. }
 
+(* βMatchLeft *)
  eapply ceq_trans. apply WfJudg; obvious. 2: apply βMatchLeft.
 all: simpl_c_subs. apply WfCeq.
 
@@ -155,6 +164,7 @@ all: simpl_c_subs. apply WfCeq.
 { ctype_step. instantiate (1:=TyBool). obvious_vtype. obvious_ctype.
   obvious_vtype. }
 
+(* βApp *)
 eapply ceq_trans. apply WfJudg; obvious. 2: apply βApp.
 all: simpl_c_subs. apply WfCeq.
 
@@ -162,13 +172,15 @@ all: simpl_c_subs. apply WfCeq.
   obvious_vtype. }
 { obvious_ctype. }
 
+(* βMatchLeft *)
 eapply ceq_trans. apply WfJudg; obvious. 2: apply βMatchLeft.
 all: simpl_c_subs. apply WfCeq.
 
 { obvious_ctype. }
 { obvious_ctype. }
 
-(* Clean Left *)
+(* Reduce left side *)
+(* βApp *)
 apply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2: apply βApp.
 all: simpl_c_subs. apply WfCeq.
 
@@ -180,6 +192,7 @@ all: simpl_c_subs. apply WfCeq.
   ctype_step. instantiate (1:=TyBool). obvious_vtype. obvious_ctype. 
   obvious_vtype. }
 
+(* βMatchLeft *)
 eapply ceq_trans. apply WfJudg; obvious. 2: apply βMatchLeft.
 all: simpl_c_subs. apply WfCeq.
 
@@ -188,6 +201,7 @@ all: simpl_c_subs. apply WfCeq.
   obvious_vtype. }
 { obvious_ctype. }
 
+(* reflexivity *)
 apply ceq_refl; obvious_ctype.
 }
 Qed.

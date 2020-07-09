@@ -1,16 +1,12 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\operational_semantics".
+Add LoadPath "???\logic".
 
 Require Export type_lemmas subtyping_lemmas.
 
+(* ==================== Tactics for easier examples ==================== *)
 
 Ltac simpl_c_subs := 
 unfold c_subs2_out; unfold c_subs_out; unfold c_subs; simpl.
@@ -105,6 +101,7 @@ apply vsubtype_refl. auto. apply STySigØ. apply STyEqsØ.
 Qed.
 
 
+(* ==================== Propagation of operations ==================== *)
 
 Lemma Op_ListMatch v v' c1 c2 c2' id vop vop' Γ Ψ A Σ E Al Aop Bop :
   (* We need to take care of the variables shifting around *)
@@ -125,7 +122,7 @@ Proof.
 intros shiftedc2 shiftedv shiftedvop wfhyp gets 
   vtypes voptypes c1types c2types.
 
-(* Asserts for that delicious auto tactic *)
+(* Asserts for `auto` *)
 assert (wf_vtype Aop) as wfaop by (inv voptypes; auto).
 assert (wf_vtype Bop) as wfbop.
 { apply get_op_type_wf in gets. destruct gets. auto. inv c1types.

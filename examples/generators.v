@@ -1,15 +1,12 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
+
+(* DISCLAIMER: This example will be fully outlined and cleaned up soon. *)
+
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\operational_semantics".
+Add LoadPath "???\logic".
+Add LoadPath "???\examples".
 
 Require Export type_lemmas logic_lemmas logic_tactics.
 Open Scope string_scope.
@@ -17,9 +14,9 @@ Open Scope string_scope.
 
 (* ========================================================================== *)
 
-Definition TyA := TyInt. (* Need some wellformed type *)
+Definition TyA := TyInt. (* Need some wellformed type for `obvious` tactic *)
 
-Definition TyState := TyList TyA. (* Need some wellformed type *)
+Definition TyState := TyList TyA. (* Need some wellformed type for `obvious` *)
 
 Definition TyOption A := TySum TyUnit A.
 
@@ -126,7 +123,6 @@ Example generator_cases := CasesU (CasesØ)
       )
     ).
 
-(* not sure which equations I need *)
 Lemma cases_types A E :
   wf_vtype A -> wf_eqs E state_sig ->
   has_htype CtxØ generator_cases next_sig (CTy A state_sig E).

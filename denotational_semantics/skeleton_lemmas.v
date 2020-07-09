@@ -1,11 +1,7 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\skeletons". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\skeletons".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\denotational_semantics".
 Require Export skeletons subtyping_lemmas.
 
 
@@ -78,7 +74,7 @@ destruct types. destruct H1; simpl.
   eapply CL in H1. simpl in *. eauto.
   eapply CL in H2. simpl in *. auto.
 + eapply SkTypeOp. eauto.
-  eapply CL in H7. simpl in *. auto.
+  eapply CL in H5. simpl in *. auto.
 + eapply CL in H1. simpl in *.
   apply skeletons_ignore_csubtype in H2. inv H2. auto.
 }{

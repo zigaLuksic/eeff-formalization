@@ -1,37 +1,12 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\operational_semantics".
+Add LoadPath "???\logic".
+Add LoadPath "???\examples".
 
 Require Export type_lemmas logic_lemmas logic_tactics.
 Open Scope string_scope.
-
-(* Helpful lemma *)
-Lemma letbind_ctype A c1 c2 Γ D:
-  has_ctype Γ c1 (CTy A SigØ EqsØ) -> has_ctype (CtxU Γ A) c2 D ->
-  has_ctype Γ (Do c1 c2) D.
-Proof.
-intros tys1 tys2.
-apply TypeC. inv tys1. auto. inv tys2. auto.
-destruct D as [B Σ E]. eapply TypeDo; eauto.
-apply TypeC. inv tys1. auto.
-+ apply WfCTy. inv tys1. inv H0. auto.
-  all: inv tys2; inv H0; auto.
-+ eapply TypeCSubsume; eauto. apply STyCTy.
-  apply vsubtype_refl. inv tys1. inv H0. auto.
-  apply STySigØ. apply STyEqsØ.
-Qed.
-
-
-(* ========================================================================== *)
 
 
 Example etabind_with_induction Γ Ψ C c:
@@ -39,7 +14,7 @@ Example etabind_with_induction Γ Ψ C c:
   judg Γ Ψ (Ceq C (Do c (Ret (Var 0))) c).
 Proof.
 intros wfc wfg wfh ctys. destruct C as [A Σ E]. inv wfc.
-(* Translate arbitrary computation to arbitrary functions. *)
+(* Setup version with functions that is suitable for induction. *)
 assert (
   judg Γ Ψ (Forall (TyFun TyUnit (CTy A Σ E))
     (Ceq (CTy A Σ E) 
@@ -47,19 +22,22 @@ assert (
   ))).
 { 
 apply WfJudg; obvious.
+(* Wf formula *)
 { apply WfForall; obvious. apply WfCeq.
   + ctype_step. instantiate (1:=A). obvious_ctype.
     apply dirty_ret; obvious_vtype.
   + obvious_ctype. }
 apply CompInduction. 
-(* START INDUCTION *)
+(* ===== START INDUCTION ===== *)
+(* Check admissibility *)
 + apply AdmissCeq.
 
-+ (* BASE CASE *)
++ (* ===== VALUE CASE ===== *)
   simpl. simpl_c_subs.
   assert (wf_hyp (CtxU Γ A) (hyp_shift Ψ 1 0)) as wfhyp.
   { apply wf_hyp_shift_typesafe; auto. }
   
+  (* CeqDo and βApp *)
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply CeqDo.
   3: apply ceq_refl. 2: apply WfJudg; obvious. 3: eapply βApp. all: auto.
   2: instantiate (1:=A). all: simpl_c_subs. apply WfCeq. 3: apply WfCeq.
@@ -73,12 +51,14 @@ apply CompInduction.
   { apply dirty_ret; obvious_vtype. }
   { apply wf_hyp_shift_typesafe; auto. }
 
+  (* βDoRet *)
   eapply ceq_trans. apply WfJudg; obvious. 2:eapply βDoRet.
   all: simpl_c_subs. apply WfCeq.
 
   { ctype_step. instantiate (1:=A). all: apply dirty_ret; obvious_vtype. }
   { apply dirty_ret; obvious_vtype. }
 
+  (* βApp *)
   eapply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2:eapply βApp.
   all: simpl_c_subs. apply WfCeq.
 
@@ -87,12 +67,12 @@ apply CompInduction.
 
   eapply ceq_refl. apply dirty_ret; obvious_vtype. auto.
 
-+ (* STEP CASE *)
++ (* ===== OPERATION CASE ===== *)
   intros op Aop Bop gets.
   apply get_op_type_wf in gets as getss. destruct getss. 2: auto.
   simpl. simpl_c_subs.
 
-
+  (* Assert well formed hypotheses for `obvious` tactic. *)
   assert (
     wf_hyp (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E)))
     (HypU (hyp_shift Ψ 2 0)
@@ -111,6 +91,7 @@ apply CompInduction.
       - ctype_step. 2: obvious_vtype. vtype_step. ctype_step.
         instantiate (1:=Bop). all:obvious_vtype. }
   
+  (* CeqDo and βApp *)
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply CeqDo.
   3: apply ceq_refl. 2: apply WfJudg; obvious. 3: eapply βApp.
   2: instantiate (1:=A). all: simpl_c_subs. apply WfCeq. 3: apply WfCeq.
@@ -126,6 +107,7 @@ apply CompInduction.
   { apply dirty_ret; obvious_vtype. }
   { eapply wf_hyp_shift_typesafe in wfhyp. simpl in wfhyp. eauto. auto. }
 
+  (* βDoOp *)
   eapply ceq_trans. apply WfJudg; obvious. 2: eapply βDoOp.
   all: simpl. apply WfCeq.
 
@@ -134,6 +116,7 @@ apply CompInduction.
   { obvious_ctype. auto. ctype_step. instantiate (1:=A). ctype_step.
     instantiate (1:=Bop). all: obvious_vtype. apply dirty_ret; obvious_vtype. }
 
+  (* βApp *)
   apply ceq_sym. eapply ceq_trans. apply WfJudg; obvious. 2: eapply βApp.
   all: simpl_c_subs. apply WfCeq.
 
@@ -141,6 +124,7 @@ apply CompInduction.
     ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
   { obvious_ctype. auto. ctype_step. instantiate (1:=Bop). all: obvious_vtype. }
 
+  (* CeqOp *)
   apply WfJudg; obvious. 2: eapply CeqOp; eauto. 2: apply veq_refl.
   2: obvious_vtype. 2: obvious. apply WfCeq.
 
@@ -170,7 +154,7 @@ apply CompInduction.
       all: obvious_vtype.
     * apply IsHyp. simpl. left. auto. }
   
-  (* IH cleanup *)
+  (* IH transition to extended ctx *)
   assert (
     wf_hyp (CtxU (CtxU (CtxU Γ Aop) (TyFun Bop (CTy A Σ E))) Bop)
       (HypU (hyp_shift (hyp_shift Ψ 2 0) 1 0)
@@ -187,7 +171,8 @@ apply CompInduction.
   2: instantiate (1:=(Var 0)); obvious_vtype. simpl in IH.
   unfold c_subs in IH. simpl in IH. simpl.
 
-  eapply WfJudg in IH; obvious. eapply ceq_trans in IH. (* Continue here *)
+  (* IH cleanup *)
+  eapply WfJudg in IH; obvious. eapply ceq_trans in IH.
   2: apply ceq_sym. 2: eapply WfJudg; obvious. 3: eapply CeqDo.
   4: apply ceq_refl. 3: eapply WfJudg; obvious. 4: eapply βApp.
   
@@ -210,20 +195,27 @@ apply CompInduction.
     ctype_step. instantiate (1:=Bop). all: obvious_vtype.
   
   unfold c_subs_out in IH. unfold c_subs in IH. simpl in IH.
-  eapply ceq_trans. 2: apply ceq_sym. 2: exact IH. clear IH. apply ceq_sym.
-  eapply WfJudg; obvious. 2: apply βApp. apply WfCeq.
+
+  (* Use IH *)
+  eapply ceq_trans. 2: apply ceq_sym. 2: exact IH. clear IH. 
+  
+  (* βApp *)
+  apply ceq_sym. eapply WfJudg; obvious. 2: apply βApp. apply WfCeq.
 
   { ctype_step; obvious_vtype. ctype_step. instantiate(1:=Bop).
     all: obvious_vtype. }
   { ctype_step. instantiate(1:=Bop). all: obvious_vtype. }
 
-+ (* NONTERMINATION CASE *)
++ (* ===== NONTERMINATION CASE ===== *)
+
+  (* βApp *)
   simpl. simpl_c_subs. eapply ceq_sym. eapply ceq_trans.
   eapply WfJudg; auto. 2: eapply βApp. simpl_c_subs. apply WfCeq.
 
   { ctype_step; obvious_vtype. ctype_step; ctype_step; obvious_vtype. }
   { ctype_step; ctype_step; obvious_vtype. }
   
+  (* DoLoop *)
   simpl_c_subs. eapply ceq_trans. eapply ceq_sym. eapply WfJudg; auto.
   2: eapply DoLoop. instantiate (1:=(Ret (Var 0))). apply WfCeq.
 
@@ -231,6 +223,7 @@ apply CompInduction.
     apply dirty_ret; obvious_vtype.  }
   { ctype_step; ctype_step; obvious_vtype. }
 
+  (* CeqDo *)
   eapply ceq_sym. eapply WfJudg; auto. 2: eapply CeqDo.
   2: instantiate (1:=A). apply WfCeq.
 
@@ -239,18 +232,22 @@ apply CompInduction.
   { ctype_step. instantiate (1:=A). ctype_step; ctype_step; obvious_vtype.
     apply dirty_ret; obvious_vtype.  }
 
+  (* βApp *)
   eapply WfJudg; auto. 2: eapply βApp. eapply WfCeq.
 
   { ctype_step; obvious_vtype. ctype_step; ctype_step; obvious_vtype. }
   { ctype_step; ctype_step; obvious_vtype. }
   
+  (* reflexivity *)
   apply ceq_refl; obvious.
 
   { apply dirty_ret; auto. obvious_vtype. }
   { apply wf_hyp_shift_typesafe; auto. }
 
 }{
-(* Now lets put induction to good use *)
+(* ===== USE RESULT OF INDUCTION ===== *)
+
+(* ForallEl in H *)
 eapply ForallEl in H.
 Focus 2.
   instantiate (1:= (Fun TyUnit (c_shift c 1 0))).
@@ -258,6 +255,7 @@ Focus 2.
 simpl in H. unfold c_subs in H. simpl in H. 
 rewrite c_negshift_shift, c_shift_0 in H. 2: omega.
 
+(* βApp in H*)
 eapply WfJudg in H; obvious. apply ceq_sym in H. eapply ceq_trans in H.
 2: apply ceq_sym. 2: apply WfJudg; obvious. 3: apply βApp. 
 
@@ -270,6 +268,7 @@ Focus 2.
   apply c_shift_typesafe; obvious. apply dirty_ret; obvious_vtype.
   obvious_ctype. apply c_shift_typesafe; obvious.
 
+(* use H *)
 unfold c_subs_out in H. unfold c_subs in H. simpl in H.
 rewrite c_sub_no_var_same, c_negshift_shift, c_shift_0 in H.
 2: omega. 2: apply c_shift_makes_no_var.
@@ -287,6 +286,7 @@ assert (c_negshift (c_sub (c_shift c 1 0) (0, Unit)) 1 0 = c) as same.
 { rewrite c_sub_no_var_same, c_negshift_shift, c_shift_0; aomega.
   apply c_shift_makes_no_var. }
 
+(* βApp *)
 clear H. eapply ceq_trans. apply WfJudg; obvious. 2: apply βApp.
 all: simpl_c_subs; rewrite same. clear same. apply WfCeq; auto.
 obvious_ctype. apply c_shift_typesafe; obvious.

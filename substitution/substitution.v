@@ -1,5 +1,5 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+
+Add LoadPath "???\syntax".
 Require Export syntax.
 
 (* ==================== Shifts and Subs ==================== *)

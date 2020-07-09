@@ -1,7 +1,5 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "???\substitution".
+Add LoadPath "???\syntax".
 Require Export substitution syntax_lemmas.
 Require Import Le Arith.
 

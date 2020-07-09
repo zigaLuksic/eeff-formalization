@@ -1,7 +1,8 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
+Add LoadPath "???\syntax".
 Require Import syntax.
 
+
+(* ==================== Subtyping ==================== *)
 
 Inductive vsubtype : vtype -> vtype -> Prop :=
 | STyUnit : vsubtype TyUnit TyUnit
@@ -56,6 +57,9 @@ Inductive hyp_subset : hypotheses -> hypotheses -> Prop :=
     hyp_subset Ψ Ψ' ->
     has_hypothesis Ψ' φ ->
     hyp_subset (HypU Ψ φ) Ψ'.
+
+
+(* ==================== Admissibility ==================== *)
 
 Inductive var_admissible : nat -> formula -> Prop :=
 | AdmissNotPresent n φ :
