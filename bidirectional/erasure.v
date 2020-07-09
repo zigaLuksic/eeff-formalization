@@ -1,13 +1,10 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\bidirectional". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\bidirectional".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
+Add LoadPath "???\syntax".
+Add LoadPath "???\substitution".
+Add LoadPath "???\bidirectional".
+Add LoadPath "???\type_system".
 Require Import syntax bidirectional declarational subtyping.
 
+(* ==================== Erasure ==================== *)
 
 Fixpoint v_erase v :=
   match v with
@@ -198,7 +195,7 @@ all: destruct orig; simpl.
 Qed.
 
 
-(* ==================== Main ==================== *)
+(* ==================== Correctness ==================== *)
 
 Lemma ctx_erase_unsimpl Γ A:
   CtxU (ctx_erase Γ) (vtype_erase A) = ctx_erase (BCtxU Γ A).
