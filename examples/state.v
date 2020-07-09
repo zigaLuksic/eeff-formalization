@@ -1,32 +1,24 @@
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\syntax". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\type_system". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\substitution". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\operational_semantics". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\logic". *)
-(* Add LoadPath "C:\Users\Ziga\Documents\Ziga_podatki\repositories\eeff-formalization\examples". *)
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\syntax".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\type_system".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\substitution".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\operational_semantics".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\logic".
-Add LoadPath "E:\Ziga_Podatki\faks\eeff-formalization\examples".
+Add LoadPath "???\syntax".
+Add LoadPath "???\type_system".
+Add LoadPath "???\substitution".
+Add LoadPath "???\operational_semantics".
+Add LoadPath "???\logic".
 
 Require Export type_lemmas logic_lemmas logic_tactics.
 Open Scope string_scope.
+
+(* ==================== Lemmas for easier work with Do ==================== *)
 
 Lemma letbind_ctype A c1 c2 Γ D:
   has_ctype Γ c1 (CTy A SigØ EqsØ) -> has_ctype (CtxU Γ A) c2 D ->
   has_ctype Γ (Do c1 c2) D.
 Proof.
-intros tys1 tys2.
-apply TypeC. inv tys1. auto. inv tys2. auto.
-destruct D as [B Σ E]. eapply TypeDo; eauto.
-apply TypeC. inv tys1. auto.
-+ apply WfCTy. inv tys1. inv H0. auto.
-  all: inv tys2; inv H0; auto.
-+ eapply TypeCSubsume; eauto. apply STyCTy.
-  apply vsubtype_refl. inv tys1. inv H0. auto.
-  apply STySigØ. apply STyEqsØ.
+intros tys1 tys2. 
+assert (wf_ctx Γ) by (inv tys1; auto). assert (wf_ctype D) by (inv tys2; auto).
+assert (wf_vtype A) by (inv tys1; inv H2; auto). destruct D as [B Σ E]. inv H0.
+ctype_step. instantiate (1:=A). 2: auto.
+ctype_step. eapply TypeCSubsume; eauto.
+apply STyCTy. apply vsubtype_refl. auto. apply STySigØ. apply STyEqsØ.
 Qed.
 
 
@@ -37,27 +29,18 @@ Proof.
 intros step tys. destruct D as [B Σ E].
 assert (wf_ctx Γ) as wfctx by (inv step; inv H; auto).
 apply Ceq; obvious.
-+ apply TypeC. auto. inv tys. auto.
-  eapply TypeDo; eauto. inv step.
-  apply TypeC. auto. apply WfCTy. inv H. inv H3. auto.
-  3: eapply TypeCSubsume; eauto. all: inv tys; inv H3; auto.
-  apply STyCTy. apply vsubtype_refl. inv H2. auto.
-  apply STySigØ. apply STyEqsØ.
-+ apply TypeC. auto. inv tys. auto.
-  eapply TypeDo; eauto. inv step.
-  apply TypeC. auto. apply WfCTy. inv H. inv H3. auto.
-  3: eapply TypeCSubsume; eauto. all: inv tys; inv H3; auto.
-  apply STyCTy. apply vsubtype_refl. inv H2. auto.
-  apply STySigØ. apply STyEqsØ.
-+ eapply CeqDo. 2: apply ceq_refl; eauto.
-  eapply ceq_subtype. eauto. apply WfCTy; inv tys; inv H; inv H0; auto.
-  apply STyCTy. apply vsubtype_refl. inv tys. inv H. auto. 
-  apply STySigØ. apply STyEqsØ.
++ apply (letbind_ctype A). inv step. auto. auto.
++ apply (letbind_ctype A). inv step. auto. auto.
++ eapply CeqDo. instantiate (1:=A). 2: apply ceq_refl; eauto.
+  eapply ceq_subtype. eauto. 
+  - inv tys. inv H0. inv H. obvious.
+  - apply STyCTy. apply vsubtype_refl. inv tys. inv H. auto. 
+    apply STySigØ. apply STyEqsØ.
 Qed.
 
 (* ========================================================================== *)
 
-Definition TyState := TyInt. (* Need some wellformed type *)
+Definition TyState := TyInt. (* Need some wellformed type for `obvious` *)
 
 Example sig := (SigU (SigU (SigØ) 
     ("get") TyUnit TyState)
@@ -71,103 +54,103 @@ unfold sig. obvious.
 Qed.
 
 
-Example state_cases := (CasesU (CasesU (CasesØ)
-  ("get") 
-    (Ret(Fun (
-      Do (App (Var 2) (Var 0))
-        (App (Var 0) (Var 1)))) ))
-  ("set") 
-    (Ret(Fun (
-      Do (App (Var 2) Unit)
-        (App (Var 0) (Var 2)))) )).
-
-  
-Lemma has_htype_state_cases D :
-  wf_ctype D ->
-  has_htype CtxØ state_cases sig (CTy (TyFun TyState D) SigØ EqsØ).
-Proof.
-intros wfd.
-assert (wf_sig sig). apply wf_sig_sig. 
-unfold sig in *. unfold state_cases.
-apply TypeH; obvious. apply TypeCasesU; obvious.
-apply TypeH; obvious. apply TypeCasesU; obvious.
-+ apply TypeH; obvious. apply TypeCasesØ.
-+ ctype_step. vtype_step.
-  eapply letbind_ctype. instantiate (1:=(TyFun TyState D)).
-  ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-  ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-+ ctype_step. vtype_step.
-  eapply letbind_ctype. instantiate (1:=(TyFun TyState D)).
-  ctype_step. instantiate (1:=TyUnit). obvious_vtype. obvious_vtype.
-  ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-Qed.
-
-(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+(* ==================== Define Theory ==================== *)
 
 Example eq_set_set := (EqsU (EqsØ)
   (CtxU (CtxU (CtxØ) TyState) TyState)
   (TCtxU (TCtxØ) TyUnit)
-    (TOp "set" (Var 0) (TOp "set" (Var 2) (TApp 0 Unit)))
-    (TOp "set" (Var 1) (TApp 0 Unit)) ).
+    (TOp "set" TyState TyUnit 
+      (Var 0) (TOp "set" TyState TyUnit (Var 2) (TApp 0 Unit)))
+    (TOp "set" TyState TyUnit 
+      (Var 1) (TApp 0 Unit)) ).
 
 Example eq_get_get := (EqsU (EqsØ)
   CtxØ
   (TCtxU (TCtxØ) (TyProd TyState TyState))
-    (TOp "get" Unit (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 1)))))
-    (TOp "get" Unit (TApp 0 (Pair (Var 0) (Var 0)))) ).
+    (TOp "get" TyUnit TyState 
+      Unit (TOp "get" TyUnit TyState Unit (TApp 0 (Pair (Var 0) (Var 1)))))
+    (TOp "get" TyUnit TyState 
+      Unit (TApp 0 (Pair (Var 0) (Var 0)))) ).
 
 Example eq_set_get := (EqsU (EqsØ)
   (CtxU (CtxØ) TyState)
   (TCtxU (TCtxØ) TyState)
-    (TOp "set" (Var 0) (TOp "get" Unit (TApp 0 (Var 0))))
-    (TOp "set" (Var 0) (TApp 0 (Var 1))) ).
+    (TOp "set" TyState TyUnit 
+      (Var 0) (TOp "get" TyUnit TyState Unit (TApp 0 (Var 0))))
+    (TOp "set" TyState TyUnit 
+      (Var 0) (TApp 0 (Var 1))) ).
 
 Example eq_get_set := (EqsU (EqsØ)
   CtxØ
   (TCtxU (TCtxØ) TyUnit)
-    (TOp "get" Unit (TOp "set" (Var 0) (TApp 0 Unit)))
+    (TOp "get" TyUnit TyState 
+      Unit (TOp "set" TyState TyUnit (Var 0) (TApp 0 Unit)))
     (TApp 0 Unit) ).
 
 Example eq_get_set_weak := (EqsU (EqsØ)
   CtxØ
   (TCtxU (TCtxØ) TyState)
-    (TOp "get" Unit (TOp "set" (Var 0) (TApp 0 (Var 1))))
-    (TOp "get" Unit (TApp 0 (Var 0))) ).
+    (TOp "get" TyUnit TyState 
+      Unit (TOp "set" TyState TyUnit (Var 0) (TApp 0 (Var 1))))
+    (TOp "get" TyUnit TyState 
+      Unit (TApp 0 (Var 0))) ).
 
 Lemma wf_eq_set_set:
   wf_eqs eq_set_set sig.
 Proof.
 unfold eq_set_set. unfold sig.
 apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. obvious_vtype. simpl. auto.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. obvious_vtype. simpl. auto.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. simpl. reflexivity.
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step; obvious_vtype.
++ wft_step. simpl. reflexivity.
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step; obvious_vtype.
 Qed.
+
 
 Lemma wf_eq_get_get:
   wf_eqs eq_get_get sig.
 Proof.
 unfold eq_get_get. unfold sig.
 apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. simpl. reflexivity.
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. instantiate (1:=(TyProd TyState TyState)).
+  all: obvious_vtype.
++ wft_step. simpl. reflexivity.
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. instantiate (1:=(TyProd TyState TyState)).
+  all: obvious_vtype.
 Qed.
+
 
 Lemma wf_eq_set_get:
   wf_eqs eq_set_get sig.
 Proof.
 unfold eq_set_get. unfold sig.
 apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. instantiate (1:=TyState). all: obvious_vtype.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. instantiate (1:=TyState). all: obvious_vtype.
 Qed.
 
 
@@ -176,10 +159,14 @@ Lemma wf_eq_get_set:
 Proof.
 unfold eq_get_set. unfold sig.
 apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-+ eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step; obvious_vtype.
++ wft_step; obvious_vtype.
 Qed.
 
 
@@ -188,114 +175,163 @@ Lemma wf_eq_get_set_weak:
 Proof.
 unfold eq_get_set_weak. unfold sig.
 apply WfEqsU; obvious.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
-+ eapply WfTOp. simpl. reflexivity. obvious_vtype.
-  eapply WfTApp. 2: simpl; reflexivity. obvious_vtype.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. instantiate (1:=TyState). all: obvious_vtype.
++ wft_step. simpl. reflexivity. 
+  { apply vsubtype_refl. obvious. }
+  { apply vsubtype_refl. obvious. }
+  obvious_vtype. wft_step. instantiate (1:=TyState). all: obvious_vtype.
 Qed.
 
-(* ========================================================================== *)
+
+(* ==================== Operation cases ==================== *)
+
+
+Example state_cases D := (CasesU (CasesU 
+  (CasesØ (CTy (TyFun TyState D) SigØ EqsØ))
+  ("get") TyUnit TyState
+    (Ret(Fun TyState (
+      Do (App (Var 1) (Var 0))
+        (App (Var 0) (Var 1)))) ))
+  ("set") TyState TyUnit
+    (Ret(Fun TyState (
+      Do (App (Var 1) Unit)
+        (App (Var 0) (Var 3)))) )).
+
+  
+Lemma has_htype_state_cases D :
+  wf_ctype D ->
+  has_htype CtxØ (state_cases D) sig (CTy (TyFun TyState D) SigØ EqsØ).
+Proof.
+intros wfd.
+assert (wf_sig sig). apply wf_sig_sig. 
+unfold sig in *. unfold state_cases.
+apply TypeH; obvious. apply TypeCasesU; obvious.
+apply TypeH; obvious. apply TypeCasesU; obvious.
++ apply TypeH; obvious. apply TypeCasesØ.
++ ctype_step. vtype_step. eapply letbind_ctype.
+  instantiate (1:=(TyFun TyState D)).
+  ctype_step. instantiate (1:=TyState). vtype_step. obvious_vtype.
+  ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
++ ctype_step. vtype_step.
+  eapply letbind_ctype. instantiate (1:=(TyFun TyState D)).
+  ctype_step. instantiate (1:=TyUnit). obvious_vtype. obvious_vtype.
+  ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
+Qed.
+
+
+(* ==================== SET SET ==================== *)
+(* The proof is written out in full for SetSet and outlined for others. *)
 
 Lemma respects_set_set A:
   wf_vtype A ->
   respects
-    CtxØ state_cases
+    CtxØ (state_cases (CTy A SigØ EqsØ))
     sig (CTy (TyFun TyState (CTy A SigØ EqsØ)) SigØ EqsØ) eq_set_set.
 Proof.
-intros wfa.
-unfold state_cases. unfold sig. unfold eq_set_set.
-apply Respects; obvious. apply wf_eq_set_set.
-apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
-simpl. simpl_c_subs. apply Ceq; obvious.
+intros wfa. unfold state_cases. unfold sig. unfold eq_set_set.
+(* Dispatch side conditions *)
+apply Respects; obvious. apply wf_eq_set_set. 
+apply has_htype_state_cases. obvious.
+apply RespectEqsU. apply Respects; obvious.
+apply has_htype_state_cases. obvious.
+apply RespectEqsØ.
 
-{ ctype_step. vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
-  Focus 2. apply TypeC; obvious. eapply TypeApp.
-    instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-  ctype_step. 2: obvious_vtype. vtype_step. ctype_step. vtype_step.
-  eapply letbind_ctype. instantiate (1:= (TyFun TyState (CTy A SigØ EqsØ))).
-  + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
-  + ctype_step. instantiate (1:=TyState). all: obvious_vtype. }
-{ ctype_step. vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
-  Focus 2. ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-  ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. }
+(* CeqRet *)
+simpl. simpl_c_subs. apply Ceq; obvious. 3: apply CeqRet.
 
-apply CeqRet. apply Veq; obvious.
+{ ctype_step. vtype_step. 
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  ctype_step; obvious_vtype. ctype_step. vtype_step.
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. vtype_step.
+  ctype_step. instantiate (1:= TyState). vtype_step. vtype_step. }
+{ ctype_step. vtype_step. 
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step. instantiate (1:=TyState).
+  all: obvious_vtype. }
 
-{ vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
-  Focus 2. apply TypeC; obvious. eapply TypeApp.
-    instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-  ctype_step. 2: obvious_vtype. vtype_step. ctype_step. vtype_step.
-  eapply letbind_ctype. instantiate (1:= (TyFun TyState (CTy A SigØ EqsØ))).
-  + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
-  + ctype_step. instantiate (1:=TyState). all: obvious_vtype. }
-{ vtype_step. eapply letbind_ctype.
-  instantiate (1:=(TyFun TyState (CTy A SigØ EqsØ))).
-  Focus 2. ctype_step. instantiate (1:=TyState). obvious_vtype. obvious_vtype.
-  ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. }
+(* VeqFun *)
+apply Veq; obvious. 3: apply VeqFun.
 
-apply VeqFun. eapply ceq_trans.
-instantiate (1:=
-  (Do (Ret (Fun
-          (Do (App (Fun (App (Var 5) Unit)) Unit)
-             (App (Var 0) (Var 4)))))) (App (Var 0) (Var 2)) ).
-eapply (letbind_reduce (TyFun TyState (CTy A SigØ EqsØ))).
+{ vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  ctype_step; obvious_vtype. ctype_step. vtype_step.
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. vtype_step.
+  ctype_step. instantiate (1:= TyState). vtype_step. vtype_step. }
+{ vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step. instantiate (1:=TyState).
+  all: obvious_vtype. }
 
-{ apply Ceq; obvious. 3: apply βApp.
-  { ctype_step. 2:obvious_vtype. vtype_step. ctype_step.
-    vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-    + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
-    + ctype_step. instantiate (1:=TyState). all: obvious_vtype. }
-  { ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-    + ctype_step. 2:obvious_vtype. vtype_step. obvious_ctype.
-    + ctype_step. instantiate (1:=TyState). all: obvious_vtype. } }
+(* CeqDo and βApp *)
+eapply ceq_trans. eapply (letbind_reduce (TyFun TyState (CTy A SigØ EqsØ))).
+apply Ceq; obvious. 3: apply βApp.
+
+{ obvious_ctype. ctype_step. vtype_step. 
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))). obvious_ctype.
+  obvious_ctype. ctype_step. instantiate (1:=TyState). all: obvious_vtype. }
+{ simpl_c_subs. ctype_step. vtype_step.
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))). obvious_ctype.
+  obvious_ctype. ctype_step. instantiate (1:=TyState). all: obvious_vtype. } 
 { ctype_step. instantiate (1:=TyState). all: obvious_vtype. }
 
-eapply ceq_trans. apply Ceq; obvious. 3: apply βDoRet.
+(* βDoRet *)
+simpl_c_subs. eapply ceq_trans. apply Ceq; obvious. 3: apply βDoRet.
 
-{ eapply letbind_ctype. instantiate (1:= (TyFun TyState (CTy A SigØ EqsØ))).
-  ctype_step. vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-  ctype_step. 2: obvious_vtype. vtype_step. obvious_ctype. 
-  ctype_step. instantiate (1:= TyState). obvious_vtype. obvious_vtype.
-  ctype_step. instantiate (1:= TyState). obvious_vtype. obvious_vtype. }
-{ simpl_c_subs. ctype_step. instantiate (1:= TyState). 2:obvious_vtype.
-  vtype_step. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-  ctype_step. vtype_step. obvious_ctype. obvious_vtype.
-  ctype_step. instantiate (1:= TyState). obvious_vtype. obvious_vtype. }
+{ eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  ctype_step; obvious_vtype.
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. vtype_step.
+  ctype_step. instantiate (1:= TyState). vtype_step. vtype_step. }
+{ simpl_c_subs. ctype_step. instantiate (1:= TyState). vtype_step.
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. vtype_step. obvious_vtype. }
 
+(* βApp *)
 simpl_c_subs. eapply ceq_trans. apply Ceq. 3: apply βApp. all: simpl_c_subs.
 
-{ ctype_step. instantiate (1:=TyState). 2: obvious_vtype.
-  vtype_step.  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-  ctype_step. vtype_step. obvious_ctype. obvious_vtype.
-  ctype_step. instantiate (1:= TyState). obvious_vtype. obvious_vtype. }
+{ simpl_c_subs. ctype_step. instantiate (1:= TyState). vtype_step.
+  eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. vtype_step. obvious_vtype. }
 { eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-  ctype_step. vtype_step. obvious_ctype. obvious_vtype.
-  ctype_step. instantiate (1:= TyState). obvious_vtype. obvious_vtype.  }
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. obvious_vtype. }
 
-apply ceq_refl. eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
-ctype_step. vtype_step. obvious_ctype. obvious_vtype.
-ctype_step. instantiate (1:= TyState). obvious_vtype. obvious_vtype.
+(* reflexivity *)
+apply ceq_refl.
+{ eapply (letbind_ctype (TyFun TyState (CTy A SigØ EqsØ))).
+  obvious_ctype. obvious_ctype. ctype_step.
+  instantiate (1:= TyState). vtype_step. obvious_vtype. }
 
 Qed.
 
-(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+(* ==================== Get Get ==================== *)
 
 Lemma respects_get_get A:
   wf_vtype A ->
   respects 
-    CtxØ state_cases 
+    CtxØ (state_cases (CTy A SigØ EqsØ))
     sig (CTy (TyFun TyState (CTy A SigØ EqsØ)) SigØ EqsØ) eq_get_get.
 Proof.
 intros wfa.
-unfold state_cases. unfold sig. unfold eq_get_get.
-apply Respects; obvious. apply wf_eq_get_get.
-apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
-simpl. simpl_c_subs.
-apply Ceq; obvious.
+(* Dispatch side conditions *)
+apply Respects; obvious. apply wf_eq_get_get. 
+apply has_htype_state_cases. obvious.
+apply RespectEqsU. apply Respects; obvious.
+apply has_htype_state_cases. obvious.
+apply RespectEqsØ.
+simpl. simpl_c_subs. apply Ceq; obvious.
 { admit. }
 { admit. }
 apply CeqRet. apply Veq; obvious.
@@ -329,18 +365,22 @@ simpl_c_subs. eapply ceq_refl. admit.
 Admitted.
 
 
-(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+(* ==================== SET GET ==================== *)
 
 Lemma respects_set_get A:
   wf_vtype A ->
   respects 
-    CtxØ state_cases 
+    CtxØ (state_cases (CTy A SigØ EqsØ)) 
     sig (CTy (TyFun TyState (CTy A SigØ EqsØ)) SigØ EqsØ) eq_set_get.
 Proof.
 intros wfa.
-unfold state_cases. unfold sig. unfold eq_set_get.
-apply Respects; obvious. apply wf_eq_set_get.
-apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
+(* Dispatch side conditions *)
+apply Respects; obvious. apply wf_eq_set_get. 
+apply has_htype_state_cases. obvious.
+apply RespectEqsU. apply Respects; obvious.
+apply has_htype_state_cases. obvious.
+apply RespectEqsØ.
 simpl. simpl_c_subs.
 apply Ceq; obvious.
 { admit. }
@@ -376,34 +416,43 @@ simpl_c_subs. eapply ceq_refl. admit.
 Admitted.
 
 
-(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+(* ==================== GET SET ==================== *)
+(* This one does not hold! *)
 
 Lemma respects_get_set A:
   wf_vtype A ->
   respects 
-    CtxØ state_cases 
+    CtxØ (state_cases (CTy A SigØ EqsØ)) 
     sig (CTy (TyFun TyState (CTy A SigØ EqsØ)) SigØ EqsØ) eq_get_set.
 Proof.
 intros wfa.
-unfold state_cases. unfold sig. unfold eq_get_set.
-apply Respects; obvious. apply wf_eq_get_set.
-apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
+(* Dispatch side conditions *)
+apply Respects; obvious. apply wf_eq_get_set. 
+apply has_htype_state_cases. obvious.
+apply RespectEqsU. apply Respects; obvious.
+apply has_htype_state_cases. obvious.
+apply RespectEqsØ.
 simpl. simpl_c_subs.
 admit.
 Admitted.
 
-(* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *)
+
+(* ==================== Weak GET SET ==================== *)
 
 Lemma respects_get_set_weak A:
   wf_vtype A ->
   respects 
-    CtxØ state_cases 
+    CtxØ (state_cases (CTy A SigØ EqsØ)) 
     sig (CTy (TyFun TyState (CTy A SigØ EqsØ)) SigØ EqsØ) eq_get_set_weak.
 Proof.
 intros wfa.
-unfold state_cases. unfold sig. unfold eq_get_set_weak.
-apply Respects; obvious. apply wf_eq_get_set_weak.
-apply RespectEqsU. apply Respects; obvious. apply RespectEqsØ.
+(* Dispatch side conditions *)
+apply Respects; obvious. apply wf_eq_get_set_weak. 
+apply has_htype_state_cases. obvious.
+apply RespectEqsU. apply Respects; obvious.
+apply has_htype_state_cases. obvious.
+apply RespectEqsØ.
 simpl. simpl_c_subs.
 apply Ceq; obvious.
 { admit. }
