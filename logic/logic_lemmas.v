@@ -275,10 +275,8 @@ instantiate (1:=(TyFun TyUnit (CTy A Σ E))).
   { intros. destruct Γ; simpl; auto. }
   rewrite same. all: obvious. inv wfc. auto.
 + inv wfc. apply get_op_type_wf in gets as getss. destruct getss. 
-  vtype_step. ctype_step. eapply TypeOp; eauto; try apply vsubtype_refl; auto.
-  - vtype_step.
-  - ctype_step. instantiate (1:=Bop). 2: obvious_vtype. vtype_step.
-  - auto.
+  vtype_step. obvious_ctype. auto.
+  ctype_step. instantiate (1:=Bop). 2: obvious_vtype. vtype_step. auto.
 + omega.
 Qed.
 

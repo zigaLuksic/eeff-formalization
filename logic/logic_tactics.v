@@ -70,6 +70,7 @@ Ltac ctype_step := (
 (apply TypeC; (
   (apply TypeRet; obvious)
 || (eapply TypeApp; obvious)
+|| (eapply TypeOp; ((apply vsubtype_refl; obvious) || auto))
 || (eapply TypeSumMatch; obvious)
 || (eapply TypeProdMatch; obvious)
 || (eapply TypeListMatch; obvious)
@@ -135,15 +136,14 @@ assert (wf_vtype Al) as wfal by (inv vtypes; inv H0; auto).
 
 (* Check that requirements result in well typed terms *)
 assert (has_ctype Γ (Op id Aop Bop vop (ListMatch v c1 c2)) (CTy A Σ E)).
-{ subst. inv wfc. ctype_step. eapply TypeOp; eauto.
-  all: try apply vsubtype_refl; auto.
+{ subst. inv wfc. ctype_step. auto.
   ctype_step. apply v_shift_typesafe; eauto. eauto. }
   
 assert (has_ctype Γ 
   (ListMatch v' (Op id Aop Bop vop c1) (Op id Aop Bop vop' c2')) (CTy A Σ E)).
 { subst. inv wfc. ctype_step. eauto.
-  + ctype_step. eapply TypeOp; eauto.
-  + ctype_step. eapply TypeOp; eauto.
+  + ctype_step. auto.
+  + ctype_step. auto.
     - rewrite <-(v_shift_shift 1). do 2 try apply v_shift_typesafe.
       all: inv vtypes; auto.
     - eapply c_subs_typesafe. 3: reflexivity. instantiate (1:=Al). simpl.
@@ -221,8 +221,7 @@ Focus 3.
   clear rule.
   assert (ctx_insert Γ 0 (TyList Al) = CtxU Γ (TyList Al)) as same.
   { destruct Γ; simpl; auto. } rewrite same. clear same.
-  inv vtypes. inv H2. inv wfc. ctype_step. 
-  eapply TypeOp; eauto.
+  inv vtypes. inv H2. inv wfc. ctype_step. auto.
   apply v_shift_typesafe; obvious.
   ctype_step. instantiate (1:=Al). obvious_vtype.
   assert (ctx_insert (CtxU Γ Bop) 1 (TyList Al) 
@@ -236,11 +235,9 @@ Focus 3.
 
 Focus 2.
   clear rule. inv wfc. apply WfCeq.
-  { ctype_step. eapply TypeOp; eauto.
-    ctype_step; eauto. apply v_shift_typesafe; obvious. }
-  { ctype_step. eauto. ctype_step. 
-    eapply TypeOp; eauto. ctype_step. instantiate (1:=Al). vtype_step. auto.
-    ctype_step. eapply TypeOp; eauto.
+  { ctype_step. auto. ctype_step; eauto. apply v_shift_typesafe; obvious. }
+  { ctype_step. eauto. ctype_step. auto.
+    ctype_step. instantiate (1:=Al). vtype_step. auto. ctype_step. auto.
     rewrite <-(v_shift_shift 1). do 2 try apply v_shift_typesafe; obvious.
     ctype_step. instantiate (1:=Al). obvious_vtype. 
     { rewrite <-(c_shift_shift 1 1).
@@ -261,9 +258,8 @@ eapply ceq_trans. eauto. clear rule.
 eapply WfJudg; obvious.
 
 { inv wfc. apply WfCeq.
-  ctype_step. eauto. ctype_step. eapply TypeOp; eauto. ctype_step.
-  instantiate (1:=Al). obvious_vtype. auto.
-  ctype_step. eapply TypeOp; eauto. 
+  ctype_step. eauto. ctype_step. auto. ctype_step.
+  instantiate (1:=Al). obvious_vtype. auto. ctype_step. auto. 
   rewrite <-(v_shift_shift 1). do 2 try apply v_shift_typesafe; obvious.
   ctype_step. instantiate (1:=Al). obvious_vtype.
   { rewrite <-(c_shift_shift 1 1).
@@ -279,8 +275,7 @@ eapply WfJudg; obvious.
     apply c_insert_typesafe; obvious. rewrite <-same.
     apply c_insert_typesafe; obvious. } 
   
-  ctype_step. eauto. ctype_step. eapply TypeOp; eauto.
-  ctype_step. eapply TypeOp; eauto.
+  ctype_step. eauto. ctype_step. auto. ctype_step. auto.
   rewrite <-(v_shift_shift 1). do 2 try apply v_shift_typesafe; obvious.
   unfold c_subs2_out. do 2 try eapply c_subs_out_typesafe.
   instantiate (2:=Al). instantiate (1:=(TyList Al)).
@@ -298,7 +293,7 @@ eapply CeqListMatch. instantiate (1:=Al).
 
 + apply WfJudg; obvious.
 
-  { inv wfc. apply WfCeq; ctype_step; eapply TypeOp; eauto.
+  { inv wfc. apply WfCeq; ctype_step; auto.
     ctype_step. instantiate (1:=Al). obvious_vtype. auto. }
 
   eapply CeqOp; eauto. apply veq_refl; obvious.
@@ -313,7 +308,7 @@ eapply CeqListMatch. instantiate (1:=Al).
   { rewrite <-(hyp_shift_shift 1). do 2 try apply wf_hyp_shift_typesafe; obvious. }
   apply WfJudg; obvious.
 
-  { inv wfc. apply WfCeq; ctype_step; eapply TypeOp; eauto.
+  { inv wfc. apply WfCeq; ctype_step; auto.
     rewrite <-(v_shift_shift 1). do 2 try apply v_shift_typesafe; obvious.
     2: rewrite <-(v_shift_shift 1). 2: do 2 try apply v_shift_typesafe; obvious.
     ctype_step. instantiate (1:=Al). obvious_vtype.
